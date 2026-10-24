@@ -119,6 +119,7 @@ function actualizarControles() {
   $("abrir-entorno").disabled = !conectado;
   $("generar").disabled = !listo || (vista === "trucar" ? !base || !pieza || !parte : items.length === 0);
   $("buscar-base").disabled = $("buscar-pieza").disabled = $("buscar-parte").disabled = !listo || !prendas.length;
+  $("buscar-swf-pieza").disabled = !listo || !prendas.length;
   $("pestana-agregar").disabled = $("pestana-trucar").disabled = !conectado || ocupado;
   $("copiar").disabled = $("guardar").disabled = $("entregar").disabled = !listo || !$("encode").value;
 }
@@ -393,14 +394,17 @@ let prendas = []; // [{ruta, clase, partes}] del SWF abierto
 let piezasDelSwf = []; // [{ruta, clase}]
 let partesDelCuerpo = []; // [{id, nombre}]
 let base = null;
-let pieza = null;
+let pieza = null; // {ruta, clase}: la ruta lleva el SWF de la Pieza, que puede ser otro
 let parte = null;
+let swfAbiertoNombre = null; // el SWF de la Prenda base
+let swfDePiezas = null; // de qué SWF se eligen las Piezas
 
 function olvidarPrendas() {
   prendas = [];
   piezasDelSwf = [];
   base = pieza = parte = null;
-  for (const id of ["buscar-base", "buscar-pieza", "buscar-parte"]) $(id).value = "";
+  swfDePiezas = null;
+  for (const id of ["buscar-base", "buscar-pieza", "buscar-parte", "buscar-swf-pieza"]) $(id).value = "";
   mostrarTruco();
 }
 
@@ -411,6 +415,7 @@ async function cargarPrendas() {
   const resultadoPiezas = await api().piezas();
   prendas = resultado.prendas;
   partesDelCuerpo = resultado.partes_del_cuerpo;
+  swfAbiertoNombre = swfDePiezas = resultado.swf;
   piezasDelSwf = resultadoPiezas.ok ? resultadoPiezas.piezas : [];
   actualizarControles();
   if (!prendas.length) return avisarLista("Este SWF no tiene Prendas.", "advertencia");
@@ -439,7 +444,7 @@ function mostrarTruco() {
     caja.replaceChildren(
       ...(base ? [elementoIcono(base.ruta), etiqueta(base.clase, "nombre")] : [hueco("Prenda base")]),
       etiqueta("→ muestra", "conector"),
-      ...(pieza ? [elementoIcono(pieza.ruta), etiqueta(pieza.clase, "nombre")] : [hueco("Pieza")]),
+      ...(pieza ? [elementoIcono(pieza.ruta), etiqueta(pieza.ruta.startsWith(swfAbiertoNombre + ".") ? pieza.clase : pieza.ruta, "nombre")] : [hueco("Pieza")]),
       etiqueta("en", "conector"),
       parte ? etiqueta(parte.nombre, "parte") : hueco("Parte del cuerpo")
     );
@@ -448,7 +453,7 @@ function mostrarTruco() {
 }
 
 async function trucar() {
-  const resultado = await mientras("Trucando la Prenda… (tarda unos segundos)", () => api().trucar_prenda(base.clase, parte.id, pieza.clase));
+  const resultado = await mientras("Trucando la Prenda… (tarda unos segundos)", () => api().trucar_prenda(base.clase, parte.id, pieza.ruta));
   if (!resultado.ok) return avisarLista(resultado.error, "error");
   avisarLista("");
   mostrarEncode(resultado);
@@ -494,6 +499,36 @@ crearDesplegable({
     mostrarTruco();
   },
   vacio: "No hay una Parte del cuerpo con ese nombre.",
+});
+
+// Las Piezas pueden salir de otro SWF del juego (se escriben "<swf>.<clase>" y el juego las busca ahí).
+async function usarPiezasDe(swf) {
+  $("buscar-swf-pieza").value = swf === swfAbiertoNombre ? "" : swf;
+  if (swf === swfDePiezas) return;
+  const resultado = await mientras(`Leyendo las Piezas de ${swf}…`, () => api().piezas(swf));
+  if (!resultado.ok) return avisarLista(resultado.error, "error");
+  swfDePiezas = swf;
+  piezasDelSwf = resultado.piezas;
+  pieza = null;
+  $("buscar-pieza").value = "";
+  mostrarTruco();
+  avisarLista(`${piezasDelSwf.length} Piezas de ${swf}.`, "exito");
+  $("buscar-pieza").focus();
+  // Sus imágenes, en segundo plano.
+  const iconos = await api().preparar_iconos(swf);
+  if (iconos.ok) {
+    for (const ruta of [...imagenes.keys()]) if (ruta.startsWith(swf + ".")) imagenes.delete(ruta);
+    cargarIconos([...document.querySelectorAll(".icono[data-ruta]")].map((c) => c.dataset.ruta));
+  }
+}
+
+crearDesplegable({
+  campo: $("buscar-swf-pieza"),
+  lista: $("resultados-swf-pieza"),
+  consultar: async (t) => (await api().buscar_en_catalogo(t)).swfs.slice(0, 80),
+  fila: ({ swf, items }) => [etiqueta(swf, "nombre"), etiqueta(swf === swfAbiertoNombre ? "el mismo" : contarItems(items), "ayuda")],
+  elegir: ({ swf }) => usarPiezasDe(swf),
+  vacio: "No hay SWF con ese nombre.",
 });
 
 $("pestana-agregar").addEventListener("click", () => cambiarVista("agregar"));

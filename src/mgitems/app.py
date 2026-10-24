@@ -35,14 +35,14 @@ class Puente:
     def prendas(self) -> dict:
         return self._nucleo.prendas()
 
-    def piezas(self) -> dict:
-        return self._nucleo.piezas()
+    def piezas(self, swf: str | None = None) -> dict:
+        return self._nucleo.piezas(swf)
 
     def trucar_prenda(self, base: str, parte: str, pieza: str) -> dict:
         return self._nucleo.trucar_prenda(base, parte, pieza)
 
-    def preparar_iconos(self) -> dict:
-        return self._nucleo.preparar_iconos()
+    def preparar_iconos(self, swf: str | None = None) -> dict:
+        return self._nucleo.preparar_iconos(swf)
 
     def iconos(self, rutas_items: list[str]) -> dict:
         return self._nucleo.iconos(rutas_items)

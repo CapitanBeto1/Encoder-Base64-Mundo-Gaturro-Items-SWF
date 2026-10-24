@@ -46,6 +46,7 @@ class Nucleo:
         self._prendas_ffdec = prendas_ffdec or PrendasFFDec()
         self._prendas: dict[tuple[str, str], dict[str, Prenda]] = {}
         self._trucos: dict[str, dict[str, bytes]] = {}  # Encode → SWF trucados que necesita
+        self._otros_swf: dict[str, bytes] = {}  # SWF de donde se sacan Piezas para trucar
         self._candado_ffdec = threading.Lock()
         self._swf_abierto: str | None = None
         self._items_del_swf: list[str] = []
@@ -120,15 +121,30 @@ class Nucleo:
             "partes_del_cuerpo": partes,
         }
 
-    def piezas(self) -> dict:
-        """Todas las Piezas del SWF abierto: cualquiera se puede poner en cualquier Parte del cuerpo."""
-        if self._swf_abierto is None:
-            return {"ok": False, "error": "Primero abrí un SWF."}
-        return {
-            "ok": True,
-            "swf": self._swf_abierto,
-            "piezas": [{"ruta": f"{self._swf_abierto}.{p}", "clase": p} for p in self._piezas_del_swf],
-        }
+    def piezas(self, swf: str | None = None) -> dict:
+        """Todas las Piezas de un SWF (por defecto, el abierto): cualquiera va en cualquier Parte del cuerpo.
+
+        Las de otro SWF del juego también sirven para trucar una Prenda del SWF abierto.
+        """
+        if swf in (None, self._swf_abierto):
+            if self._swf_abierto is None:
+                return {"ok": False, "error": "Primero abrí un SWF."}
+            swf, piezas = self._swf_abierto, self._piezas_del_swf
+        else:
+            obtenido = self._datos_de_otro_swf(swf)
+            if not obtenido["ok"]:
+                return obtenido
+            piezas = piezas_del_swf([clase for _, clase in leer_simbolos(obtenido["data"])])
+        return {"ok": True, "swf": swf, "piezas": [{"ruta": f"{swf}.{p}", "clase": p} for p in piezas]}
+
+    def _datos_de_otro_swf(self, swf: str) -> dict:
+        """Un SWF del CDN que no es el abierto (se recuerda mientras dura el programa)."""
+        if swf not in self._otros_swf:
+            obtenido = self._obtener_del_cdn(swf)
+            if not obtenido["ok"]:
+                return obtenido
+            self._otros_swf[swf] = obtenido["data"]
+        return {"ok": True, "data": self._otros_swf[swf]}
 
     def trucar_prenda(self, base: str, parte: str, pieza: str) -> dict:
         """Genera la Prenda trucada: `base` (una Prenda del SWF abierto) mostrando solo `pieza` en `parte`.
@@ -145,9 +161,21 @@ class Nucleo:
         partes_validas = {p["id"] for p in resultado["partes_del_cuerpo"]}
         if parte not in partes_validas:
             return {"ok": False, "error": f"{parte} no es una Parte del cuerpo."}
-        if pieza not in self._piezas_del_swf:
-            return {"ok": False, "error": f"{pieza} no es una Pieza de {swf}."}
-        partes = {parte: pieza}
+        swf_pieza, _, clase_pieza = pieza.rpartition(".")
+        if swf_pieza in ("", swf):
+            # Del mismo SWF se escribe sin el nombre del SWF, como hace el juego.
+            if clase_pieza not in self._piezas_del_swf:
+                return {"ok": False, "error": f"{clase_pieza} no es una Pieza de {swf}."}
+            valor = clase_pieza
+        else:
+            # De otro SWF se escribe "<swf>.<clase>": el juego la busca en ese SWF.
+            otras = self.piezas(swf_pieza)
+            if not otras["ok"]:
+                return {"ok": False, "error": f"No se pudo usar una Pieza de {swf_pieza}: {otras['error']}"}
+            if clase_pieza not in {p["clase"] for p in otras["piezas"]}:
+                return {"ok": False, "error": f"{clase_pieza} no es una Pieza de {swf_pieza}."}
+            valor = f"{swf_pieza}.{clase_pieza}"
+        partes = {parte: valor}
 
         try:
             fuente = reescribir_partes(prendas[base].fuente, partes)
@@ -276,6 +304,13 @@ class Nucleo:
 
     def abrir_swf_del_cdn(self, nombre: str) -> dict:
         """Abre un SWF de assets del CDN del juego, descargándolo solo si cambió desde la última vez."""
+        obtenido = self._obtener_del_cdn(nombre)
+        if not obtenido["ok"]:
+            return obtenido
+        return self._cargar_swf(nombre, obtenido["data"], f"{nombre}.swf", obtenido["extra"])
+
+    def _obtener_del_cdn(self, nombre: str) -> dict:
+        """`{"ok", "data", "extra"}` de un SWF del CDN, usando la copia guardada si no cambió. No lo abre."""
         if not _NOMBRE_SWF.match(nombre):
             return {"ok": False, "error": f"Nombre de SWF inválido: {nombre}"}
         try:
@@ -292,16 +327,16 @@ class Nucleo:
             if guardado is None:
                 return {"ok": False, "error": "No hay conexión a internet y este SWF todavía no se descargó."}
             data, version = guardado
-            return self._cargar_swf(nombre, data, f"{nombre}.swf", {
+            return {"ok": True, "data": data, "extra": {
                 "tamano": version.tamano,
                 "origen": "copia",
                 "aviso": "Sin conexión: se usa la copia descargada antes, que puede no estar actualizada.",
-            })
+            }}
         except OSError as e:
             return {"ok": False, "error": f"No se pudo consultar el servidor del juego: {e}"}
 
         if guardado is not None and guardado[1] == version and len(guardado[0]) == version.tamano:
-            return self._cargar_swf(nombre, guardado[0], f"{nombre}.swf", {"tamano": version.tamano, "origen": "copia"})
+            return {"ok": True, "data": guardado[0], "extra": {"tamano": version.tamano, "origen": "copia"}}
 
         try:
             data = self._fuente.descargar(nombre)
@@ -311,14 +346,15 @@ class Nucleo:
             return {"ok": False, "error": "Se cortó la conexión mientras se descargaba el SWF. Probá de nuevo."}
         except OSError as e:
             return {"ok": False, "error": f"No se pudo descargar el SWF: {e}"}
-        version = Version(len(data), version.etag)
-        resultado = self._cargar_swf(nombre, data, f"{nombre}.swf", {"tamano": version.tamano, "origen": "descarga"})
-        if resultado["ok"]:
-            try:
-                cache.guardar(nombre, data, version)
-            except OSError:
-                pass  # sin copia local se vuelve a descargar la próxima vez
-        return resultado
+        try:
+            leer_simbolos(data)
+        except SwfInvalido as e:
+            return {"ok": False, "error": f"{e}: {nombre}.swf"}
+        try:
+            cache.guardar(nombre, data, Version(len(data), version.etag))
+        except OSError:
+            pass  # sin copia local se vuelve a descargar la próxima vez
+        return {"ok": True, "data": data, "extra": {"tamano": len(data), "origen": "descarga"}}
 
     def _cargar_swf(self, nombre: str, data: bytes, mostrado: str, extra: dict) -> dict:
         try:
@@ -327,23 +363,31 @@ class Nucleo:
             return {"ok": False, "error": f"{e}: {mostrado}"}
         clases = [clase for _, clase in simbolos]
         items = items_del_swf(clases)
-        piezas = piezas_del_swf(clases)
-        con_imagen = set(items) | set(piezas)
         self._swf_abierto = nombre
         self._items_del_swf = items
-        self._piezas_del_swf = piezas
-        self._simbolos_con_imagen = {id_: clase for id_, clase in simbolos if clase in con_imagen}
+        self._piezas_del_swf = piezas_del_swf(clases)
+        self._simbolos_con_imagen = _simbolos_con_imagen(simbolos)
         self._data_swf = data
         self._tamano_swf = extra["tamano"]
         return {"ok": True, "swf": nombre, "cantidad_items": len(items), **extra}
 
     # --- Imágenes de los Items ---
 
-    def preparar_iconos(self) -> dict:
-        """Exporta (una vez por versión) las imágenes de los Items y las Piezas del SWF abierto. Tarda unos segundos."""
-        if self._swf_abierto is None:
-            return {"ok": False, "error": "Primero abrí un SWF."}
-        swf, data, simbolos = self._swf_abierto, self._data_swf, dict(self._simbolos_con_imagen)
+    def preparar_iconos(self, swf: str | None = None) -> dict:
+        """Exporta (una vez por versión) las imágenes de los Items y las Piezas de un SWF (por defecto, el abierto).
+
+        Tarda unos segundos la primera vez.
+        """
+        if swf in (None, self._swf_abierto):
+            if self._swf_abierto is None:
+                return {"ok": False, "error": "Primero abrí un SWF."}
+            swf, data, simbolos = self._swf_abierto, self._data_swf, dict(self._simbolos_con_imagen)
+        else:
+            obtenido = self._datos_de_otro_swf(swf)
+            if not obtenido["ok"]:
+                return obtenido
+            data = obtenido["data"]
+            simbolos = _simbolos_con_imagen(leer_simbolos(data))
         try:
             iconos = self._iconos()
             with self._candado_iconos:
@@ -487,3 +531,10 @@ def _cantidad(valor) -> int | None:
 
 def _como_items(pedidos: list[tuple[str, int]]) -> list[dict]:
     return [{"ruta": ruta, "cantidad": cantidad} for ruta, cantidad in pedidos]
+
+
+def _simbolos_con_imagen(simbolos: list[tuple[int, str]]) -> dict[int, str]:
+    """Los símbolos de Items y Piezas (los que tienen imagen para mostrar): id → clase."""
+    clases = [clase for _, clase in simbolos]
+    con_imagen = set(items_del_swf(clases)) | set(piezas_del_swf(clases))
+    return {id_: clase for id_, clase in simbolos if clase in con_imagen}
