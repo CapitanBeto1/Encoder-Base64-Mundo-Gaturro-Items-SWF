@@ -96,17 +96,17 @@ function mostrarEncode(resultado) {
   $("encode").value = resultado ? resultado.encode : "";
   if (resultado?.look) {
     const n = Object.keys(resultado.prenda.partes).length;
-    $("resumen").textContent = `Look «${resultado.look.nombre}»: ${resultado.prenda.ruta} con ${n === 1 ? "1 Pieza" : `${n} Piezas`}.`;
+    $("resumen").textContent = `Look «${resultado.look.nombre}»: ${resultado.prenda.ruta} con ${n === 1 ? "1 Pieza" : `${n} Piezas`}.` + (resultado.prenda.tipo === "mochila" ? " Está en la mochila: usalo para vestirte." : "");
   } else if (resultado?.prenda) {
     const [[parteElegida, piezaElegida]] = Object.entries(resultado.prenda.partes);
     const nombreParte = partesDelCuerpo.find((p) => p.id === parteElegida)?.nombre ?? parteElegida;
-    $("resumen").textContent = `Prenda trucada: ${resultado.prenda.ruta} muestra ${piezaElegida} en ${nombreParte}.`;
+    $("resumen").textContent = `Prenda trucada: ${resultado.prenda.ruta} muestra ${piezaElegida} en ${nombreParte}.` + (resultado.prenda.tipo === "mochila" ? " Está en la mochila: usalo para vestirte." : "");
   } else if (resultado) {
     $("resumen").textContent = `Encode con ${contarItems(resultado.items.length)}.`;
   } else {
     $("resumen").textContent =
       vista === "trucar"
-        ? base && pieza && parte ? "Tocá «Trucar Prenda» para generar el Encode." : "Elegí la Prenda base, la Pieza y la Parte del cuerpo."
+        ? base && pieza && parte ? "Tocá «Trucar Prenda» para generar el Encode." : "Elegí el Item base, la Pieza y la Parte del cuerpo."
         : vista === "looks"
           ? Object.keys(lookActual.partes).length ? "Tocá «Aplicar Look» para generar el Encode." : "Elegí las Piezas del Look."
           : items.length ? "Generá el Encode con los Items de la lista." : "Todavía no generaste ningún Encode.";
@@ -407,7 +407,7 @@ function cambiarVista(nueva) {
   cargarParaLaVista();
 }
 
-// --- Trucar Prenda: una Prenda base que muestra una Pieza (cualquiera) en una Parte del cuerpo (cualquiera) ---
+// --- Trucar Prenda: un Item base que muestra una Pieza (cualquiera) en una Parte del cuerpo (cualquiera) ---
 
 let prendas = []; // [{ruta, clase, partes}] del SWF abierto
 let piezasDelSwf = []; // [{ruta, clase}]
@@ -415,7 +415,7 @@ let partesDelCuerpo = []; // [{id, nombre}]
 let base = null;
 let pieza = null; // {ruta, clase}: la ruta lleva el SWF de la Pieza, que puede ser otro
 let parte = null;
-let swfAbiertoNombre = null; // el SWF de la Prenda base
+let swfAbiertoNombre = null; // el SWF del Item base
 let swfDePiezas = null; // de qué SWF se eligen las Piezas
 
 function olvidarPrendas() {
@@ -429,7 +429,7 @@ function olvidarPrendas() {
 
 async function cargarPrendas() {
   olvidarPrendas();
-  const resultado = await mientras("Leyendo las Prendas del SWF… (la primera vez tarda unos segundos)", () => api().prendas());
+  const resultado = await mientras("Leyendo las Prendas e Items de mochila del SWF… (la primera vez tarda unos segundos)", () => api().prendas());
   if (!resultado.ok) return avisarLista(resultado.error, "error");
   const resultadoPiezas = await api().piezas();
   prendas = resultado.prendas;
@@ -437,8 +437,10 @@ async function cargarPrendas() {
   swfAbiertoNombre = swfDePiezas = resultado.swf;
   piezasDelSwf = resultadoPiezas.ok ? resultadoPiezas.piezas : [];
   actualizarControles();
-  if (!prendas.length) return avisarLista("Este SWF no tiene Prendas.", "advertencia");
-  avisarLista(`${prendas.length === 1 ? "1 Prenda" : `${prendas.length} Prendas`} y ${piezasDelSwf.length === 1 ? "1 Pieza" : `${piezasDelSwf.length} Piezas`}. Elegí la Prenda base.`, "exito");
+  if (!prendas.length) return avisarLista("Este SWF no tiene Prendas ni Items de mochila.", "advertencia");
+  const deMochila = prendas.filter((p) => p.tipo === "mochila").length;
+  const cuantos = (n, uno, varios) => (n === 1 ? `1 ${uno}` : `${n} ${varios}`);
+  avisarLista(`${cuantos(prendas.length - deMochila, "Prenda", "Prendas")}, ${cuantos(deMochila, "Item de mochila", "Items de mochila")} y ${cuantos(piezasDelSwf.length, "Pieza", "Piezas")}. Elegí el Item base.`, "exito");
   $("buscar-base").focus();
 }
 
@@ -453,15 +455,17 @@ function filtrarPorNombre(lista, texto, nombreDe = (o) => o.clase) {
 }
 
 const filaConImagen = (o) => [elementoIcono(o.ruta), etiqueta(o.clase, "nombre")];
+// Un Item base: dónde queda en el juego.
+const filaDeBase = (o) => [...filaConImagen(o), etiqueta(o.tipo === "mochila" ? "mochila" : "guardarropa", `ayuda tipo-${o.tipo}`)];
 
 function mostrarTruco() {
   const caja = $("resumen-truco");
   if (!base && !pieza && !parte) {
-    caja.replaceChildren(prendas.length ? "Elegí la Prenda base, la Pieza y la Parte del cuerpo." : "Abrí un SWF y elegí la Prenda base, la Pieza y la Parte del cuerpo.");
+    caja.replaceChildren(prendas.length ? "Elegí el Item base, la Pieza y la Parte del cuerpo." : "Abrí un SWF y elegí el Item base, la Pieza y la Parte del cuerpo.");
   } else {
     const hueco = (texto) => etiqueta(texto, "hueco");
     caja.replaceChildren(
-      ...(base ? [elementoIcono(base.ruta), etiqueta(base.clase, "nombre")] : [hueco("Prenda base")]),
+      ...(base ? [elementoIcono(base.ruta), etiqueta(base.clase, "nombre")] : [hueco("Item base")]),
       etiqueta("→ muestra", "conector"),
       ...(pieza ? [elementoIcono(pieza.ruta), etiqueta(pieza.ruta.startsWith(swfAbiertoNombre + ".") ? pieza.clase : pieza.ruta, "nombre")] : [hueco("Pieza")]),
       etiqueta("en", "conector"),
@@ -483,14 +487,14 @@ crearDesplegable({
   campo: $("buscar-base"),
   lista: $("resultados-base"),
   consultar: async (t) => filtrarPorNombre(prendas, t),
-  fila: filaConImagen,
+  fila: filaDeBase,
   elegir: (p) => {
     base = p;
     $("buscar-base").value = p.clase;
     mostrarTruco();
     if (!pieza) $("buscar-pieza").focus();
   },
-  vacio: "Ninguna Prenda se llama así.",
+  vacio: "Ninguna Prenda ni Item de mochila se llama así.",
 });
 
 crearDesplegable({
@@ -553,7 +557,7 @@ crearDesplegable({
 $("pestana-agregar").addEventListener("click", () => cambiarVista("agregar"));
 $("pestana-trucar").addEventListener("click", () => cambiarVista("trucar"));
 
-// --- Looks: una Prenda base con una Pieza (de cualquier SWF) en cada una de varias Partes del cuerpo ---
+// --- Looks: un Item base con una Pieza (de cualquier SWF) en cada una de varias Partes del cuerpo ---
 
 let looksGuardados = [];
 let lookActual = nuevoLook();
@@ -702,7 +706,7 @@ async function borrarLook() {
 async function aplicarLook() {
   const resultado = await mientras("Aplicando el Look… (tarda unos segundos)", () => api().aplicar_look(lookActual));
   if (!resultado.ok) return avisarLista(resultado.error, "error");
-  avisarLista(resultado.look.base_propuesta ? `Se usó ${resultado.look.base} como Prenda base.` : "");
+  avisarLista(resultado.look.base_propuesta ? `Se usó ${resultado.look.base} como Item base.` : "");
   mostrarEncode(resultado);
   avisarEncode("Look aplicado. Tocá «Agregar al juego» para recibirlo.", "exito");
 }
@@ -716,12 +720,12 @@ crearDesplegable({
   campo: $("buscar-base-look"),
   lista: $("resultados-base-look"),
   consultar: async (t) => filtrarPorNombre(prendas, t),
-  fila: filaConImagen,
+  fila: filaDeBase,
   elegir: (p) => {
     lookActual.base = p.ruta;
     mostrarLook();
   },
-  vacio: "Ninguna Prenda del SWF abierto se llama así (abrí otro SWF arriba).",
+  vacio: "Nada del SWF abierto se llama así (abrí otro SWF arriba).",
 });
 
 crearDesplegable({

@@ -27,14 +27,19 @@ _Avoid_: slot, zona
 ## Truqueo
 
 **Prenda trucada**:
-Una Prenda base modificada para que, al ponérsela, muestre una sola Pieza (cualquiera) en una sola Parte del cuerpo (cualquiera), en lugar de sus propias Piezas; por ejemplo, una máscara en la mano. Los demás jugadores la ven así y se puede intercambiar.
+Un Item base modificado para mostrar una sola Pieza (cualquiera) en una sola Parte del cuerpo (cualquiera); por ejemplo, una máscara en la mano. Si el Item base es una Prenda, se ve al ponérsela; si es un Item de mochila, al usarlo. Los demás jugadores la ven así y se puede intercambiar.
 _Avoid_: Item trucado, objeto trucado
 
-**Prenda base**:
-La Prenda existente a partir de la cual se crea una Prenda trucada; de ella toma su nombre e ícono en el juego.
+**Item base**:
+El Item existente que se modifica para crear una Prenda trucada o materializar un Look; de él toma su nombre e ícono en el juego. Puede ser una Prenda (queda en el guardarropa) o un Item de mochila.
+_Avoid_: Prenda base (ya no es siempre una Prenda)
+
+**Item de mochila**:
+Un Item usable o consumible (poción, bebida, comida) que queda en la mochila; al usarlo aplica sus efectos al Gaturro. Como Item base, al usarlo te pone las Piezas.
+_Avoid_: consumible (a secas), objeto de mochila
 
 **Look** _(provisional)_:
-Un conjunto de Piezas asignadas a varias Partes del cuerpo a la vez, con nombre, que se materializa en el juego como una Prenda base modificada. Se guarda y se comparte como archivo; con él se puede volver a generar.
+Un conjunto de Piezas asignadas a varias Partes del cuerpo a la vez, con nombre, que se materializa en el juego como un Item base modificado (normalmente un Item de mochila). Se guarda y se comparte como archivo; con él se puede volver a generar.
 _Avoid_: Outfit, conjunto
 
 ## Entrega al juego

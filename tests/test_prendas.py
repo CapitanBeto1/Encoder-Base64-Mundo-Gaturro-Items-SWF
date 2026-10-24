@@ -9,7 +9,7 @@ from mgitems.entrega import URL_LOLA
 from mgitems.ffdec import FFDec, FFDecNoDisponible
 from mgitems.fuente import URL_ASSETS, FuenteCDN
 from mgitems.nucleo import Nucleo
-from mgitems.prendas import Prenda, PrendasFFDec, TruqueoFallido, leer_prenda, reescribir_partes
+from mgitems.prendas import USOS_ILIMITADOS, ItemsBaseFFDec, TruqueoFallido, leer_item_base, reescribir_partes
 from fuente_falsa import FuenteFalsa
 from procesos_falso import ProcesosFalso
 from sistema_falso import SistemaFalso
@@ -58,7 +58,7 @@ PRENDAS = {
 CLASES = ["silla"] + [c for prenda, partes in PRENDAS.items() for c in [prenda, *partes.values()]]
 
 
-class PrendasFalsas(PrendasFFDec):
+class PrendasFalsas(ItemsBaseFFDec):
     """Lee el código AS3 de un diccionario y "truca" agregando una marca a los bytes (sin Java)."""
 
     def __init__(self):
@@ -70,7 +70,7 @@ class PrendasFalsas(PrendasFFDec):
 
     def analizar(self, data, clases):
         self.analisis += 1
-        prendas = (leer_prenda(self.codigo[c]) for c in clases if c in self.codigo)
+        prendas = (leer_item_base(self.codigo[c]) for c in clases if c in self.codigo)
         return {p.clase: p for p in prendas if p}
 
     def trucar(self, data, clase, fuente, partes):
@@ -121,22 +121,22 @@ def reglas(sistema) -> list[dict]:
 # --- Código AS3 ---
 
 def test_leer_una_prenda_del_codigo_as3():
-    prenda = leer_prenda(codigo_prenda("remera5", PRENDAS["remera5"]))
+    prenda = leer_item_base(codigo_prenda("remera5", PRENDAS["remera5"]))
 
     assert prenda.clase == "remera5"
     assert prenda.partes == {"cloth": "remera5_on", "arm": "remera5_brazo_on"}
 
 
 def test_una_clase_que_no_extiende_cloth_mambo_asset_no_es_prenda():
-    assert leer_prenda(CODIGO_NO_PRENDA) is None
+    assert leer_item_base(CODIGO_NO_PRENDA) is None
 
 
 def test_reescribir_las_partes_conserva_el_resto_del_codigo():
     original = codigo_prenda("remera5", PRENDAS["remera5"], simbolo="symbol889")
 
-    nuevo = reescribir_partes(original, {"cloth": "buzo1_on", "arm": "buzo1_brazo_on", "hats": "gorra1_on"})
+    nuevo = reescribir_partes(leer_item_base(original), {"cloth": "buzo1_on", "arm": "buzo1_brazo_on", "hats": "gorra1_on"})
 
-    assert leer_prenda(nuevo).partes == {"cloth": "buzo1_on", "arm": "buzo1_brazo_on", "hats": "gorra1_on"}
+    assert leer_item_base(nuevo).partes == {"cloth": "buzo1_on", "arm": "buzo1_brazo_on", "hats": "gorra1_on"}
     assert 'symbol="symbol889"' in nuevo
     assert "addFrameScript(0,this.frame1);" in nuevo
     assert nuevo.replace(nuevo[nuevo.index("clothes ="):nuevo.index("};") + 2], "") == \
@@ -146,14 +146,14 @@ def test_reescribir_las_partes_conserva_el_resto_del_codigo():
 @pytest.mark.parametrize("partes", [{"cloth": 'x"; hackear(); "'}, {"cl oth": "remera5_on"}, {"cloth": ""}])
 def test_reescribir_rechaza_nombres_que_no_son_identificadores(partes):
     with pytest.raises(ValueError):
-        reescribir_partes(codigo_prenda("remera5", PRENDAS["remera5"]), partes)
+        reescribir_partes(leer_item_base(codigo_prenda("remera5", PRENDAS["remera5"])), partes)
 
 
 def test_reescribir_una_prenda_sin_clothes_falla():
     sin_clothes = codigo_prenda("remera5", PRENDAS["remera5"]).replace("clothes =", "otraCosa =")
 
     with pytest.raises(TruqueoFallido):
-        reescribir_partes(sin_clothes, {"cloth": "buzo1_on"})
+        reescribir_partes(leer_item_base(sin_clothes), {"cloth": "buzo1_on"})
 
 
 # --- Prendas del SWF abierto ---
@@ -196,7 +196,7 @@ def test_prendas_sin_swf_abierto_devuelve_error(sistema, ffdec):
 
 
 def test_prendas_sin_java_devuelve_error(sistema, fuente):
-    class SinJava(PrendasFFDec):
+    class SinJava(ItemsBaseFFDec):
         def analizar(self, data, clases):
             raise FFDecNoDisponible("No se encontró Java")
 
@@ -231,13 +231,13 @@ def test_trucar_pone_una_sola_pieza_en_la_parte_elegida(nucleo, ffdec):
     resultado = nucleo.trucar_prenda("remera5", "grip", "gorra1_on")  # una gorra en la mano
 
     assert resultado["ok"], resultado
-    assert resultado["prenda"] == {"ruta": "clothes1.remera5", "partes": {"grip": "gorra1_on"}}
+    assert resultado["prenda"] == {"ruta": "clothes1.remera5", "tipo": "prenda", "partes": {"grip": "gorra1_on"}}
     script = base64.b64decode(resultado["encode"]).decode()
     assert "inventory.add 1 clothes1.remera5\n" in script
     clase, fuente = ffdec.trucos[0]
     assert clase == "remera5"
     # Solo esa Pieza: la remera deja de mostrar lo suyo y no se completa nada más.
-    assert leer_prenda(fuente).partes == {"grip": "gorra1_on"}
+    assert leer_item_base(fuente).partes == {"grip": "gorra1_on"}
 
 
 @pytest.mark.parametrize("parte, pieza", [("foot", "remera5_brazo_on"), ("hats", "buzo1_on"), ("cloth", "gorra1_on"), ("capeExtra", "remera5_on")])
@@ -245,7 +245,7 @@ def test_cualquier_pieza_va_en_cualquier_parte_del_cuerpo(nucleo, ffdec, parte, 
     resultado = nucleo.trucar_prenda("remera5", parte, pieza)
 
     assert resultado["ok"], resultado
-    assert leer_prenda(ffdec.trucos[0][1]).partes == {parte: pieza}
+    assert leer_item_base(ffdec.trucos[0][1]).partes == {parte: pieza}
 
 
 @pytest.mark.parametrize(
@@ -298,14 +298,14 @@ def test_trucar_con_una_pieza_de_otro_swf_la_escribe_con_el_nombre_del_swf(nucle
 
     assert resultado["ok"], resultado
     assert resultado["prenda"]["partes"] == {"hats": "costumes.coronaRey_on"}
-    assert leer_prenda(ffdec.trucos[0][1]).partes == {"hats": "costumes.coronaRey_on"}
+    assert leer_item_base(ffdec.trucos[0][1]).partes == {"hats": "costumes.coronaRey_on"}
 
 
 def test_una_pieza_del_mismo_swf_con_su_nombre_completo_se_escribe_sin_el_swf(nucleo, ffdec):
     resultado = nucleo.trucar_prenda("remera5", "grip", "clothes1.gorra1_on")
 
     assert resultado["ok"], resultado
-    assert leer_prenda(ffdec.trucos[0][1]).partes == {"grip": "gorra1_on"}
+    assert leer_item_base(ffdec.trucos[0][1]).partes == {"grip": "gorra1_on"}
 
 
 @pytest.mark.parametrize(
@@ -332,7 +332,7 @@ def test_una_pieza_de_un_swf_en_subcarpeta_conserva_la_carpeta(sistema, fuente, 
     resultado = nucleo.trucar_prenda("remera5", "hats", "animales2018/wears.orejas_on")
 
     assert resultado["ok"], resultado
-    assert leer_prenda(ffdec.trucos[0][1]).partes == {"hats": "animales2018/wears.orejas_on"}
+    assert leer_item_base(ffdec.trucos[0][1]).partes == {"hats": "animales2018/wears.orejas_on"}
 
 
 def test_con_una_pieza_de_otro_swf_solo_se_entrega_trucado_el_swf_de_la_prenda_base(nucleo, sistema):
@@ -420,7 +420,7 @@ def test_con_ffdec_real_el_swf_trucado_declara_las_piezas_elegidas(sistema):
     assert resultado["ok"], resultado
     assert nucleo.entregar_encode(resultado["encode"])["ok"]
     trucado = Path(reglas(sistema)[1]["Action"]).read_bytes()
-    assert PrendasFFDec().analizar(trucado, ["remera5"])["remera5"].partes == partes
+    assert ItemsBaseFFDec().analizar(trucado, ["remera5"])["remera5"].partes == partes
 
     # Y con una Pieza de otro SWF (la corona de rey de costumes, probada en el juego).
     resultado = nucleo.trucar_prenda("remera5", "hats", "costumes.coronaRey_on")
@@ -428,4 +428,4 @@ def test_con_ffdec_real_el_swf_trucado_declara_las_piezas_elegidas(sistema):
     assert resultado["ok"], resultado
     assert nucleo.entregar_encode(resultado["encode"])["ok"]
     trucado = Path(reglas(sistema)[1]["Action"]).read_bytes()
-    assert PrendasFFDec().analizar(trucado, ["remera5"])["remera5"].partes == {"hats": "costumes.coronaRey_on"}
+    assert ItemsBaseFFDec().analizar(trucado, ["remera5"])["remera5"].partes == {"hats": "costumes.coronaRey_on"}
