@@ -1,0 +1,136 @@
+:root {
+  --fondo: #14161c;
+  --panel: #1d2029;
+  --borde: #2c303c;
+  --texto: #e8eaf0;
+  --texto-suave: #9aa0ae;
+  --acento: #3b82f6;
+  --acento-hover: #2f6fd8;
+  --error: #f87171;
+  --exito: #4ade80;
+  --radio: 10px;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--fondo);
+  color: var(--texto);
+  font: 15px/1.5 "Segoe UI", system-ui, sans-serif;
+}
+
+.barra {
+  padding: 20px 28px 8px;
+}
+
+.barra h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.subtitulo {
+  margin: 2px 0 0;
+  color: var(--texto-suave);
+}
+
+.paneles {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  padding: 16px 28px 28px;
+  min-height: 0;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px;
+  background: var(--panel);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  min-height: 0;
+}
+
+.panel h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.ayuda {
+  margin: 0;
+  color: var(--texto-suave);
+  font-size: 13px;
+}
+
+code {
+  font-family: Consolas, monospace;
+  color: var(--texto);
+}
+
+textarea {
+  flex: 1;
+  min-height: 160px;
+  resize: none;
+  padding: 12px;
+  background: var(--fondo);
+  color: var(--texto);
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+  font: 13px/1.5 Consolas, monospace;
+}
+
+textarea:focus {
+  outline: 2px solid var(--acento);
+  outline-offset: -1px;
+}
+
+#encode {
+  word-break: break-all;
+}
+
+.acciones {
+  display: flex;
+  gap: 8px;
+}
+
+button {
+  padding: 8px 16px;
+  background: var(--borde);
+  color: var(--texto);
+  border: none;
+  border-radius: 8px;
+  font: inherit;
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) { filter: brightness(1.2); }
+
+button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+button.primario { background: var(--acento); }
+button.primario:hover:not(:disabled) { background: var(--acento-hover); filter: none; }
+
+.mensaje {
+  margin: 0;
+  min-height: 1.5em;
+  font-size: 13px;
+}
+
+.mensaje.error { color: var(--error); }
+.mensaje.exito { color: var(--exito); }
+
+@media (max-width: 760px) {
+  .paneles { grid-template-columns: 1fr; }
+}

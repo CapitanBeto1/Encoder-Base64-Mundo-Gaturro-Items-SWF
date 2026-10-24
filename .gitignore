@@ -1,0 +1,20 @@
+# Cachés de Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Entornos virtuales
+.venv/
+venv/
+
+# Armado y distribución
+build/
+dist/
+*.egg-info/
+
+# Binarios de terceros (FFDec, Java): se obtienen en el armado, no se versionan
+/vendor/
+
+# Temporales
+temp_assets/
+*.tmp

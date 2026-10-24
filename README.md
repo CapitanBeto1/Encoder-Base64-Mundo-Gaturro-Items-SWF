@@ -1,3 +1,5 @@
+> **En desarrollo:** se está construyendo una versión nueva en `src/mgitems/` (ver la spec en el issue #1). Para probarla: `python -m venv .venv`, `.venv/Scripts/python -m pip install -e .` y `.venv/Scripts/python -m mgitems`. Lo que sigue describe el programa actual.
+
 Es un programa que de un SWF te deja buscar nombres de items (los que empiecen con la palabra que pongas) de Mundo Gaturro y te saca un texto codificado en Base64 que te agrega esos items al inventario de tu cuenta (se necesita Fiddler). Se usa ffdec para leer el SWF y regex para encontrar los nombres.
 
 Hecho (casi) en su totalidad con IA
