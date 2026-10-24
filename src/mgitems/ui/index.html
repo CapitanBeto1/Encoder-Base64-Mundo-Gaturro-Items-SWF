@@ -8,9 +8,20 @@
 </head>
 <body>
   <header class="barra">
-    <h1>MG Items</h1>
-    <p class="subtitulo">Agregá Items a tu inventario de Mundo Gaturro</p>
+    <div>
+      <h1>MG Items</h1>
+      <p class="subtitulo">Agregá Items a tu inventario de Mundo Gaturro</p>
+    </div>
+    <button id="abrir-entorno" class="estado-entorno" disabled>
+      <span id="indicador-entorno" class="indicador" aria-hidden="true"></span>
+      Configuración
+    </button>
   </header>
+
+  <div id="aviso-entorno" class="aviso" hidden>
+    <span>Para enviar Items al juego falta instalar o configurar algo.</span>
+    <button id="ver-entorno" class="enlace">Ver qué falta</button>
+  </div>
 
   <main class="paneles">
     <section class="panel">
@@ -72,6 +83,21 @@
         <button type="button" id="cancelar-importar" class="derecha">Cancelar</button>
       </div>
     </form>
+  </dialog>
+
+  <dialog id="dialogo-entorno" class="grande">
+    <div class="panel">
+      <h2>Configuración</h2>
+      <p class="ayuda">
+        Para enviar Items al juego hacen falta Mundo Gaturro Desktop y Fiddler Classic configurado.
+      </p>
+      <ul id="componentes" class="componentes"></ul>
+      <p id="mensaje-entorno" class="mensaje" role="status" aria-live="polite"></p>
+      <div class="acciones">
+        <button id="revisar-entorno" class="primario">Revisar de nuevo</button>
+        <button id="cerrar-entorno" class="derecha">Cerrar</button>
+      </div>
+    </div>
   </dialog>
 
   <script src="app.js"></script>

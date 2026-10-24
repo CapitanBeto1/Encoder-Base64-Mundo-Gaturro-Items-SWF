@@ -109,6 +109,7 @@ function actualizarControles() {
   $("manual").disabled = $("agregar").disabled = !listo;
   $("quitar-todos").disabled = !listo || items.length === 0;
   $("importar").disabled = !listo;
+  $("abrir-entorno").disabled = !conectado;
   $("generar").disabled = !listo || items.length === 0;
   $("copiar").disabled = $("guardar").disabled = !listo || !$("encode").value;
 }
@@ -210,6 +211,97 @@ async function importarDeArchivo() {
   if (!resultado.cancelado) aplicarImportado(resultado);
 }
 
+// --- Configuración: juego, Fiddler y lo que falta ---
+
+function tarjetaDeComponente(c) {
+  const tarjeta = document.createElement("li");
+  tarjeta.className = "componente " + (c.ok ? "ok" : "falta");
+
+  const marca = document.createElement("span");
+  marca.className = "marca";
+  marca.textContent = c.ok ? "✓" : "✗";
+  marca.setAttribute("aria-label", c.ok ? "Listo" : "Falta");
+
+  const titulo = document.createElement("span");
+  titulo.className = "titulo";
+  titulo.textContent = c.nombre;
+
+  const botones = document.createElement("span");
+  botones.className = "botones";
+  if (c.corregible) {
+    const elegir = document.createElement("button");
+    elegir.textContent = "Elegir…";
+    elegir.title = c.corregible === "carpeta" ? "Elegir la carpeta a mano" : "Elegir el programa a mano";
+    elegir.addEventListener("click", () => elegirRuta(c));
+    botones.append(elegir);
+  }
+  if (c.corregida) {
+    const auto = document.createElement("button");
+    auto.textContent = "Detectar solo";
+    auto.title = "Olvidar la ruta elegida a mano y detectarla automáticamente";
+    auto.addEventListener("click", () => restablecerRuta(c));
+    botones.append(auto);
+  }
+
+  const detalle = document.createElement("p");
+  detalle.className = "detalle";
+  detalle.textContent = c.corregida && c.ok ? `${c.detalle} (elegido a mano)` : c.detalle;
+
+  tarjeta.append(marca, titulo, botones, detalle);
+  if (c.ruta) {
+    const ruta = document.createElement("p");
+    ruta.className = "ruta";
+    ruta.textContent = c.ruta;
+    tarjeta.append(ruta);
+  }
+  if (!c.ok && c.instrucciones.length) {
+    const pasos = document.createElement("ol");
+    pasos.append(...c.instrucciones.map((texto) => Object.assign(document.createElement("li"), { textContent: texto })));
+    tarjeta.append(pasos);
+  }
+  return tarjeta;
+}
+
+function mostrarEntorno(estado) {
+  if (!estado.ok) return avisar($("mensaje-entorno"), estado.error, "error");
+  $("componentes").replaceChildren(...estado.componentes.map(tarjetaDeComponente));
+  $("indicador-entorno").className = "indicador " + (estado.listo ? "ok" : "falta");
+  $("abrir-entorno").title = estado.listo ? "Todo listo para enviar Items al juego" : "Falta configurar algo";
+  $("aviso-entorno").hidden = estado.listo;
+}
+
+async function revisarEntorno() {
+  avisar($("mensaje-entorno"), "Revisando…", "progreso");
+  mostrarEntorno(await api().estado_entorno());
+  avisar($("mensaje-entorno"), "");
+}
+
+async function elegirRuta(componente) {
+  const resultado = await api().elegir_ruta(componente.id, componente.corregible);
+  if (resultado.cancelado) return;
+  if (!resultado.ok) return avisar($("mensaje-entorno"), resultado.error, "error");
+  mostrarEntorno(resultado);
+  avisar($("mensaje-entorno"), `Se guardó la ruta de ${componente.nombre}.`, "exito");
+}
+
+async function restablecerRuta(componente) {
+  const resultado = await api().restablecer_ruta(componente.id);
+  if (!resultado.ok) return avisar($("mensaje-entorno"), resultado.error, "error");
+  mostrarEntorno(resultado);
+  avisar($("mensaje-entorno"), "");
+}
+
+function abrirEntorno() {
+  avisar($("mensaje-entorno"), "");
+  $("dialogo-entorno").showModal();
+  revisarEntorno();
+}
+
+$("abrir-entorno").addEventListener("click", abrirEntorno);
+$("ver-entorno").addEventListener("click", abrirEntorno);
+$("revisar-entorno").addEventListener("click", revisarEntorno);
+$("cerrar-entorno").addEventListener("click", () => $("dialogo-entorno").close());
+
 $("abrir").addEventListener("click", abrirSwf);
 $("form-buscar").addEventListener("submit", buscar);
 $("form-agregar").addEventListener("submit", agregarAMano);
@@ -226,8 +318,9 @@ $("importar-archivo").addEventListener("click", importarDeArchivo);
 $("cancelar-importar").addEventListener("click", () => $("dialogo-importar").close());
 $("texto-importar").addEventListener("input", () => avisar($("mensaje-importar"), ""));
 
-window.addEventListener("pywebviewready", () => {
+window.addEventListener("pywebviewready", async () => {
   conectado = true;
   actualizarControles();
+  mostrarEntorno(await api().estado_entorno());
 });
 mostrarLista();

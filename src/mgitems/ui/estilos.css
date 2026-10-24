@@ -27,8 +27,42 @@ body {
 }
 
 .barra {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
   padding: 20px 28px 8px;
 }
+
+.estado-entorno {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.indicador {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--texto-suave);
+}
+
+.indicador.ok { background: var(--exito); }
+.indicador.falta { background: var(--advertencia); }
+
+.aviso {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 8px 28px 0;
+  padding: 10px 14px;
+  border: 1px solid var(--advertencia);
+  border-radius: var(--radio);
+  color: var(--advertencia);
+  font-size: 14px;
+}
+
+.aviso[hidden] { display: none; }
 
 .barra h1 {
   margin: 0;
@@ -147,6 +181,78 @@ dialog {
 dialog::backdrop { background: rgb(0 0 0 / 0.6); }
 
 dialog .panel { height: 100%; }
+
+dialog.grande {
+  width: min(720px, 92vw);
+  height: min(620px, 88vh);
+}
+
+.componentes {
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.componentes:focus-visible {
+  outline: 1px solid var(--borde);
+  outline-offset: 2px;
+}
+
+.componente {
+  display: grid;
+  grid-template-columns: 22px 1fr auto;
+  gap: 4px 10px;
+  padding: 10px 12px;
+  background: var(--fondo);
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+}
+
+.componente .marca { font-weight: 700; }
+.componente.ok .marca { color: var(--exito); }
+.componente.falta .marca { color: var(--advertencia); }
+.componente.falta { border-color: var(--advertencia); }
+
+.componente .titulo { font-weight: 600; }
+
+.componente .detalle,
+.componente .ruta,
+.componente ol {
+  grid-column: 2 / -1;
+  margin: 0;
+  font-size: 13px;
+  color: var(--texto-suave);
+}
+
+.componente .ruta {
+  font-family: Consolas, monospace;
+  overflow-wrap: anywhere;
+}
+
+.componente ol {
+  padding-left: 18px;
+  color: var(--texto);
+}
+
+.componente ol li + li { margin-top: 2px; }
+
+.componente .botones {
+  grid-row: 1;
+  grid-column: 3;
+  display: flex;
+  gap: 6px;
+}
+
+.componente .botones button {
+  padding: 4px 10px;
+  font-size: 13px;
+}
 
 button.derecha { margin-left: auto; }
 
