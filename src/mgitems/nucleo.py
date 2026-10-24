@@ -16,8 +16,7 @@ from mgitems.entorno import Entorno, Sistema
 from mgitems.entrega import PUERTO_FIDDLER_POR_DEFECTO, QUE_HACER_EN_EL_JUEGO, URL_LOLA, Entrega, PasoFallido, Procesos, SwfTrucado
 from mgitems.ffdec import FFDecNoDisponible
 from mgitems.fuente import URL_ASSETS, FuenteCDN, SinConexion, SwfNoEncontrado, Version
-from mgitems.gaturro import CLASE_CUERPO, SWF_CUERPO, ImagenesPiezas, componer
-from mgitems.gaturro import PARTES as PARTES_GATURRO
+from mgitems.gaturro import AVISO_VERSION_ANTERIOR, CLASE_CUERPO, SWF_CUERPO, ImagenesPiezas, componer, es_version_anterior, tiene_lugar
 from mgitems.iconos import ExportadorFFDec, IconosItems, version_de
 from mgitems.items import (
     es_ruta_valida,
@@ -608,7 +607,8 @@ class Nucleo:
         `colores`: los del jugador (`color1` pelaje, `color2` panza, `color3` ojos, como "#RRGGBB");
         si faltan, los de fábrica del juego. El cuerpo y las Piezas de cada SWF se exportan una vez
         por versión (la primera vez tarda unos segundos). Las Piezas sin imagen se listan en
-        `sin_imagen`, y las de Partes donde el juego no pone nada, en `sin_lugar`.
+        `sin_imagen`, y las de Partes donde este Gaturro no tiene lugar, en `sin_lugar`. Si el Gaturro
+        conseguido es una versión anterior a la del juego, `aviso` lo dice.
         """
         if not isinstance(partes, dict) or not isinstance(colores, (dict, type(None))):
             return {"ok": False, "error": "Las Partes del cuerpo no tienen la forma esperada."}
@@ -620,9 +620,10 @@ class Nucleo:
             return {"ok": False, "sin_gaturro": True,
                     "error": "No se encontró el Gaturro original del juego, así que no se muestra ninguno."}
 
-        elegidas = {p: r for p, r in partes.items() if p in PARTES_GATURRO and isinstance(r, str) and es_ruta_valida(r)}
-        sin_lugar = [r for p, r in partes.items() if p not in PARTES_GATURRO]
-        sin_imagen = [r for p, r in partes.items() if p in PARTES_GATURRO and r not in elegidas.values()]
+        con_lugar = {p for p in partes if tiene_lugar(cuerpo, p)}
+        elegidas = {p: r for p, r in partes.items() if p in con_lugar and isinstance(r, str) and es_ruta_valida(r)}
+        sin_lugar = [r for p, r in partes.items() if p not in con_lugar]
+        sin_imagen = [r for p, r in partes.items() if p in con_lugar and r not in elegidas.values()]
         imagenes = ImagenesPiezas(self._entorno.carpeta_cache() / "piezas", self._exportador)
         for swf in sorted({r.rpartition(".")[0] for r in elegidas.values()}):
             try:
@@ -637,7 +638,8 @@ class Nucleo:
                 sin_imagen.append(ruta)
             else:
                 piezas[parte] = (clase, svg)
-        return {"ok": True, "svg": componer(cuerpo, piezas, colores), "sin_imagen": sin_imagen, "sin_lugar": sin_lugar}
+        return {"ok": True, "svg": componer(cuerpo, piezas, colores), "sin_imagen": sin_imagen, "sin_lugar": sin_lugar,
+                "aviso": AVISO_VERSION_ANTERIOR if es_version_anterior(cuerpo) else None}
 
     def _cuerpo_gaturro(self) -> str | None:
         """El SVG de `assets.GaturroMC` del primer SWF del juego que lo traiga."""

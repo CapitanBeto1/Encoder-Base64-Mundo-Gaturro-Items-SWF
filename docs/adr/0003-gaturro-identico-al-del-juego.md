@@ -19,6 +19,7 @@ Las Piezas (primer cuadro de cada una, en SVG con su punto de anclaje) se ponen 
 ## Consequences
 
 - Si el juego deja de publicar `assets.GaturroMC` sin cifrar en esos SWF, el editor no muestra ningún Gaturro y lo avisa; nunca una aproximación.
-- Se ve el Gaturro quieto, de frente, sin animación. Las Partes del cuerpo que el juego no pone en el Gaturro (por ejemplo, `accesories2`) se avisan como "no se ven en el juego".
+- **Las copias publicadas son de una versión anterior a la del juego actual**, y el código del cliente que se leyó también. Comparando con el juego, el dueño del proyecto encontró dos diferencias: el Gaturro actual tiene un clip para `accesories2` (las Piezas de «Accesorio 2» se ven delante de la cara) y la nariz queda debajo de `hairs`. Ninguno de 523 SWF del servidor ni de la caché del juego trae la versión actual sin cifrar. No se corrige a mano (no se conocen la posición ni la capa exactas del clip nuevo): por decisión del dueño del proyecto se muestra la versión anterior con un aviso visible. El aviso sale solo cuando el cuerpo no tiene clip `accesories2`, así que desaparece si algún día se publica una copia actual.
+- Se ve el Gaturro quieto, de frente, sin animación. Las Piezas de Partes del cuerpo donde el Gaturro no tiene clip se avisan como "No se dibuja".
 - `lookForHideParts` en el juego solo esconde partes del cuerpo de los Gaturros ciudadanos; el editor siempre las esconde.
 - El repositorio no contiene arte del juego: el cuerpo y las Piezas se exportan en la computadora del jugador.
