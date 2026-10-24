@@ -189,3 +189,18 @@ def test_con_ffdec_real_cada_item_tiene_una_imagen_png(sistema, tmp_path):
         assert png.startswith(b"\x89PNG")
     carpeta = sistema.base / "Local" / "MGItems" / "iconos" / "clothes1"
     assert not (carpeta / "remera5_on.png").exists()
+
+
+@pytest.mark.skipif(not _ffdec_disponible(), reason="Hace falta Java y FFDec (scripts/obtener_binarios.py)")
+def test_con_ffdec_real_un_item_con_imagen_jpeg_no_corta_la_exportacion(sistema, tmp_path):
+    # Con Java 9+, FFDec necesita acceso a un módulo interno para leer JPEG; sin él, el primer
+    # JPEG aborta la exportación de todo el SWF.
+    nucleo = Nucleo(sistema, catalogo=[])
+    swf = tmp_path / "clothes1.swf"
+    swf.write_bytes(crear_swf(["foto", "remera5", "gorra1"], con_dibujos=True, con_jpeg=("foto",)))
+    nucleo.abrir_swf(str(swf))
+
+    assert nucleo.preparar_iconos()["ok"]
+
+    iconos = nucleo.iconos(["clothes1.foto", "clothes1.remera5", "clothes1.gorra1"])["iconos"]
+    assert all(iconos.values()), iconos
