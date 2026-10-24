@@ -94,14 +94,15 @@ function mostrarLista() {
 function mostrarEncode(resultado) {
   $("encode").value = resultado ? resultado.encode : "";
   if (resultado?.prenda) {
-    const n = Object.keys(resultado.prenda.partes).length;
-    $("resumen").textContent = `Prenda trucada: ${resultado.prenda.ruta} con ${n === 1 ? "1 Pieza" : `${n} Piezas`}.`;
+    const [[parteElegida, piezaElegida]] = Object.entries(resultado.prenda.partes);
+    const nombreParte = partesDelCuerpo.find((p) => p.id === parteElegida)?.nombre ?? parteElegida;
+    $("resumen").textContent = `Prenda trucada: ${resultado.prenda.ruta} muestra ${piezaElegida} en ${nombreParte}.`;
   } else if (resultado) {
     $("resumen").textContent = `Encode con ${contarItems(resultado.items.length)}.`;
   } else {
     $("resumen").textContent =
       vista === "trucar"
-        ? base ? "Tocá «Trucar Prenda» para generar el Encode." : "Elegí una Prenda base y sus Piezas."
+        ? base && pieza && parte ? "Tocá «Trucar Prenda» para generar el Encode." : "Elegí la Prenda base, la Pieza y la Parte del cuerpo."
         : items.length ? "Generá el Encode con los Items de la lista." : "Todavía no generaste ningún Encode.";
     avisarEncode("");
   }
@@ -116,11 +117,8 @@ function actualizarControles() {
   $("quitar-todos").disabled = !listo || items.length === 0;
   $("importar").disabled = !listo;
   $("abrir-entorno").disabled = !conectado;
-  const hayPiezas = Object.keys(piezas).length > 0;
-  $("generar").disabled = !listo || (vista === "trucar" ? !base || !hayPiezas : items.length === 0);
-  $("buscar-base").disabled = !listo || !prendas.length;
-  $("restaurar-piezas").disabled = !listo || !base;
-  document.querySelectorAll("#partes input").forEach((c) => (c.disabled = !listo));
+  $("generar").disabled = !listo || (vista === "trucar" ? !base || !pieza || !parte : items.length === 0);
+  $("buscar-base").disabled = $("buscar-pieza").disabled = $("buscar-parte").disabled = !listo || !prendas.length;
   $("pestana-agregar").disabled = $("pestana-trucar").disabled = !conectado || ocupado;
   $("copiar").disabled = $("guardar").disabled = $("entregar").disabled = !listo || !$("encode").value;
 }
@@ -389,120 +387,68 @@ function cambiarVista(nueva) {
   if (vista === "trucar" && swfAbierto && !prendas.length) cargarPrendas();
 }
 
-// --- Trucar Prenda ---
+// --- Trucar Prenda: una Prenda base que muestra una Pieza (cualquiera) en una Parte del cuerpo (cualquiera) ---
 
-let prendas = []; // [{ruta, clase, partes: {parte: pieza}}] del SWF abierto
+let prendas = []; // [{ruta, clase, partes}] del SWF abierto
+let piezasDelSwf = []; // [{ruta, clase}]
 let partesDelCuerpo = []; // [{id, nombre}]
-let base = null; // la Prenda base elegida
-let piezas = {}; // parte → {pieza, origen}: la Pieza elegida y la Prenda de donde sale
+let base = null;
+let pieza = null;
+let parte = null;
 
 function olvidarPrendas() {
   prendas = [];
-  base = null;
-  piezas = {};
-  $("buscar-base").value = "";
-  mostrarPartes();
+  piezasDelSwf = [];
+  base = pieza = parte = null;
+  for (const id of ["buscar-base", "buscar-pieza", "buscar-parte"]) $(id).value = "";
+  mostrarTruco();
 }
 
 async function cargarPrendas() {
   olvidarPrendas();
   const resultado = await mientras("Leyendo las Prendas del SWF… (la primera vez tarda unos segundos)", () => api().prendas());
   if (!resultado.ok) return avisarLista(resultado.error, "error");
+  const resultadoPiezas = await api().piezas();
   prendas = resultado.prendas;
   partesDelCuerpo = resultado.partes_del_cuerpo;
+  piezasDelSwf = resultadoPiezas.ok ? resultadoPiezas.piezas : [];
   actualizarControles();
   if (!prendas.length) return avisarLista("Este SWF no tiene Prendas.", "advertencia");
-  avisarLista(`${prendas.length === 1 ? "1 Prenda" : `${prendas.length} Prendas`}. Elegí la Prenda base.`, "exito");
-  cargarIconos(prendas.map((p) => p.ruta));
+  avisarLista(`${prendas.length === 1 ? "1 Prenda" : `${prendas.length} Prendas`} y ${piezasDelSwf.length === 1 ? "1 Pieza" : `${piezasDelSwf.length} Piezas`}. Elegí la Prenda base.`, "exito");
   $("buscar-base").focus();
 }
 
-// Las Prendas cuyo nombre contiene el texto; las que empiezan con él, primero.
-// Pide las imágenes que falten (pueden no estar listas cuando se cargaron las Prendas).
-function filtrarPrendas(lista, texto) {
+// Las opciones cuyo nombre contiene el texto; las que empiezan con él, primero.
+// Pide las imágenes que falten (pueden no estar listas cuando se cargó el SWF).
+function filtrarPorNombre(lista, texto, nombreDe = (o) => o.clase) {
   const t = texto.trim().toLowerCase();
-  const coinciden = lista.filter((p) => p.clase.toLowerCase().includes(t));
-  const elegidas = coinciden.sort((a, b) => !a.clase.toLowerCase().startsWith(t) - !b.clase.toLowerCase().startsWith(t)).slice(0, 80);
-  cargarIconos(elegidas.map((p) => p.ruta));
-  return elegidas;
+  const coinciden = lista.filter((o) => nombreDe(o).toLowerCase().includes(t));
+  const ordenadas = coinciden.sort((a, b) => !nombreDe(a).toLowerCase().startsWith(t) - !nombreDe(b).toLowerCase().startsWith(t)).slice(0, 80);
+  cargarIconos(ordenadas.filter((o) => o.ruta).map((o) => o.ruta));
+  return ordenadas;
 }
 
-const filaDePrenda = (p) => [elementoIcono(p.ruta), etiqueta(p.clase, "nombre")];
+const filaConImagen = (o) => [elementoIcono(o.ruta), etiqueta(o.clase, "nombre")];
 
-function elegirBase(prenda) {
-  base = prenda;
-  $("buscar-base").value = prenda.clase;
-  restaurarPiezas();
-}
-
-function restaurarPiezas() {
-  piezas = Object.fromEntries(Object.entries(base.partes).map(([parte, pieza]) => [parte, { pieza, origen: base }]));
-  mostrarPartes();
-}
-
-// Ponerse una Prenda en una Parte del cuerpo trae todas sus Piezas (una remera trae torso y brazos).
-function usarPrenda(prenda) {
-  for (const [parte, pieza] of Object.entries(prenda.partes)) piezas[parte] = { pieza, origen: prenda };
-  mostrarPartes();
-}
-
-function quitarPieza(parte) {
-  delete piezas[parte];
-  mostrarPartes();
-}
-
-function filaDeParte({ id, nombre }) {
-  const fila = document.createElement("li");
-  const elegida = piezas[id];
-
-  const rotulo = etiqueta(nombre, "parte");
-  const icono = elegida ? elementoIcono(elegida.origen.ruta) : Object.assign(document.createElement("span"), { className: "icono vacio" });
-  const pieza = etiqueta(elegida ? elegida.pieza : "—", "nombre");
-  if (elegida && elegida.origen !== base) pieza.title = `De ${elegida.origen.clase}`;
-
-  const selector = Object.assign(document.createElement("div"), { className: "selector-swf selector-parte" });
-  const campo = Object.assign(document.createElement("input"), { type: "text", placeholder: "Cambiar…", spellcheck: false, autocomplete: "off" });
-  campo.setAttribute("aria-label", `Elegir la Prenda para ${nombre}`);
-  campo.disabled = ocupado;
-  const lista = Object.assign(document.createElement("ul"), { className: "resultados-swf con-iconos", hidden: true });
-  selector.append(campo, lista);
-  crearDesplegable({
-    campo,
-    lista,
-    consultar: async (t) => filtrarPrendas(prendas.filter((p) => id in p.partes), t),
-    fila: filaDePrenda,
-    elegir: usarPrenda,
-    vacio: "Ninguna Prenda tiene algo para esta parte.",
-  });
-
-  const quitar = Object.assign(document.createElement("button"), { className: "quitar", textContent: "✕", title: `Dejar ${nombre} vacío` });
-  quitar.disabled = !elegida;
-  quitar.addEventListener("click", () => quitarPieza(id));
-
-  fila.append(rotulo, icono, pieza, selector, quitar);
-  return fila;
-}
-
-function mostrarPartes() {
-  const lista = $("partes");
-  if (!base) {
-    lista.replaceChildren();
-    $("partes-vacia").hidden = false;
-    $("partes-vacia").textContent = prendas.length ? "Elegí una Prenda base." : "Abrí un SWF y elegí una Prenda base.";
+function mostrarTruco() {
+  const caja = $("resumen-truco");
+  if (!base && !pieza && !parte) {
+    caja.replaceChildren(prendas.length ? "Elegí la Prenda base, la Pieza y la Parte del cuerpo." : "Abrí un SWF y elegí la Prenda base, la Pieza y la Parte del cuerpo.");
   } else {
-    // Las Partes conocidas, más cualquier otra que use alguna Pieza elegida.
-    const conocidas = new Set(partesDelCuerpo.map((p) => p.id));
-    const extra = Object.keys(piezas).filter((p) => !conocidas.has(p)).map((id) => ({ id, nombre: id }));
-    lista.replaceChildren(...[...partesDelCuerpo, ...extra].map(filaDeParte));
-    $("partes-vacia").hidden = true;
-    cargarIconos(Object.values(piezas).map((p) => p.origen.ruta));
+    const hueco = (texto) => etiqueta(texto, "hueco");
+    caja.replaceChildren(
+      ...(base ? [elementoIcono(base.ruta), etiqueta(base.clase, "nombre")] : [hueco("Prenda base")]),
+      etiqueta("→ muestra", "conector"),
+      ...(pieza ? [elementoIcono(pieza.ruta), etiqueta(pieza.clase, "nombre")] : [hueco("Pieza")]),
+      etiqueta("en", "conector"),
+      parte ? etiqueta(parte.nombre, "parte") : hueco("Parte del cuerpo")
+    );
   }
   mostrarEncode(null);
 }
 
 async function trucar() {
-  const partes = Object.fromEntries(Object.entries(piezas).map(([parte, { pieza }]) => [parte, pieza]));
-  const resultado = await mientras("Trucando la Prenda… (tarda unos segundos)", () => api().trucar_prenda(base.clase, partes));
+  const resultado = await mientras("Trucando la Prenda… (tarda unos segundos)", () => api().trucar_prenda(base.clase, parte.id, pieza.clase));
   if (!resultado.ok) return avisarLista(resultado.error, "error");
   avisarLista("");
   mostrarEncode(resultado);
@@ -512,15 +458,46 @@ async function trucar() {
 crearDesplegable({
   campo: $("buscar-base"),
   lista: $("resultados-base"),
-  consultar: async (t) => filtrarPrendas(prendas, t),
-  fila: filaDePrenda,
-  elegir: elegirBase,
+  consultar: async (t) => filtrarPorNombre(prendas, t),
+  fila: filaConImagen,
+  elegir: (p) => {
+    base = p;
+    $("buscar-base").value = p.clase;
+    mostrarTruco();
+    if (!pieza) $("buscar-pieza").focus();
+  },
   vacio: "Ninguna Prenda se llama así.",
+});
+
+crearDesplegable({
+  campo: $("buscar-pieza"),
+  lista: $("resultados-pieza"),
+  consultar: async (t) => filtrarPorNombre(piezasDelSwf, t),
+  fila: filaConImagen,
+  elegir: (p) => {
+    pieza = p;
+    $("buscar-pieza").value = p.clase;
+    mostrarTruco();
+    if (!parte) $("buscar-parte").focus();
+  },
+  vacio: "Ninguna Pieza se llama así.",
+});
+
+crearDesplegable({
+  campo: $("buscar-parte"),
+  lista: $("resultados-parte"),
+  consultar: async (t) => filtrarPorNombre(partesDelCuerpo, t, (p) => `${p.nombre} ${p.id}`),
+  fila: (p) => [etiqueta(p.nombre, "nombre"), etiqueta(p.id, "ayuda")],
+  elegir: (p) => {
+    parte = p;
+    $("buscar-parte").value = p.nombre;
+    mostrarTruco();
+  },
+  vacio: "No hay una Parte del cuerpo con ese nombre.",
 });
 
 $("pestana-agregar").addEventListener("click", () => cambiarVista("agregar"));
 $("pestana-trucar").addEventListener("click", () => cambiarVista("trucar"));
-$("restaurar-piezas").addEventListener("click", restaurarPiezas);
 
 // --- Importar un Encode ---
 

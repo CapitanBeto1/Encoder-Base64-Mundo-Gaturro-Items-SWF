@@ -53,11 +53,11 @@ def nucleo(sistema, exportador, tmp_path):
     return nucleo
 
 
-def test_se_exportan_solo_las_imagenes_de_los_items(nucleo, exportador):
+def test_se_exportan_las_imagenes_de_los_items_y_las_piezas(nucleo, exportador):
     assert nucleo.preparar_iconos() == {"ok": True, "swf": "clothes1"}
 
     assert len(exportador.llamadas) == 1
-    assert sorted(exportador.llamadas[0].values()) == ["Remera6", "gorra1", "remera5"]
+    assert sorted(exportador.llamadas[0].values()) == ["Remera6", "gorra1", "remera5", "remera5_brazo_on", "remera5_on"]
 
 
 def test_cada_item_encontrado_tiene_su_imagen(nucleo):
@@ -106,7 +106,9 @@ def test_las_imagenes_quedan_en_la_carpeta_del_programa_y_no_hay_temporales(nucl
     nucleo.preparar_iconos()
 
     carpeta = sistema.base / "Local" / "MGItems" / "iconos" / "clothes1"
-    assert sorted(p.name for p in carpeta.iterdir()) == ["Remera6.png", "gorra1.png", "remera5.png", "version"]
+    assert sorted(p.name for p in carpeta.iterdir()) == [
+        "Remera6.png", "gorra1.png", "remera5.png", "remera5_brazo_on.png", "remera5_on.png", "version",
+    ]
 
 
 def test_sin_java_se_informa_y_no_se_rompe_nada(sistema, tmp_path):
@@ -189,7 +191,7 @@ def test_con_ffdec_real_cada_item_tiene_una_imagen_png(sistema, tmp_path):
         png = base64.b64decode(icono.removeprefix("data:image/png;base64,"))
         assert png.startswith(b"\x89PNG")
     carpeta = sistema.base / "Local" / "MGItems" / "iconos" / "clothes1"
-    assert not (carpeta / "remera5_on.png").exists()
+    assert (carpeta / "remera5_on.png").read_bytes().startswith(b"\x89PNG")  # la Pieza también
 
 
 @pytest.mark.skipif(not _ffdec_disponible(), reason="Hace falta Java y FFDec (scripts/obtener_binarios.py)")

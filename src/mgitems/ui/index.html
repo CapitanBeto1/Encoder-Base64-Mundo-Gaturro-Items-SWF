@@ -105,19 +105,28 @@
       </div>
 
       <div id="vista-trucar" class="vista" role="tabpanel" hidden>
-        <h2>Prenda base</h2>
+        <h2>1. Prenda base</h2>
         <div class="selector-swf">
           <input id="buscar-base" type="text" spellcheck="false" autocomplete="off" disabled
-                 placeholder="Elegí la Prenda que se va a trucar"
+                 placeholder="La Prenda que vas a recibir"
                  role="combobox" aria-expanded="false" aria-controls="resultados-base" aria-autocomplete="list">
           <ul id="resultados-base" class="resultados-swf con-iconos" role="listbox" hidden></ul>
         </div>
-        <div class="encabezado-lista">
-          <h2>Piezas</h2>
-          <button id="restaurar-piezas" class="enlace" disabled title="Volver a las Piezas de la Prenda base">Como la original</button>
+        <h2>2. Pieza (vestimenta)</h2>
+        <div class="selector-swf">
+          <input id="buscar-pieza" type="text" spellcheck="false" autocomplete="off" disabled
+                 placeholder="Cualquier Pieza del SWF, ej: mascara, anteojo"
+                 role="combobox" aria-expanded="false" aria-controls="resultados-pieza" aria-autocomplete="list">
+          <ul id="resultados-pieza" class="resultados-swf con-iconos" role="listbox" hidden></ul>
         </div>
-        <ul id="partes" class="lista partes"></ul>
-        <p id="partes-vacia" class="ayuda vacia">Abrí un SWF y elegí una Prenda base.</p>
+        <h2>3. Parte del cuerpo</h2>
+        <div class="selector-swf">
+          <input id="buscar-parte" type="text" spellcheck="false" autocomplete="off" disabled
+                 placeholder="Dónde se ve la Pieza, ej: mano, pies, sombrero"
+                 role="combobox" aria-expanded="false" aria-controls="resultados-parte" aria-autocomplete="list">
+          <ul id="resultados-parte" class="resultados-swf" role="listbox" hidden></ul>
+        </div>
+        <div id="resumen-truco" class="resumen-truco">Abrí un SWF y elegí la Prenda base, la Pieza y la Parte del cuerpo.</div>
       </div>
       <p id="mensaje" class="mensaje" role="status" aria-live="polite"></p>
     </section>

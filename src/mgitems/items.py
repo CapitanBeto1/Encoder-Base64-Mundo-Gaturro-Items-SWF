@@ -31,6 +31,11 @@ def items_del_swf(clases: list[str]) -> list[str]:
     return _sin_repetidas(c for c in clases if "." not in c and not c.endswith(_SUFIJOS_NO_ITEM))
 
 
+def piezas_del_swf(clases: list[str]) -> list[str]:
+    """Las clases de un SWF de assets que son Piezas (`_on`, incluidas las `_brazo_on`), en orden natural."""
+    return sorted(_sin_repetidas(c for c in clases if "." not in c and c.endswith("_on")), key=orden_natural)
+
+
 def filtrar_por_prefijos(items: list[str], prefijos: list[str]) -> list[str]:
     """Items cuyo nombre empieza con alguno de los prefijos, sin distinguir mayúsculas, en orden natural."""
     prefijos = tuple(p.lower() for p in prefijos)
