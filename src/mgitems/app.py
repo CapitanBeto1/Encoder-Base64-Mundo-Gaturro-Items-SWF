@@ -44,6 +44,22 @@ class Puente:
             return {"ok": False, "cancelado": True}
         return self._nucleo.importar_encode_de_archivo(ruta)
 
+    def estado_entorno(self) -> dict:
+        return self._nucleo.estado_entorno()
+
+    def elegir_ruta(self, id_componente: str, tipo: str) -> dict:
+        """Diálogo para elegir a mano dónde está un componente (`tipo`: "archivo" o "carpeta")."""
+        if tipo == "carpeta":
+            ruta = _dialogo(webview.FileDialog.FOLDER)
+        else:
+            ruta = _dialogo(webview.FileDialog.OPEN, file_types=("Programas (*.exe)", "Todos los archivos (*.*)"))
+        if not ruta:
+            return {"ok": False, "cancelado": True}
+        return self._nucleo.corregir_ruta(id_componente, ruta)
+
+    def restablecer_ruta(self, id_componente: str) -> dict:
+        return self._nucleo.restablecer_ruta(id_componente)
+
     def guardar_encode(self, encode: str) -> dict:
         ruta = _dialogo(
             webview.FileDialog.SAVE,

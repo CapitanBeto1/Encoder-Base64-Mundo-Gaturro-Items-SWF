@@ -4,8 +4,10 @@ Todas las operaciones devuelven diccionarios simples (serializables a JSON) con
 `ok` y, si algo falla, un `error` en español listo para mostrar al jugador.
 """
 
+from dataclasses import asdict
 from pathlib import Path
 
+from mgitems.entorno import Entorno, Sistema
 from mgitems.items import (
     es_ruta_valida,
     filtrar_por_prefijos,
@@ -18,9 +20,37 @@ from mgitems.swf import SwfInvalido, leer_clases
 
 
 class Nucleo:
-    def __init__(self):
+    def __init__(self, sistema: Sistema | None = None):
         self._swf_abierto: str | None = None
         self._items_del_swf: list[str] = []
+        self._entorno = Entorno(sistema or Sistema())
+
+    def estado_entorno(self) -> dict:
+        """Qué hay instalado y configurado para entregar Items al juego, con instrucciones para lo que falta."""
+        componentes = self._entorno.componentes()
+        return {
+            "ok": True,
+            "listo": all(c.ok for c in componentes),
+            "componentes": [asdict(c) for c in componentes],
+        }
+
+    def corregir_ruta(self, id_componente: str, ruta: str) -> dict:
+        """Usa una ruta elegida a mano para un componente; queda guardada para las próximas veces."""
+        try:
+            self._entorno.corregir_ruta(id_componente, ruta)
+        except ValueError as e:
+            return {"ok": False, "error": str(e)}
+        except OSError as e:
+            return {"ok": False, "error": f"No se pudo guardar la configuración: {e.strerror or e}"}
+        return self.estado_entorno()
+
+    def restablecer_ruta(self, id_componente: str) -> dict:
+        """Vuelve a detectar automáticamente la ruta de un componente."""
+        try:
+            self._entorno.restablecer_ruta(id_componente)
+        except OSError as e:
+            return {"ok": False, "error": f"No se pudo guardar la configuración: {e.strerror or e}"}
+        return self.estado_entorno()
 
     def abrir_swf(self, ruta: str) -> dict:
         """Abre un SWF de assets de la computadora para buscar sus Items."""
