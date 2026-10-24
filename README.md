@@ -1,24 +1,80 @@
-> **En desarrollo:** se está construyendo una versión nueva en `src/mgitems/` (ver la spec en el issue #1). Para probarla: `python -m venv .venv`, `.venv/Scripts/python -m pip install -e .`, `.venv/Scripts/python scripts/obtener_binarios.py` (FFDec y Java, para las imágenes) y `.venv/Scripts/python -m mgitems`. El instalador para Windows se arma con `.venv/Scripts/python scripts/armar_instalador.py` (necesita Inno Setup 6). Lo que sigue describe el programa actual.
+# MG Items
 
-Es un programa que de un SWF te deja buscar nombres de items (los que empiecen con la palabra que pongas) de Mundo Gaturro y te saca un texto codificado en Base64 que te agrega esos items al inventario de tu cuenta (se necesita Fiddler). Se usa ffdec para leer el SWF y regex para encontrar los nombres.
+Programa para Windows que agrega Items de **Mundo Gaturro** a tu inventario, solo con clics.
 
-(((((((((((((((((((((((((((en progreso otra vez)))))))))))))))))))))))))))))))
+Buscás los Items en los SWF del juego (el programa los descarga solo), armás una lista, y con **Agregar al juego** el programa prepara todo: Fiddler, el caché del juego y la regla para el NPC Lola. Después entrás al juego, hacés clic en Lola y recibís los Items.
 
-----------------------------------------------------------------------------------------------------------------------------------
-ACLARACIONES
-----------------------------------------------------------------------------------------------------------------------------------
+> **Estado:** en desarrollo. Ya funciona agregar Items (Fase 1). Vienen trucar Prendas y armar Looks (ver la [spec](../../issues/1)).
 
-1. No fue pensado para que sea de uso ajeno (está hecho y pensado para que funcione en mi computadora y sus configuraciones, puede que no ande como corresponde en otros dispositivos).
-2. Posiblemente no te ande si no tenes los archivos necesarios.
-3. Los SWF los saqué de https://www.mediafire.com/file/okcbniu98gt34ld/swf_2024.rar/file
-4. Se necesita JPEXS: https://github.com/jindrapetrik/jpexs-decompiler
-5. Se necesita Java
-6. Este programa no está hecho para trucar (por ahora), solo para sacar items gratis de el SWF que quieras.
-7. No todos los items se pueden conseguir (algunos fueron quitados y/o estan bug), no es necesariamente problema del programa.
-8. El archivo .txt codificado a Base64 de los items que pusiste NO hace nada por si mismo, para darle uso se necesita de Fiddler (configurado). Hay tutoriales en YouTube sobre eso. El programa no sirve de 'tutorial' (por ahora)
-9. Todo lo que hace el programa se puede hacer de forma manual.
-10. Mundo Gaturro no banea cuentas por hacer uso de esto.
-11. El buscador de palabras agrega todos los items que empiecen con esa palabra (ej: palabra zapa -> resultados zapatillaRosa1, zapatoHombre).
-12. Se puede buscar mas de una palabra (ej: palabras zapa,campera,remera. Si o si cada palabra tiene que estar separada de una coma y sin espacios).
-13. Solo se puede buscar items de un .swf al mismo tiempo (por ahora).
-14. MUY probablemente tenga bugs/problemas.
+## Qué hace
+
+- **Catálogo de SWF del juego** con buscador: 445 SWF con Items, descargados del servidor del juego cuando hacen falta y guardados para la próxima vez.
+- **Buscar Items** por el comienzo del nombre, con sugerencias e imágenes mientras escribís (por ejemplo `remera`, `zapa, campera`).
+- **Lista de Items** con imagen y cantidad de cada uno; se pueden quitar o agregar a mano (`clothes1.remera5`).
+- **Encode**: generarlo, copiarlo, guardarlo como `.txt` o importar uno existente (pegado o desde archivo).
+- **Agregar al juego**: cierra el juego y Fiddler, pone la regla de Lola en el AutoResponder de Fiddler (respetando tus reglas), borra el caché del juego y vuelve a abrir todo.
+- **Configuración**: revisa que estén Mundo Gaturro Desktop y Fiddler, y explica paso a paso qué falta.
+
+## Requisitos
+
+- Windows 10 u 11.
+- [Mundo Gaturro Desktop](https://www.mundogaturro.com) instalado.
+- [Fiddler Classic](https://www.telerik.com/fiddler/fiddler-classic) (gratis) con el descifrado HTTPS activado y su certificado instalado. Si falta algo, el botón **Configuración** del programa dice cómo hacerlo.
+
+No hace falta instalar Python ni Java: el instalador trae todo lo necesario.
+
+## Instalación
+
+1. Descargá `MGItems-Setup-<versión>.exe` y abrilo.
+2. Si Windows muestra "Windows protegió su PC", tocá **Más información** → **Ejecutar de todas formas** (el instalador no está firmado digitalmente).
+3. Seguí el asistente. Se instala para tu usuario, sin pedir permisos de administrador, y queda en el menú Inicio como **MG Items**.
+
+Para desinstalarlo: Configuración de Windows → Aplicaciones → MG Items → Desinstalar.
+
+> Todavía no hay una versión publicada para descargar: por ahora el instalador se arma desde el código (ver [Desarrollo](#desarrollo)).
+
+## Cómo se usa
+
+1. Abrí **Configuración** y fijate que esté todo en verde.
+2. Elegí un SWF del juego en **Buscar en un SWF** (por ejemplo `clothes1`).
+3. Escribí el comienzo del nombre de los Items y elegí de las sugerencias, o tocá **Buscar** para agregar todos los que coinciden.
+4. Ajustá las cantidades y tocá **Generar Encode**.
+5. Tocá **Agregar al juego** y, cuando cargue Mundo Gaturro, andá hasta **Lola** y hacé clic en ella.
+
+Mientras la regla esté activa, Lola entrega ese Encode cada vez. Se puede quitar desde **Configuración → Quitar la regla de Fiddler** (tus otras reglas no se tocan).
+
+## Aclaraciones
+
+- Es un programa no oficial: no tiene relación con Mundo Gaturro ni con sus creadores. Usalo bajo tu responsabilidad.
+- No todos los Items se pueden conseguir: algunos fueron quitados del juego o tienen errores, y eso no depende del programa.
+- Todo lo que hace el programa se puede hacer a mano (FFDec, un Encode en Base64 y una regla de Fiddler); el programa lo automatiza.
+
+## Desarrollo
+
+Python 3.12 o más nuevo, en Windows.
+
+```
+python -m venv .venv
+.venv\Scripts\python -m pip install -e ".[dev]"
+.venv\Scripts\python scripts\obtener_binarios.py    # FFDec y Java en vendor\ (para las imágenes)
+.venv\Scripts\python -m mgitems                      # abrir el programa
+.venv\Scripts\python -m pytest                       # pruebas
+```
+
+- **Instalador:** `.venv\Scripts\python scripts\armar_instalador.py` arma `dist\MGItems\` con PyInstaller y, si está [Inno Setup 6](https://jrsoftware.org/isinfo.php), `dist\MGItems-Setup-<versión>.exe`.
+- **Catálogo de SWF:** `.venv\Scripts\python scripts\armar_catalogo.py [nombres.txt]` lo vuelve a armar desde el servidor del juego.
+- El lenguaje del proyecto está en [GLOSSARY.md](GLOSSARY.md) y las decisiones de arquitectura en [docs/adr](docs/adr).
+
+## Software de terceros
+
+El instalador incluye, sin modificarlos:
+
+- **[JPEXS Free Flash Decompiler (FFDec)](https://github.com/jindrapetrik/jpexs-decompiler)** 26.3.0, licencia GPL v3. Se usa como programa aparte para exportar las imágenes de los Items. Su código fuente está en su repositorio.
+- **[Eclipse Temurin](https://adoptium.net) JRE** 21, licencia GPL v2 con Classpath Exception. Lo necesita FFDec.
+- Bibliotecas de Python empaquetadas con PyInstaller, entre ellas [pywebview](https://github.com/r0x0r/pywebview) (BSD) y [pythonnet](https://github.com/pythonnet/pythonnet) (MIT).
+
+Los textos de esas licencias van dentro de la carpeta del programa instalado.
+
+## Licencia
+
+[Apache 2.0](LICENSE).
