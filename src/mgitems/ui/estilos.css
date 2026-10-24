@@ -179,6 +179,19 @@ dialog {
 }
 
 dialog::backdrop { background: rgb(0 0 0 / 0.6); }
+dialog:focus { outline: none; }
+
+/* El diálogo de entrega se ajusta a su contenido. */
+#dialogo-entrega {
+  height: auto;
+  max-height: 88vh;
+}
+
+#dialogo-entrega .panel {
+  height: auto;
+  max-height: 88vh;
+  overflow-y: auto;
+}
 
 dialog .panel { height: 100%; }
 
@@ -198,6 +211,43 @@ dialog.grande {
   flex-direction: column;
   gap: 8px;
 }
+
+button.entregar {
+  width: 100%;
+  padding: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  background: #16a34a;
+}
+
+button.entregar:hover:not(:disabled) { background: #15803d; filter: none; }
+
+.pasos {
+  margin: 0;
+  padding-left: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+}
+
+.pasos li { display: flex; gap: 8px; }
+.pasos .marca { width: 18px; font-weight: 700; }
+.pasos .ok .marca { color: var(--exito); }
+.pasos .falla .marca { color: var(--error); }
+.pasos .detalle { color: var(--texto-suave); }
+
+.resultado {
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--exito);
+  line-height: 1.5;
+}
+
+.resultado.error { border-color: var(--error); }
+.resultado[hidden] { display: none; }
+.resultado strong { display: block; margin-bottom: 4px; }
 
 .componentes:focus-visible {
   outline: 1px solid var(--borde);

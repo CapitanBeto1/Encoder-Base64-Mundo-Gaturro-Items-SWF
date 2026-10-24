@@ -44,6 +44,15 @@ class Puente:
             return {"ok": False, "cancelado": True}
         return self._nucleo.importar_encode_de_archivo(ruta)
 
+    def juego_abierto(self) -> bool:
+        return self._nucleo.juego_abierto()
+
+    def entregar_encode(self, encode: str) -> dict:
+        return self._nucleo.entregar_encode(encode)
+
+    def desactivar_reglas(self) -> dict:
+        return self._nucleo.desactivar_reglas()
+
     def estado_entorno(self) -> dict:
         return self._nucleo.estado_entorno()
 

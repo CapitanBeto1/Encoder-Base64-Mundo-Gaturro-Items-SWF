@@ -111,7 +111,7 @@ function actualizarControles() {
   $("importar").disabled = !listo;
   $("abrir-entorno").disabled = !conectado;
   $("generar").disabled = !listo || items.length === 0;
-  $("copiar").disabled = $("guardar").disabled = !listo || !$("encode").value;
+  $("copiar").disabled = $("guardar").disabled = $("entregar").disabled = !listo || !$("encode").value;
 }
 
 async function abrirSwf() {
@@ -297,6 +297,97 @@ function abrirEntorno() {
   revisarEntorno();
 }
 
+async function desactivarReglas() {
+  avisar($("mensaje-entorno"), "Quitando la regla… (Fiddler se reinicia si estaba abierto)", "progreso");
+  $("desactivar-reglas").disabled = true;
+  try {
+    const resultado = await api().desactivar_reglas();
+    if (!resultado.ok) {
+      return avisar($("mensaje-entorno"), [resultado.error, resultado.que_hacer].filter(Boolean).join(" "), "error");
+    }
+    avisar(
+      $("mensaje-entorno"),
+      resultado.quitadas ? "Listo: se quitó la regla de MG Items. Tus reglas no se tocaron." : "No había reglas de MG Items en Fiddler.",
+      "exito"
+    );
+  } finally {
+    $("desactivar-reglas").disabled = false;
+  }
+}
+
+// --- Agregar al juego ---
+
+function mostrarPasos(pasos) {
+  $("pasos-entrega").replaceChildren(
+    ...pasos.map((p) => {
+      const fila = document.createElement("li");
+      fila.className = p.ok ? "ok" : "falla";
+      const marca = Object.assign(document.createElement("span"), { className: "marca", textContent: p.ok ? "✓" : "✗" });
+      const nombre = Object.assign(document.createElement("span"), { textContent: p.nombre });
+      fila.append(marca, nombre);
+      if (p.detalle) fila.append(Object.assign(document.createElement("span"), { className: "detalle", textContent: p.detalle }));
+      return fila;
+    })
+  );
+}
+
+function mostrarResultadoEntrega(titulo, texto, tipo) {
+  const caja = $("resultado-entrega");
+  const fuerte = Object.assign(document.createElement("strong"), { textContent: titulo });
+  caja.replaceChildren(fuerte, document.createTextNode(texto));
+  caja.className = "resultado " + tipo;
+  caja.hidden = false;
+}
+
+async function entregar() {
+  const encode = $("encode").value;
+  const abierto = await api().juego_abierto();
+  const aviso = abierto
+    ? "Para agregar los Items se van a cerrar Mundo Gaturro y Fiddler, y se van a volver a abrir. Si estás jugando, se corta la sesión. ¿Seguir?"
+    : "Para agregar los Items se va a reiniciar Fiddler y se va a abrir Mundo Gaturro. ¿Seguir?";
+  if (!confirm(aviso)) return;
+
+  $("titulo-entrega").textContent = "Agregando al juego…";
+  $("pasos-entrega").replaceChildren(
+    Object.assign(document.createElement("li"), { className: "detalle", textContent: "Cerrando programas, escribiendo la regla y volviendo a abrir. Puede tardar unos segundos." })
+  );
+  $("resultado-entrega").hidden = true;
+  $("cerrar-entrega").disabled = true;
+  $("dialogo-entrega").showModal();
+
+  let resultado;
+  try {
+    ocupado = true;
+    actualizarControles();
+    resultado = await api().entregar_encode(encode);
+  } finally {
+    ocupado = false;
+    actualizarControles();
+    $("cerrar-entrega").disabled = false;
+  }
+
+  if (resultado.ok) {
+    $("titulo-entrega").textContent = "¡Listo!";
+    mostrarPasos(resultado.pasos);
+    mostrarResultadoEntrega("Qué hacer ahora", resultado.que_hacer, "");
+  } else if (resultado.falta_configurar) {
+    $("dialogo-entrega").close();
+    avisarEncode(resultado.error, "error");
+    abrirEntorno();
+  } else {
+    $("titulo-entrega").textContent = "No se pudo agregar al juego";
+    mostrarPasos(resultado.pasos || []);
+    mostrarResultadoEntrega(resultado.error, resultado.que_hacer || "", "error");
+  }
+}
+
+$("entregar").addEventListener("click", entregar);
+$("cerrar-entrega").addEventListener("click", () => $("dialogo-entrega").close());
+// Mientras se entrega no se puede cerrar el diálogo con Escape.
+$("dialogo-entrega").addEventListener("cancel", (e) => {
+  if ($("cerrar-entrega").disabled) e.preventDefault();
+});
+$("desactivar-reglas").addEventListener("click", desactivarReglas);
 $("abrir-entorno").addEventListener("click", abrirEntorno);
 $("ver-entorno").addEventListener("click", abrirEntorno);
 $("revisar-entorno").addEventListener("click", revisarEntorno);
