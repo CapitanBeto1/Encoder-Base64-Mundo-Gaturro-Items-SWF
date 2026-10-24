@@ -117,6 +117,13 @@ class Entorno:
             raise OSError("No se encontró la carpeta APPDATA")
         return Path(appdata) / "MGItems"
 
+    def carpeta_cache(self) -> Path:
+        """Donde el programa guarda lo que se puede volver a descargar (SWF del CDN)."""
+        local = self._sistema.variable("LOCALAPPDATA")
+        if not local:
+            raise OSError("No se encontró la carpeta LOCALAPPDATA")
+        return Path(local) / "MGItems"
+
     def puerto_fiddler(self, por_defecto: int) -> int:
         valor = self._sistema.ajuste_fiddler("ListenPort")
         return int(valor) if valor and valor.isdigit() else por_defecto

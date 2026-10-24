@@ -4,10 +4,14 @@ Todas las operaciones devuelven diccionarios simples (serializables a JSON) con
 `ok` y, si algo falla, un `error` en español listo para mostrar al jugador.
 """
 
+import re
 from dataclasses import asdict
 from pathlib import Path
 
+from mgitems.cache_swf import CacheSwf
+from mgitems.catalogo import buscar_en_catalogo, cargar_catalogo
 from mgitems.entorno import Entorno, Sistema
+from mgitems.fuente import FuenteCDN, SinConexion, SwfNoEncontrado, Version
 from mgitems.entrega import PUERTO_FIDDLER_POR_DEFECTO, QUE_HACER_EN_EL_JUEGO, Entrega, PasoFallido, Procesos
 from mgitems.items import (
     es_ruta_valida,
@@ -19,13 +23,24 @@ from mgitems.items import (
 from mgitems.script import EncodeInvalido, codificar, decodificar, generar_script, leer_script
 from mgitems.swf import SwfInvalido, leer_clases
 
+_NOMBRE_SWF = re.compile(r"^[A-Za-z0-9_\-]+(?:/[A-Za-z0-9_\-]+)*$")
+
 
 class Nucleo:
-    def __init__(self, sistema: Sistema | None = None, procesos: Procesos | None = None):
+    def __init__(
+        self,
+        sistema: Sistema | None = None,
+        procesos: Procesos | None = None,
+        fuente: FuenteCDN | None = None,
+        catalogo: list[dict] | None = None,
+    ):
         self._swf_abierto: str | None = None
         self._items_del_swf: list[str] = []
+        self._tamano_swf: int | None = None
         self._entorno = Entorno(sistema or Sistema())
         self._procesos = procesos or Procesos()
+        self._fuente = fuente or FuenteCDN()
+        self._catalogo = cargar_catalogo() if catalogo is None else catalogo
 
     def juego_abierto(self) -> bool:
         juego = self._entorno.ruta("juego")
@@ -118,19 +133,78 @@ class Nucleo:
             return {"ok": False, "error": f"No se pudo guardar la configuración: {e.strerror or e}"}
         return self.estado_entorno()
 
+    def buscar_en_catalogo(self, texto: str) -> dict:
+        """SWF de assets conocidos cuyo nombre contiene el texto, con cuántos Items tiene cada uno."""
+        return {"ok": True, "swfs": buscar_en_catalogo(self._catalogo, texto)}
+
     def abrir_swf(self, ruta: str) -> dict:
         """Abre un SWF de assets de la computadora para buscar sus Items."""
         archivo = Path(ruta)
         try:
-            clases = leer_clases(archivo.read_bytes())
+            data = archivo.read_bytes()
         except OSError as e:
             return {"ok": False, "error": f"No se pudo abrir el archivo: {e.strerror or e}"}
-        except SwfInvalido as e:
-            return {"ok": False, "error": f"{e}: {archivo.name}"}
+        # Un SWF guardado en su subcarpeta del CDN (antro2017/wears.swf) usa esa ruta en sus Items.
+        conocidos = {s["swf"] for s in self._catalogo}
+        con_carpeta = f"{archivo.parent.name}/{archivo.stem}"
+        nombre = con_carpeta if con_carpeta in conocidos else archivo.stem
+        return self._cargar_swf(nombre, data, archivo.name, {"tamano": len(data), "origen": "archivo"})
 
-        self._swf_abierto = archivo.stem
+    def abrir_swf_del_cdn(self, nombre: str) -> dict:
+        """Abre un SWF de assets del CDN del juego, descargándolo solo si cambió desde la última vez."""
+        if not _NOMBRE_SWF.match(nombre):
+            return {"ok": False, "error": f"Nombre de SWF inválido: {nombre}"}
+        try:
+            cache = CacheSwf(self._entorno.carpeta_cache() / "swf")
+        except OSError as e:
+            return {"ok": False, "error": str(e)}
+        guardado = cache.leer(nombre)
+
+        try:
+            version = self._fuente.version(nombre)
+        except SwfNoEncontrado:
+            return {"ok": False, "error": f"El SWF {nombre} no existe en el servidor del juego."}
+        except SinConexion:
+            if guardado is None:
+                return {"ok": False, "error": "No hay conexión a internet y este SWF todavía no se descargó."}
+            data, version = guardado
+            return self._cargar_swf(nombre, data, f"{nombre}.swf", {
+                "tamano": version.tamano,
+                "origen": "copia",
+                "aviso": "Sin conexión: se usa la copia descargada antes, que puede no estar actualizada.",
+            })
+        except OSError as e:
+            return {"ok": False, "error": f"No se pudo consultar el servidor del juego: {e}"}
+
+        if guardado is not None and guardado[1] == version and len(guardado[0]) == version.tamano:
+            return self._cargar_swf(nombre, guardado[0], f"{nombre}.swf", {"tamano": version.tamano, "origen": "copia"})
+
+        try:
+            data = self._fuente.descargar(nombre)
+        except SwfNoEncontrado:
+            return {"ok": False, "error": f"El SWF {nombre} no existe en el servidor del juego."}
+        except SinConexion:
+            return {"ok": False, "error": "Se cortó la conexión mientras se descargaba el SWF. Probá de nuevo."}
+        except OSError as e:
+            return {"ok": False, "error": f"No se pudo descargar el SWF: {e}"}
+        version = Version(len(data), version.etag)
+        resultado = self._cargar_swf(nombre, data, f"{nombre}.swf", {"tamano": version.tamano, "origen": "descarga"})
+        if resultado["ok"]:
+            try:
+                cache.guardar(nombre, data, version)
+            except OSError:
+                pass  # sin copia local se vuelve a descargar la próxima vez
+        return resultado
+
+    def _cargar_swf(self, nombre: str, data: bytes, mostrado: str, extra: dict) -> dict:
+        try:
+            clases = leer_clases(data)
+        except SwfInvalido as e:
+            return {"ok": False, "error": f"{e}: {mostrado}"}
+        self._swf_abierto = nombre
         self._items_del_swf = items_del_swf(clases)
-        return {"ok": True, "swf": self._swf_abierto, "cantidad_items": len(self._items_del_swf)}
+        self._tamano_swf = extra["tamano"]
+        return {"ok": True, "swf": nombre, "cantidad_items": len(self._items_del_swf), **extra}
 
     def buscar_items(self, texto_prefijos: str) -> dict:
         """Items del SWF abierto cuyo nombre empieza con alguno de los prefijos (separados por coma)."""

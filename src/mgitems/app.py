@@ -26,6 +26,12 @@ class Puente:
             return {"ok": False, "cancelado": True}
         return self._nucleo.abrir_swf(ruta)
 
+    def buscar_en_catalogo(self, texto: str) -> dict:
+        return self._nucleo.buscar_en_catalogo(texto)
+
+    def abrir_swf_del_cdn(self, nombre: str) -> dict:
+        return self._nucleo.abrir_swf_del_cdn(nombre)
+
     def buscar_items(self, texto_prefijos: str) -> dict:
         return self._nucleo.buscar_items(texto_prefijos)
 

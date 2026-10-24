@@ -21,7 +21,7 @@ mgitems = "mgitems.app:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-mgitems = ["ui/*"]
+mgitems = ["ui/*", "datos/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

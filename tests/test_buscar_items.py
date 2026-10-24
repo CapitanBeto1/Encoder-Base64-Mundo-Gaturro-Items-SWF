@@ -37,7 +37,7 @@ def test_abre_swf_sin_comprimir_y_comprimidos(nucleo, tmp_path, compresion):
 
     resultado = nucleo.abrir_swf(str(ruta))
 
-    assert resultado == {"ok": True, "swf": "clothes1", "cantidad_items": 6}
+    assert (resultado["ok"], resultado["swf"], resultado["cantidad_items"]) == (True, "clothes1", 6)
     assert nucleo.buscar_items("r")["items"] == ["clothes1.remera5", "clothes1.Remera6", "clothes1.remera_onda"]
 
 

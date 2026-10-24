@@ -1,0 +1,1782 @@
+[
+ {
+  "swf": "acciones",
+  "items": 31
+ },
+ {
+  "swf": "achievements",
+  "items": 48
+ },
+ {
+  "swf": "acuarium",
+  "items": 7
+ },
+ {
+  "swf": "ades",
+  "items": 9
+ },
+ {
+  "swf": "aeropuerto",
+  "items": 7
+ },
+ {
+  "swf": "aesthetic",
+  "items": 17
+ },
+ {
+  "swf": "albumPanini",
+  "items": 44
+ },
+ {
+  "swf": "angeles",
+  "items": 12
+ },
+ {
+  "swf": "animales2018/props",
+  "items": 10
+ },
+ {
+  "swf": "animales2018/wears",
+  "items": 27
+ },
+ {
+  "swf": "animalPrint",
+  "items": 24
+ },
+ {
+  "swf": "animals",
+  "items": 21
+ },
+ {
+  "swf": "animalsCostumes",
+  "items": 14
+ },
+ {
+  "swf": "animatedClothes",
+  "items": 13
+ },
+ {
+  "swf": "anime",
+  "items": 60
+ },
+ {
+  "swf": "animus",
+  "items": 13
+ },
+ {
+  "swf": "aniversario",
+  "items": 13
+ },
+ {
+  "swf": "aniversario11",
+  "items": 3
+ },
+ {
+  "swf": "aniversario4",
+  "items": 28
+ },
+ {
+  "swf": "anteojos2019",
+  "items": 10
+ },
+ {
+  "swf": "antiques",
+  "items": 105
+ },
+ {
+  "swf": "antro2017/wears",
+  "items": 9
+ },
+ {
+  "swf": "apariciones",
+  "items": 46
+ },
+ {
+  "swf": "appTecno",
+  "items": 10
+ },
+ {
+  "swf": "arab",
+  "items": 11
+ },
+ {
+  "swf": "arcor",
+  "items": 42
+ },
+ {
+  "swf": "artGallery",
+  "items": 8
+ },
+ {
+  "swf": "atlantis",
+  "items": 15
+ },
+ {
+  "swf": "atlantisQuest",
+  "items": 15
+ },
+ {
+  "swf": "ba",
+  "items": 20
+ },
+ {
+  "swf": "baggio",
+  "items": 49
+ },
+ {
+  "swf": "balloons",
+  "items": 16
+ },
+ {
+  "swf": "banderas2018",
+  "items": 42
+ },
+ {
+  "swf": "bannersThumbs",
+  "items": 28
+ },
+ {
+  "swf": "barbie",
+  "items": 10
+ },
+ {
+  "swf": "barEspacial",
+  "items": 29
+ },
+ {
+  "swf": "barrilete",
+  "items": 20
+ },
+ {
+  "swf": "bathroom",
+  "items": 15
+ },
+ {
+  "swf": "bazar",
+  "items": 21
+ },
+ {
+  "swf": "beach",
+  "items": 11
+ },
+ {
+  "swf": "bebes2017/props",
+  "items": 1
+ },
+ {
+  "swf": "beds",
+  "items": 15
+ },
+ {
+  "swf": "bicentenario",
+  "items": 20
+ },
+ {
+  "swf": "boca2017/deco",
+  "items": 19
+ },
+ {
+  "swf": "boca2017/props",
+  "items": 26
+ },
+ {
+  "swf": "boca2017/wears",
+  "items": 53
+ },
+ {
+  "swf": "bombero",
+  "items": 8
+ },
+ {
+  "swf": "bosqueMagico",
+  "items": 6
+ },
+ {
+  "swf": "bossFinal",
+  "items": 7
+ },
+ {
+  "swf": "bruja",
+  "items": 25
+ },
+ {
+  "swf": "butterflies",
+  "items": 1
+ },
+ {
+  "swf": "buyStore",
+  "items": 3
+ },
+ {
+  "swf": "caballos",
+  "items": 9
+ },
+ {
+  "swf": "cafeteria",
+  "items": 13
+ },
+ {
+  "swf": "cages",
+  "items": 4
+ },
+ {
+  "swf": "campamento",
+  "items": 17
+ },
+ {
+  "swf": "campamento/props",
+  "items": 6
+ },
+ {
+  "swf": "canierias",
+  "items": 10
+ },
+ {
+  "swf": "carnival",
+  "items": 16
+ },
+ {
+  "swf": "carnival2",
+  "items": 30
+ },
+ {
+  "swf": "carnival3",
+  "items": 17
+ },
+ {
+  "swf": "carpets",
+  "items": 15
+ },
+ {
+  "swf": "casaRaton",
+  "items": 17
+ },
+ {
+  "swf": "cassettes",
+  "items": 51
+ },
+ {
+  "swf": "catalogoRock",
+  "items": 22
+ },
+ {
+  "swf": "cave",
+  "items": 26
+ },
+ {
+  "swf": "cazadoresEspacio",
+  "items": 25
+ },
+ {
+  "swf": "cbse/props",
+  "items": 14
+ },
+ {
+  "swf": "cheetos",
+  "items": 8
+ },
+ {
+  "swf": "china",
+  "items": 7
+ },
+ {
+  "swf": "christmas",
+  "items": 61
+ },
+ {
+  "swf": "christmas2",
+  "items": 46
+ },
+ {
+  "swf": "christmas2014",
+  "items": 5
+ },
+ {
+  "swf": "christmas2023",
+  "items": 8
+ },
+ {
+  "swf": "christmas2025",
+  "items": 7
+ },
+ {
+  "swf": "christmasClothes",
+  "items": 29
+ },
+ {
+  "swf": "christmasClothes2",
+  "items": 53
+ },
+ {
+  "swf": "ciguenas",
+  "items": 8
+ },
+ {
+  "swf": "ciguenasPack",
+  "items": 9
+ },
+ {
+  "swf": "cine",
+  "items": 9
+ },
+ {
+  "swf": "cinema",
+  "items": 4
+ },
+ {
+  "swf": "circus",
+  "items": 9
+ },
+ {
+  "swf": "city",
+  "items": 3
+ },
+ {
+  "swf": "city2",
+  "items": 2
+ },
+ {
+  "swf": "clothes1",
+  "items": 213
+ },
+ {
+  "swf": "clothesZero",
+  "items": 36
+ },
+ {
+  "swf": "clothesZero2",
+  "items": 28
+ },
+ {
+  "swf": "clothesZero3",
+  "items": 79
+ },
+ {
+  "swf": "club",
+  "items": 45
+ },
+ {
+  "swf": "comerciales",
+  "items": 3
+ },
+ {
+  "swf": "comisaria",
+  "items": 2
+ },
+ {
+  "swf": "computer",
+  "items": 5
+ },
+ {
+  "swf": "concursoRemeras1",
+  "items": 12
+ },
+ {
+  "swf": "concursoRemeras2",
+  "items": 22
+ },
+ {
+  "swf": "concursoRemeras2026",
+  "items": 11
+ },
+ {
+  "swf": "copatoons",
+  "items": 2
+ },
+ {
+  "swf": "coronacion",
+  "items": 19
+ },
+ {
+  "swf": "costumes",
+  "items": 141
+ },
+ {
+  "swf": "costumes2",
+  "items": 84
+ },
+ {
+  "swf": "costumes3",
+  "items": 56
+ },
+ {
+  "swf": "costumes4",
+  "items": 26
+ },
+ {
+  "swf": "costumesAnimals",
+  "items": 4
+ },
+ {
+  "swf": "costumesHalloween",
+  "items": 57
+ },
+ {
+  "swf": "costumesVip",
+  "items": 10
+ },
+ {
+  "swf": "cottage",
+  "items": 4
+ },
+ {
+  "swf": "cumple2016",
+  "items": 22
+ },
+ {
+  "swf": "cumpleAnios2018/wears",
+  "items": 3
+ },
+ {
+  "swf": "cupido",
+  "items": 17
+ },
+ {
+  "swf": "customToys",
+  "items": 23
+ },
+ {
+  "swf": "dailyBonus/props",
+  "items": 1
+ },
+ {
+  "swf": "depot",
+  "items": 8
+ },
+ {
+  "swf": "desastre",
+  "items": 3
+ },
+ {
+  "swf": "detective/wears",
+  "items": 1
+ },
+ {
+  "swf": "dinosaur",
+  "items": 3
+ },
+ {
+  "swf": "discoteca",
+  "items": 49
+ },
+ {
+  "swf": "drawing",
+  "items": 1
+ },
+ {
+  "swf": "earthDay",
+  "items": 7
+ },
+ {
+  "swf": "easter",
+  "items": 43
+ },
+ {
+  "swf": "easter2015",
+  "items": 11
+ },
+ {
+  "swf": "easter2016",
+  "items": 20
+ },
+ {
+  "swf": "easter2021",
+  "items": 16
+ },
+ {
+  "swf": "easter2023",
+  "items": 6
+ },
+ {
+  "swf": "easterCostumes",
+  "items": 56
+ },
+ {
+  "swf": "egipto",
+  "items": 20
+ },
+ {
+  "swf": "elementos",
+  "items": 12
+ },
+ {
+  "swf": "emoClothes",
+  "items": 28
+ },
+ {
+  "swf": "equipaje",
+  "items": 11
+ },
+ {
+  "swf": "escenarioVip/props",
+  "items": 2
+ },
+ {
+  "swf": "escuela",
+  "items": 48
+ },
+ {
+  "swf": "escuelaBaggio",
+  "items": 14
+ },
+ {
+  "swf": "escuelaNueva",
+  "items": 36
+ },
+ {
+  "swf": "espacio",
+  "items": 19
+ },
+ {
+  "swf": "esperanzaMia",
+  "items": 25
+ },
+ {
+  "swf": "estaciones",
+  "items": 24
+ },
+ {
+  "swf": "estadio",
+  "items": 2
+ },
+ {
+  "swf": "estanterias",
+  "items": 5
+ },
+ {
+  "swf": "estrella",
+  "items": 15
+ },
+ {
+  "swf": "eternautaClothes",
+  "items": 10
+ },
+ {
+  "swf": "extraterrestres",
+  "items": 14
+ },
+ {
+  "swf": "faber",
+  "items": 15
+ },
+ {
+  "swf": "fancyClothes",
+  "items": 36
+ },
+ {
+  "swf": "faro",
+  "items": 16
+ },
+ {
+  "swf": "fashion",
+  "items": 8
+ },
+ {
+  "swf": "fashion2017",
+  "items": 50
+ },
+ {
+  "swf": "fashion2025",
+  "items": 1
+ },
+ {
+  "swf": "fashion_basicos",
+  "items": 143
+ },
+ {
+  "swf": "fashion_halloween",
+  "items": 17
+ },
+ {
+  "swf": "fashion_mujeres",
+  "items": 12
+ },
+ {
+  "swf": "fashion_verano2016_mujeres",
+  "items": 47
+ },
+ {
+  "swf": "fiat",
+  "items": 1
+ },
+ {
+  "swf": "fiesta",
+  "items": 61
+ },
+ {
+  "swf": "fiestaPersonajes",
+  "items": 3
+ },
+ {
+  "swf": "fishes",
+  "items": 42
+ },
+ {
+  "swf": "flannys2018/props",
+  "items": 10
+ },
+ {
+  "swf": "flowersStore",
+  "items": 2
+ },
+ {
+  "swf": "food",
+  "items": 146
+ },
+ {
+  "swf": "freddo",
+  "items": 7
+ },
+ {
+  "swf": "funAttic",
+  "items": 24
+ },
+ {
+  "swf": "fx",
+  "items": 13
+ },
+ {
+  "swf": "gadgets",
+  "items": 46
+ },
+ {
+  "swf": "gadgets2",
+  "items": 2
+ },
+ {
+  "swf": "galaPremios2017/props",
+  "items": 24
+ },
+ {
+  "swf": "gatoons",
+  "items": 52
+ },
+ {
+  "swf": "gatoonsClothes",
+  "items": 86
+ },
+ {
+  "swf": "gatubers/props",
+  "items": 21
+ },
+ {
+  "swf": "gatufashion2019",
+  "items": 2
+ },
+ {
+  "swf": "gatumemes2018/wears",
+  "items": 14
+ },
+ {
+  "swf": "gatupacks/abr19",
+  "items": 11
+ },
+ {
+  "swf": "gatupacks/hw18",
+  "items": 12
+ },
+ {
+  "swf": "gatupacks/mar19",
+  "items": 14
+ },
+ {
+  "swf": "gatupacks/may19",
+  "items": 30
+ },
+ {
+  "swf": "gatupacks/playa18",
+  "items": 10
+ },
+ {
+  "swf": "gatupacks/san19",
+  "items": 11
+ },
+ {
+  "swf": "gatupacks/xmas18",
+  "items": 10
+ },
+ {
+  "swf": "gatuPotter/props",
+  "items": 4
+ },
+ {
+  "swf": "gatuPotter/wears",
+  "items": 33
+ },
+ {
+  "swf": "geocat",
+  "items": 1
+ },
+ {
+  "swf": "geoGifts",
+  "items": 23
+ },
+ {
+  "swf": "giacomo",
+  "items": 8
+ },
+ {
+  "swf": "giftStore",
+  "items": 10
+ },
+ {
+  "swf": "gigante",
+  "items": 4
+ },
+ {
+  "swf": "glam",
+  "items": 34
+ },
+ {
+  "swf": "goblinTrajes",
+  "items": 4
+ },
+ {
+  "swf": "godzillaKK",
+  "items": 10
+ },
+ {
+  "swf": "gojira/wears",
+  "items": 15
+ },
+ {
+  "swf": "gorroRojo",
+  "items": 24
+ },
+ {
+  "swf": "gorroRojo2017/wears",
+  "items": 14
+ },
+ {
+  "swf": "gorroRojo2024",
+  "items": 10
+ },
+ {
+  "swf": "granja",
+  "items": 118
+ },
+ {
+  "swf": "granjaCatalogo",
+  "items": 8
+ },
+ {
+  "swf": "greek",
+  "items": 10
+ },
+ {
+  "swf": "hairdressing",
+  "items": 35
+ },
+ {
+  "swf": "hairs1",
+  "items": 122
+ },
+ {
+  "swf": "hairs2",
+  "items": 32
+ },
+ {
+  "swf": "hairsGradient",
+  "items": 16
+ },
+ {
+  "swf": "halloween",
+  "items": 8
+ },
+ {
+  "swf": "halloween2014",
+  "items": 21
+ },
+ {
+  "swf": "halloween2015",
+  "items": 33
+ },
+ {
+  "swf": "halloween2017/wears",
+  "items": 41
+ },
+ {
+  "swf": "halloween2018/props",
+  "items": 18
+ },
+ {
+  "swf": "halloween2018/props2",
+  "items": 1
+ },
+ {
+  "swf": "halloween2021",
+  "items": 2
+ },
+ {
+  "swf": "halloween2022",
+  "items": 13
+ },
+ {
+  "swf": "halloween2023/props",
+  "items": 1
+ },
+ {
+  "swf": "halloween2023/wears",
+  "items": 13
+ },
+ {
+  "swf": "halloween2025",
+  "items": 36
+ },
+ {
+  "swf": "halloween2026",
+  "items": 23
+ },
+ {
+  "swf": "halloween3",
+  "items": 1
+ },
+ {
+  "swf": "halloween4",
+  "items": 12
+ },
+ {
+  "swf": "halloween5",
+  "items": 4
+ },
+ {
+  "swf": "halloween6",
+  "items": 31
+ },
+ {
+  "swf": "halloweenClothes",
+  "items": 54
+ },
+ {
+  "swf": "havana",
+  "items": 26
+ },
+ {
+  "swf": "havanna",
+  "items": 31
+ },
+ {
+  "swf": "heartStop",
+  "items": 11
+ },
+ {
+  "swf": "hobbit",
+  "items": 6
+ },
+ {
+  "swf": "homenajeMaradona",
+  "items": 2
+ },
+ {
+  "swf": "hotelTransylvania",
+  "items": 6
+ },
+ {
+  "swf": "huevosdragon",
+  "items": 3
+ },
+ {
+  "swf": "ice",
+  "items": 22
+ },
+ {
+  "swf": "icecream",
+  "items": 39
+ },
+ {
+  "swf": "ingravidez",
+  "items": 11
+ },
+ {
+  "swf": "insects",
+  "items": 46
+ },
+ {
+  "swf": "insects2",
+  "items": 19
+ },
+ {
+  "swf": "interacciones",
+  "items": 2
+ },
+ {
+  "swf": "internetClothes",
+  "items": 24
+ },
+ {
+  "swf": "internetClothes2",
+  "items": 31
+ },
+ {
+  "swf": "invisibles/halloween2018",
+  "items": 5
+ },
+ {
+  "swf": "invisibles/unreleased",
+  "items": 4
+ },
+ {
+  "swf": "iphone",
+  "items": 13
+ },
+ {
+  "swf": "islandClothes",
+  "items": 15
+ },
+ {
+  "swf": "islandReliquias",
+  "items": 35
+ },
+ {
+  "swf": "jobClothes",
+  "items": 26
+ },
+ {
+  "swf": "joyeria2018/wears",
+  "items": 37
+ },
+ {
+  "swf": "jumbo",
+  "items": 12
+ },
+ {
+  "swf": "jungla",
+  "items": 11
+ },
+ {
+  "swf": "jurasicIsland",
+  "items": 8
+ },
+ {
+  "swf": "kda2018/wears",
+  "items": 4
+ },
+ {
+  "swf": "kimetsuClothes",
+  "items": 12
+ },
+ {
+  "swf": "kitchen",
+  "items": 38
+ },
+ {
+  "swf": "kitty",
+  "items": 13
+ },
+ {
+  "swf": "lamps",
+  "items": 20
+ },
+ {
+  "swf": "lan",
+  "items": 1
+ },
+ {
+  "swf": "libroDeLaVida",
+  "items": 3
+ },
+ {
+  "swf": "live",
+  "items": 5
+ },
+ {
+  "swf": "llama",
+  "items": 1
+ },
+ {
+  "swf": "luna",
+  "items": 13
+ },
+ {
+  "swf": "madagascar",
+  "items": 2
+ },
+ {
+  "swf": "magia",
+  "items": 30
+ },
+ {
+  "swf": "maquillajes",
+  "items": 60
+ },
+ {
+  "swf": "masks",
+  "items": 10
+ },
+ {
+  "swf": "medals",
+  "items": 6
+ },
+ {
+  "swf": "medieval",
+  "items": 17
+ },
+ {
+  "swf": "merlinaClothes",
+  "items": 12
+ },
+ {
+  "swf": "millionaire",
+  "items": 12
+ },
+ {
+  "swf": "mime",
+  "items": 15
+ },
+ {
+  "swf": "mistery2026",
+  "items": 29
+ },
+ {
+  "swf": "momia",
+  "items": 6
+ },
+ {
+  "swf": "mostaza",
+  "items": 33
+ },
+ {
+  "swf": "movistar",
+  "items": 8
+ },
+ {
+  "swf": "mundial",
+  "items": 14
+ },
+ {
+  "swf": "mundial2018/wears",
+  "items": 23
+ },
+ {
+  "swf": "mundial2022/prizes",
+  "items": 7
+ },
+ {
+  "swf": "mundial2022/props",
+  "items": 6
+ },
+ {
+  "swf": "mundial2026/props",
+  "items": 6
+ },
+ {
+  "swf": "mundialClothes",
+  "items": 53
+ },
+ {
+  "swf": "mundialClothes2",
+  "items": 47
+ },
+ {
+  "swf": "navidad2015",
+  "items": 39
+ },
+ {
+  "swf": "navidad2016/wears",
+  "items": 41
+ },
+ {
+  "swf": "navidad2017/wears",
+  "items": 13
+ },
+ {
+  "swf": "navidad2018/album",
+  "items": 48
+ },
+ {
+  "swf": "navidad2018/props",
+  "items": 11
+ },
+ {
+  "swf": "navidad20_quest",
+  "items": 3
+ },
+ {
+  "swf": "negatividad",
+  "items": 28
+ },
+ {
+  "swf": "nieve",
+  "items": 15
+ },
+ {
+  "swf": "nik",
+  "items": 35
+ },
+ {
+  "swf": "ninja",
+  "items": 5
+ },
+ {
+  "swf": "nursery",
+  "items": 18
+ },
+ {
+  "swf": "olimpicos",
+  "items": 27
+ },
+ {
+  "swf": "paintings",
+  "items": 34
+ },
+ {
+  "swf": "parqueDiversiones/props",
+  "items": 9
+ },
+ {
+  "swf": "parqueDiversiones/wears",
+  "items": 84
+ },
+ {
+  "swf": "party",
+  "items": 23
+ },
+ {
+  "swf": "party2017/props",
+  "items": 4
+ },
+ {
+  "swf": "pascuas2018/props",
+  "items": 37
+ },
+ {
+  "swf": "pascuas2018/wears",
+  "items": 8
+ },
+ {
+  "swf": "pascuas2019/props",
+  "items": 43
+ },
+ {
+  "swf": "pascuas2020",
+  "items": 26
+ },
+ {
+  "swf": "peluqueria2017/wears",
+  "items": 4
+ },
+ {
+  "swf": "personajes",
+  "items": 4
+ },
+ {
+  "swf": "pet",
+  "items": 11
+ },
+ {
+  "swf": "pet2",
+  "items": 1
+ },
+ {
+  "swf": "pet3",
+  "items": 2
+ },
+ {
+  "swf": "petClothes",
+  "items": 96
+ },
+ {
+  "swf": "petFood",
+  "items": 7
+ },
+ {
+  "swf": "petShop",
+  "items": 1
+ },
+ {
+  "swf": "petToys",
+  "items": 1
+ },
+ {
+  "swf": "phones",
+  "items": 31
+ },
+ {
+  "swf": "photos",
+  "items": 22
+ },
+ {
+  "swf": "picapon",
+  "items": 11
+ },
+ {
+  "swf": "pijamada",
+  "items": 23
+ },
+ {
+  "swf": "pijamadaClothes",
+  "items": 10
+ },
+ {
+  "swf": "piletas",
+  "items": 6
+ },
+ {
+  "swf": "piratas",
+  "items": 12
+ },
+ {
+  "swf": "pitufos",
+  "items": 3
+ },
+ {
+  "swf": "plant",
+  "items": 12
+ },
+ {
+  "swf": "plants",
+  "items": 41
+ },
+ {
+  "swf": "plaza",
+  "items": 10
+ },
+ {
+  "swf": "plusbelle",
+  "items": 20
+ },
+ {
+  "swf": "plutonita",
+  "items": 8
+ },
+ {
+  "swf": "pocimaQuest",
+  "items": 1
+ },
+ {
+  "swf": "pools",
+  "items": 3
+ },
+ {
+  "swf": "potions",
+  "items": 16
+ },
+ {
+  "swf": "prehistoric",
+  "items": 14
+ },
+ {
+  "swf": "premiosPanini",
+  "items": 18
+ },
+ {
+  "swf": "presidentes2019/wears",
+  "items": 28
+ },
+ {
+  "swf": "primavera2015",
+  "items": 17
+ },
+ {
+  "swf": "primavera2020",
+  "items": 61
+ },
+ {
+  "swf": "prince",
+  "items": 14
+ },
+ {
+  "swf": "princeClothes",
+  "items": 24
+ },
+ {
+  "swf": "privateAticFloors1",
+  "items": 4
+ },
+ {
+  "swf": "privateAticFloors2",
+  "items": 12
+ },
+ {
+  "swf": "privateAticWalls1",
+  "items": 3
+ },
+ {
+  "swf": "privateHomeFloors1",
+  "items": 38
+ },
+ {
+  "swf": "privateHomeFloors2",
+  "items": 21
+ },
+ {
+  "swf": "privateHomeFloors3",
+  "items": 22
+ },
+ {
+  "swf": "privateHomeFloors4",
+  "items": 14
+ },
+ {
+  "swf": "privateHomeRoofs1",
+  "items": 9
+ },
+ {
+  "swf": "privateHomeSkys1",
+  "items": 8
+ },
+ {
+  "swf": "privateHomeWalls1",
+  "items": 58
+ },
+ {
+  "swf": "privateHomeWalls2",
+  "items": 27
+ },
+ {
+  "swf": "privateHomeWalls3",
+  "items": 47
+ },
+ {
+  "swf": "privateHomeWalls4",
+  "items": 11
+ },
+ {
+  "swf": "privateRoom",
+  "items": 1
+ },
+ {
+  "swf": "profesiones",
+  "items": 130
+ },
+ {
+  "swf": "promocion",
+  "items": 15
+ },
+ {
+  "swf": "pruebas",
+  "items": 17
+ },
+ {
+  "swf": "rancho",
+  "items": 6
+ },
+ {
+  "swf": "recycling",
+  "items": 9
+ },
+ {
+  "swf": "regalos",
+  "items": 13
+ },
+ {
+  "swf": "retro",
+  "items": 15
+ },
+ {
+  "swf": "retroClothes",
+  "items": 68
+ },
+ {
+  "swf": "reunion",
+  "items": 9
+ },
+ {
+  "swf": "reyes",
+  "items": 13
+ },
+ {
+  "swf": "reyes2017/deco",
+  "items": 1
+ },
+ {
+  "swf": "reyes2017/wears",
+  "items": 12
+ },
+ {
+  "swf": "reyMomo2018/props",
+  "items": 10
+ },
+ {
+  "swf": "river2017/deco",
+  "items": 10
+ },
+ {
+  "swf": "river2017/props",
+  "items": 10
+ },
+ {
+  "swf": "river2017/wears",
+  "items": 36
+ },
+ {
+  "swf": "robo",
+  "items": 3
+ },
+ {
+  "swf": "robo/props",
+  "items": 6
+ },
+ {
+  "swf": "robots",
+  "items": 5
+ },
+ {
+  "swf": "rockstar",
+  "items": 13
+ },
+ {
+  "swf": "ruedaAmor",
+  "items": 28
+ },
+ {
+  "swf": "ruletaPrizes",
+  "items": 9
+ },
+ {
+  "swf": "salitaMedica",
+  "items": 20
+ },
+ {
+  "swf": "salitaMedicaAssets",
+  "items": 24
+ },
+ {
+  "swf": "sanvalentin",
+  "items": 10
+ },
+ {
+  "swf": "sanValentin2018/wears",
+  "items": 7
+ },
+ {
+  "swf": "sanValentin2019/props",
+  "items": 1
+ },
+ {
+  "swf": "sanValentin2021/final",
+  "items": 5
+ },
+ {
+  "swf": "sanValentin2021/wears",
+  "items": 11
+ },
+ {
+  "swf": "science",
+  "items": 5
+ },
+ {
+  "swf": "sea",
+  "items": 17
+ },
+ {
+  "swf": "seaFishes",
+  "items": 43
+ },
+ {
+  "swf": "seats",
+  "items": 62
+ },
+ {
+  "swf": "serenito",
+  "items": 81
+ },
+ {
+  "swf": "serenito2017/deco",
+  "items": 39
+ },
+ {
+  "swf": "serenito2017/props",
+  "items": 11
+ },
+ {
+  "swf": "serenito2017/wears",
+  "items": 38
+ },
+ {
+  "swf": "seretubers2017/deco",
+  "items": 23
+ },
+ {
+  "swf": "session",
+  "items": 13
+ },
+ {
+  "swf": "shopping2017/localPintureria",
+  "items": 2
+ },
+ {
+  "swf": "shopping2017/localVestidores",
+  "items": 12
+ },
+ {
+  "swf": "signals",
+  "items": 3
+ },
+ {
+  "swf": "signs",
+  "items": 3
+ },
+ {
+  "swf": "sky",
+  "items": 3
+ },
+ {
+  "swf": "snoopy",
+  "items": 5
+ },
+ {
+  "swf": "snow",
+  "items": 1
+ },
+ {
+  "swf": "sotano",
+  "items": 8
+ },
+ {
+  "swf": "space",
+  "items": 19
+ },
+ {
+  "swf": "spooky",
+  "items": 34
+ },
+ {
+  "swf": "sportClothes",
+  "items": 93
+ },
+ {
+  "swf": "sports",
+  "items": 21
+ },
+ {
+  "swf": "springClothes",
+  "items": 34
+ },
+ {
+  "swf": "spy",
+  "items": 11
+ },
+ {
+  "swf": "square",
+  "items": 14
+ },
+ {
+  "swf": "squid",
+  "items": 8
+ },
+ {
+  "swf": "squidGame",
+  "items": 10
+ },
+ {
+  "swf": "summer",
+  "items": 14
+ },
+ {
+  "swf": "summer2016",
+  "items": 11
+ },
+ {
+  "swf": "summer2020",
+  "items": 21
+ },
+ {
+  "swf": "summerClothes",
+  "items": 95
+ },
+ {
+  "swf": "superclasico/props",
+  "items": 4
+ },
+ {
+  "swf": "superheroes",
+  "items": 17
+ },
+ {
+  "swf": "superHeroes16",
+  "items": 8
+ },
+ {
+  "swf": "superHeroesTrajes",
+  "items": 13
+ },
+ {
+  "swf": "sweaterClothes",
+  "items": 29
+ },
+ {
+  "swf": "tables",
+  "items": 35
+ },
+ {
+  "swf": "taller",
+  "items": 2
+ },
+ {
+  "swf": "tamagotchi",
+  "items": 5
+ },
+ {
+  "swf": "techosDecoracion",
+  "items": 24
+ },
+ {
+  "swf": "tecno",
+  "items": 1
+ },
+ {
+  "swf": "teenClothes",
+  "items": 102
+ },
+ {
+  "swf": "teenTitans",
+  "items": 5
+ },
+ {
+  "swf": "therians",
+  "items": 6
+ },
+ {
+  "swf": "toys",
+  "items": 73
+ },
+ {
+  "swf": "toys2",
+  "items": 2
+ },
+ {
+  "swf": "transport",
+  "items": 101
+ },
+ {
+  "swf": "transport2",
+  "items": 53
+ },
+ {
+  "swf": "tribusUrbanas",
+  "items": 43
+ },
+ {
+  "swf": "underground/props",
+  "items": 16
+ },
+ {
+  "swf": "unicef",
+  "items": 2
+ },
+ {
+  "swf": "unicefClothes",
+  "items": 4
+ },
+ {
+  "swf": "uniforms",
+  "items": 4
+ },
+ {
+  "swf": "vacuna",
+  "items": 2
+ },
+ {
+  "swf": "versus",
+  "items": 21
+ },
+ {
+  "swf": "vestidores/pascuas",
+  "items": 2
+ },
+ {
+  "swf": "viajesCereza",
+  "items": 8
+ },
+ {
+  "swf": "viajesDorado",
+  "items": 3
+ },
+ {
+  "swf": "viajesJapon",
+  "items": 32
+ },
+ {
+  "swf": "viajesLumiere",
+  "items": 1
+ },
+ {
+  "swf": "virtualGoods",
+  "items": 100
+ },
+ {
+  "swf": "virtualGoods2",
+  "items": 57
+ },
+ {
+  "swf": "virtualGoods3",
+  "items": 72
+ },
+ {
+  "swf": "visa",
+  "items": 19
+ },
+ {
+  "swf": "volcan",
+  "items": 14
+ },
+ {
+  "swf": "vueltaCole2018/props",
+  "items": 27
+ },
+ {
+  "swf": "vueltaCole2018/wears",
+  "items": 22
+ },
+ {
+  "swf": "waterPark",
+  "items": 5
+ },
+ {
+  "swf": "waterPark/deco",
+  "items": 6
+ },
+ {
+  "swf": "waterPark/wears",
+  "items": 38
+ },
+ {
+  "swf": "wedding",
+  "items": 68
+ },
+ {
+  "swf": "wedding2",
+  "items": 8
+ },
+ {
+  "swf": "western",
+  "items": 24
+ },
+ {
+  "swf": "winter2025",
+  "items": 8
+ },
+ {
+  "swf": "winterClothes",
+  "items": 42
+ },
+ {
+  "swf": "winterClothes2",
+  "items": 7
+ },
+ {
+  "swf": "yetiFiesta",
+  "items": 1
+ },
+ {
+  "swf": "YoBackgrounds",
+  "items": 1
+ },
+ {
+  "swf": "yogurt",
+  "items": 74
+ },
+ {
+  "swf": "zapatos",
+  "items": 9
+ },
+ {
+  "swf": "zeroZone",
+  "items": 16
+ },
+ {
+  "swf": "zombies",
+  "items": 15
+ }
+]
