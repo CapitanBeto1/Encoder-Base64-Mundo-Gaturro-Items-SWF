@@ -71,6 +71,7 @@ El instalador incluye, sin modificarlos:
 
 - **[JPEXS Free Flash Decompiler (FFDec)](https://github.com/jindrapetrik/jpexs-decompiler)** 26.3.0, licencia GPL v3. Se usa como programa aparte para exportar las imágenes de los Items. Su código fuente está en su repositorio.
 - **[Eclipse Temurin](https://adoptium.net) JRE** 21, licencia GPL v2 con Classpath Exception. Lo necesita FFDec.
+- **[Fraunces](https://github.com/undercasetype/Fraunces)**, licencia SIL Open Font License 1.1: la letra de la interfaz (alternativa libre a Cooper Black, la del juego). Va con su licencia en `src/mgitems/ui/fuentes/`.
 - Bibliotecas de Python empaquetadas con PyInstaller, entre ellas [pywebview](https://github.com/r0x0r/pywebview) (BSD) y [pythonnet](https://github.com/pythonnet/pythonnet) (MIT).
 
 Los textos de esas licencias van dentro de la carpeta del programa instalado.
