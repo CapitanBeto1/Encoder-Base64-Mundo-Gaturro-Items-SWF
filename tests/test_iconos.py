@@ -174,7 +174,7 @@ def _ffdec_disponible() -> bool:
     return True
 
 
-@pytest.mark.skipif(not _ffdec_disponible(), reason="Hace falta Java y FFDec (scripts/obtener_ffdec.py)")
+@pytest.mark.skipif(not _ffdec_disponible(), reason="Hace falta Java y FFDec (scripts/obtener_binarios.py)")
 def test_con_ffdec_real_cada_item_tiene_una_imagen_png(sistema, tmp_path):
     nucleo = Nucleo(sistema, catalogo=[])
     swf = tmp_path / "clothes1.swf"
