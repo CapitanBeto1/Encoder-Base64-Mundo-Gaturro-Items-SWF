@@ -43,7 +43,10 @@
     </section>
 
     <section class="panel">
-      <h2>Encode</h2>
+      <div class="encabezado-lista">
+        <h2>Encode</h2>
+        <button id="importar" class="enlace" disabled>Importar Encode…</button>
+      </div>
       <p class="ayuda" id="resumen">Todavía no generaste ningún Encode.</p>
       <textarea id="encode" readonly spellcheck="false"></textarea>
       <div class="acciones">
@@ -54,6 +57,22 @@
       <p id="mensaje-encode" class="mensaje" role="status" aria-live="polite"></p>
     </section>
   </main>
+
+  <dialog id="dialogo-importar">
+    <form id="form-importar" class="panel">
+      <h2>Importar Encode</h2>
+      <label for="texto-importar" class="ayuda">
+        Pegá un Encode o abrí un archivo .txt. Los Items que contiene reemplazan a los de la lista.
+      </label>
+      <textarea id="texto-importar" spellcheck="false"></textarea>
+      <p id="mensaje-importar" class="mensaje" role="status" aria-live="polite"></p>
+      <div class="acciones">
+        <button type="submit" class="primario">Importar</button>
+        <button type="button" id="importar-archivo">Desde archivo…</button>
+        <button type="button" id="cancelar-importar" class="derecha">Cancelar</button>
+      </div>
+    </form>
+  </dialog>
 
   <script src="app.js"></script>
 </body>

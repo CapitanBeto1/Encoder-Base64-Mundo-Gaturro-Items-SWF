@@ -13,7 +13,7 @@ from mgitems.items import (
     separar_prefijos,
     separar_rutas,
 )
-from mgitems.script import codificar, generar_script
+from mgitems.script import EncodeInvalido, codificar, decodificar, generar_script, leer_script
 from mgitems.swf import SwfInvalido, leer_clases
 
 
@@ -62,16 +62,65 @@ class Nucleo:
             }
         return {"ok": True, "items": rutas}
 
-    def generar_encode(self, items: str | list[str]) -> dict:
-        """Encode que agrega los Items: una lista de rutas, o texto como el de `interpretar_items`."""
-        texto = items if isinstance(items, str) else "\n".join(items)
-        interpretados = self.interpretar_items(texto)
-        if not interpretados["ok"]:
-            return interpretados
+    def generar_encode(self, items: str | list[str | dict]) -> dict:
+        """Encode que agrega los Items en su cantidad.
 
-        rutas = interpretados["items"]
-        script = generar_script(rutas)
-        return {"ok": True, "items": rutas, "script": script, "encode": codificar(script)}
+        `items` es texto como el de `interpretar_items` (cantidad 1 cada uno) o una
+        lista donde cada elemento es una ruta (cantidad 1) o `{"ruta", "cantidad"}`.
+        """
+        if isinstance(items, str):
+            interpretados = self.interpretar_items(items)
+            if not interpretados["ok"]:
+                return interpretados
+            items = interpretados["items"]
+
+        pedidos = [(i, 1) if isinstance(i, str) else (i.get("ruta", ""), i.get("cantidad", 1)) for i in items]
+        if not pedidos:
+            return {"ok": False, "error": "Agregá al menos un Item a la lista."}
+
+        invalidas = [ruta for ruta, _ in pedidos if not es_ruta_valida(ruta)]
+        if invalidas:
+            return {
+                "ok": False,
+                "error": "Estos Items no tienen el formato <swf>.<Clase>: " + ", ".join(invalidas),
+                "invalidas": invalidas,
+            }
+        cantidades_invalidas = [ruta for ruta, cantidad in pedidos if _cantidad(cantidad) is None]
+        if cantidades_invalidas:
+            return {
+                "ok": False,
+                "error": "La cantidad tiene que ser un número entero mayor que 0: " + ", ".join(cantidades_invalidas),
+            }
+
+        pedidos = [(ruta, _cantidad(cantidad)) for ruta, cantidad in pedidos]
+        script = generar_script(pedidos)
+        return {"ok": True, "items": _como_items(pedidos), "script": script, "encode": codificar(script)}
+
+    def importar_encode(self, encode: str) -> dict:
+        """Items y cantidades que agrega un Encode existente."""
+        try:
+            script = decodificar(encode)
+        except EncodeInvalido as e:
+            return {"ok": False, "error": f"{e}."}
+
+        pedidos, otros_comandos = leer_script(script)
+        validos = [(ruta, cantidad) for ruta, cantidad in pedidos if es_ruta_valida(ruta) and cantidad > 0]
+        if not validos:
+            return {"ok": False, "error": "Este Encode no agrega ningún Item."}
+        return {
+            "ok": True,
+            "items": _como_items(validos),
+            "ignorados": [ruta for ruta, cantidad in pedidos if (ruta, cantidad) not in validos],
+            "otros_comandos": otros_comandos,
+            "script": script,
+        }
+
+    def importar_encode_de_archivo(self, ruta: str) -> dict:
+        try:
+            contenido = Path(ruta).read_text(encoding="utf-8", errors="replace")
+        except OSError as e:
+            return {"ok": False, "error": f"No se pudo abrir el archivo: {e.strerror or e}"}
+        return self.importar_encode(contenido)
 
     def guardar_encode(self, encode: str, ruta: str) -> dict:
         try:
@@ -79,3 +128,18 @@ class Nucleo:
         except OSError as e:
             return {"ok": False, "error": f"No se pudo guardar el archivo: {e.strerror or e}"}
         return {"ok": True, "ruta": ruta}
+
+
+def _cantidad(valor) -> int | None:
+    """La cantidad como entero mayor que 0, o None si no es válida (la interfaz puede mandar texto)."""
+    if isinstance(valor, bool):
+        return None
+    if isinstance(valor, str) and valor.strip().isdigit():
+        valor = int(valor)
+    if isinstance(valor, float) and valor.is_integer():
+        valor = int(valor)
+    return valor if isinstance(valor, int) and valor > 0 else None
+
+
+def _como_items(pedidos: list[tuple[str, int]]) -> list[dict]:
+    return [{"ruta": ruta, "cantidad": cantidad} for ruta, cantidad in pedidos]
