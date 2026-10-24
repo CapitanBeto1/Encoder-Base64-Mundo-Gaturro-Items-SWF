@@ -62,6 +62,7 @@
   <nav class="pestanas" role="tablist">
     <button id="pestana-agregar" class="pestana" role="tab" aria-selected="true" aria-controls="vista-agregar">Agregar Items</button>
     <button id="pestana-trucar" class="pestana" role="tab" aria-selected="false" aria-controls="vista-trucar">Trucar Prenda</button>
+    <button id="pestana-looks" class="pestana" role="tab" aria-selected="false" aria-controls="vista-looks">Looks</button>
   </nav>
 
   <main class="paneles">
@@ -136,6 +137,43 @@
           <ul id="resultados-parte" class="resultados-swf" role="listbox" hidden></ul>
         </div>
         <div id="resumen-truco" class="resumen-truco">Abrí un SWF y elegí la Prenda base, la Pieza y la Parte del cuerpo.</div>
+      </div>
+
+      <div id="vista-looks" class="vista" role="tabpanel" hidden>
+        <div class="encabezado-lista">
+          <h2>Mis Looks</h2>
+          <button id="nuevo-look" class="enlace">+ Nuevo Look</button>
+        </div>
+        <div id="lista-looks" class="lista-looks"></div>
+
+        <div class="fila">
+          <span class="ayuda etiqueta-campo">Nombre:</span>
+          <input id="nombre-look" type="text" spellcheck="false" autocomplete="off" placeholder="Por ejemplo: Rey">
+        </div>
+        <div class="fila">
+          <span class="ayuda etiqueta-campo">Prenda base:</span>
+          <div class="selector-swf">
+            <input id="buscar-base-look" type="text" spellcheck="false" autocomplete="off"
+                   placeholder="Una Prenda del SWF abierto (si no elegís, se propone una)"
+                   role="combobox" aria-expanded="false" aria-controls="resultados-base-look" aria-autocomplete="list">
+            <ul id="resultados-base-look" class="resultados-swf con-iconos" role="listbox" hidden></ul>
+          </div>
+        </div>
+        <div class="fila">
+          <span class="ayuda etiqueta-campo">Piezas de:</span>
+          <div class="selector-swf">
+            <input id="buscar-swf-look" type="text" spellcheck="false" autocomplete="off"
+                   placeholder="El SWF abierto (o elegí otro del juego)"
+                   role="combobox" aria-expanded="false" aria-controls="resultados-swf-look" aria-autocomplete="list">
+            <ul id="resultados-swf-look" class="resultados-swf" role="listbox" hidden></ul>
+          </div>
+        </div>
+        <ul id="partes-look" class="lista partes"></ul>
+        <div class="acciones">
+          <button id="guardar-look">Guardar</button>
+          <button id="duplicar-look">Duplicar</button>
+          <button id="borrar-look">Borrar</button>
+        </div>
       </div>
       <p id="mensaje" class="mensaje" role="status" aria-live="polite"></p>
     </section>

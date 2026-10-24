@@ -268,9 +268,81 @@ button.derecha { margin-left: auto; }
 .vista[hidden] { display: none; }
 
 /* Trucar no tiene una lista que se achique: si no entra, la vista entera se desplaza. */
-#vista-trucar {
+#vista-trucar,
+#vista-looks {
   overflow-y: auto;
   padding-right: 4px;
+}
+
+/* Looks guardados: fichas; la del Look abierto, amarilla. */
+.lista-looks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+button.chip-look {
+  padding: 4px 12px;
+  border-width: 2px;
+  border-radius: 10px;
+  font-size: 13px;
+  text-transform: none;
+}
+
+button.chip-look[aria-pressed="true"] {
+  background: linear-gradient(var(--amarillo), var(--amarillo-oscuro));
+  border-color: var(--amarillo-borde);
+  box-shadow: inset 0 0 0 1px var(--amarillo-contorno), 0 3px 0 rgba(90, 70, 0, 0.35);
+}
+
+.vacia-chica {
+  color: var(--blanco);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.6);
+}
+
+.etiqueta-campo {
+  flex: none;
+  width: 92px;
+}
+
+/* Partes del cuerpo de un Look: rótulo, imagen, Pieza, selector y quitar. */
+#partes-look {
+  flex: none;
+  min-height: auto;
+  overflow: visible;
+}
+
+.partes li .parte {
+  flex: none;
+  width: 124px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 2px 6px;
+  border-radius: 8px;
+  background: var(--rotulo);
+  color: var(--blanco);
+  font-size: 11px;
+  white-space: nowrap;
+  text-align: center;
+  text-transform: uppercase;
+  -webkit-text-stroke-width: 0.2px;
+}
+
+.partes li .nombre { font-size: 13px; }
+
+.icono.vacio {
+  background: rgba(255, 255, 255, 0.45);
+  box-shadow: inset 0 0 0 2px rgba(42, 93, 116, 0.25);
+}
+
+.selector-parte {
+  flex: 1;
+  min-width: 0;
+}
+
+.selector-parte input[type="text"] {
+  padding: 4px 8px;
+  font-size: 12px;
 }
 
 /* --- Paneles --- */
@@ -278,7 +350,8 @@ button.derecha { margin-left: auto; }
 .paneles {
   flex: 1;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  /* minmax(0, …): las dos columnas miden siempre lo mismo, aunque el contenido de una sea ancho. */
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 18px;
   padding: 12px 28px 22px;
   min-height: 0;

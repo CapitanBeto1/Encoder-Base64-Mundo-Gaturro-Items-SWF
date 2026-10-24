@@ -26,6 +26,7 @@ from mgitems.items import (
     separar_prefijos,
     separar_rutas,
 )
+from mgitems.looks import AlmacenLooks, Look, LookInvalido
 from mgitems.prendas import PARTES_DEL_CUERPO, CachePrendas, Prenda, PrendasFFDec, TruqueoFallido, reescribir_partes
 from mgitems.script import EncodeInvalido, codificar, decodificar, generar_script, leer_script
 from mgitems.swf import SwfInvalido, leer_simbolos
@@ -149,42 +150,46 @@ class Nucleo:
     def trucar_prenda(self, base: str, parte: str, pieza: str) -> dict:
         """Genera la Prenda trucada: `base` (una Prenda del SWF abierto) mostrando solo `pieza` en `parte`.
 
+        `pieza` es una Pieza del SWF abierto o de otro (`costumes.coronaRey_on`).
         Devuelve el Encode que la agrega; al entregarlo se entrega también el SWF trucado.
         """
         resultado = self.prendas()
         if not resultado["ok"]:
             return resultado
-        swf, data = self._swf_abierto, self._data_swf
-        prendas = self._prendas_del_swf_abierto()
-        if base not in prendas:
-            return {"ok": False, "error": f"{base} no es una Prenda de {swf}."}
         partes_validas = {p["id"] for p in resultado["partes_del_cuerpo"]}
         if parte not in partes_validas:
             return {"ok": False, "error": f"{parte} no es una Parte del cuerpo."}
-        swf_pieza, _, clase_pieza = pieza.rpartition(".")
-        if swf_pieza in ("", swf):
-            # Del mismo SWF se escribe sin el nombre del SWF, como hace el juego.
-            if clase_pieza not in self._piezas_del_swf:
-                return {"ok": False, "error": f"{clase_pieza} no es una Pieza de {swf}."}
-            valor = clase_pieza
-        else:
-            # De otro SWF se escribe "<swf>.<clase>": el juego la busca en ese SWF.
-            otras = self.piezas(swf_pieza)
-            if not otras["ok"]:
-                return {"ok": False, "error": f"No se pudo usar una Pieza de {swf_pieza}: {otras['error']}"}
-            if clase_pieza not in {p["clase"] for p in otras["piezas"]}:
-                return {"ok": False, "error": f"{clase_pieza} no es una Pieza de {swf_pieza}."}
-            valor = f"{swf_pieza}.{clase_pieza}"
-        partes = {parte: valor}
+        return self._trucar(self._swf_abierto, self._data_swf, base, {parte: pieza})
+
+    def _trucar(self, swf: str, data: bytes, base: str, partes: dict[str, str]) -> dict:
+        """Truca la Prenda `base` del SWF `swf` para que muestre `partes` (Parte del cuerpo → Pieza de cualquier SWF)."""
+        try:
+            prendas = self._prendas_de(swf, data)
+        except FFDecNoDisponible as e:
+            return {"ok": False, "error": f"{e}: no se pueden leer las Prendas."}
+        except (OSError, subprocess.SubprocessError) as e:
+            return {"ok": False, "error": f"No se pudieron leer las Prendas: {e}"}
+        if base not in prendas:
+            return {"ok": False, "error": f"{base} no es una Prenda de {swf}."}
+        if not partes:
+            return {"ok": False, "error": "Elegí al menos una Pieza."}
+
+        piezas_propias = set(piezas_del_swf([clase for _, clase in leer_simbolos(data)]))
+        valores = {}
+        for parte, pieza in partes.items():
+            valor, error = self._valor_de_pieza(swf, piezas_propias, pieza)
+            if error:
+                return {"ok": False, "error": error}
+            valores[parte] = valor
 
         try:
-            fuente = reescribir_partes(prendas[base].fuente, partes)
-            trucado = self._prendas_ffdec.trucar(data, base, fuente, dict(partes))
+            fuente = reescribir_partes(prendas[base].fuente, valores)
+            trucado = self._prendas_ffdec.trucar(data, base, fuente, dict(valores))
         except TruqueoFallido as e:
             return {"ok": False, "error": f"No se pudo trucar la Prenda: {e}."}
         except FFDecNoDisponible as e:
             return {"ok": False, "error": f"{e}: no se puede trucar."}
-        except (OSError, subprocess.SubprocessError) as e:
+        except (OSError, subprocess.SubprocessError, ValueError) as e:
             return {"ok": False, "error": f"No se pudo trucar la Prenda: {e}"}
 
         ruta = f"{swf}.{base}"
@@ -193,25 +198,136 @@ class Nucleo:
         self._trucos[encode] = {swf: trucado}
         return {
             "ok": True,
-            "prenda": {"ruta": ruta, "partes": dict(partes)},
+            "prenda": {"ruta": ruta, "partes": dict(valores)},
             "items": [{"ruta": ruta, "cantidad": 1}],
             "script": script,
             "encode": encode,
         }
 
+    def _valor_de_pieza(self, swf: str, piezas_propias: set[str], pieza: str) -> tuple[str | None, str | None]:
+        """(cómo se escribe la Pieza en `clothes` de una Prenda de `swf`, error)."""
+        swf_pieza, _, clase = pieza.rpartition(".")
+        if swf_pieza in ("", swf):
+            # Del mismo SWF se escribe sin el nombre del SWF, como hace el juego.
+            if clase not in piezas_propias:
+                return None, f"{clase} no es una Pieza de {swf}."
+            return clase, None
+        # De otro SWF se escribe "<swf>.<clase>": el juego la busca en ese SWF.
+        otras = self.piezas(swf_pieza)
+        if not otras["ok"]:
+            return None, f"No se pudo usar una Pieza de {swf_pieza}: {otras['error']}"
+        if clase not in {p["clase"] for p in otras["piezas"]}:
+            return None, f"{clase} no es una Pieza de {swf_pieza}."
+        return f"{swf_pieza}.{clase}", None
+
     def _prendas_del_swf_abierto(self) -> dict[str, Prenda]:
-        swf, data = self._swf_abierto, self._data_swf
+        return self._prendas_de(self._swf_abierto, self._data_swf)
+
+    def _prendas_de(self, swf: str, data: bytes) -> dict[str, Prenda]:
+        """Las Prendas de un SWF, leídas con FFDec una vez por versión y guardadas."""
         version = version_de(data)
         clave = (swf, version)
         if clave not in self._prendas:
             cache = CachePrendas(self._entorno.carpeta_cache() / "prendas")
             prendas = cache.leer(swf, version)
             if prendas is None:
+                items = items_del_swf([clase for _, clase in leer_simbolos(data)])
                 with self._candado_ffdec:
-                    prendas = self._prendas_ffdec.analizar(data, self._items_del_swf)
+                    prendas = self._prendas_ffdec.analizar(data, items)
                 cache.guardar(swf, version, prendas)
             self._prendas[clave] = prendas
         return self._prendas[clave]
+
+    # --- Looks ---
+
+    def partes_del_cuerpo(self) -> dict:
+        """Las Partes del cuerpo conocidas, con su nombre en español (no hace falta un SWF abierto)."""
+        return {"ok": True, "partes_del_cuerpo": [{"id": i, "nombre": n} for i, n in PARTES_DEL_CUERPO.items()]}
+
+    def looks(self) -> dict:
+        """Los Looks guardados, por nombre."""
+        try:
+            looks = self._almacen_looks().todos()
+        except OSError as e:
+            return {"ok": False, "error": f"No se pudieron leer los Looks: {e}"}
+        return {"ok": True, "looks": [asdict(l) for l in sorted(looks, key=lambda l: orden_natural(l.nombre))]}
+
+    def guardar_look(self, look: dict) -> dict:
+        """Guarda un Look nuevo (sin id) o los cambios de uno guardado."""
+        try:
+            guardado = self._almacen_looks().guardar(Look.desde(look))
+        except LookInvalido as e:
+            return {"ok": False, "error": str(e)}
+        except OSError as e:
+            return {"ok": False, "error": f"No se pudo guardar el Look: {e}"}
+        return {"ok": True, "look": asdict(guardado)}
+
+    def duplicar_look(self, id_look: str) -> dict:
+        """Una copia de un Look guardado, con otro nombre."""
+        try:
+            almacen = self._almacen_looks()
+            original = next((l for l in almacen.todos() if l.id == id_look), None)
+            if original is None:
+                return {"ok": False, "error": "Ese Look ya no existe."}
+            nombres = {l.nombre for l in almacen.todos()}
+            nombre = f"{original.nombre} (copia)"
+            n = 2
+            while nombre in nombres:
+                nombre = f"{original.nombre} (copia {n})"
+                n += 1
+            copia = almacen.guardar(Look(nombre, original.base, dict(original.partes)))
+        except OSError as e:
+            return {"ok": False, "error": f"No se pudo duplicar el Look: {e}"}
+        return {"ok": True, "look": asdict(copia)}
+
+    def borrar_look(self, id_look: str) -> dict:
+        try:
+            borrado = self._almacen_looks().borrar(id_look)
+        except OSError as e:
+            return {"ok": False, "error": f"No se pudo borrar el Look: {e}"}
+        return {"ok": True} if borrado else {"ok": False, "error": "Ese Look ya no existe."}
+
+    def aplicar_look(self, look: dict) -> dict:
+        """Genera la Prenda base modificada con todas las Piezas del Look y el Encode que la agrega.
+
+        Si el Look no tiene Prenda base, se propone una: la primera Prenda del SWF de su primera Pieza.
+        """
+        try:
+            look = Look.desde(look)
+        except LookInvalido as e:
+            return {"ok": False, "error": str(e)}
+        if not look.partes:
+            return {"ok": False, "error": "Elegí al menos una Pieza para el Look."}
+
+        base = look.base or self._proponer_base(look)
+        if base is None:
+            return {"ok": False, "error": "No se encontró una Prenda base para el Look: elegí una."}
+        swf, _, clase = base.rpartition(".")
+        if swf == self._swf_abierto:
+            data = self._data_swf
+        else:
+            obtenido = self._datos_de_otro_swf(swf)
+            if not obtenido["ok"]:
+                return {"ok": False, "error": f"No se pudo usar la Prenda base: {obtenido['error']}"}
+            data = obtenido["data"]
+        resultado = self._trucar(swf, data, clase, look.partes)
+        if resultado["ok"]:
+            resultado["look"] = {"nombre": look.nombre, "base": base, "base_propuesta": look.base is None}
+        return resultado
+
+    def _proponer_base(self, look: Look) -> str | None:
+        swf = next(iter(look.partes.values())).rpartition(".")[0]
+        obtenido = {"ok": True, "data": self._data_swf} if swf == self._swf_abierto else self._datos_de_otro_swf(swf)
+        if not obtenido["ok"]:
+            return None
+        try:
+            prendas = self._prendas_de(swf, obtenido["data"])
+        except (FFDecNoDisponible, OSError, subprocess.SubprocessError):
+            return None
+        return f"{swf}.{min(prendas, key=orden_natural)}" if prendas else None
+
+    def _almacen_looks(self) -> AlmacenLooks:
+        return AlmacenLooks(self._entorno.carpeta_programa() / "looks.json")
 
     def desactivar_reglas(self) -> dict:
         """Quita de Fiddler las reglas que puso el programa; las del jugador no se tocan."""

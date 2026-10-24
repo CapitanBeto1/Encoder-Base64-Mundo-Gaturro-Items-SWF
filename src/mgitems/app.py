@@ -41,6 +41,24 @@ class Puente:
     def trucar_prenda(self, base: str, parte: str, pieza: str) -> dict:
         return self._nucleo.trucar_prenda(base, parte, pieza)
 
+    def partes_del_cuerpo(self) -> dict:
+        return self._nucleo.partes_del_cuerpo()
+
+    def looks(self) -> dict:
+        return self._nucleo.looks()
+
+    def guardar_look(self, look: dict) -> dict:
+        return self._nucleo.guardar_look(look)
+
+    def duplicar_look(self, id_look: str) -> dict:
+        return self._nucleo.duplicar_look(id_look)
+
+    def borrar_look(self, id_look: str) -> dict:
+        return self._nucleo.borrar_look(id_look)
+
+    def aplicar_look(self, look: dict) -> dict:
+        return self._nucleo.aplicar_look(look)
+
     def preparar_iconos(self, swf: str | None = None) -> dict:
         return self._nucleo.preparar_iconos(swf)
 
