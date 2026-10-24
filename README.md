@@ -1,4 +1,4 @@
-> **En desarrollo:** se está construyendo una versión nueva en `src/mgitems/` (ver la spec en el issue #1). Para probarla: `python -m venv .venv`, `.venv/Scripts/python -m pip install -e .`, `.venv/Scripts/python scripts/obtener_ffdec.py` (para las imágenes; necesita Java) y `.venv/Scripts/python -m mgitems`. Lo que sigue describe el programa actual.
+> **En desarrollo:** se está construyendo una versión nueva en `src/mgitems/` (ver la spec en el issue #1). Para probarla: `python -m venv .venv`, `.venv/Scripts/python -m pip install -e .`, `.venv/Scripts/python scripts/obtener_binarios.py` (FFDec y Java, para las imágenes) y `.venv/Scripts/python -m mgitems`. El instalador para Windows se arma con `.venv/Scripts/python scripts/armar_instalador.py` (necesita Inno Setup 6). Lo que sigue describe el programa actual.
 
 Es un programa que de un SWF te deja buscar nombres de items (los que empiecen con la palabra que pongas) de Mundo Gaturro y te saca un texto codificado en Base64 que te agrega esos items al inventario de tu cuenta (se necesita Fiddler). Se usa ffdec para leer el SWF y regex para encontrar los nombres.
 
