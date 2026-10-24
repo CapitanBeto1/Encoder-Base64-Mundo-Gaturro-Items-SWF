@@ -7,6 +7,7 @@ versión del SWF salieron.
 
 import base64
 import hashlib
+import os
 import shutil
 import subprocess
 import sys
@@ -56,7 +57,7 @@ class ExportadorFFDec:
                 "-selectid", ids, "-select", cuadros, "-zoom", str(ZOOM),
                 "-format", "sprite:png", "-export", "sprite", temporal, str(swf),
             ]
-            subprocess.run(comando, capture_output=True, timeout=300, creationflags=self._SIN_VENTANA)
+            subprocess.run(comando, capture_output=True, timeout=300, env=_entorno_java(), creationflags=self._SIN_VENTANA)
             # FFDec deja cada sprite en `DefineSprite_<id>_<clase>/1.png`.
             destino.mkdir(parents=True, exist_ok=True)
             for carpeta in Path(temporal).iterdir():
@@ -101,6 +102,16 @@ class IconosItems:
             return "data:image/png;base64," + base64.b64encode(png.read_bytes()).decode("ascii")
         except OSError:
             return None
+
+
+def _entorno_java() -> dict[str, str]:
+    """Variables para Java: FFDec lee los JPEG de 4 componentes con un lector propio que usa un
+    módulo interno de Java; desde Java 9 hay que habilitarlo o el primero de esos JPEG aborta
+    toda la exportación. `JDK_JAVA_OPTIONS` la leen Java 9+ y Java 8 la ignora."""
+    entorno = dict(os.environ)
+    permiso = "--add-exports=java.desktop/com.sun.imageio.plugins.jpeg=ALL-UNNAMED"
+    entorno["JDK_JAVA_OPTIONS"] = f"{entorno.get('JDK_JAVA_OPTIONS', '')} {permiso}".strip()
+    return entorno
 
 
 def _carpeta_vendor() -> Path:

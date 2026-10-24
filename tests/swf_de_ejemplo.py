@@ -9,6 +9,7 @@ import struct
 import zlib
 
 TAG_FIN, TAG_SHOW_FRAME, TAG_DEFINE_SHAPE, TAG_PLACE_OBJECT2, TAG_DEFINE_SPRITE, TAG_SYMBOL_CLASS = 0, 1, 2, 26, 39, 76
+TAG_DEFINE_BITS_JPEG3 = 35
 LADO = 800  # twips (40 píxeles)
 
 
@@ -40,9 +41,41 @@ def _rect(xmin: int, xmax: int, ymin: int, ymax: int, bits: int = 13) -> bytes:
     return _Bits().u(bits, 5).s(xmin, bits).s(xmax, bits).s(ymin, bits).s(ymax, bits).bytes()
 
 
-def _cuadrado(id_forma: int, color: tuple[int, int, int]) -> bytes:
-    """DefineShape con un cuadrado relleno de un color."""
-    estilos = bytes([1, 0x00, *color]) + bytes([0])  # 1 relleno sólido, 0 líneas
+def _jpeg(id_imagen: int) -> bytes:
+    """DefineBitsJPEG3: una imagen JPEG chica con canal alfa (así guarda Flash los dibujos con transparencia)."""
+    import io
+
+    from PIL import Image
+
+    lado = 40
+    salida = io.BytesIO()
+    # JPEG de 4 componentes y sin segmentos APP, como algunos de Flash: FFDec los lee con su
+    # lector propio, que en Java 9+ necesita acceso a un módulo interno de JPEG.
+    Image.new("CMYK", (lado, lado), (20, 140, 220, 0)).save(salida, format="JPEG")
+    jpeg = _sin_segmentos_app(salida.getvalue())
+    alfa = zlib.compress(bytes([255]) * (lado * lado))
+    return _tag(TAG_DEFINE_BITS_JPEG3, struct.pack("<HI", id_imagen, len(jpeg)) + jpeg + alfa)
+
+
+def _sin_segmentos_app(jpeg: bytes) -> bytes:
+    """Quita los segmentos APP0–APP15 (JFIF, Adobe…) que siguen al inicio del JPEG."""
+    resto = jpeg[2:]
+    while resto[:1] == b"\xff" and 0xE0 <= resto[1] <= 0xEF:
+        resto = resto[2 + struct.unpack(">H", resto[2:4])[0]:]
+    return jpeg[:2] + resto
+
+
+def _relleno_imagen(id_imagen: int) -> bytes:
+    """Estilo de relleno con una imagen (bitmap recortado), escalada 20× (píxeles a twips)."""
+    escala = 20 << 16  # punto fijo 16.16
+    matriz = _Bits().u(1, 1).u(23, 5).s(escala, 23).s(escala, 23).u(0, 1).u(0, 5).bytes()
+    return bytes([0x41]) + struct.pack("<H", id_imagen) + matriz
+
+
+def _cuadrado(id_forma: int, color: tuple[int, int, int], id_imagen: int | None = None) -> bytes:
+    """DefineShape con un cuadrado relleno de un color, o de una imagen si se indica."""
+    relleno = _relleno_imagen(id_imagen) if id_imagen else bytes([0x00, *color])
+    estilos = bytes([1]) + relleno + bytes([0])  # 1 relleno, 0 líneas
     n = 13
     registros = _Bits().u(1, 4).u(0, 4)  # NumFillBits=1, NumLineBits=0
     registros.u(0, 1).u(0, 1).u(0, 1).u(1, 1).u(0, 1).u(1, 1)  # StyleChange: FillStyle1 + MoveTo
@@ -65,14 +98,19 @@ def _sprite(id_sprite: int, id_forma: int) -> bytes:
     return _tag(TAG_DEFINE_SPRITE, cuerpo)
 
 
-def crear_swf(clases: list[str], compresion: str = "CWS", con_dibujos: bool = False) -> bytes:
+def crear_swf(clases: list[str], compresion: str = "CWS", con_dibujos: bool = False,
+              con_jpeg: tuple[str, ...] = ()) -> bytes:
+    """`con_jpeg`: clases cuyo dibujo es una imagen JPEG en vez de un color."""
     tags = b""
     ids = list(range(1, len(clases) + 1))
     if con_dibujos:
-        # Cada clase n: forma con id 1000+n y sprite con id n.
-        for n in ids:
+        # Cada clase n: forma con id 1000+n, sprite con id n y, si es JPEG, imagen con id 2000+n.
+        for n, clase in zip(ids, clases):
             color = (40 * n % 256, 200 - 30 * n % 200, 120)
-            tags += _cuadrado(1000 + n, color) + _sprite(n, 1000 + n)
+            id_imagen = 2000 + n if clase in con_jpeg else None
+            if id_imagen:
+                tags += _jpeg(id_imagen)
+            tags += _cuadrado(1000 + n, color, id_imagen) + _sprite(n, 1000 + n)
     symbol_class = struct.pack("<H", len(clases))
     for id_simbolo, nombre in zip(ids, clases):
         symbol_class += struct.pack("<H", id_simbolo) + nombre.encode("utf-8") + b"\0"
