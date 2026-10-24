@@ -28,27 +28,33 @@ class ExportadorFFDec:
     def __init__(self, ffdec: FFDec | None = None):
         self._ffdec = ffdec or FFDec()
 
-    def exportar(self, swf: Path, simbolos: dict[int, str], destino: Path) -> None:
-        """Escribe `destino/<Clase>.png` para cada símbolo (id → nombre de clase) que se pueda dibujar."""
+    def exportar(self, swf: Path, simbolos: dict[int, str], destino: Path, formato: str = "png") -> None:
+        """Escribe `destino/<Clase>.<formato>` ("png" o "svg") para cada símbolo (id → nombre de clase) que se pueda dibujar.
+
+        El SVG conserva el punto de anclaje del símbolo y no se agranda.
+        """
         if not simbolos:
             return
         ids = ",".join(str(i) for i in simbolos)
         cuadros = ",".join(f"{i}:1" for i in simbolos)
+        zoom = ("-zoom", str(ZOOM)) if formato == "png" else ()
         with tempfile.TemporaryDirectory(prefix="mgitems-") as temporal:
             self._ffdec.ejecutar(
-                "-selectid", ids, "-select", cuadros, "-zoom", str(ZOOM),
-                "-format", "sprite:png", "-export", "sprite", temporal, str(swf),
+                "-selectid", ids, "-select", cuadros, *zoom,
+                "-format", f"sprite:{formato}", "-export", "sprite", temporal, str(swf),
             )
-            # FFDec deja cada sprite en `DefineSprite_<id>_<clase>/1.png`.
+            # FFDec deja cada sprite en `DefineSprite_<id>_<clase>/1.<formato>`.
             destino.mkdir(parents=True, exist_ok=True)
             for carpeta in Path(temporal).iterdir():
                 partes = carpeta.name.split("_", 2)
-                png = carpeta / "1.png"
-                if len(partes) >= 2 and partes[1].isdigit() and int(partes[1]) in simbolos and png.is_file():
-                    shutil.move(png, destino / f"{simbolos[int(partes[1])]}.png")
+                imagen = carpeta / f"1.{formato}"
+                if len(partes) >= 2 and partes[1].isdigit() and int(partes[1]) in simbolos and imagen.is_file():
+                    shutil.move(imagen, destino / f"{simbolos[int(partes[1])]}.{formato}")
 
 
 class IconosItems:
+    FORMATO = "png"
+
     def __init__(self, carpeta: Path, exportador: ExportadorFFDec):
         self._carpeta = carpeta
         self._exportador = exportador
@@ -71,7 +77,7 @@ class IconosItems:
         with tempfile.TemporaryDirectory(prefix="mgitems-") as temporal:
             archivo = Path(temporal) / "assets.swf"
             archivo.write_bytes(data)
-            self._exportador.exportar(archivo, simbolos, carpeta)
+            self._exportador.exportar(archivo, simbolos, carpeta, self.FORMATO)
         carpeta.mkdir(parents=True, exist_ok=True)
         (carpeta / "version").write_text(version, encoding="utf-8")
 

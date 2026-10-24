@@ -16,6 +16,7 @@ from mgitems.entorno import Entorno, Sistema
 from mgitems.entrega import PUERTO_FIDDLER_POR_DEFECTO, QUE_HACER_EN_EL_JUEGO, URL_LOLA, Entrega, PasoFallido, Procesos, SwfTrucado
 from mgitems.ffdec import FFDecNoDisponible
 from mgitems.fuente import URL_ASSETS, FuenteCDN, SinConexion, SwfNoEncontrado, Version
+from mgitems.gaturro import ANCLAS, COLOR_PELAJE, ImagenesPiezas, componer
 from mgitems.iconos import ExportadorFFDec, IconosItems, version_de
 from mgitems.items import (
     es_ruta_valida,
@@ -31,6 +32,7 @@ from mgitems.prendas import MOCHILA, PARTES_DEL_CUERPO, PRENDA, CacheItemsBase, 
 from mgitems.script import EncodeInvalido, codificar, decodificar, generar_script, leer_script
 from mgitems.swf import SwfInvalido, leer_simbolos
 
+_COLOR = re.compile(r"^#[0-9a-fA-F]{6}$")
 _NOMBRE_SWF = re.compile(r"^[A-Za-z0-9_\-]+(?:/[A-Za-z0-9_\-]+)*$")
 
 
@@ -599,6 +601,35 @@ class Nucleo:
             "items": [{"ruta": ruta, "icono": iconos.get(ruta)} for ruta in rutas[:limite]],
             "total": len(rutas),
         }
+
+    def gaturro(self, partes: dict, color: str | None = None) -> dict:
+        """El Gaturro (SVG) con una Pieza de cualquier SWF en cada Parte del cuerpo de `partes`.
+
+        Las imágenes de las Piezas de cada SWF se exportan una vez por versión (la primera vez
+        tarda unos segundos). Las Piezas sin imagen se listan en `sin_imagen` y el resto se dibuja igual.
+        """
+        if not isinstance(partes, dict):
+            return {"ok": False, "error": "Las Partes del cuerpo no tienen la forma esperada."}
+        color = color if isinstance(color, str) and _COLOR.match(color) else COLOR_PELAJE
+        elegidas = {p: r for p, r in partes.items() if p in ANCLAS and isinstance(r, str) and es_ruta_valida(r)}
+        sin_imagen = [r for p, r in partes.items() if p in ANCLAS and r not in elegidas.values()]
+        imagenes = ImagenesPiezas(self._entorno.carpeta_cache() / "piezas", self._exportador)
+        for swf in sorted({r.rpartition(".")[0] for r in elegidas.values()}):
+            obtenido = {"ok": True, "data": self._data_swf} if swf == self._swf_abierto else self._datos_de_otro_swf(swf)
+            if not obtenido["ok"]:
+                continue
+            simbolos = leer_simbolos(obtenido["data"])
+            piezas = set(piezas_del_swf([clase for _, clase in simbolos]))
+            try:
+                with self._candado_iconos:
+                    imagenes.preparar(swf, obtenido["data"], {i: c for i, c in simbolos if c in piezas})
+            except FFDecNoDisponible as e:
+                return {"ok": False, "sin_exportador": True, "error": f"{e}: no se puede dibujar al Gaturro."}
+            except (OSError, subprocess.SubprocessError):
+                continue
+        svgs = {p: imagenes.svg(r) for p, r in elegidas.items()}
+        sin_imagen += [elegidas[p] for p, svg in svgs.items() if svg is None]
+        return {"ok": True, "svg": componer({p: s for p, s in svgs.items() if s}, color), "sin_imagen": sin_imagen}
 
     def _iconos(self) -> IconosItems:
         return IconosItems(self._entorno.carpeta_cache() / "iconos", self._exportador)
