@@ -59,6 +59,11 @@
     <button id="ver-entorno" class="enlace">Ver qué falta</button>
   </div>
 
+  <nav class="pestanas" role="tablist">
+    <button id="pestana-agregar" class="pestana" role="tab" aria-selected="true" aria-controls="vista-agregar">Agregar Items</button>
+    <button id="pestana-trucar" class="pestana" role="tab" aria-selected="false" aria-controls="vista-trucar">Trucar Prenda</button>
+  </nav>
+
   <main class="paneles">
     <section class="panel">
       <h2>Buscar en un SWF</h2>
@@ -72,6 +77,7 @@
         <span id="swf" class="ayuda"><span id="nombre-swf">Ningún SWF abierto</span><span id="estado-imagenes"></span></span>
         <button id="abrir" class="enlace derecha" disabled>Abrir archivo…</button>
       </div>
+      <div id="vista-agregar" class="vista" role="tabpanel">
       <form id="form-buscar" class="fila">
         <div class="selector-swf">
           <input id="prefijos" type="text" spellcheck="false" autocomplete="off"
@@ -96,6 +102,23 @@
                placeholder="Agregar a mano: clothes1.remera5" disabled>
         <button id="agregar" disabled>Agregar</button>
       </form>
+      </div>
+
+      <div id="vista-trucar" class="vista" role="tabpanel" hidden>
+        <h2>Prenda base</h2>
+        <div class="selector-swf">
+          <input id="buscar-base" type="text" spellcheck="false" autocomplete="off" disabled
+                 placeholder="Elegí la Prenda que se va a trucar"
+                 role="combobox" aria-expanded="false" aria-controls="resultados-base" aria-autocomplete="list">
+          <ul id="resultados-base" class="resultados-swf con-iconos" role="listbox" hidden></ul>
+        </div>
+        <div class="encabezado-lista">
+          <h2>Piezas</h2>
+          <button id="restaurar-piezas" class="enlace" disabled title="Volver a las Piezas de la Prenda base">Como la original</button>
+        </div>
+        <ul id="partes" class="lista partes"></ul>
+        <p id="partes-vacia" class="ayuda vacia">Abrí un SWF y elegí una Prenda base.</p>
+      </div>
       <p id="mensaje" class="mensaje" role="status" aria-live="polite"></p>
     </section>
 

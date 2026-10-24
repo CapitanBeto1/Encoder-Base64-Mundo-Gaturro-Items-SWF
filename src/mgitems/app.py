@@ -32,6 +32,12 @@ class Puente:
     def abrir_swf_del_cdn(self, nombre: str) -> dict:
         return self._nucleo.abrir_swf_del_cdn(nombre)
 
+    def prendas(self) -> dict:
+        return self._nucleo.prendas()
+
+    def trucar_prenda(self, base: str, partes: dict) -> dict:
+        return self._nucleo.trucar_prenda(base, partes)
+
     def preparar_iconos(self) -> dict:
         return self._nucleo.preparar_iconos()
 

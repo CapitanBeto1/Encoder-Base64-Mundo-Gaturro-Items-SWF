@@ -13,6 +13,8 @@ import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from pathlib import Path, PureWindowsPath
 
+from mgitems.fuente import URL_ASSETS
+
 URL_LOLA = "https://cdn-ar.mundogaturro.com/juego/npc/lola.npc?cache=no%20cache"
 ARCHIVO_REGLAS = "AutoResponder.xml"
 ARCHIVO_RESPALDO = "AutoResponder.mgitems.bak"
@@ -158,6 +160,13 @@ class Paso:
     detalle: str = ""
 
 
+@dataclass
+class SwfTrucado:
+    nombre: str  # como en el CDN, con subcarpeta si la tiene: "clothes1", "antro2017/wears"
+    data: bytes
+    tamano_original: int  # el del SWF original en el CDN: el juego lo pide con ese número
+
+
 class PasoFallido(Exception):
     def __init__(self, detalle: str, que_hacer: str):
         super().__init__(detalle)
@@ -182,14 +191,24 @@ class Entrega:
         self.procesos = procesos
         self.pasos: list[Paso] = []
 
-    def entregar(self, encode: str) -> None:
-        """Lanza PasoFallido en el primer paso que falla; `self.pasos` dice hasta dónde se llegó."""
+    def entregar(self, encode: str, swfs_trucados: list["SwfTrucado"] = ()) -> None:
+        """Lanza PasoFallido en el primer paso que falla; `self.pasos` dice hasta dónde se llegó.
+
+        Cada SWF trucado se responde en lugar del original: el juego lo pide con su
+        tamaño en bytes como parámetro (`<swf>.swf?<bytes>`).
+        """
         self._paso("Cerrar Mundo Gaturro", self._cerrar_juego)
         self._paso("Cerrar Fiddler", self._cerrar_fiddler)
         destino = self.carpeta_entregas / "lola.txt"
         self._paso("Guardar el Encode", lambda: self._guardar_encode(destino, encode))
+        reglas = [("EXACT:" + URL_LOLA, destino)]
+        for trucado in swfs_trucados:
+            archivo = self.carpeta_entregas.joinpath("swf", *trucado.nombre.split("/")).with_suffix(".swf")
+            self._paso(f"Guardar el SWF trucado ({trucado.nombre})", lambda t=trucado, a=archivo: self._guardar_swf(a, t.data))
+            reglas.append((f"EXACT:{URL_ASSETS}{trucado.nombre}.swf?{trucado.tamano_original}", archivo))
         self._paso("Respaldar las reglas de Fiddler", self._respaldar)
-        self._paso("Escribir la regla de Lola", lambda: self._escribir([("EXACT:" + URL_LOLA, destino)]))
+        nombre_paso = "Escribir las reglas de Lola y del SWF trucado" if swfs_trucados else "Escribir la regla de Lola"
+        self._paso(nombre_paso, lambda: self._escribir(reglas))
         self._paso("Borrar el caché del juego", self._vaciar_cache)
         self._paso("Abrir Fiddler", self._abrir_fiddler)
         self._paso("Abrir Mundo Gaturro", self._abrir_juego)
@@ -233,6 +252,13 @@ class Entrega:
             destino.write_text(encode, encoding="ascii")
         except OSError as e:
             raise PasoFallido(f"No se pudo guardar el Encode: {e.strerror or e}.", "Probá de nuevo.") from e
+
+    def _guardar_swf(self, destino: Path, data: bytes) -> None:
+        try:
+            destino.parent.mkdir(parents=True, exist_ok=True)
+            destino.write_bytes(data)
+        except OSError as e:
+            raise PasoFallido(f"No se pudo guardar el SWF trucado: {e.strerror or e}.", "Probá de nuevo.") from e
 
     def _respaldar(self) -> str:
         try:

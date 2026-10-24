@@ -34,10 +34,10 @@ def items_del_swf(clases: list[str]) -> list[str]:
 def filtrar_por_prefijos(items: list[str], prefijos: list[str]) -> list[str]:
     """Items cuyo nombre empieza con alguno de los prefijos, sin distinguir mayúsculas, en orden natural."""
     prefijos = tuple(p.lower() for p in prefijos)
-    return sorted((i for i in items if i.lower().startswith(prefijos)), key=_orden_natural)
+    return sorted((i for i in items if i.lower().startswith(prefijos)), key=orden_natural)
 
 
-def _orden_natural(nombre: str) -> list:
+def orden_natural(nombre: str) -> list:
     """Clave para ordenar `anteojo2` antes que `anteojo10`."""
     return [int(parte) if parte.isdigit() else parte for parte in re.split(r"(\d+)", nombre.lower())]
 

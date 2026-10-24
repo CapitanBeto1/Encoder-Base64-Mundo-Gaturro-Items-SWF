@@ -2,7 +2,8 @@ import base64
 
 import pytest
 
-from mgitems.iconos import ExportadorFFDec, ExportadorNoDisponible
+from mgitems.ffdec import FFDec, FFDecNoDisponible
+from mgitems.iconos import ExportadorFFDec
 from mgitems.nucleo import Nucleo
 from sistema_falso import SistemaFalso
 from swf_de_ejemplo import crear_swf
@@ -30,7 +31,7 @@ class ExportadorFalso(ExportadorFFDec):
 
 class SinJava(ExportadorFFDec):
     def exportar(self, swf, simbolos, destino):
-        raise ExportadorNoDisponible("No se encontró Java")
+        raise FFDecNoDisponible("No se encontró Java")
 
 
 @pytest.fixture
@@ -168,8 +169,8 @@ def test_las_sugerencias_tienen_un_limite(sistema, exportador, tmp_path):
 
 def _ffdec_disponible() -> bool:
     try:
-        ExportadorFFDec()._programas()
-    except ExportadorNoDisponible:
+        FFDec().programas()
+    except FFDecNoDisponible:
         return False
     return True
 
