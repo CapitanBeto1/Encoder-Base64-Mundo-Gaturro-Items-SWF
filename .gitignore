@@ -16,5 +16,4 @@ dist/
 /vendor/
 
 # Temporales
-temp_assets/
 *.tmp

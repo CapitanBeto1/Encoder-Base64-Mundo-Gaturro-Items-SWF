@@ -1,6 +1,6 @@
 ## Desarrollo
 
-El programa nuevo vive en `src/mgitems/` (núcleo en Python, interfaz web en `src/mgitems/ui/`). La carpeta `Codificador Base64 MG/` es el programa viejo, que se retira en el issue #10.
+El programa vive en `src/mgitems/` (núcleo en Python, interfaz web en `src/mgitems/ui/`). Los scripts de armado (catálogo, binarios de terceros, instalador) están en `scripts/`.
 
 - Instalar: `python -m venv .venv` y `.venv/Scripts/python -m pip install -e ".[dev]"`
 - FFDec y Java (imágenes de los Items): `.venv/Scripts/python scripts/obtener_binarios.py` los descarga a `vendor/` (no se versiona)
