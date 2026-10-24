@@ -16,7 +16,8 @@
 
 body {
   margin: 0;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   background: var(--fondo);
@@ -78,7 +79,7 @@ code {
 
 textarea {
   flex: 1;
-  min-height: 160px;
+  min-height: 80px;
   resize: none;
   padding: 12px;
   background: var(--fondo);
@@ -130,7 +131,110 @@ button.primario:hover:not(:disabled) { background: var(--acento-hover); filter: 
 
 .mensaje.error { color: var(--error); }
 .mensaje.exito { color: var(--exito); }
+.mensaje.progreso { color: var(--texto-suave); }
+
+.fila {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 0;
+}
+
+.fila .ayuda {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+input[type="text"] {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 12px;
+  background: var(--fondo);
+  color: var(--texto);
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+  font: inherit;
+}
+
+input[type="text"]:focus {
+  outline: 2px solid var(--acento);
+  outline-offset: -1px;
+}
+
+input:disabled { opacity: 0.45; }
+
+.encabezado-lista {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-top: 6px;
+}
+
+.encabezado-lista .ayuda { font-weight: normal; }
+
+button.enlace {
+  padding: 0;
+  background: none;
+  color: var(--acento);
+  font-size: 13px;
+}
+
+.lista {
+  flex: 1;
+  min-height: 80px;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  overflow-y: auto;
+  background: var(--fondo);
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+}
+
+.lista:empty { display: none; }
+
+.lista li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 4px 4px 10px;
+  border-radius: 6px;
+  font: 13px/1.5 Consolas, monospace;
+}
+
+.lista li:hover { background: var(--panel); }
+
+.lista li span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+button.quitar {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  background: none;
+  color: var(--texto-suave);
+}
+
+button.quitar:hover { color: var(--error); filter: none; }
+
+.vacia {
+  flex: 1;
+  min-height: 80px;
+  display: grid;
+  place-items: center;
+  border: 1px dashed var(--borde);
+  border-radius: 8px;
+}
+
+.vacia[hidden] { display: none; }
 
 @media (max-width: 760px) {
+  body { height: auto; overflow: auto; }
   .paneles { grid-template-columns: 1fr; }
 }
