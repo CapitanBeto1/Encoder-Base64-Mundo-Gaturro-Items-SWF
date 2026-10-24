@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MG Items</title>
+  <link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+  <header class="barra">
+    <h1>MG Items</h1>
+    <p class="subtitulo">Agregá Items a tu inventario de Mundo Gaturro</p>
+  </header>
+
+  <main class="paneles">
+    <section class="panel">
+      <h2>Items</h2>
+      <label for="entrada" class="ayuda">
+        Escribí un Item por línea o separalos con coma, con el formato <code>swf.Clase</code>.
+      </label>
+      <textarea id="entrada" spellcheck="false"
+                placeholder="clothes1.remera5&#10;costumes.costumeUnicornio"></textarea>
+      <div class="acciones">
+        <button id="generar" class="primario" disabled>Generar Encode</button>
+      </div>
+      <p id="mensaje" class="mensaje" role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="panel">
+      <h2>Encode</h2>
+      <p class="ayuda" id="resumen">Todavía no generaste ningún Encode.</p>
+      <textarea id="encode" readonly spellcheck="false"></textarea>
+      <div class="acciones">
+        <button id="copiar" disabled>Copiar</button>
+        <button id="guardar" disabled>Guardar como…</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
