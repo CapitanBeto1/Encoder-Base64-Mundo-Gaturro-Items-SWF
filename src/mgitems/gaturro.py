@@ -20,12 +20,17 @@ from mgitems.iconos import IconosItems
 
 CLASE_CUERPO = "assets.GaturroMC"
 # SWF de assets del juego que traen `assets.GaturroMC` sin cifrar (el mismo dibujo en los dos).
+# Son una versión anterior a la del cliente actual (ver `es_version_anterior`).
 SWF_CUERPO = ("fashion_nuevo", "superHeroesTrajes")
 
 # Las Partes del cuerpo en el orden en que el juego las pone (AvatarBodyEnum.getList): si dos van
 # al mismo clip, queda la última (por ejemplo, `gripFore` gana sobre `grip` en el clip `gripFore`).
-PARTES = ["hats", "hairs", "mouths", "neck", "accesories", "cloth", "clothFront", "clothBack", "leg", "foot",
-          "arm", "armFore", "armBack", "glove", "gloveFore", "gloveBack", "grip", "gripFore", "gripBack"]
+# `accesories2` existe en el juego actual (se ve), aunque no en la versión del cliente que se leyó.
+PARTES = ["hats", "hairs", "mouths", "neck", "accesories", "accesories2", "cloth", "clothFront", "clothBack", "leg",
+          "foot", "arm", "armFore", "armBack", "glove", "gloveFore", "gloveBack", "grip", "gripFore", "gripBack"]
+
+# La versión actual no está publicada sin cifrar.
+AVISO_VERSION_ANTERIOR = "Gaturro de una versión anterior del juego: la nariz y «Accesorio 2» pueden verse distinto."
 
 # Colores de fábrica del juego (ColorPickerModal): pelaje, panza y ojos.
 COLORES = {"color1": "#FFF200", "color2": "#DDB42D", "color3": "#FFFFFF"}
@@ -47,6 +52,16 @@ def huecos_de(parte: str) -> list[str]:
 
 
 _TODOS_LOS_HUECOS = {h for p in PARTES for h in huecos_de(p)}
+
+
+def tiene_lugar(cuerpo: str, parte: str) -> bool:
+    """Si el cuerpo tiene algún clip donde poner la Pieza de esa Parte."""
+    return parte in PARTES and any(_hueco(h).search(cuerpo) for h in huecos_de(parte))
+
+
+def es_version_anterior(cuerpo: str) -> bool:
+    """El Gaturro del juego actual tiene un lugar para «Accesorio 2»; el de las copias publicadas, no."""
+    return not tiene_lugar(cuerpo, "accesories2")
 
 
 def _pieza(svg: str, prefijo: str) -> tuple[str, str] | None:

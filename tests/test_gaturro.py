@@ -220,18 +220,45 @@ def test_los_clips_de_color_de_las_piezas_tambien_se_pintan(nucleo):
 
 def test_una_pieza_sin_imagen_no_rompe_el_resto(nucleo):
     resultado = nucleo.gaturro({"hats": "costumes.noExiste_on", "cloth": "clothes1.remera5_on",
-                                "foot": "noHay.bota_on", "leg": "mal escrita"})
+                                "hairs": "noHay.bota_on", "clothBack": "mal escrita"})
 
     assert resultado["ok"]
     assert set(puestas(resultado["svg"])) == {"cloth"}
     assert sorted(resultado["sin_imagen"]) == ["costumes.noExiste_on", "mal escrita", "noHay.bota_on"]
 
 
-def test_partes_donde_el_juego_no_pone_nada(nucleo):
-    resultado = nucleo.gaturro({"accesories2": "clothes1.gorra1_on", "capeExtra": "clothes1.capa1_on"})
+def test_partes_donde_este_gaturro_no_tiene_lugar(nucleo):
+    resultado = nucleo.gaturro({"capeExtra": "clothes1.capa1_on", "gloveFore": "clothes1.gorra1_on"})
 
     assert puestas(resultado["svg"]) == {}
     assert sorted(resultado["sin_lugar"]) == ["clothes1.capa1_on", "clothes1.gorra1_on"]
+
+
+# --- Versión del Gaturro ---
+
+def test_el_gaturro_publicado_es_una_version_anterior_y_se_avisa(nucleo):
+    resultado = nucleo.gaturro({"accesories2": "clothes1.gorra1_on"})
+
+    assert "versión anterior" in resultado["aviso"]
+    assert resultado["sin_lugar"] == ["clothes1.gorra1_on"]  # no tiene lugar para «Accesorio 2»
+
+
+def test_con_un_gaturro_actual_no_hay_aviso_y_accesorio_2_se_ve(tmp_path, fuente):
+    class ConGaturroActual(ExportadorConGaturro):
+        def exportar(self, swf, simbolos, destino, formato="png"):
+            super().exportar(swf, simbolos, destino, formato)
+            cuerpo = destino / "assets.GaturroMC.svg"
+            if cuerpo.exists():
+                cuerpo.write_text(CUERPO.replace(
+                    '<use ffdec:characterId="2" height="0.0" id="hats"',
+                    '<use ffdec:characterId="2" height="0.0" id="accesories2" transform="matrix(1.0, 0.0, 0.0, 1.0, 1.0, -6.0)" width="0.0" xlink:href="#sprite0"/>\n      '
+                    '<use ffdec:characterId="2" height="0.0" id="hats"'), encoding="utf-8")
+
+    nucleo = Nucleo(SistemaFalso(tmp_path), fuente=fuente, catalogo=[], exportador=ConGaturroActual())
+    resultado = nucleo.gaturro({"accesories2": "clothes1.gorra1_on"})
+
+    assert resultado["aviso"] is None
+    assert puestas(resultado["svg"]) == {"accesories2": ["matrix(1.0, 0.0, 0.0, 1.0, 1.0, -6.0)"]}
 
 
 def test_partes_con_forma_invalida(nucleo):

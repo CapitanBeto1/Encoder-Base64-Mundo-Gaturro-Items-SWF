@@ -701,10 +701,11 @@ async function dibujarGaturro() {
     return;
   }
   $("imagen-gaturro").src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(resultado.svg);
-  const avisos = [];
-  if (resultado.sin_lugar.length) avisos.push(`No se ven en el juego: ${resultado.sin_lugar.join(", ")}`);
-  if (resultado.sin_imagen.length) avisos.push(`Sin imagen: ${resultado.sin_imagen.join(", ")}`);
-  $("estado-gaturro").textContent = avisos.join(". ");
+  const clases = (rutas) => rutas.map((r) => r.slice(r.lastIndexOf(".") + 1)).join(", ");
+  const avisos = resultado.aviso ? [resultado.aviso] : [];
+  if (resultado.sin_lugar.length) avisos.push(`No se dibuja: ${clases(resultado.sin_lugar)}.`);
+  if (resultado.sin_imagen.length) avisos.push(`Sin imagen: ${clases(resultado.sin_imagen)}.`);
+  $("estado-gaturro").replaceChildren(...avisos.map((a) => etiqueta(a, "aviso-gaturro")));
 }
 
 async function usarPiezasLookDe(swf) {

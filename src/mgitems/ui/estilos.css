@@ -969,7 +969,7 @@ dialog.grande {
 .gaturro img { height: 180px; aspect-ratio: 1; }
 .gaturro img[hidden] { display: none; }
 .gaturro figcaption { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-.gaturro #estado-gaturro { color: var(--texto); }
+.gaturro #estado-gaturro { display: flex; flex-direction: column; gap: 4px; color: var(--texto); font-size: 12px; line-height: 1.25; }
 .gaturro #estado-gaturro:empty { display: none; }
 .colores-gaturro { display: flex; flex-direction: column; gap: 4px; }
 .colores-gaturro label { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--texto); }
