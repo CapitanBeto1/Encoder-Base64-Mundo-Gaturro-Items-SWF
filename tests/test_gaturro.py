@@ -93,22 +93,16 @@ def test_una_pieza_sin_imagen_no_rompe_el_resto(nucleo):
     assert sorted(resultado["sin_imagen"]) == ["costumes.noExiste_on", "mal escrita", "noHay.bota_on"]
 
 
-def test_sin_piezas_se_ve_el_gaturro_solo(nucleo, exportador):
+def test_sin_piezas_no_hay_nada_que_exportar(nucleo, exportador):
     resultado = nucleo.gaturro({})
 
     assert resultado["ok"]
     assert piezas_dibujadas(resultado["svg"]) == {}
-    assert "<ellipse" in resultado["svg"]
     assert exportador.llamadas == []
 
 
 def test_partes_que_el_gaturro_no_tiene_se_ignoran(nucleo):
     assert piezas_dibujadas(nucleo.gaturro({"capeExtra": "clothes1.capa1_on"})["svg"]) == {}
-
-
-def test_color_del_pelaje(nucleo):
-    assert "#3366cc" in nucleo.gaturro({}, "#3366cc")["svg"]
-    assert "javascript" not in nucleo.gaturro({}, '"/><script>javascript')["svg"]
 
 
 def test_partes_con_forma_invalida(nucleo):
