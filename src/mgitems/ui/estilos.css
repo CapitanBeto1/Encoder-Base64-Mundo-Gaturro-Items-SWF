@@ -65,8 +65,11 @@ body {
   background: var(--amarillo-fondo);
   color: var(--texto);
   font: 15px/1.4 "MG", Georgia, serif;
-  font-weight: 700;
-  font-variation-settings: "SOFT" 100, "WONK" 0;
+  font-weight: 900;
+  /* Tamaño óptico chico: trazos parejos y gruesos, más parecidos a Cooper Black. */
+  font-variation-settings: "SOFT" 100, "WONK" 0, "opsz" 9;
+  /* Un contorno del mismo color engorda la letra (Cooper Black es muy pesada). */
+  -webkit-text-stroke: 0.5px currentColor;
 }
 
 /* --- Fondo --- */
@@ -112,6 +115,7 @@ body > :not(svg) { position: relative; z-index: 1; }
   font-weight: 900;
   line-height: 1;
   letter-spacing: 1px;
+  white-space: nowrap;
   text-transform: uppercase;
   color: #ffd21f;
   -webkit-text-stroke: 9px #8a4f12;
@@ -126,6 +130,7 @@ body > :not(svg) { position: relative; z-index: 1; }
   background: var(--rotulo);
   color: var(--blanco);
   font-size: 13px;
+  white-space: nowrap;
   text-transform: uppercase;
 }
 
@@ -141,6 +146,7 @@ button {
   color: var(--texto);
   font: inherit;
   font-weight: 900;
+  -webkit-text-stroke: 1px currentColor;
   text-transform: uppercase;
   cursor: pointer;
 }
@@ -259,15 +265,18 @@ button.derecha { margin-left: auto; }
   color: var(--blanco);
   font-size: 15px;
   font-weight: 900;
+  -webkit-text-stroke: 0.8px currentColor;
   text-transform: uppercase;
 }
 
-.panel h2 .ayuda { color: #ffe14d; }
+.panel h2 .ayuda { color: #ffe14d; -webkit-text-stroke-width: 0.3px; }
 
+/* En los textos chicos el contorno es más fino para que no se empasten. */
 .ayuda {
   margin: 0;
   color: var(--texto-suave);
   font-size: 13px;
+  -webkit-text-stroke-width: 0.25px;
 }
 
 .panel > .ayuda,
@@ -319,13 +328,13 @@ input[type="text"] {
   flex: 1;
   min-width: 0;
   padding: 8px 12px;
-  font-weight: 700;
+  font-weight: 900;
 }
 
 input::placeholder,
 textarea::placeholder {
   color: #7d8a90;
-  font-weight: 600;
+  font-weight: 800;
 }
 
 input:focus,
@@ -344,6 +353,7 @@ textarea {
   resize: none;
   padding: 10px 12px;
   font: 12px/1.5 Consolas, monospace;
+  -webkit-text-stroke: 0;
 }
 
 #encode { word-break: break-all; }
@@ -395,7 +405,7 @@ textarea {
   font-weight: 900;
 }
 
-.resultados-swf li .ayuda { color: #1f4d63; font-weight: 700; }
+.resultados-swf li .ayuda { color: #1f4d63; font-weight: 900; }
 
 .resultados-swf li:hover,
 .resultados-swf li.activo {
@@ -538,6 +548,7 @@ button.quitar:hover:not(:disabled) {
   margin: 0;
   min-height: 1.5em;
   font-size: 13px;
+  -webkit-text-stroke-width: 0.25px;
 }
 
 .mensaje:not(:empty) {
@@ -687,6 +698,7 @@ dialog.grande {
 .componente .ruta {
   font-family: Consolas, monospace;
   font-weight: 400;
+  -webkit-text-stroke: 0;
   overflow-wrap: anywhere;
 }
 
