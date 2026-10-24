@@ -6,9 +6,10 @@ const $ = (id) => document.getElementById(id);
 const api = () => window.pywebview.api;
 
 let items = [];
-let ocupado = false;
+let ocupado = 0; // tareas del núcleo en curso: mientras haya alguna, la interfaz queda bloqueada
 let conectado = false; // true cuando pywebview expuso la API
 let swfAbierto = false;
+let swfAbiertoActual = null; // nombre del SWF abierto
 
 function avisar(elemento, texto, tipo = "") {
   elemento.textContent = texto;
@@ -22,13 +23,13 @@ const avisarEncode = (texto, tipo) => avisar($("mensaje-encode"), texto, tipo);
 
 // Mientras el núcleo trabaja se bloquean los botones y se muestra qué está pasando.
 async function mientras(texto, tarea) {
-  ocupado = true;
+  ocupado++;
   actualizarControles();
   avisarLista(texto, "progreso");
   try {
     return await tarea();
   } finally {
-    ocupado = false;
+    ocupado--;
     actualizarControles();
   }
 }
@@ -93,7 +94,10 @@ function mostrarLista() {
 
 function mostrarEncode(resultado) {
   $("encode").value = resultado ? resultado.encode : "";
-  if (resultado?.prenda) {
+  if (resultado?.look) {
+    const n = Object.keys(resultado.prenda.partes).length;
+    $("resumen").textContent = `Look «${resultado.look.nombre}»: ${resultado.prenda.ruta} con ${n === 1 ? "1 Pieza" : `${n} Piezas`}.`;
+  } else if (resultado?.prenda) {
     const [[parteElegida, piezaElegida]] = Object.entries(resultado.prenda.partes);
     const nombreParte = partesDelCuerpo.find((p) => p.id === parteElegida)?.nombre ?? parteElegida;
     $("resumen").textContent = `Prenda trucada: ${resultado.prenda.ruta} muestra ${piezaElegida} en ${nombreParte}.`;
@@ -103,7 +107,9 @@ function mostrarEncode(resultado) {
     $("resumen").textContent =
       vista === "trucar"
         ? base && pieza && parte ? "Tocá «Trucar Prenda» para generar el Encode." : "Elegí la Prenda base, la Pieza y la Parte del cuerpo."
-        : items.length ? "Generá el Encode con los Items de la lista." : "Todavía no generaste ningún Encode.";
+        : vista === "looks"
+          ? Object.keys(lookActual.partes).length ? "Tocá «Aplicar Look» para generar el Encode." : "Elegí las Piezas del Look."
+          : items.length ? "Generá el Encode con los Items de la lista." : "Todavía no generaste ningún Encode.";
     avisarEncode("");
   }
   actualizarControles();
@@ -117,10 +123,15 @@ function actualizarControles() {
   $("quitar-todos").disabled = !listo || items.length === 0;
   $("importar").disabled = !listo;
   $("abrir-entorno").disabled = !conectado;
-  $("generar").disabled = !listo || (vista === "trucar" ? !base || !pieza || !parte : items.length === 0);
+  const puedeGenerar = { agregar: items.length > 0, trucar: base && pieza && parte, looks: Object.keys(lookActual.partes).length > 0 }[vista];
+  $("generar").disabled = !listo || !puedeGenerar;
+  $("guardar-look").disabled = $("nuevo-look").disabled = !listo;
+  $("duplicar-look").disabled = $("borrar-look").disabled = !listo || !lookActual.id;
+  $("nombre-look").disabled = $("buscar-base-look").disabled = $("buscar-swf-look").disabled = !listo;
+  document.querySelectorAll("#partes-look input").forEach((c) => (c.disabled = !listo));
   $("buscar-base").disabled = $("buscar-pieza").disabled = $("buscar-parte").disabled = !listo || !prendas.length;
   $("buscar-swf-pieza").disabled = !listo || !prendas.length;
-  $("pestana-agregar").disabled = $("pestana-trucar").disabled = !conectado || ocupado;
+  $("pestana-agregar").disabled = $("pestana-trucar").disabled = $("pestana-looks").disabled = !conectado || ocupado;
   $("copiar").disabled = $("guardar").disabled = $("entregar").disabled = !listo || !$("encode").value;
 }
 
@@ -177,14 +188,21 @@ function mostrarSwfAbierto(resultado) {
   if (resultado.cancelado) return avisarLista("");
   if (!resultado.ok) return avisarLista(resultado.error, "error");
   swfAbierto = true;
+  swfAbiertoActual = resultado.swf;
   actualizarControles();
   $("nombre-swf").textContent = `${resultado.swf}.swf · ${contarItems(resultado.cantidad_items)}`;
   if (resultado.aviso) avisarLista(resultado.aviso, "advertencia");
   else avisarLista("SWF abierto. Escribí el comienzo de un nombre para buscar.", "exito");
   olvidarPrendas();
   prepararIconos(resultado.swf);
-  if (vista === "trucar") cargarPrendas();
-  else $("prefijos").focus();
+  if (vista === "agregar") $("prefijos").focus();
+  else cargarParaLaVista();
+}
+
+// Lo que necesita la pestaña elegida, en orden (las cargas no se pisan entre sí).
+async function cargarParaLaVista() {
+  if ((vista === "trucar" || vista === "looks") && swfAbierto && !prendas.length) await cargarPrendas();
+  if (vista === "looks") await cargarLooks();
 }
 
 async function abrirArchivo() {
@@ -350,6 +368,7 @@ async function agregarAMano(evento) {
 
 async function generar() {
   if (vista === "trucar") return trucar();
+  if (vista === "looks") return aplicarLook();
   const resultado = await api().generar_encode(items);
   if (!resultado.ok) return avisarEncode(resultado.error, "error");
   mostrarEncode(resultado);
@@ -378,14 +397,14 @@ let vista = "agregar";
 
 function cambiarVista(nueva) {
   vista = nueva;
-  for (const nombre of ["agregar", "trucar"]) {
+  for (const nombre of ["agregar", "trucar", "looks"]) {
     $(`vista-${nombre}`).hidden = nombre !== vista;
     $(`pestana-${nombre}`).setAttribute("aria-selected", String(nombre === vista));
   }
-  $("generar").textContent = vista === "trucar" ? "Trucar Prenda" : "Generar Encode";
+  $("generar").textContent = { agregar: "Generar Encode", trucar: "Trucar Prenda", looks: "Aplicar Look" }[vista];
   avisarLista("");
   mostrarEncode(null);
-  if (vista === "trucar" && swfAbierto && !prendas.length) cargarPrendas();
+  cargarParaLaVista();
 }
 
 // --- Trucar Prenda: una Prenda base que muestra una Pieza (cualquiera) en una Parte del cuerpo (cualquiera) ---
@@ -533,6 +552,197 @@ crearDesplegable({
 
 $("pestana-agregar").addEventListener("click", () => cambiarVista("agregar"));
 $("pestana-trucar").addEventListener("click", () => cambiarVista("trucar"));
+
+// --- Looks: una Prenda base con una Pieza (de cualquier SWF) en cada una de varias Partes del cuerpo ---
+
+let looksGuardados = [];
+let lookActual = nuevoLook();
+let partesConocidas = []; // [{id, nombre}]
+let piezasLook = []; // Piezas del SWF elegido en "Piezas de:"
+let swfPiezasLook = null;
+let iconosPreparados = new Set(); // SWF cuyas imágenes ya se pidieron preparar
+
+function nuevoLook() {
+  return { id: "", nombre: "", base: null, partes: {} };
+}
+
+async function prepararIconosDe(swf) {
+  if (iconosPreparados.has(swf)) return;
+  iconosPreparados.add(swf);
+  const resultado = await api().preparar_iconos(swf);
+  if (!resultado.ok) return;
+  for (const ruta of [...imagenes.keys()]) if (ruta.startsWith(swf + ".")) imagenes.delete(ruta);
+  cargarIconos([...document.querySelectorAll(".icono[data-ruta]")].map((c) => c.dataset.ruta));
+}
+
+const swfDeRuta = (ruta) => ruta.slice(0, ruta.lastIndexOf("."));
+
+async function cargarLooks() {
+  if (!partesConocidas.length) partesConocidas = (await api().partes_del_cuerpo()).partes_del_cuerpo;
+  const resultado = await api().looks();
+  if (!resultado.ok) return avisarLista(resultado.error, "error");
+  looksGuardados = resultado.looks;
+  mostrarListaLooks();
+  mostrarLook();
+  if (!swfPiezasLook && swfAbierto) await usarPiezasLookDe(swfAbiertoActual);
+}
+
+function mostrarListaLooks() {
+  const lista = $("lista-looks");
+  if (!looksGuardados.length) {
+    lista.replaceChildren(etiqueta("Todavía no guardaste ningún Look.", "ayuda vacia-chica"));
+    return;
+  }
+  lista.replaceChildren(
+    ...looksGuardados.map((look) => {
+      const boton = Object.assign(document.createElement("button"), { className: "chip-look", textContent: look.nombre });
+      boton.setAttribute("aria-pressed", String(look.id === lookActual.id));
+      boton.addEventListener("click", () => abrirLook(look));
+      return boton;
+    })
+  );
+}
+
+function abrirLook(look) {
+  lookActual = structuredClone(look);
+  mostrarListaLooks();
+  mostrarLook();
+  // Las imágenes de todas las Piezas del Look (pueden ser de varios SWF).
+  for (const swf of new Set(Object.values(lookActual.partes).map(swfDeRuta))) prepararIconosDe(swf);
+  if (lookActual.base) prepararIconosDe(swfDeRuta(lookActual.base));
+}
+
+function filaDeParteLook({ id, nombre }) {
+  const fila = document.createElement("li");
+  const ruta = lookActual.partes[id];
+
+  const icono = ruta ? elementoIcono(ruta) : Object.assign(document.createElement("span"), { className: "icono vacio" });
+
+  // El campo muestra la Pieza elegida; al escribir, ofrece las del SWF de "Piezas de:".
+  const selector = Object.assign(document.createElement("div"), { className: "selector-swf selector-parte" });
+  const campo = Object.assign(document.createElement("input"), {
+    type: "text", value: ruta ?? "", title: ruta ?? "", placeholder: "Elegir una Pieza…", spellcheck: false, autocomplete: "off",
+  });
+  campo.setAttribute("aria-label", `Pieza para ${nombre}`);
+  campo.disabled = ocupado;
+  campo.addEventListener("focus", () => campo.select());
+  const lista = Object.assign(document.createElement("ul"), { className: "resultados-swf con-iconos", hidden: true });
+  selector.append(campo, lista);
+  crearDesplegable({
+    campo,
+    lista,
+    // Si el campo muestra la ruta completa de la Pieza elegida, se busca por su nombre.
+    consultar: async (t) => filtrarPorNombre(piezasLook, t === ruta ? "" : t),
+    fila: filaConImagen,
+    elegir: (pieza) => {
+      lookActual.partes[id] = pieza.ruta;
+      mostrarLook();
+    },
+    vacio: piezasLook.length ? "Ninguna Pieza se llama así." : "Elegí de qué SWF son las Piezas (Piezas de:).",
+  });
+
+  const quitar = Object.assign(document.createElement("button"), { className: "quitar", textContent: "✕", title: `Dejar ${nombre} vacío` });
+  quitar.disabled = !ruta;
+  quitar.addEventListener("click", () => {
+    delete lookActual.partes[id];
+    mostrarLook();
+  });
+
+  fila.append(etiqueta(nombre, "parte"), icono, selector, quitar);
+  return fila;
+}
+
+function mostrarLook() {
+  $("nombre-look").value = lookActual.nombre;
+  $("buscar-base-look").value = lookActual.base ?? "";
+  const conocidas = new Set(partesConocidas.map((p) => p.id));
+  const extra = Object.keys(lookActual.partes).filter((p) => !conocidas.has(p)).map((id) => ({ id, nombre: id }));
+  $("partes-look").replaceChildren(...[...partesConocidas, ...extra].map(filaDeParteLook));
+  cargarIconos(Object.values(lookActual.partes));
+  mostrarEncode(null);
+}
+
+async function usarPiezasLookDe(swf) {
+  $("buscar-swf-look").value = swf === swfAbiertoActual ? "" : swf;
+  if (swf === swfPiezasLook) return;
+  const resultado = await mientras(`Leyendo las Piezas de ${swf}…`, () => api().piezas(swf));
+  if (!resultado.ok) return avisarLista(resultado.error, "error");
+  swfPiezasLook = swf;
+  piezasLook = resultado.piezas;
+  avisarLista(`${piezasLook.length} Piezas de ${swf} para elegir.`, "exito");
+  mostrarLook();
+  prepararIconosDe(swf);
+}
+
+async function guardarLook() {
+  const resultado = await api().guardar_look(lookActual);
+  if (!resultado.ok) return avisarLista(resultado.error, "error");
+  lookActual = resultado.look;
+  avisarLista(`Se guardó el Look «${lookActual.nombre}».`, "exito");
+  await cargarLooks();
+}
+
+async function duplicarLook() {
+  const resultado = await api().duplicar_look(lookActual.id);
+  if (!resultado.ok) return avisarLista(resultado.error, "error");
+  lookActual = resultado.look;
+  avisarLista(`Se creó «${lookActual.nombre}».`, "exito");
+  await cargarLooks();
+}
+
+async function borrarLook() {
+  if (!confirm(`¿Borrar el Look «${lookActual.nombre}»?`)) return;
+  const resultado = await api().borrar_look(lookActual.id);
+  if (!resultado.ok) return avisarLista(resultado.error, "error");
+  avisarLista(`Se borró «${lookActual.nombre}».`, "exito");
+  lookActual = nuevoLook();
+  await cargarLooks();
+}
+
+async function aplicarLook() {
+  const resultado = await mientras("Aplicando el Look… (tarda unos segundos)", () => api().aplicar_look(lookActual));
+  if (!resultado.ok) return avisarLista(resultado.error, "error");
+  avisarLista(resultado.look.base_propuesta ? `Se usó ${resultado.look.base} como Prenda base.` : "");
+  mostrarEncode(resultado);
+  avisarEncode("Look aplicado. Tocá «Agregar al juego» para recibirlo.", "exito");
+}
+
+$("nombre-look").addEventListener("input", () => {
+  lookActual.nombre = $("nombre-look").value;
+  mostrarEncode(null);
+});
+
+crearDesplegable({
+  campo: $("buscar-base-look"),
+  lista: $("resultados-base-look"),
+  consultar: async (t) => filtrarPorNombre(prendas, t),
+  fila: filaConImagen,
+  elegir: (p) => {
+    lookActual.base = p.ruta;
+    mostrarLook();
+  },
+  vacio: "Ninguna Prenda del SWF abierto se llama así (abrí otro SWF arriba).",
+});
+
+crearDesplegable({
+  campo: $("buscar-swf-look"),
+  lista: $("resultados-swf-look"),
+  consultar: async (t) => (await api().buscar_en_catalogo(t)).swfs.slice(0, 80),
+  fila: ({ swf, items }) => [etiqueta(swf, "nombre"), etiqueta(swf === swfAbiertoActual ? "el abierto" : contarItems(items), "ayuda")],
+  elegir: ({ swf }) => usarPiezasLookDe(swf),
+  vacio: "No hay SWF con ese nombre.",
+});
+
+$("nuevo-look").addEventListener("click", () => {
+  lookActual = nuevoLook();
+  mostrarListaLooks();
+  mostrarLook();
+  $("nombre-look").focus();
+});
+$("guardar-look").addEventListener("click", guardarLook);
+$("duplicar-look").addEventListener("click", duplicarLook);
+$("borrar-look").addEventListener("click", borrarLook);
+$("pestana-looks").addEventListener("click", () => cambiarVista("looks"));
 
 // --- Importar un Encode ---
 
@@ -719,11 +929,11 @@ async function entregar() {
 
   let resultado;
   try {
-    ocupado = true;
+    ocupado++;
     actualizarControles();
     resultado = await api().entregar_encode(encode);
   } finally {
-    ocupado = false;
+    ocupado--;
     actualizarControles();
     $("cerrar-entrega").disabled = false;
   }
