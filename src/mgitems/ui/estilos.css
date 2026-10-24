@@ -951,3 +951,19 @@ dialog.grande {
 .resultados-swf.con-iconos { overflow-x: hidden; }
 .resultados-swf.con-iconos li .nombre { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .botones-encabezado { display: flex; gap: 8px; }
+
+/* --- El Gaturro del Look --- */
+
+.gaturro {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0;
+  padding: 6px;
+  background: rgba(255, 255, 255, 0.35);
+  border-radius: 12px;
+}
+.gaturro[hidden] { display: none; }
+.gaturro img { height: 140px; aspect-ratio: 140 / 145; }
+.gaturro figcaption:empty { display: none; }

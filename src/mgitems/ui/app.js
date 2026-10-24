@@ -402,6 +402,7 @@ function cambiarVista(nueva) {
     $(`vista-${nombre}`).hidden = nombre !== vista;
     $(`pestana-${nombre}`).setAttribute("aria-selected", String(nombre === vista));
   }
+  $("gaturro").hidden = vista !== "looks";
   $("generar").textContent = { agregar: "Generar Encode", trucar: "Trucar Prenda", looks: "Aplicar Look" }[vista];
   avisarLista("");
   mostrarEncode(null);
@@ -665,6 +666,25 @@ function mostrarLook() {
   $("partes-look").replaceChildren(...[...partesConocidas, ...extra].map(filaDeParteLook));
   cargarIconos(Object.values(lookActual.partes));
   mostrarEncode(null);
+  dibujarGaturro();
+}
+
+// El Gaturro con las Piezas del Look. Si se piden varios seguidos, se muestra solo el último.
+let pedidoGaturro = 0;
+async function dibujarGaturro() {
+  const pedido = ++pedidoGaturro;
+  const partes = { ...lookActual.partes };
+  const espera = setTimeout(() => pedido === pedidoGaturro && ($("estado-gaturro").textContent = "Preparando las imágenes…"), 400);
+  const resultado = await api().gaturro(partes);
+  clearTimeout(espera);
+  if (pedido !== pedidoGaturro) return;
+  if (!resultado.ok) {
+    $("estado-gaturro").textContent = resultado.error;
+    return;
+  }
+  $("imagen-gaturro").src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(resultado.svg);
+  const sin = resultado.sin_imagen;
+  $("estado-gaturro").textContent = sin.length ? `Sin imagen: ${sin.join(", ")}` : "";
 }
 
 async function usarPiezasLookDe(swf) {

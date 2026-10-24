@@ -22,16 +22,36 @@ class ExportadorFalso(ExportadorFFDec):
         super().__init__()
         self.llamadas: list[dict[int, str]] = []
 
-    def exportar(self, swf, simbolos, destino):
+    def exportar(self, swf, simbolos, destino, formato="png"):
         assert swf.is_file()
         self.llamadas.append(dict(simbolos))
         destino.mkdir(parents=True, exist_ok=True)
         for clase in simbolos.values():
-            (destino / f"{clase}.png").write_bytes(PNG_MINIMO)
+            if formato == "svg":
+                (destino / f"{clase}.svg").write_text(svg_como_ffdec(clase), encoding="utf-8")
+            else:
+                (destino / f"{clase}.png").write_bytes(PNG_MINIMO)
+
+
+def svg_como_ffdec(clase: str) -> str:
+    """Un SVG como los que exporta FFDec: el punto de anclaje en el <g transform> de afuera."""
+    return f'''<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns:ffdec="https://www.free-decompiler.com/flash" xmlns:xlink="http://www.w3.org/1999/xlink" height="20.0px" width="30.0px" xmlns="http://www.w3.org/2000/svg">
+  <g transform="matrix(1.0, 0.0, 0.0, 1.0, 15.0, 12.5)">
+    <use ffdec:characterId="7" height="20.0" transform="matrix(1.0, 0.0, 0.0, 1.0, -15.0, -12.5)" width="30.0" xlink:href="#shape0"/>
+  </g>
+  <defs>
+    <g id="shape0">
+      <path d="M0.0 0.0 L30.0 0.0 30.0 20.0 0.0 20.0 Z" fill="url(#gradient0)" data-clase="{clase}"/>
+    </g>
+    <linearGradient id="gradient0"><stop offset="0" stop-color="#ff0000"/></linearGradient>
+  </defs>
+</svg>
+'''
 
 
 class SinJava(ExportadorFFDec):
-    def exportar(self, swf, simbolos, destino):
+    def exportar(self, swf, simbolos, destino, formato="png"):
         raise FFDecNoDisponible("No se encontró Java")
 
 
