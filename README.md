@@ -1,6 +1,6 @@
 Es un programa que de un SWF te deja buscar nombres de items (los que empiecen con la palabra que pongas) de Mundo Gaturro y te saca un texto codificado en Base64 que te agrega esos items al inventario de tu cuenta (se necesita Fiddler). Se usa ffdec para leer el SWF y regex para encontrar los nombres.
 
-Hecho (casi) en su totalidad con IA
+(((((((((((((((((((((((((((en progreso otra vez)))))))))))))))))))))))))))))))
 
 ----------------------------------------------------------------------------------------------------------------------------------
 ACLARACIONES
