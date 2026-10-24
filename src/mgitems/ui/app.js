@@ -402,6 +402,7 @@ function cambiarVista(nueva) {
     $(`vista-${nombre}`).hidden = nombre !== vista;
     $(`pestana-${nombre}`).setAttribute("aria-selected", String(nombre === vista));
   }
+  $("gaturro").hidden = vista !== "looks";
   $("generar").textContent = { agregar: "Generar Encode", trucar: "Trucar Prenda", looks: "Aplicar Look" }[vista];
   avisarLista("");
   mostrarEncode(null);
@@ -665,6 +666,45 @@ function mostrarLook() {
   $("partes-look").replaceChildren(...[...partesConocidas, ...extra].map(filaDeParteLook));
   cargarIconos(Object.values(lookActual.partes));
   mostrarEncode(null);
+  dibujarGaturro();
+}
+
+// --- El Gaturro original del juego con las Piezas del Look ---
+
+const COLORES_GATURRO = ["color1", "color2", "color3"];
+try {
+  const guardados = JSON.parse(localStorage.getItem("coloresGaturro") || "{}");
+  for (const c of COLORES_GATURRO) if (/^#[0-9a-f]{6}$/i.test(guardados[c] ?? "")) $(c).value = guardados[c];
+} catch {}
+for (const c of COLORES_GATURRO) {
+  $(c).addEventListener("input", () => {
+    try {
+      localStorage.setItem("coloresGaturro", JSON.stringify(Object.fromEntries(COLORES_GATURRO.map((k) => [k, $(k).value]))));
+    } catch {}
+    dibujarGaturro();
+  });
+}
+
+// Si se piden varios seguidos, se muestra solo el último.
+let pedidoGaturro = 0;
+async function dibujarGaturro() {
+  const pedido = ++pedidoGaturro;
+  const colores = Object.fromEntries(COLORES_GATURRO.map((c) => [c, $(c).value]));
+  const espera = setTimeout(() => pedido === pedidoGaturro && ($("estado-gaturro").textContent = "Preparando las imágenes…"), 400);
+  const resultado = await api().gaturro({ ...lookActual.partes }, colores);
+  clearTimeout(espera);
+  if (pedido !== pedidoGaturro) return;
+  // Sin el Gaturro original no se muestra ninguno.
+  $("imagen-gaturro").hidden = !resultado.ok;
+  if (!resultado.ok) {
+    $("estado-gaturro").textContent = resultado.error;
+    return;
+  }
+  $("imagen-gaturro").src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(resultado.svg);
+  const avisos = [];
+  if (resultado.sin_lugar.length) avisos.push(`No se ven en el juego: ${resultado.sin_lugar.join(", ")}`);
+  if (resultado.sin_imagen.length) avisos.push(`Sin imagen: ${resultado.sin_imagen.join(", ")}`);
+  $("estado-gaturro").textContent = avisos.join(". ");
 }
 
 async function usarPiezasLookDe(swf) {
