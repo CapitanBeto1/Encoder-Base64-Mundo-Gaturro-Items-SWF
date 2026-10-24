@@ -35,8 +35,11 @@ class Puente:
     def prendas(self) -> dict:
         return self._nucleo.prendas()
 
-    def trucar_prenda(self, base: str, partes: dict) -> dict:
-        return self._nucleo.trucar_prenda(base, partes)
+    def piezas(self) -> dict:
+        return self._nucleo.piezas()
+
+    def trucar_prenda(self, base: str, parte: str, pieza: str) -> dict:
+        return self._nucleo.trucar_prenda(base, parte, pieza)
 
     def preparar_iconos(self) -> dict:
         return self._nucleo.preparar_iconos()

@@ -206,34 +206,57 @@ def test_prendas_sin_java_devuelve_error(sistema, fuente):
     assert "Java" in resultado["error"]
 
 
-# --- Trucar ---
+# --- Piezas ---
 
-def test_trucar_una_prenda_genera_el_encode_de_la_prenda_base(nucleo, ffdec):
-    partes = {"cloth": "buzo1_on", "arm": "buzo1_brazo_on", "hats": "gorra1_on"}
+def test_lista_todas_las_piezas_del_swf(nucleo):
+    resultado = nucleo.piezas()
 
-    resultado = nucleo.trucar_prenda("remera5", partes)
+    assert resultado["ok"]
+    assert [p["clase"] for p in resultado["piezas"]] == [
+        "buzo1_brazo_on", "buzo1_on", "capa1_on", "gorra1_on", "remera5_brazo_on", "remera5_on",
+    ]
+    assert resultado["piezas"][0]["ruta"] == "clothes1.buzo1_brazo_on"
+
+
+def test_piezas_sin_swf_abierto_devuelve_error(sistema, ffdec):
+    assert not Nucleo(sistema, catalogo=[], prendas_ffdec=ffdec).piezas()["ok"]
+
+
+# --- Trucar: una Pieza en una Parte del cuerpo ---
+
+def test_trucar_pone_una_sola_pieza_en_la_parte_elegida(nucleo, ffdec):
+    resultado = nucleo.trucar_prenda("remera5", "grip", "gorra1_on")  # una gorra en la mano
 
     assert resultado["ok"], resultado
-    assert resultado["prenda"] == {"ruta": "clothes1.remera5", "partes": partes}
+    assert resultado["prenda"] == {"ruta": "clothes1.remera5", "partes": {"grip": "gorra1_on"}}
     script = base64.b64decode(resultado["encode"]).decode()
     assert "inventory.add 1 clothes1.remera5\n" in script
     clase, fuente = ffdec.trucos[0]
     assert clase == "remera5"
-    assert leer_prenda(fuente).partes == partes
+    # Solo esa Pieza: la remera deja de mostrar lo suyo y no se completa nada más.
+    assert leer_prenda(fuente).partes == {"grip": "gorra1_on"}
+
+
+@pytest.mark.parametrize("parte, pieza", [("foot", "remera5_brazo_on"), ("hats", "buzo1_on"), ("cloth", "gorra1_on"), ("capeExtra", "remera5_on")])
+def test_cualquier_pieza_va_en_cualquier_parte_del_cuerpo(nucleo, ffdec, parte, pieza):
+    resultado = nucleo.trucar_prenda("remera5", parte, pieza)
+
+    assert resultado["ok"], resultado
+    assert leer_prenda(ffdec.trucos[0][1]).partes == {parte: pieza}
 
 
 @pytest.mark.parametrize(
-    "base, partes, error",
+    "base, parte, pieza, error",
     [
-        ("silla", {"hats": "gorra1_on"}, "no es una Prenda"),
-        ("noExiste", {"hats": "gorra1_on"}, "no es una Prenda"),
-        ("remera5", {}, "al menos una Pieza"),
-        ("remera5", {"hats": "noExiste_on"}, "no existen"),
-        ("remera5", {"inventada": "gorra1_on"}, "no existen"),
+        ("silla", "hats", "gorra1_on", "no es una Prenda"),
+        ("noExiste", "hats", "gorra1_on", "no es una Prenda"),
+        ("remera5", "inventada", "gorra1_on", "no es una Parte del cuerpo"),
+        ("remera5", "hats", "noExiste_on", "no es una Pieza"),
+        ("remera5", "hats", "gorra1", "no es una Pieza"),  # un Item, no una Pieza
     ],
 )
-def test_trucar_con_datos_invalidos_no_llama_a_ffdec(nucleo, ffdec, base, partes, error):
-    resultado = nucleo.trucar_prenda(base, partes)
+def test_trucar_con_datos_invalidos_no_llama_a_ffdec(nucleo, ffdec, base, parte, pieza, error):
+    resultado = nucleo.trucar_prenda(base, parte, pieza)
 
     assert not resultado["ok"]
     assert error in resultado["error"]
@@ -243,7 +266,7 @@ def test_trucar_con_datos_invalidos_no_llama_a_ffdec(nucleo, ffdec, base, partes
 def test_si_el_truco_falla_se_informa(nucleo, ffdec):
     ffdec.falla = True
 
-    resultado = nucleo.trucar_prenda("remera5", {"hats": "gorra1_on"})
+    resultado = nucleo.trucar_prenda("remera5", "hats", "gorra1_on")
 
     assert not resultado["ok"]
     assert "No se pudo trucar" in resultado["error"]
@@ -252,7 +275,7 @@ def test_si_el_truco_falla_se_informa(nucleo, ffdec):
 # --- Entregar la Prenda trucada ---
 
 def test_entregar_una_prenda_trucada_escribe_las_reglas_de_lola_y_del_swf(nucleo, sistema, swf):
-    truco = nucleo.trucar_prenda("remera5", {"hats": "gorra1_on"})
+    truco = nucleo.trucar_prenda("remera5", "hats", "gorra1_on")
 
     resultado = nucleo.entregar_encode(truco["encode"])
 
@@ -273,7 +296,7 @@ def test_un_encode_comun_no_entrega_swf(nucleo, sistema):
 
 
 def test_una_entrega_nueva_reemplaza_las_reglas_del_truco_anterior(nucleo, sistema):
-    nucleo.entregar_encode(nucleo.trucar_prenda("remera5", {"hats": "gorra1_on"})["encode"])
+    nucleo.entregar_encode(nucleo.trucar_prenda("remera5", "hats", "gorra1_on")["encode"])
 
     nucleo.entregar_encode(nucleo.generar_encode(["clothes1.buzo1"])["encode"])
 
@@ -284,7 +307,7 @@ def test_el_swf_trucado_de_una_subcarpeta_usa_la_carpeta_en_la_url_y_en_el_archi
     nucleo = Nucleo(sistema, ProcesosFalso(), fuente=fuente, catalogo=[], prendas_ffdec=ffdec)
     nucleo.abrir_swf_del_cdn("antro2017/wears")
 
-    nucleo.entregar_encode(nucleo.trucar_prenda("remera5", {"hats": "gorra1_on"})["encode"])
+    nucleo.entregar_encode(nucleo.trucar_prenda("remera5", "hats", "gorra1_on")["encode"])
 
     regla = reglas(sistema)[1]
     assert regla["Match"] == f"EXACT:{URL_ASSETS}antro2017/wears.swf?{len(swf)}"
@@ -292,7 +315,7 @@ def test_el_swf_trucado_de_una_subcarpeta_usa_la_carpeta_en_la_url_y_en_el_archi
 
 
 def test_sin_conexion_no_se_puede_entregar_una_prenda_trucada(nucleo, fuente, sistema):
-    truco = nucleo.trucar_prenda("remera5", {"hats": "gorra1_on"})
+    truco = nucleo.trucar_prenda("remera5", "hats", "gorra1_on")
     fuente.sin_conexion = True
 
     resultado = nucleo.entregar_encode(truco["encode"])
@@ -319,9 +342,9 @@ def test_con_ffdec_real_el_swf_trucado_declara_las_piezas_elegidas(sistema):
     assert nucleo.abrir_swf_del_cdn("clothes1")["ok"]
     prendas = {p["clase"]: p for p in nucleo.prendas()["prendas"]}
     assert prendas["remera5"]["partes"] == {"cloth": "remera5_on", "arm": "remera5_brazo_on"}
-    partes = dict(prendas["buzo1"]["partes"]) | prendas["anteojo1"]["partes"]
+    partes = {"grip": "anteojo1_on"}  # unos anteojos en la mano
 
-    resultado = nucleo.trucar_prenda("remera5", partes)
+    resultado = nucleo.trucar_prenda("remera5", "grip", "anteojo1_on")
 
     assert resultado["ok"], resultado
     assert nucleo.entregar_encode(resultado["encode"])["ok"]

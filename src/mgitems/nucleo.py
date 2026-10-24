@@ -22,6 +22,7 @@ from mgitems.items import (
     filtrar_por_prefijos,
     items_del_swf,
     orden_natural,
+    piezas_del_swf,
     separar_prefijos,
     separar_rutas,
 )
@@ -48,7 +49,8 @@ class Nucleo:
         self._candado_ffdec = threading.Lock()
         self._swf_abierto: str | None = None
         self._items_del_swf: list[str] = []
-        self._simbolos_items: dict[int, str] = {}
+        self._piezas_del_swf: list[str] = []
+        self._simbolos_con_imagen: dict[int, str] = {}  # Items y Piezas: id del símbolo → clase
         self._data_swf: bytes = b""
         self._tamano_swf: int | None = None
         self._exportador = exportador or ExportadorFFDec()
@@ -118,8 +120,18 @@ class Nucleo:
             "partes_del_cuerpo": partes,
         }
 
-    def trucar_prenda(self, base: str, partes: dict[str, str]) -> dict:
-        """Genera la Prenda trucada: `base` (una Prenda del SWF abierto) mostrando `partes` (Parte del cuerpo → Pieza).
+    def piezas(self) -> dict:
+        """Todas las Piezas del SWF abierto: cualquiera se puede poner en cualquier Parte del cuerpo."""
+        if self._swf_abierto is None:
+            return {"ok": False, "error": "Primero abrí un SWF."}
+        return {
+            "ok": True,
+            "swf": self._swf_abierto,
+            "piezas": [{"ruta": f"{self._swf_abierto}.{p}", "clase": p} for p in self._piezas_del_swf],
+        }
+
+    def trucar_prenda(self, base: str, parte: str, pieza: str) -> dict:
+        """Genera la Prenda trucada: `base` (una Prenda del SWF abierto) mostrando solo `pieza` en `parte`.
 
         Devuelve el Encode que la agrega; al entregarlo se entrega también el SWF trucado.
         """
@@ -130,14 +142,12 @@ class Nucleo:
         prendas = self._prendas_del_swf_abierto()
         if base not in prendas:
             return {"ok": False, "error": f"{base} no es una Prenda de {swf}."}
-        if not partes:
-            return {"ok": False, "error": "Elegí al menos una Pieza para alguna Parte del cuerpo."}
-        clases_del_swf = {clase for _, clase in leer_simbolos(data)}
-        partes_validas = set(PARTES_DEL_CUERPO) | {p for prenda in prendas.values() for p in prenda.partes}
-        invalidas = [f"{parte} → {pieza}" for parte, pieza in partes.items()
-                     if parte not in partes_validas or pieza not in clases_del_swf]
-        if invalidas:
-            return {"ok": False, "error": f"Estas Piezas no existen en {swf}: " + ", ".join(invalidas)}
+        partes_validas = {p["id"] for p in resultado["partes_del_cuerpo"]}
+        if parte not in partes_validas:
+            return {"ok": False, "error": f"{parte} no es una Parte del cuerpo."}
+        if pieza not in self._piezas_del_swf:
+            return {"ok": False, "error": f"{pieza} no es una Pieza de {swf}."}
+        partes = {parte: pieza}
 
         try:
             fuente = reescribir_partes(prendas[base].fuente, partes)
@@ -315,11 +325,14 @@ class Nucleo:
             simbolos = leer_simbolos(data)
         except SwfInvalido as e:
             return {"ok": False, "error": f"{e}: {mostrado}"}
-        items = items_del_swf([clase for _, clase in simbolos])
-        es_item = set(items)
+        clases = [clase for _, clase in simbolos]
+        items = items_del_swf(clases)
+        piezas = piezas_del_swf(clases)
+        con_imagen = set(items) | set(piezas)
         self._swf_abierto = nombre
         self._items_del_swf = items
-        self._simbolos_items = {id_: clase for id_, clase in simbolos if clase in es_item}
+        self._piezas_del_swf = piezas
+        self._simbolos_con_imagen = {id_: clase for id_, clase in simbolos if clase in con_imagen}
         self._data_swf = data
         self._tamano_swf = extra["tamano"]
         return {"ok": True, "swf": nombre, "cantidad_items": len(items), **extra}
@@ -327,10 +340,10 @@ class Nucleo:
     # --- Imágenes de los Items ---
 
     def preparar_iconos(self) -> dict:
-        """Exporta (una vez por versión) las imágenes de los Items del SWF abierto. Puede tardar unos segundos."""
+        """Exporta (una vez por versión) las imágenes de los Items y las Piezas del SWF abierto. Tarda unos segundos."""
         if self._swf_abierto is None:
             return {"ok": False, "error": "Primero abrí un SWF."}
-        swf, data, simbolos = self._swf_abierto, self._data_swf, dict(self._simbolos_items)
+        swf, data, simbolos = self._swf_abierto, self._data_swf, dict(self._simbolos_con_imagen)
         try:
             iconos = self._iconos()
             with self._candado_iconos:
