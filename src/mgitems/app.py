@@ -32,6 +32,15 @@ class Puente:
     def abrir_swf_del_cdn(self, nombre: str) -> dict:
         return self._nucleo.abrir_swf_del_cdn(nombre)
 
+    def preparar_iconos(self) -> dict:
+        return self._nucleo.preparar_iconos()
+
+    def iconos(self, rutas_items: list[str]) -> dict:
+        return self._nucleo.iconos(rutas_items)
+
+    def sugerir_items(self, texto: str) -> dict:
+        return self._nucleo.sugerir_items(texto)
+
     def buscar_items(self, texto_prefijos: str) -> dict:
         return self._nucleo.buscar_items(texto_prefijos)
 

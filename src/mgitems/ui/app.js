@@ -78,12 +78,13 @@ function filaDeItem({ ruta, cantidad }) {
   quitar.setAttribute("aria-label", `Quitar ${ruta}`);
   quitar.addEventListener("click", () => quitarItem(ruta));
 
-  fila.append(nombre, campoCantidad, quitar);
+  fila.append(elementoIcono(ruta), nombre, campoCantidad, quitar);
   return fila;
 }
 
 function mostrarLista() {
   $("lista").replaceChildren(...items.map(filaDeItem));
+  cargarIconos(items.map((i) => i.ruta));
   $("cantidad").textContent = items.length ? `(${items.length})` : "";
   $("lista-vacia").hidden = items.length > 0;
   // El Encode mostrado deja de corresponder a la lista.
@@ -116,100 +117,189 @@ function actualizarControles() {
   $("copiar").disabled = $("guardar").disabled = $("entregar").disabled = !listo || !$("encode").value;
 }
 
+// --- Imágenes de los Items ---
+
+const imagenes = new Map(); // ruta del Item → data URL, o null si no tiene
+
+function elementoIcono(ruta) {
+  const caja = document.createElement("span");
+  caja.className = "icono";
+  caja.dataset.ruta = ruta;
+  pintarIcono(caja);
+  return caja;
+}
+
+function pintarIcono(caja) {
+  const src = imagenes.get(caja.dataset.ruta);
+  if (src) {
+    caja.replaceChildren(Object.assign(document.createElement("img"), { src, alt: "" }));
+    caja.classList.remove("sin-imagen");
+    caja.title = "";
+  } else {
+    caja.replaceChildren();
+    caja.classList.add("sin-imagen");
+    caja.title = imagenes.has(caja.dataset.ruta) ? "Sin imagen" : "";
+  }
+}
+
+// Pide al núcleo las imágenes que todavía no se conocen y repinta las que estén en pantalla.
+async function cargarIconos(rutas) {
+  const faltan = [...new Set(rutas)].filter((r) => !imagenes.get(r));
+  if (!faltan.length || !conectado) return;
+  const resultado = await api().iconos(faltan);
+  if (!resultado.ok) return;
+  for (const [ruta, src] of Object.entries(resultado.iconos)) imagenes.set(ruta, src);
+  document.querySelectorAll(".icono").forEach(pintarIcono);
+}
+
+async function prepararIconos(swf) {
+  const etiqueta = $("estado-imagenes");
+  etiqueta.textContent = " · preparando imágenes…";
+  etiqueta.title = "";
+  const resultado = await api().preparar_iconos();
+  if (resultado.swf && resultado.swf !== swf) return; // mientras tanto se abrió otro SWF
+  etiqueta.textContent = resultado.ok ? "" : resultado.sin_exportador ? " · sin imágenes (falta Java)" : " · sin imágenes";
+  etiqueta.title = resultado.ok ? "" : resultado.error;
+  if (!resultado.ok) return;
+  // Pudo cambiar la versión del SWF: olvidar lo conocido de sus Items y volver a pedirlo.
+  for (const ruta of [...imagenes.keys()]) if (ruta.startsWith(swf + ".")) imagenes.delete(ruta);
+  cargarIconos([...document.querySelectorAll(".icono")].map((c) => c.dataset.ruta));
+}
+
 function mostrarSwfAbierto(resultado) {
   if (resultado.cancelado) return avisarLista("");
   if (!resultado.ok) return avisarLista(resultado.error, "error");
   swfAbierto = true;
   actualizarControles();
-  $("swf").textContent = `${resultado.swf}.swf · ${contarItems(resultado.cantidad_items)}`;
+  $("nombre-swf").textContent = `${resultado.swf}.swf · ${contarItems(resultado.cantidad_items)}`;
   if (resultado.aviso) avisarLista(resultado.aviso, "advertencia");
   else avisarLista("SWF abierto. Escribí el comienzo de un nombre para buscar.", "exito");
   $("prefijos").focus();
+  prepararIconos(resultado.swf);
 }
 
 async function abrirArchivo() {
   mostrarSwfAbierto(await mientras("Abriendo SWF…", () => api().abrir_swf()));
 }
 
-// --- Elegir un SWF del catálogo ---
+// --- Desplegable de sugerencias (para elegir un SWF y para elegir Items) ---
 
-let resultadosSwf = [];
-let activo = -1;
+/**
+ * Lista de sugerencias bajo un campo de texto, que se actualiza mientras se escribe.
+ * consultar(texto) devuelve las opciones; fila(opcion) arma su contenido; elegir(opcion)
+ * se llama con un clic o con Enter sobre la opción marcada. Si existe sinElegir(),
+ * Enter sin una opción marcada la llama.
+ */
+function crearDesplegable({ campo, lista, consultar, fila, elegir, vacio, sinElegir }) {
+  let opciones = [];
+  let activo = -1;
 
-function cerrarResultadosSwf() {
-  $("resultados-swf").hidden = true;
-  $("buscar-swf").setAttribute("aria-expanded", "false");
-  activo = -1;
-}
-
-function marcarActivo(indice) {
-  const filas = $("resultados-swf").querySelectorAll("li[role=option]");
-  filas.forEach((fila, i) => fila.classList.toggle("activo", i === indice));
-  filas[indice]?.scrollIntoView({ block: "nearest" });
-  activo = indice;
-}
-
-async function mostrarResultadosSwf() {
-  const texto = $("buscar-swf").value;
-  const { swfs } = await api().buscar_en_catalogo(texto);
-  if (texto !== $("buscar-swf").value) return; // llegó tarde: el jugador siguió escribiendo
-  resultadosSwf = swfs.slice(0, 80);
-  const lista = $("resultados-swf");
-  if (!resultadosSwf.length) {
-    lista.replaceChildren(Object.assign(document.createElement("li"), { className: "vacio", textContent: "No hay SWF con ese nombre." }));
-  } else {
-    lista.replaceChildren(
-      ...resultadosSwf.map(({ swf, items }) => {
-        const fila = document.createElement("li");
-        fila.setAttribute("role", "option");
-        const nombre = Object.assign(document.createElement("span"), { textContent: swf });
-        const cantidad = Object.assign(document.createElement("span"), { className: "ayuda", textContent: contarItems(items) });
-        fila.append(nombre, cantidad);
-        // mousedown en vez de click: se dispara antes de que el campo pierda el foco y cierre la lista.
-        fila.addEventListener("mousedown", (e) => {
-          e.preventDefault();
-          abrirDelCatalogo(swf);
-        });
-        return fila;
-      })
-    );
+  function cerrar() {
+    lista.hidden = true;
+    campo.setAttribute("aria-expanded", "false");
+    activo = -1;
   }
-  lista.hidden = false;
-  $("buscar-swf").setAttribute("aria-expanded", "true");
-  activo = -1;
+
+  function marcar(indice) {
+    const filas = lista.querySelectorAll("li[role=option]");
+    filas.forEach((f, i) => f.classList.toggle("activo", i === indice));
+    filas[indice]?.scrollIntoView({ block: "nearest" });
+    activo = indice;
+  }
+
+  async function mostrar() {
+    const consultado = campo.value;
+    const encontradas = await consultar(consultado);
+    if (consultado !== campo.value || document.activeElement !== campo) return; // llegó tarde
+    opciones = encontradas;
+    if (!opciones.length) {
+      if (!vacio || !consultado.trim()) return cerrar();
+      lista.replaceChildren(Object.assign(document.createElement("li"), { className: "vacio", textContent: vacio }));
+    } else {
+      lista.replaceChildren(
+        ...opciones.map((opcion) => {
+          const li = document.createElement("li");
+          li.setAttribute("role", "option");
+          li.append(...fila(opcion));
+          // mousedown en vez de click: se dispara antes de que el campo pierda el foco y cierre la lista.
+          li.addEventListener("mousedown", (e) => {
+            e.preventDefault();
+            cerrar();
+            elegir(opcion);
+          });
+          return li;
+        })
+      );
+    }
+    lista.hidden = false;
+    campo.setAttribute("aria-expanded", "true");
+    activo = -1;
+  }
+
+  campo.addEventListener("input", mostrar);
+  campo.addEventListener("focus", mostrar);
+  campo.addEventListener("blur", cerrar);
+  campo.addEventListener("keydown", (e) => {
+    const abierta = !lista.hidden;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      if (!abierta) return mostrar();
+      marcar(Math.min(activo + 1, opciones.length - 1));
+    } else if (e.key === "ArrowUp" && abierta) {
+      e.preventDefault();
+      marcar(Math.max(activo - 1, 0));
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      // Sin sinElegir, Enter con una sola opción la elige directamente.
+      const elegida = abierta ? opciones[activo] ?? (!sinElegir && opciones.length === 1 ? opciones[0] : null) : null;
+      cerrar();
+      if (elegida) elegir(elegida);
+      else if (sinElegir) sinElegir();
+    } else if (e.key === "Escape") {
+      cerrar();
+    }
+  });
+  return { cerrar };
 }
+
+const etiqueta = (contenido, className) => Object.assign(document.createElement("span"), { textContent: contenido, className });
+
+// Elegir un SWF del catálogo.
+crearDesplegable({
+  campo: $("buscar-swf"),
+  lista: $("resultados-swf"),
+  consultar: async (t) => (await api().buscar_en_catalogo(t)).swfs.slice(0, 80),
+  fila: ({ swf, items }) => [etiqueta(swf, "nombre"), etiqueta(contarItems(items), "ayuda")],
+  elegir: ({ swf }) => abrirDelCatalogo(swf),
+  vacio: "No hay SWF con ese nombre.",
+});
 
 async function abrirDelCatalogo(nombre) {
-  cerrarResultadosSwf();
   $("buscar-swf").value = nombre;
   mostrarSwfAbierto(await mientras(`Abriendo ${nombre} (se descarga del juego si hace falta)…`, () => api().abrir_swf_del_cdn(nombre)));
 }
 
-function teclaEnBuscarSwf(e) {
-  const abierta = !$("resultados-swf").hidden;
-  if (e.key === "ArrowDown") {
-    e.preventDefault();
-    if (!abierta) return mostrarResultadosSwf();
-    marcarActivo(Math.min(activo + 1, resultadosSwf.length - 1));
-  } else if (e.key === "ArrowUp" && abierta) {
-    e.preventDefault();
-    marcarActivo(Math.max(activo - 1, 0));
-  } else if (e.key === "Enter") {
-    e.preventDefault();
-    const elegido = resultadosSwf[activo] ?? (resultadosSwf.length === 1 ? resultadosSwf[0] : null);
-    if (abierta && elegido) abrirDelCatalogo(elegido.swf);
-  } else if (e.key === "Escape") {
-    cerrarResultadosSwf();
-  }
-}
-
-$("buscar-swf").addEventListener("input", mostrarResultadosSwf);
-$("buscar-swf").addEventListener("focus", mostrarResultadosSwf);
-$("buscar-swf").addEventListener("blur", cerrarResultadosSwf);
-$("buscar-swf").addEventListener("keydown", teclaEnBuscarSwf);
+// Elegir Items del SWF abierto mientras se escribe.
+const sugerencias = crearDesplegable({
+  campo: $("prefijos"),
+  lista: $("sugerencias-items"),
+  consultar: async (t) => {
+    const resultado = await api().sugerir_items(t);
+    for (const { ruta, icono } of resultado.items) if (icono) imagenes.set(ruta, icono);
+    return resultado.items;
+  },
+  fila: ({ ruta }) => [elementoIcono(ruta), etiqueta(ruta.slice(ruta.lastIndexOf(".") + 1), "nombre")],
+  elegir: ({ ruta }) => {
+    const agregado = agregarItems([ruta]);
+    avisarLista(agregado ? `Se agregó ${ruta}.` : `${ruta} ya estaba en la lista.`, "exito");
+  },
+  vacio: "Ningún Item empieza así.",
+  sinElegir: () => $("form-buscar").requestSubmit(),
+});
 
 async function buscar(evento) {
   evento.preventDefault();
+  sugerencias.cerrar();
   const resultado = await mientras("Buscando…", () => api().buscar_items($("prefijos").value));
   if (!resultado.ok) return avisarLista(resultado.error, "error");
   if (!resultado.items.length) return avisarLista("No se encontraron Items con ese comienzo.", "error");
