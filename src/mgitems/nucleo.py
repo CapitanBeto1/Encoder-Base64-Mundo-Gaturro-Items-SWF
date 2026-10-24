@@ -13,16 +13,19 @@ from pathlib import Path
 from mgitems.cache_swf import CacheSwf
 from mgitems.catalogo import buscar_en_catalogo, cargar_catalogo
 from mgitems.entorno import Entorno, Sistema
+from mgitems.entrega import PUERTO_FIDDLER_POR_DEFECTO, QUE_HACER_EN_EL_JUEGO, Entrega, PasoFallido, Procesos, SwfTrucado
+from mgitems.ffdec import FFDecNoDisponible
 from mgitems.fuente import FuenteCDN, SinConexion, SwfNoEncontrado, Version
-from mgitems.iconos import ExportadorFFDec, ExportadorNoDisponible, IconosItems
-from mgitems.entrega import PUERTO_FIDDLER_POR_DEFECTO, QUE_HACER_EN_EL_JUEGO, Entrega, PasoFallido, Procesos
+from mgitems.iconos import ExportadorFFDec, IconosItems, version_de
 from mgitems.items import (
     es_ruta_valida,
     filtrar_por_prefijos,
     items_del_swf,
+    orden_natural,
     separar_prefijos,
     separar_rutas,
 )
+from mgitems.prendas import PARTES_DEL_CUERPO, CachePrendas, Prenda, PrendasFFDec, TruqueoFallido, reescribir_partes
 from mgitems.script import EncodeInvalido, codificar, decodificar, generar_script, leer_script
 from mgitems.swf import SwfInvalido, leer_simbolos
 
@@ -37,7 +40,12 @@ class Nucleo:
         fuente: FuenteCDN | None = None,
         catalogo: list[dict] | None = None,
         exportador: ExportadorFFDec | None = None,
+        prendas_ffdec: PrendasFFDec | None = None,
     ):
+        self._prendas_ffdec = prendas_ffdec or PrendasFFDec()
+        self._prendas: dict[tuple[str, str], dict[str, Prenda]] = {}
+        self._trucos: dict[str, dict[str, bytes]] = {}  # Encode → SWF trucados que necesita
+        self._candado_ffdec = threading.Lock()
         self._swf_abierto: str | None = None
         self._items_del_swf: list[str] = []
         self._simbolos_items: dict[int, str] = {}
@@ -55,7 +63,10 @@ class Nucleo:
         return bool(juego) and self._procesos.corriendo(juego)
 
     def entregar_encode(self, encode: str) -> dict:
-        """Entrega el Encode al juego: regla de Fiddler para Lola, caché borrado, Fiddler y juego reabiertos."""
+        """Entrega el Encode al juego: regla de Fiddler para Lola, caché borrado, Fiddler y juego reabiertos.
+
+        Si el Encode es de una Prenda trucada generada en esta sesión, también se entrega su SWF trucado.
+        """
         try:
             decodificar(encode)
         except EncodeInvalido as e:
@@ -63,11 +74,106 @@ class Nucleo:
         entrega, error = self._preparar_entrega()
         if error:
             return error
+        trucados = []
+        for nombre, data in self._trucos.get(encode.strip(), {}).items():
+            try:
+                tamano = self._fuente.version(nombre).tamano
+            except SwfNoEncontrado:
+                return {"ok": False, "error": f"El SWF {nombre} no existe en el servidor del juego: solo se pueden trucar SWF del juego."}
+            except OSError:
+                return {"ok": False, "error": "Para entregar una Prenda trucada hace falta conexión a internet (para saber el tamaño actual del SWF)."}
+            trucados.append(SwfTrucado(nombre, data, tamano))
         try:
-            entrega.entregar(encode)
+            entrega.entregar(encode, trucados)
         except PasoFallido as e:
             return self._resultado_fallido(entrega, e)
         return {"ok": True, "pasos": [asdict(p) for p in entrega.pasos], "que_hacer": QUE_HACER_EN_EL_JUEGO}
+
+    # --- Prendas trucadas ---
+
+    def prendas(self) -> dict:
+        """Las Prendas del SWF abierto con la Pieza que muestra cada una en cada Parte del cuerpo.
+
+        La primera vez para cada versión de un SWF tarda unos segundos (FFDec); después se lee guardado.
+        """
+        if self._swf_abierto is None:
+            return {"ok": False, "error": "Primero abrí un SWF."}
+        try:
+            prendas = self._prendas_del_swf_abierto()
+        except FFDecNoDisponible as e:
+            return {"ok": False, "error": f"{e}: no se pueden leer las Prendas."}
+        except (OSError, subprocess.SubprocessError) as e:
+            return {"ok": False, "error": f"No se pudieron leer las Prendas: {e}"}
+
+        presentes = {parte for p in prendas.values() for parte in p.partes}
+        partes = [{"id": i, "nombre": n} for i, n in PARTES_DEL_CUERPO.items()]
+        partes += [{"id": i, "nombre": i} for i in sorted(presentes - set(PARTES_DEL_CUERPO))]
+        return {
+            "ok": True,
+            "swf": self._swf_abierto,
+            "prendas": [
+                {"ruta": f"{self._swf_abierto}.{p.clase}", "clase": p.clase, "partes": p.partes}
+                for p in sorted(prendas.values(), key=lambda p: orden_natural(p.clase))
+            ],
+            "partes_del_cuerpo": partes,
+        }
+
+    def trucar_prenda(self, base: str, partes: dict[str, str]) -> dict:
+        """Genera la Prenda trucada: `base` (una Prenda del SWF abierto) mostrando `partes` (Parte del cuerpo → Pieza).
+
+        Devuelve el Encode que la agrega; al entregarlo se entrega también el SWF trucado.
+        """
+        resultado = self.prendas()
+        if not resultado["ok"]:
+            return resultado
+        swf, data = self._swf_abierto, self._data_swf
+        prendas = self._prendas_del_swf_abierto()
+        if base not in prendas:
+            return {"ok": False, "error": f"{base} no es una Prenda de {swf}."}
+        if not partes:
+            return {"ok": False, "error": "Elegí al menos una Pieza para alguna Parte del cuerpo."}
+        clases_del_swf = {clase for _, clase in leer_simbolos(data)}
+        partes_validas = set(PARTES_DEL_CUERPO) | {p for prenda in prendas.values() for p in prenda.partes}
+        invalidas = [f"{parte} → {pieza}" for parte, pieza in partes.items()
+                     if parte not in partes_validas or pieza not in clases_del_swf]
+        if invalidas:
+            return {"ok": False, "error": f"Estas Piezas no existen en {swf}: " + ", ".join(invalidas)}
+
+        try:
+            fuente = reescribir_partes(prendas[base].fuente, partes)
+            trucado = self._prendas_ffdec.trucar(data, base, fuente, dict(partes))
+        except TruqueoFallido as e:
+            return {"ok": False, "error": f"No se pudo trucar la Prenda: {e}."}
+        except FFDecNoDisponible as e:
+            return {"ok": False, "error": f"{e}: no se puede trucar."}
+        except (OSError, subprocess.SubprocessError) as e:
+            return {"ok": False, "error": f"No se pudo trucar la Prenda: {e}"}
+
+        ruta = f"{swf}.{base}"
+        script = generar_script([(ruta, 1)])
+        encode = codificar(script)
+        self._trucos[encode] = {swf: trucado}
+        return {
+            "ok": True,
+            "prenda": {"ruta": ruta, "partes": dict(partes)},
+            "items": [{"ruta": ruta, "cantidad": 1}],
+            "script": script,
+            "encode": encode,
+        }
+
+    def _prendas_del_swf_abierto(self) -> dict[str, Prenda]:
+        swf, data = self._swf_abierto, self._data_swf
+        version = version_de(data)
+        clave = (swf, version)
+        if clave not in self._prendas:
+            cache = CachePrendas(self._entorno.carpeta_cache() / "prendas")
+            prendas = cache.leer(swf, version)
+            if prendas is None:
+                with self._candado_ffdec:
+                    prendas = self._prendas_ffdec.analizar(data, self._items_del_swf)
+                cache.guardar(swf, version, prendas)
+            self._prendas[clave] = prendas
+        return self._prendas[clave]
 
     def desactivar_reglas(self) -> dict:
         """Quita de Fiddler las reglas que puso el programa; las del jugador no se tocan."""
@@ -229,7 +335,7 @@ class Nucleo:
             iconos = self._iconos()
             with self._candado_iconos:
                 iconos.preparar(swf, data, simbolos)
-        except ExportadorNoDisponible as e:
+        except FFDecNoDisponible as e:
             return {"ok": False, "sin_exportador": True, "error": f"{e}: no se pueden mostrar las imágenes de los Items."}
         except (OSError, subprocess.SubprocessError) as e:
             return {"ok": False, "error": f"No se pudieron preparar las imágenes: {e}"}

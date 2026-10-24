@@ -93,13 +93,16 @@ function mostrarLista() {
 
 function mostrarEncode(resultado) {
   $("encode").value = resultado ? resultado.encode : "";
-  if (resultado) {
-    const n = resultado.items.length;
-    $("resumen").textContent = `Encode con ${contarItems(n)}.`;
+  if (resultado?.prenda) {
+    const n = Object.keys(resultado.prenda.partes).length;
+    $("resumen").textContent = `Prenda trucada: ${resultado.prenda.ruta} con ${n === 1 ? "1 Pieza" : `${n} Piezas`}.`;
+  } else if (resultado) {
+    $("resumen").textContent = `Encode con ${contarItems(resultado.items.length)}.`;
   } else {
-    $("resumen").textContent = items.length
-      ? "Generá el Encode con los Items de la lista."
-      : "Todavía no generaste ningún Encode.";
+    $("resumen").textContent =
+      vista === "trucar"
+        ? base ? "Tocá «Trucar Prenda» para generar el Encode." : "Elegí una Prenda base y sus Piezas."
+        : items.length ? "Generá el Encode con los Items de la lista." : "Todavía no generaste ningún Encode.";
     avisarEncode("");
   }
   actualizarControles();
@@ -113,7 +116,12 @@ function actualizarControles() {
   $("quitar-todos").disabled = !listo || items.length === 0;
   $("importar").disabled = !listo;
   $("abrir-entorno").disabled = !conectado;
-  $("generar").disabled = !listo || items.length === 0;
+  const hayPiezas = Object.keys(piezas).length > 0;
+  $("generar").disabled = !listo || (vista === "trucar" ? !base || !hayPiezas : items.length === 0);
+  $("buscar-base").disabled = !listo || !prendas.length;
+  $("restaurar-piezas").disabled = !listo || !base;
+  document.querySelectorAll("#partes input").forEach((c) => (c.disabled = !listo));
+  $("pestana-agregar").disabled = $("pestana-trucar").disabled = !conectado || ocupado;
   $("copiar").disabled = $("guardar").disabled = $("entregar").disabled = !listo || !$("encode").value;
 }
 
@@ -149,7 +157,7 @@ async function cargarIconos(rutas) {
   const resultado = await api().iconos(faltan);
   if (!resultado.ok) return;
   for (const [ruta, src] of Object.entries(resultado.iconos)) imagenes.set(ruta, src);
-  document.querySelectorAll(".icono").forEach(pintarIcono);
+  document.querySelectorAll(".icono[data-ruta]").forEach(pintarIcono);
 }
 
 async function prepararIconos(swf) {
@@ -163,7 +171,7 @@ async function prepararIconos(swf) {
   if (!resultado.ok) return;
   // Pudo cambiar la versión del SWF: olvidar lo conocido de sus Items y volver a pedirlo.
   for (const ruta of [...imagenes.keys()]) if (ruta.startsWith(swf + ".")) imagenes.delete(ruta);
-  cargarIconos([...document.querySelectorAll(".icono")].map((c) => c.dataset.ruta));
+  cargarIconos([...document.querySelectorAll(".icono[data-ruta]")].map((c) => c.dataset.ruta));
 }
 
 function mostrarSwfAbierto(resultado) {
@@ -174,8 +182,10 @@ function mostrarSwfAbierto(resultado) {
   $("nombre-swf").textContent = `${resultado.swf}.swf · ${contarItems(resultado.cantidad_items)}`;
   if (resultado.aviso) avisarLista(resultado.aviso, "advertencia");
   else avisarLista("SWF abierto. Escribí el comienzo de un nombre para buscar.", "exito");
-  $("prefijos").focus();
+  olvidarPrendas();
   prepararIconos(resultado.swf);
+  if (vista === "trucar") cargarPrendas();
+  else $("prefijos").focus();
 }
 
 async function abrirArchivo() {
@@ -231,9 +241,26 @@ function crearDesplegable({ campo, lista, consultar, fila, elegir, vacio, sinEle
         })
       );
     }
+    ubicar();
     lista.hidden = false;
     campo.setAttribute("aria-expanded", "true");
     activo = -1;
+  }
+
+  // Posición fija junto al campo (abajo, o arriba si no hay lugar): así no lo recorta una lista con scroll.
+  function ubicar() {
+    const r = campo.getBoundingClientRect();
+    const abajo = window.innerHeight - r.bottom;
+    const arriba = abajo < 220 && r.top > abajo;
+    Object.assign(lista.style, {
+      position: "fixed",
+      left: `${r.left}px`,
+      width: `${Math.max(r.width, 260)}px`,
+      right: "auto",
+      top: arriba ? "auto" : `${r.bottom + 6}px`,
+      bottom: arriba ? `${window.innerHeight - r.top + 6}px` : "auto",
+      maxHeight: `${Math.max(140, Math.min(270, (arriba ? r.top : abajo) - 16))}px`,
+    });
   }
 
   campo.addEventListener("input", mostrar);
@@ -323,6 +350,7 @@ async function agregarAMano(evento) {
 }
 
 async function generar() {
+  if (vista === "trucar") return trucar();
   const resultado = await api().generar_encode(items);
   if (!resultado.ok) return avisarEncode(resultado.error, "error");
   mostrarEncode(resultado);
@@ -344,6 +372,155 @@ async function guardar() {
   if (resultado.ok) avisarEncode(`Encode guardado en ${resultado.ruta}`, "exito");
   else if (!resultado.cancelado) avisarEncode(resultado.error, "error");
 }
+
+// --- Pestañas: Agregar Items / Trucar Prenda ---
+
+let vista = "agregar";
+
+function cambiarVista(nueva) {
+  vista = nueva;
+  for (const nombre of ["agregar", "trucar"]) {
+    $(`vista-${nombre}`).hidden = nombre !== vista;
+    $(`pestana-${nombre}`).setAttribute("aria-selected", String(nombre === vista));
+  }
+  $("generar").textContent = vista === "trucar" ? "Trucar Prenda" : "Generar Encode";
+  avisarLista("");
+  mostrarEncode(null);
+  if (vista === "trucar" && swfAbierto && !prendas.length) cargarPrendas();
+}
+
+// --- Trucar Prenda ---
+
+let prendas = []; // [{ruta, clase, partes: {parte: pieza}}] del SWF abierto
+let partesDelCuerpo = []; // [{id, nombre}]
+let base = null; // la Prenda base elegida
+let piezas = {}; // parte → {pieza, origen}: la Pieza elegida y la Prenda de donde sale
+
+function olvidarPrendas() {
+  prendas = [];
+  base = null;
+  piezas = {};
+  $("buscar-base").value = "";
+  mostrarPartes();
+}
+
+async function cargarPrendas() {
+  olvidarPrendas();
+  const resultado = await mientras("Leyendo las Prendas del SWF… (la primera vez tarda unos segundos)", () => api().prendas());
+  if (!resultado.ok) return avisarLista(resultado.error, "error");
+  prendas = resultado.prendas;
+  partesDelCuerpo = resultado.partes_del_cuerpo;
+  actualizarControles();
+  if (!prendas.length) return avisarLista("Este SWF no tiene Prendas.", "advertencia");
+  avisarLista(`${prendas.length === 1 ? "1 Prenda" : `${prendas.length} Prendas`}. Elegí la Prenda base.`, "exito");
+  cargarIconos(prendas.map((p) => p.ruta));
+  $("buscar-base").focus();
+}
+
+// Las Prendas cuyo nombre contiene el texto; las que empiezan con él, primero.
+// Pide las imágenes que falten (pueden no estar listas cuando se cargaron las Prendas).
+function filtrarPrendas(lista, texto) {
+  const t = texto.trim().toLowerCase();
+  const coinciden = lista.filter((p) => p.clase.toLowerCase().includes(t));
+  const elegidas = coinciden.sort((a, b) => !a.clase.toLowerCase().startsWith(t) - !b.clase.toLowerCase().startsWith(t)).slice(0, 80);
+  cargarIconos(elegidas.map((p) => p.ruta));
+  return elegidas;
+}
+
+const filaDePrenda = (p) => [elementoIcono(p.ruta), etiqueta(p.clase, "nombre")];
+
+function elegirBase(prenda) {
+  base = prenda;
+  $("buscar-base").value = prenda.clase;
+  restaurarPiezas();
+}
+
+function restaurarPiezas() {
+  piezas = Object.fromEntries(Object.entries(base.partes).map(([parte, pieza]) => [parte, { pieza, origen: base }]));
+  mostrarPartes();
+}
+
+// Ponerse una Prenda en una Parte del cuerpo trae todas sus Piezas (una remera trae torso y brazos).
+function usarPrenda(prenda) {
+  for (const [parte, pieza] of Object.entries(prenda.partes)) piezas[parte] = { pieza, origen: prenda };
+  mostrarPartes();
+}
+
+function quitarPieza(parte) {
+  delete piezas[parte];
+  mostrarPartes();
+}
+
+function filaDeParte({ id, nombre }) {
+  const fila = document.createElement("li");
+  const elegida = piezas[id];
+
+  const rotulo = etiqueta(nombre, "parte");
+  const icono = elegida ? elementoIcono(elegida.origen.ruta) : Object.assign(document.createElement("span"), { className: "icono vacio" });
+  const pieza = etiqueta(elegida ? elegida.pieza : "—", "nombre");
+  if (elegida && elegida.origen !== base) pieza.title = `De ${elegida.origen.clase}`;
+
+  const selector = Object.assign(document.createElement("div"), { className: "selector-swf selector-parte" });
+  const campo = Object.assign(document.createElement("input"), { type: "text", placeholder: "Cambiar…", spellcheck: false, autocomplete: "off" });
+  campo.setAttribute("aria-label", `Elegir la Prenda para ${nombre}`);
+  campo.disabled = ocupado;
+  const lista = Object.assign(document.createElement("ul"), { className: "resultados-swf con-iconos", hidden: true });
+  selector.append(campo, lista);
+  crearDesplegable({
+    campo,
+    lista,
+    consultar: async (t) => filtrarPrendas(prendas.filter((p) => id in p.partes), t),
+    fila: filaDePrenda,
+    elegir: usarPrenda,
+    vacio: "Ninguna Prenda tiene algo para esta parte.",
+  });
+
+  const quitar = Object.assign(document.createElement("button"), { className: "quitar", textContent: "✕", title: `Dejar ${nombre} vacío` });
+  quitar.disabled = !elegida;
+  quitar.addEventListener("click", () => quitarPieza(id));
+
+  fila.append(rotulo, icono, pieza, selector, quitar);
+  return fila;
+}
+
+function mostrarPartes() {
+  const lista = $("partes");
+  if (!base) {
+    lista.replaceChildren();
+    $("partes-vacia").hidden = false;
+    $("partes-vacia").textContent = prendas.length ? "Elegí una Prenda base." : "Abrí un SWF y elegí una Prenda base.";
+  } else {
+    // Las Partes conocidas, más cualquier otra que use alguna Pieza elegida.
+    const conocidas = new Set(partesDelCuerpo.map((p) => p.id));
+    const extra = Object.keys(piezas).filter((p) => !conocidas.has(p)).map((id) => ({ id, nombre: id }));
+    lista.replaceChildren(...[...partesDelCuerpo, ...extra].map(filaDeParte));
+    $("partes-vacia").hidden = true;
+    cargarIconos(Object.values(piezas).map((p) => p.origen.ruta));
+  }
+  mostrarEncode(null);
+}
+
+async function trucar() {
+  const partes = Object.fromEntries(Object.entries(piezas).map(([parte, { pieza }]) => [parte, pieza]));
+  const resultado = await mientras("Trucando la Prenda… (tarda unos segundos)", () => api().trucar_prenda(base.clase, partes));
+  if (!resultado.ok) return avisarLista(resultado.error, "error");
+  avisarLista("");
+  mostrarEncode(resultado);
+  avisarEncode("Prenda trucada. Tocá «Agregar al juego» para recibirla.", "exito");
+}
+
+crearDesplegable({
+  campo: $("buscar-base"),
+  lista: $("resultados-base"),
+  consultar: async (t) => filtrarPrendas(prendas, t),
+  fila: filaDePrenda,
+  elegir: elegirBase,
+  vacio: "Ninguna Prenda se llama así.",
+});
+
+$("pestana-agregar").addEventListener("click", () => cambiarVista("agregar"));
+$("pestana-trucar").addEventListener("click", () => cambiarVista("trucar"));
+$("restaurar-piezas").addEventListener("click", restaurarPiezas);
 
 // --- Importar un Encode ---
 
