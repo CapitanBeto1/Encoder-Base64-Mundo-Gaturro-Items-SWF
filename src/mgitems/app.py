@@ -75,8 +75,8 @@ class Puente:
             return {"ok": False, "cancelado": True}
         return self._nucleo.importar_look_de_archivo(ruta)
 
-    def gaturro(self, partes: dict) -> dict:
-        return self._nucleo.gaturro(partes)
+    def gaturro(self, partes: dict, colores: dict | None = None) -> dict:
+        return self._nucleo.gaturro(partes, colores)
 
     def preparar_iconos(self, swf: str | None = None) -> dict:
         return self._nucleo.preparar_iconos(swf)
