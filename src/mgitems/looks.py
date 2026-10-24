@@ -45,6 +45,32 @@ class Look:
         return cls(nombre, base, {str(p): str(v) for p, v in partes.items()}, str(datos.get("id") or ""))
 
 
+FORMATO = "mgitems-look"
+VERSION_FORMATO = 1
+
+
+def archivo_de_look(look: Look) -> str:
+    """El contenido de un archivo de Look: el Look sin su id (es de cada jugador)."""
+    datos = {"formato": FORMATO, "version": VERSION_FORMATO, "nombre": look.nombre, "base": look.base, "partes": look.partes}
+    return json.dumps(datos, ensure_ascii=False, indent=1)
+
+
+def look_de_archivo(contenido: str) -> Look:
+    """El Look de un archivo de Look, validado (sin id: es nuevo para quien lo importa)."""
+    try:
+        datos = json.loads(contenido)
+    except ValueError:
+        datos = None
+    if not isinstance(datos, dict) or datos.get("formato") != FORMATO:
+        raise LookInvalido("Este archivo no es un Look de MG Items.")
+    if not isinstance(datos.get("version"), int) or datos["version"] > VERSION_FORMATO:
+        raise LookInvalido("Este Look es de una versión más nueva de MG Items: actualizá el programa.")
+    look = Look.desde({k: datos.get(k) for k in ("nombre", "base", "partes")})
+    if not look.partes:
+        raise LookInvalido("El Look del archivo no tiene Piezas.")
+    return look
+
+
 class AlmacenLooks:
     def __init__(self, archivo: Path):
         self._archivo = archivo

@@ -950,3 +950,4 @@ dialog.grande {
 .resultados-swf li .tipo-mochila { background: #f6d610; color: #5a3d00; }
 .resultados-swf.con-iconos { overflow-x: hidden; }
 .resultados-swf.con-iconos li .nombre { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.botones-encabezado { display: flex; gap: 8px; }

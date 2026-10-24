@@ -142,7 +142,10 @@
       <div id="vista-looks" class="vista" role="tabpanel" hidden>
         <div class="encabezado-lista">
           <h2>Mis Looks</h2>
-          <button id="nuevo-look" class="enlace">+ Nuevo Look</button>
+          <span class="botones-encabezado">
+            <button id="importar-look" class="enlace" title="Agregar a Mis Looks el archivo de Look de otra persona">Importar…</button>
+            <button id="nuevo-look" class="enlace">+ Nuevo Look</button>
+          </span>
         </div>
         <div id="lista-looks" class="lista-looks"></div>
 
@@ -173,6 +176,7 @@
           <button id="guardar-look">Guardar</button>
           <button id="duplicar-look">Duplicar</button>
           <button id="borrar-look">Borrar</button>
+          <button id="exportar-look" title="Guardar el Look en un archivo para pasárselo a otra persona">Exportar…</button>
         </div>
       </div>
       <p id="mensaje" class="mensaje" role="status" aria-live="polite"></p>
