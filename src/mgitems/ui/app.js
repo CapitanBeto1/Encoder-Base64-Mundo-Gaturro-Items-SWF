@@ -125,7 +125,8 @@ function actualizarControles() {
   $("abrir-entorno").disabled = !conectado;
   const puedeGenerar = { agregar: items.length > 0, trucar: base && pieza && parte, looks: Object.keys(lookActual.partes).length > 0 }[vista];
   $("generar").disabled = !listo || !puedeGenerar;
-  $("guardar-look").disabled = $("nuevo-look").disabled = !listo;
+  $("guardar-look").disabled = $("nuevo-look").disabled = $("importar-look").disabled = !listo;
+  $("exportar-look").disabled = !listo || !Object.keys(lookActual.partes).length;
   $("duplicar-look").disabled = $("borrar-look").disabled = !listo || !lookActual.id;
   $("nombre-look").disabled = $("buscar-base-look").disabled = $("buscar-swf-look").disabled = !listo;
   document.querySelectorAll("#partes-look input").forEach((c) => (c.disabled = !listo));
@@ -387,7 +388,7 @@ async function copiar() {
 
 async function guardar() {
   const resultado = await api().guardar_encode($("encode").value);
-  if (resultado.ok) avisarEncode(`Encode guardado en ${resultado.ruta}`, "exito");
+  if (resultado.ok) avisarEncode(`Guardado en ${resultado.ruta}`, "exito");
   else if (!resultado.cancelado) avisarEncode(resultado.error, "error");
 }
 
@@ -744,6 +745,19 @@ $("nuevo-look").addEventListener("click", () => {
   $("nombre-look").focus();
 });
 $("guardar-look").addEventListener("click", guardarLook);
+$("exportar-look").addEventListener("click", async () => {
+  const resultado = await api().exportar_look(lookActual);
+  if (resultado.ok) avisarLista(`Look exportado en ${resultado.ruta}`, "exito");
+  else if (!resultado.cancelado) avisarLista(resultado.error, "error");
+});
+$("importar-look").addEventListener("click", async () => {
+  const resultado = await api().importar_look();
+  if (resultado.cancelado) return;
+  if (!resultado.ok) return avisarLista(resultado.error, "error");
+  await cargarLooks();
+  abrirLook(resultado.look);
+  avisarLista(`Se importó el Look «${resultado.look.nombre}». Tocá «Aplicar Look» para usarlo.`, "exito");
+});
 $("duplicar-look").addEventListener("click", duplicarLook);
 $("borrar-look").addEventListener("click", borrarLook);
 $("pestana-looks").addEventListener("click", () => cambiarVista("looks"));

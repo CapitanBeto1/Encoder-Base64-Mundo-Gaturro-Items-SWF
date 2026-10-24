@@ -1,5 +1,6 @@
 """Ventana del programa: muestra la interfaz web y le expone el núcleo."""
 
+import re
 from pathlib import Path
 
 import webview
@@ -8,6 +9,8 @@ from mgitems.nucleo import Nucleo
 
 TITULO = "MG Items"
 UI = Path(__file__).parent / "ui" / "index.html"
+_TIPOS_LOOK = ("Look de MG Items (*.mglook)", "Todos los archivos (*.*)")
+_NO_VALE_EN_ARCHIVOS = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
 
 
 class Puente:
@@ -58,6 +61,19 @@ class Puente:
 
     def aplicar_look(self, look: dict) -> dict:
         return self._nucleo.aplicar_look(look)
+
+    def exportar_look(self, look: dict) -> dict:
+        nombre = _NO_VALE_EN_ARCHIVOS.sub("_", str(look.get("nombre") or "").strip()) or "Look"
+        ruta = _dialogo(webview.FileDialog.SAVE, save_filename=f"{nombre}.mglook", file_types=_TIPOS_LOOK)
+        if not ruta:
+            return {"ok": False, "cancelado": True}
+        return self._nucleo.exportar_look(look, ruta)
+
+    def importar_look(self) -> dict:
+        ruta = _dialogo(webview.FileDialog.OPEN, file_types=_TIPOS_LOOK)
+        if not ruta:
+            return {"ok": False, "cancelado": True}
+        return self._nucleo.importar_look_de_archivo(ruta)
 
     def preparar_iconos(self, swf: str | None = None) -> dict:
         return self._nucleo.preparar_iconos(swf)
@@ -112,6 +128,12 @@ class Puente:
         return self._nucleo.restablecer_ruta(id_componente)
 
     def guardar_encode(self, encode: str) -> dict:
+        if self._nucleo.tiene_swf_trucado(encode):
+            # Una Prenda trucada necesita también su SWF: se guarda todo en una carpeta.
+            carpeta = _dialogo(webview.FileDialog.FOLDER)
+            if not carpeta:
+                return {"ok": False, "cancelado": True}
+            return self._nucleo.exportar_truco(encode, str(Path(carpeta) / "MG Items - Prenda trucada"))
         ruta = _dialogo(
             webview.FileDialog.SAVE,
             save_filename="items.txt",

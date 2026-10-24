@@ -13,9 +13,9 @@ from pathlib import Path
 from mgitems.cache_swf import CacheSwf
 from mgitems.catalogo import buscar_en_catalogo, cargar_catalogo
 from mgitems.entorno import Entorno, Sistema
-from mgitems.entrega import PUERTO_FIDDLER_POR_DEFECTO, QUE_HACER_EN_EL_JUEGO, Entrega, PasoFallido, Procesos, SwfTrucado
+from mgitems.entrega import PUERTO_FIDDLER_POR_DEFECTO, QUE_HACER_EN_EL_JUEGO, URL_LOLA, Entrega, PasoFallido, Procesos, SwfTrucado
 from mgitems.ffdec import FFDecNoDisponible
-from mgitems.fuente import FuenteCDN, SinConexion, SwfNoEncontrado, Version
+from mgitems.fuente import URL_ASSETS, FuenteCDN, SinConexion, SwfNoEncontrado, Version
 from mgitems.iconos import ExportadorFFDec, IconosItems, version_de
 from mgitems.items import (
     es_ruta_valida,
@@ -26,7 +26,7 @@ from mgitems.items import (
     separar_prefijos,
     separar_rutas,
 )
-from mgitems.looks import AlmacenLooks, Look, LookInvalido
+from mgitems.looks import AlmacenLooks, Look, LookInvalido, archivo_de_look, look_de_archivo
 from mgitems.prendas import MOCHILA, PARTES_DEL_CUERPO, PRENDA, CacheItemsBase, ItemBase, ItemsBaseFFDec, TruqueoFallido, reescribir_partes
 from mgitems.script import EncodeInvalido, codificar, decodificar, generar_script, leer_script
 from mgitems.swf import SwfInvalido, leer_simbolos
@@ -78,15 +78,9 @@ class Nucleo:
         entrega, error = self._preparar_entrega()
         if error:
             return error
-        trucados = []
-        for nombre, data in self._trucos.get(encode.strip(), {}).items():
-            try:
-                tamano = self._fuente.version(nombre).tamano
-            except SwfNoEncontrado:
-                return {"ok": False, "error": f"El SWF {nombre} no existe en el servidor del juego: solo se pueden trucar SWF del juego."}
-            except OSError:
-                return {"ok": False, "error": "Para entregar una Prenda trucada hace falta conexión a internet (para saber el tamaño actual del SWF)."}
-            trucados.append(SwfTrucado(nombre, data, tamano))
+        trucados, error = self._swf_trucados(encode)
+        if error:
+            return error
         try:
             entrega.entregar(encode, trucados)
         except PasoFallido as e:
@@ -275,12 +269,7 @@ class Nucleo:
             original = next((l for l in almacen.todos() if l.id == id_look), None)
             if original is None:
                 return {"ok": False, "error": "Ese Look ya no existe."}
-            nombres = {l.nombre for l in almacen.todos()}
-            nombre = f"{original.nombre} (copia)"
-            n = 2
-            while nombre in nombres:
-                nombre = f"{original.nombre} (copia {n})"
-                n += 1
+            nombre = _nombre_libre(f"{original.nombre} (copia)", {l.nombre for l in almacen.todos()}, "copia ")
             copia = almacen.guardar(Look(nombre, original.base, dict(original.partes)))
         except OSError as e:
             return {"ok": False, "error": f"No se pudo duplicar el Look: {e}"}
@@ -333,8 +322,75 @@ class Nucleo:
         candidatas = [c for c, p in prendas.items() if p.tipo == PRENDA]
         return f"{swf}.{min(candidatas, key=orden_natural)}" if candidatas else None
 
+    def exportar_look(self, look: dict, ruta: str) -> dict:
+        """Guarda el Look en un archivo de Look para pasárselo a otra persona."""
+        try:
+            Path(ruta).write_text(archivo_de_look(Look.desde(look)), encoding="utf-8")
+        except LookInvalido as e:
+            return {"ok": False, "error": str(e)}
+        except OSError as e:
+            return {"ok": False, "error": f"No se pudo guardar el archivo: {e.strerror or e}"}
+        return {"ok": True, "ruta": ruta}
+
+    def importar_look_de_archivo(self, ruta: str) -> dict:
+        """Agrega a los Looks guardados el de un archivo de Look (con otro nombre si ya hay uno igual)."""
+        try:
+            contenido = Path(ruta).read_text(encoding="utf-8", errors="replace")
+        except OSError as e:
+            return {"ok": False, "error": f"No se pudo abrir el archivo: {e.strerror or e}"}
+        try:
+            look = look_de_archivo(contenido)
+            almacen = self._almacen_looks()
+            look.nombre = _nombre_libre(look.nombre, {l.nombre for l in almacen.todos()})
+            guardado = almacen.guardar(look)
+        except LookInvalido as e:
+            return {"ok": False, "error": str(e)}
+        except OSError as e:
+            return {"ok": False, "error": f"No se pudo guardar el Look: {e}"}
+        return {"ok": True, "look": asdict(guardado)}
+
     def _almacen_looks(self) -> AlmacenLooks:
         return AlmacenLooks(self._entorno.carpeta_programa() / "looks.json")
+
+    def _swf_trucados(self, encode: str) -> tuple[list[SwfTrucado], dict | None]:
+        """Los SWF trucados que necesita un Encode generado en esta sesión, con el tamaño actual del original."""
+        trucados = []
+        for nombre, data in self._trucos.get(encode.strip(), {}).items():
+            try:
+                tamano = self._fuente.version(nombre).tamano
+            except SwfNoEncontrado:
+                return [], {"ok": False, "error": f"El SWF {nombre} no existe en el servidor del juego: solo se pueden trucar SWF del juego."}
+            except OSError:
+                return [], {"ok": False, "error": "Para usar una Prenda trucada hace falta conexión a internet (para saber el tamaño actual del SWF)."}
+            trucados.append(SwfTrucado(nombre, data, tamano))
+        return trucados, None
+
+    def tiene_swf_trucado(self, encode: str) -> bool:
+        """Si el Encode necesita un SWF trucado (se guarda en una carpeta, no en un solo archivo)."""
+        return bool(self._trucos.get(encode.strip()))
+
+    def exportar_truco(self, encode: str, carpeta: str) -> dict:
+        """Guarda en `carpeta` el Encode, sus SWF trucados y cómo usarlos con Fiddler a mano."""
+        try:
+            decodificar(encode)
+        except EncodeInvalido as e:
+            return {"ok": False, "error": f"{e}."}
+        trucados, error = self._swf_trucados(encode)
+        if error:
+            return error
+        destino = Path(carpeta)
+        reglas = [f"EXACT:{URL_LOLA}\n  → encode.txt"]
+        try:
+            destino.mkdir(parents=True, exist_ok=True)
+            (destino / "encode.txt").write_text(encode.strip(), encoding="ascii")
+            for trucado in trucados:
+                archivo = trucado.nombre.replace("/", "_") + ".swf"
+                (destino / archivo).write_bytes(trucado.data)
+                reglas.append(f"EXACT:{URL_ASSETS}{trucado.nombre}.swf?{trucado.tamano_original}\n  → {archivo}")
+            (destino / "LEEME.txt").write_text(_LEEME_TRUCO.format(reglas="\n\n".join(reglas)), encoding="utf-8")
+        except OSError as e:
+            return {"ok": False, "error": f"No se pudo guardar en la carpeta: {e.strerror or e}"}
+        return {"ok": True, "ruta": str(destino)}
 
     def desactivar_reglas(self) -> dict:
         """Quita de Fiddler las reglas que puso el programa; las del jugador no se tocan."""
@@ -650,6 +706,29 @@ def _cantidad(valor) -> int | None:
     if isinstance(valor, float) and valor.is_integer():
         valor = int(valor)
     return valor if isinstance(valor, int) and valor > 0 else None
+
+
+def _nombre_libre(nombre: str, usados: set[str], sufijo: str = "") -> str:
+    """`nombre`, o "nombre (2)", "nombre (3)"… (con `sufijo` dentro del paréntesis) si ya está usado."""
+    if nombre not in usados:
+        return nombre
+    raiz = nombre.removesuffix(f" ({sufijo.strip()})") if sufijo else nombre
+    n = 2
+    while f"{raiz} ({sufijo}{n})" in usados:
+        n += 1
+    return f"{raiz} ({sufijo}{n})"
+
+
+_LEEME_TRUCO = """Prenda trucada de MG Items, para usar con Fiddler a mano.
+
+En Fiddler, pestaña AutoResponder: activá "Enable rules" y "Unmatched requests passthrough",
+y agregá una regla por cada par: en el primer campo del "Rule Editor" va la línea EXACT:…
+y en el segundo, la ruta completa del archivo de esta carpeta que se indica debajo.
+
+{reglas}
+
+Después cerrá el juego, borrá su caché (%APPDATA%\\MundoGaturro\\Cache), abrilo y tocá a Lola.
+"""
 
 
 def _como_items(pedidos: list[tuple[str, int]]) -> list[dict]:

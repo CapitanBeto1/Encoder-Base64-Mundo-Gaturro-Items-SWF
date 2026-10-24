@@ -42,6 +42,10 @@ _Avoid_: consumible (a secas), objeto de mochila
 Un conjunto de Piezas asignadas a varias Partes del cuerpo a la vez, con nombre, que se materializa en el juego como un Item base modificado (normalmente un Item de mochila). Se guarda y se comparte como archivo; con él se puede volver a generar.
 _Avoid_: Outfit, conjunto
 
+**Archivo de Look**:
+Un Look guardado en un archivo para pasárselo a otra persona, que lo importa a sus Looks y lo aplica (los SWF que le falten se descargan solos).
+_Avoid_: Look exportado, preset
+
 ## Entrega al juego
 
 **Script**:
