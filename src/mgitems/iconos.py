@@ -14,6 +14,8 @@ from pathlib import Path
 from mgitems.ffdec import FFDec
 
 ZOOM = 2
+# Qué se exporta de cada SWF. Si cambia, las imágenes guardadas se vuelven a exportar aunque el SWF sea el mismo.
+CONTENIDO = "items+piezas"
 
 
 def version_de(data: bytes) -> str:
@@ -60,7 +62,7 @@ class IconosItems:
 
     def preparar(self, swf: str, data: bytes, simbolos: dict[int, str]) -> None:
         """Exporta las imágenes de los Items (id → clase) si no están para esta versión del SWF."""
-        version = version_de(data)
+        version = f"{version_de(data)} {CONTENIDO}"
         if self.listos(swf, version):
             return
         carpeta = self._carpeta_swf(swf)

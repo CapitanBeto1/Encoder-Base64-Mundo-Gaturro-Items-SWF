@@ -93,9 +93,12 @@ def swf():
     return crear_swf(CLASES)
 
 
+COSTUMES = crear_swf(["coronaRey", "coronaRey_on", "capaRey_on", "castillo_so"])
+
+
 @pytest.fixture
 def fuente(swf):
-    return FuenteFalsa({"clothes1": swf, "antro2017/wears": swf})
+    return FuenteFalsa({"clothes1": swf, "antro2017/wears": swf, "costumes": COSTUMES})
 
 
 @pytest.fixture
@@ -272,6 +275,74 @@ def test_si_el_truco_falla_se_informa(nucleo, ffdec):
     assert "No se pudo trucar" in resultado["error"]
 
 
+# --- Piezas de otro SWF ---
+
+def test_lista_las_piezas_de_otro_swf_sin_cambiar_el_abierto(nucleo):
+    resultado = nucleo.piezas("costumes")
+
+    assert resultado["ok"]
+    assert [p["ruta"] for p in resultado["piezas"]] == ["costumes.capaRey_on", "costumes.coronaRey_on"]
+    assert nucleo.piezas()["swf"] == "clothes1"
+    assert nucleo.prendas()["swf"] == "clothes1"
+
+
+def test_piezas_de_un_swf_inexistente_devuelve_error(nucleo):
+    resultado = nucleo.piezas("noExiste")
+
+    assert not resultado["ok"]
+    assert "no existe" in resultado["error"]
+
+
+def test_trucar_con_una_pieza_de_otro_swf_la_escribe_con_el_nombre_del_swf(nucleo, ffdec):
+    resultado = nucleo.trucar_prenda("remera5", "hats", "costumes.coronaRey_on")
+
+    assert resultado["ok"], resultado
+    assert resultado["prenda"]["partes"] == {"hats": "costumes.coronaRey_on"}
+    assert leer_prenda(ffdec.trucos[0][1]).partes == {"hats": "costumes.coronaRey_on"}
+
+
+def test_una_pieza_del_mismo_swf_con_su_nombre_completo_se_escribe_sin_el_swf(nucleo, ffdec):
+    resultado = nucleo.trucar_prenda("remera5", "grip", "clothes1.gorra1_on")
+
+    assert resultado["ok"], resultado
+    assert leer_prenda(ffdec.trucos[0][1]).partes == {"grip": "gorra1_on"}
+
+
+@pytest.mark.parametrize(
+    "pieza, error",
+    [
+        ("costumes.noExiste_on", "no es una Pieza de costumes"),
+        ("costumes.coronaRey", "no es una Pieza de costumes"),  # un Item, no una Pieza
+        ("noExiste.algo_on", "no existe"),
+    ],
+)
+def test_una_pieza_de_otro_swf_que_no_sirve_se_avisa_antes_de_trucar(nucleo, ffdec, pieza, error):
+    resultado = nucleo.trucar_prenda("remera5", "hats", pieza)
+
+    assert not resultado["ok"]
+    assert error in resultado["error"]
+    assert ffdec.trucos == []
+
+
+def test_una_pieza_de_un_swf_en_subcarpeta_conserva_la_carpeta(sistema, fuente, ffdec):
+    fuente.publicar("animales2018/wears", crear_swf(["orejas", "orejas_on"]), '"v1"')
+    nucleo = Nucleo(sistema, ProcesosFalso(), fuente=fuente, catalogo=[], prendas_ffdec=ffdec)
+    nucleo.abrir_swf_del_cdn("clothes1")
+
+    resultado = nucleo.trucar_prenda("remera5", "hats", "animales2018/wears.orejas_on")
+
+    assert resultado["ok"], resultado
+    assert leer_prenda(ffdec.trucos[0][1]).partes == {"hats": "animales2018/wears.orejas_on"}
+
+
+def test_con_una_pieza_de_otro_swf_solo_se_entrega_trucado_el_swf_de_la_prenda_base(nucleo, sistema):
+    truco = nucleo.trucar_prenda("remera5", "hats", "costumes.coronaRey_on")
+
+    assert nucleo.entregar_encode(truco["encode"])["ok"]
+
+    assert [r["Match"].split("/")[-1] for r in reglas(sistema)] == [URL_LOLA.split("/")[-1], f"clothes1.swf?{len(crear_swf(CLASES))}"]
+
+
 # --- Entregar la Prenda trucada ---
 
 def test_entregar_una_prenda_trucada_escribe_las_reglas_de_lola_y_del_swf(nucleo, sistema, swf):
@@ -350,3 +421,11 @@ def test_con_ffdec_real_el_swf_trucado_declara_las_piezas_elegidas(sistema):
     assert nucleo.entregar_encode(resultado["encode"])["ok"]
     trucado = Path(reglas(sistema)[1]["Action"]).read_bytes()
     assert PrendasFFDec().analizar(trucado, ["remera5"])["remera5"].partes == partes
+
+    # Y con una Pieza de otro SWF (la corona de rey de costumes, probada en el juego).
+    resultado = nucleo.trucar_prenda("remera5", "hats", "costumes.coronaRey_on")
+
+    assert resultado["ok"], resultado
+    assert nucleo.entregar_encode(resultado["encode"])["ok"]
+    trucado = Path(reglas(sistema)[1]["Action"]).read_bytes()
+    assert PrendasFFDec().analizar(trucado, ["remera5"])["remera5"].partes == {"hats": "costumes.coronaRey_on"}

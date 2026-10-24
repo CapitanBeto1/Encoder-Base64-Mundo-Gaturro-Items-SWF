@@ -37,6 +37,8 @@ _CLASE_PRENDA = re.compile(r"\bclass\s+(\w+)\s+extends\s+ClothMamboAsset\b")
 _CLOTHES = re.compile(r"clothes\s*=\s*\{(?P<cuerpo>[^{}]*)\}\s*;")
 _PAR = re.compile(r'"(\w+)"\s*:\s*"([^"]*)"')
 _IDENTIFICADOR = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+# Una Pieza del mismo SWF (`gorra1_on`) o de otro (`costumes.coronaRey_on`, `antro2017/wears.x_on`).
+_PIEZA = re.compile(r"^(?:[A-Za-z0-9_\-]+(?:/[A-Za-z0-9_\-]+)*\.)?[A-Za-z_][A-Za-z0-9_]*$")
 
 
 class TruqueoFallido(Exception):
@@ -63,7 +65,7 @@ def leer_prenda(fuente: str) -> Prenda | None:
 def reescribir_partes(fuente: str, partes: dict[str, str]) -> str:
     """El mismo código AS3 con `clothes` reemplazado por `partes`."""
     for parte, pieza in partes.items():
-        if not _IDENTIFICADOR.match(parte) or not _IDENTIFICADOR.match(pieza):
+        if not _IDENTIFICADOR.match(parte) or not _PIEZA.match(pieza):
             raise ValueError(f"Parte del cuerpo o Pieza inválida: {parte} → {pieza}")
     pares = ",\n".join(f'            "{parte}":"{pieza}"' for parte, pieza in partes.items())
     literal = "clothes = {\n" + pares + "\n         };" if partes else "clothes = {};"

@@ -267,6 +267,12 @@ button.derecha { margin-left: auto; }
 
 .vista[hidden] { display: none; }
 
+/* Trucar no tiene una lista que se achique: si no entra, la vista entera se desplaza. */
+#vista-trucar {
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
 /* --- Paneles --- */
 
 .paneles {

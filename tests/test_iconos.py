@@ -5,6 +5,7 @@ import pytest
 from mgitems.ffdec import FFDec, FFDecNoDisponible
 from mgitems.iconos import ExportadorFFDec
 from mgitems.nucleo import Nucleo
+from fuente_falsa import FuenteFalsa
 from sistema_falso import SistemaFalso
 from swf_de_ejemplo import crear_swf
 
@@ -102,6 +103,20 @@ def test_si_el_swf_cambio_se_vuelven_a_exportar(nucleo, exportador, tmp_path):
     assert nucleo.iconos(["clothes1.gorra1"])["iconos"]["clothes1.gorra1"] is None  # de la versión anterior
 
 
+def test_imagenes_guardadas_por_una_version_anterior_del_programa_se_vuelven_a_exportar(nucleo, exportador, sistema):
+    # Antes solo se exportaban los Items y la marca guardaba solo la versión del SWF.
+    nucleo.preparar_iconos()
+    carpeta = sistema.base / "Local" / "MGItems" / "iconos" / "clothes1"
+    marca = carpeta / "version"
+    marca.write_text(marca.read_text(encoding="utf-8").split()[0], encoding="utf-8")
+    (carpeta / "remera5_on.png").unlink()
+
+    nucleo.preparar_iconos()
+
+    assert len(exportador.llamadas) == 2
+    assert (carpeta / "remera5_on.png").exists()
+
+
 def test_las_imagenes_quedan_en_la_carpeta_del_programa_y_no_hay_temporales(nucleo, sistema):
     nucleo.preparar_iconos()
 
@@ -165,6 +180,20 @@ def test_las_sugerencias_tienen_un_limite(sistema, exportador, tmp_path):
 
     assert len(resultado["items"]) == 50
     assert resultado["total"] == 80
+
+
+def test_se_preparan_las_imagenes_de_otro_swf_sin_cambiar_el_abierto(exportador, sistema, tmp_path):
+    fuente = FuenteFalsa({"costumes": crear_swf(["coronaRey", "coronaRey_on"])})
+    nucleo = Nucleo(sistema, catalogo=[], exportador=exportador, fuente=fuente)
+    swf = tmp_path / "clothes1.swf"
+    swf.write_bytes(crear_swf(CLASES))
+    nucleo.abrir_swf(str(swf))
+
+    assert nucleo.preparar_iconos("costumes")["ok"]
+
+    assert sorted(exportador.llamadas[-1].values()) == ["coronaRey", "coronaRey_on"]
+    assert nucleo.iconos(["costumes.coronaRey_on"])["iconos"]["costumes.coronaRey_on"]
+    assert nucleo.piezas()["swf"] == "clothes1"
 
 
 # --- Con FFDec de verdad ---
