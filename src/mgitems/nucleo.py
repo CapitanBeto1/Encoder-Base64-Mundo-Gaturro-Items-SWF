@@ -5,6 +5,8 @@ Todas las operaciones devuelven diccionarios simples (serializables a JSON) con
 """
 
 import re
+import subprocess
+import threading
 from dataclasses import asdict
 from pathlib import Path
 
@@ -12,6 +14,7 @@ from mgitems.cache_swf import CacheSwf
 from mgitems.catalogo import buscar_en_catalogo, cargar_catalogo
 from mgitems.entorno import Entorno, Sistema
 from mgitems.fuente import FuenteCDN, SinConexion, SwfNoEncontrado, Version
+from mgitems.iconos import ExportadorFFDec, ExportadorNoDisponible, IconosItems
 from mgitems.entrega import PUERTO_FIDDLER_POR_DEFECTO, QUE_HACER_EN_EL_JUEGO, Entrega, PasoFallido, Procesos
 from mgitems.items import (
     es_ruta_valida,
@@ -21,7 +24,7 @@ from mgitems.items import (
     separar_rutas,
 )
 from mgitems.script import EncodeInvalido, codificar, decodificar, generar_script, leer_script
-from mgitems.swf import SwfInvalido, leer_clases
+from mgitems.swf import SwfInvalido, leer_simbolos
 
 _NOMBRE_SWF = re.compile(r"^[A-Za-z0-9_\-]+(?:/[A-Za-z0-9_\-]+)*$")
 
@@ -33,10 +36,15 @@ class Nucleo:
         procesos: Procesos | None = None,
         fuente: FuenteCDN | None = None,
         catalogo: list[dict] | None = None,
+        exportador: ExportadorFFDec | None = None,
     ):
         self._swf_abierto: str | None = None
         self._items_del_swf: list[str] = []
+        self._simbolos_items: dict[int, str] = {}
+        self._data_swf: bytes = b""
         self._tamano_swf: int | None = None
+        self._exportador = exportador or ExportadorFFDec()
+        self._candado_iconos = threading.Lock()
         self._entorno = Entorno(sistema or Sistema())
         self._procesos = procesos or Procesos()
         self._fuente = fuente or FuenteCDN()
@@ -198,13 +206,60 @@ class Nucleo:
 
     def _cargar_swf(self, nombre: str, data: bytes, mostrado: str, extra: dict) -> dict:
         try:
-            clases = leer_clases(data)
+            simbolos = leer_simbolos(data)
         except SwfInvalido as e:
             return {"ok": False, "error": f"{e}: {mostrado}"}
+        items = items_del_swf([clase for _, clase in simbolos])
+        es_item = set(items)
         self._swf_abierto = nombre
-        self._items_del_swf = items_del_swf(clases)
+        self._items_del_swf = items
+        self._simbolos_items = {id_: clase for id_, clase in simbolos if clase in es_item}
+        self._data_swf = data
         self._tamano_swf = extra["tamano"]
-        return {"ok": True, "swf": nombre, "cantidad_items": len(self._items_del_swf), **extra}
+        return {"ok": True, "swf": nombre, "cantidad_items": len(items), **extra}
+
+    # --- Imágenes de los Items ---
+
+    def preparar_iconos(self) -> dict:
+        """Exporta (una vez por versión) las imágenes de los Items del SWF abierto. Puede tardar unos segundos."""
+        if self._swf_abierto is None:
+            return {"ok": False, "error": "Primero abrí un SWF."}
+        swf, data, simbolos = self._swf_abierto, self._data_swf, dict(self._simbolos_items)
+        try:
+            iconos = self._iconos()
+            with self._candado_iconos:
+                iconos.preparar(swf, data, simbolos)
+        except ExportadorNoDisponible as e:
+            return {"ok": False, "sin_exportador": True, "error": f"{e}: no se pueden mostrar las imágenes de los Items."}
+        except (OSError, subprocess.SubprocessError) as e:
+            return {"ok": False, "error": f"No se pudieron preparar las imágenes: {e}"}
+        return {"ok": True, "swf": swf}
+
+    def iconos(self, rutas_items: list[str]) -> dict:
+        """Imagen (data URL PNG) de cada Item que la tenga exportada; None si no la tiene."""
+        try:
+            iconos = self._iconos()
+        except OSError as e:
+            return {"ok": False, "error": str(e)}
+        return {"ok": True, "iconos": {ruta: iconos.icono(ruta) for ruta in rutas_items}}
+
+    def sugerir_items(self, texto: str, limite: int = 50) -> dict:
+        """Items del SWF abierto que empiezan con lo último que se escribió (después de la última coma), con su imagen."""
+        if self._swf_abierto is None:
+            return {"ok": True, "items": []}
+        ultimo = texto.rsplit(",", 1)[-1].strip()
+        if not ultimo:
+            return {"ok": True, "items": []}
+        rutas = [f"{self._swf_abierto}.{i}" for i in filtrar_por_prefijos(self._items_del_swf, [ultimo])]
+        iconos = self.iconos(rutas[:limite]).get("iconos", {})
+        return {
+            "ok": True,
+            "items": [{"ruta": ruta, "icono": iconos.get(ruta)} for ruta in rutas[:limite]],
+            "total": len(rutas),
+        }
+
+    def _iconos(self) -> IconosItems:
+        return IconosItems(self._entorno.carpeta_cache() / "iconos", self._exportador)
 
     def buscar_items(self, texto_prefijos: str) -> dict:
         """Items del SWF abierto cuyo nombre empieza con alguno de los prefijos (separados por coma)."""

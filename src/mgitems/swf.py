@@ -14,15 +14,20 @@ class SwfInvalido(Exception):
 
 def leer_clases(data: bytes) -> list[str]:
     """Nombres de todas las clases que el SWF asocia a símbolos, en el orden en que aparecen."""
+    return [nombre for _, nombre in leer_simbolos(data)]
+
+
+def leer_simbolos(data: bytes) -> list[tuple[int, str]]:
+    """(id del símbolo, nombre de la clase) de cada entrada de `SymbolClass`."""
     swf = _descomprimir(data)
-    clases = []
+    simbolos = []
     try:
         for codigo, cuerpo in _tags(swf):
             if codigo == TAG_SYMBOL_CLASS:
-                clases += _nombres_symbol_class(cuerpo)
+                simbolos += _entradas_symbol_class(cuerpo)
     except (struct.error, IndexError, ValueError, UnicodeDecodeError) as e:
         raise SwfInvalido("El SWF está dañado") from e
-    return clases
+    return simbolos
 
 
 def _descomprimir(data: bytes) -> bytes:
@@ -81,13 +86,14 @@ def _tags(swf: bytes):
             return
 
 
-def _nombres_symbol_class(cuerpo: bytes) -> list[str]:
+def _entradas_symbol_class(cuerpo: bytes) -> list[tuple[int, str]]:
     cantidad = struct.unpack_from("<H", cuerpo, 0)[0]
     pos = 2
-    nombres = []
+    entradas = []
     for _ in range(cantidad):
-        pos += 2  # id del símbolo
+        id_simbolo = struct.unpack_from("<H", cuerpo, pos)[0]
+        pos += 2
         fin = cuerpo.index(b"\0", pos)
-        nombres.append(cuerpo[pos:fin].decode("utf-8"))
+        entradas.append((id_simbolo, cuerpo[pos:fin].decode("utf-8")))
         pos = fin + 1
-    return nombres
+    return entradas

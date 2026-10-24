@@ -361,6 +361,42 @@ input:disabled { opacity: 0.45; }
   display: flex;
 }
 
+/* Dentro de una fila (campo + botón), el campo ocupa el espacio libre. */
+.fila .selector-swf {
+  flex: 1;
+  min-width: 0;
+}
+
+.icono {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  background: var(--panel);
+}
+
+.icono img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.icono.sin-imagen {
+  background: repeating-linear-gradient(45deg, var(--panel), var(--panel) 4px, var(--fondo) 4px, var(--fondo) 8px);
+  border: 1px dashed var(--borde);
+}
+
+.resultados-swf.con-iconos li {
+  justify-content: flex-start;
+  align-items: center;
+  padding: 4px 8px;
+}
+
+.lista li { gap: 10px; }
+.lista li .icono { width: 30px; height: 30px; }
+
 .resultados-swf {
   position: absolute;
   top: calc(100% + 4px);

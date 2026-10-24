@@ -33,13 +33,17 @@
         <ul id="resultados-swf" class="resultados-swf" role="listbox" hidden></ul>
       </div>
       <div class="fila">
-        <span id="swf" class="ayuda">Ningún SWF abierto</span>
+        <span id="swf" class="ayuda"><span id="nombre-swf">Ningún SWF abierto</span><span id="estado-imagenes"></span></span>
         <button id="abrir" class="enlace derecha" disabled>Abrir archivo…</button>
       </div>
       <form id="form-buscar" class="fila">
-        <input id="prefijos" type="text" spellcheck="false" autocomplete="off"
-               placeholder="Comienzo del nombre, ej: remera, zapa" disabled>
-        <button id="buscar" class="primario" disabled>Buscar</button>
+        <div class="selector-swf">
+          <input id="prefijos" type="text" spellcheck="false" autocomplete="off"
+                 placeholder="Comienzo del nombre, ej: remera, zapa" disabled
+                 role="combobox" aria-expanded="false" aria-controls="sugerencias-items" aria-autocomplete="list">
+          <ul id="sugerencias-items" class="resultados-swf con-iconos" role="listbox" hidden></ul>
+        </div>
+        <button id="buscar" class="primario" disabled title="Agrega todos los Items que empiezan así">Buscar</button>
       </form>
 
       <div class="encabezado-lista">

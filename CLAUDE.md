@@ -3,6 +3,7 @@
 El programa nuevo vive en `src/mgitems/` (núcleo en Python, interfaz web en `src/mgitems/ui/`). La carpeta `Codificador Base64 MG/` es el programa viejo, que se retira en el issue #10.
 
 - Instalar: `python -m venv .venv` y `.venv/Scripts/python -m pip install -e ".[dev]"`
+- FFDec (imágenes de los Items; necesita Java 8+): `.venv/Scripts/python scripts/obtener_ffdec.py` lo descarga a `vendor/`
 - Abrir el programa: `.venv/Scripts/python -m mgitems`
 - Pruebas: `.venv/Scripts/python -m pytest`
 
