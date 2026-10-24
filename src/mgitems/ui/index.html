@@ -7,9 +7,45 @@
   <link rel="stylesheet" href="estilos.css">
 </head>
 <body>
+  <!-- Fondo al estilo de la pantalla de servidores clásica: estrellas, planeta y anillo. -->
+  <svg class="fondo" viewBox="0 0 1000 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <defs>
+      <path id="estrella" d="M0,-10 L2.9,-4 9.5,-3.1 4.7,1.5 5.9,8.1 0,5 -5.9,8.1 -4.7,1.5 -9.5,-3.1 -2.9,-4 Z"/>
+      <clipPath id="recorte-planeta"><circle cx="500" cy="400" r="300"/></clipPath>
+    </defs>
+    <ellipse class="anillo" cx="500" cy="410" rx="520" ry="130" transform="rotate(-14 500 410)"/>
+    <g clip-path="url(#recorte-planeta)">
+      <circle cx="500" cy="400" r="300" fill="#244f0c"/>
+      <path d="M660,90 C740,170 800,290 805,430 C810,560 730,690 640,730 L840,730 L840,90 Z" fill="#1f9aa0"/>
+      <path d="M610,100 C670,170 720,270 712,370 C705,470 670,550 615,620 C690,580 760,490 770,380 C778,260 705,150 610,100 Z" fill="#2fb4b0" opacity="0.7"/>
+      <path d="M215,330 C265,255 350,225 415,262 C470,295 460,355 395,373 C330,391 265,420 228,400 Z" fill="#2f6a14"/>
+      <path d="M300,535 C355,498 460,498 515,545 C560,586 515,646 432,655 C358,664 292,618 300,535 Z" fill="#2f6a14"/>
+      <path d="M470,150 C525,132 590,150 618,196 C636,233 581,260 526,251 C471,242 433,187 470,150 Z" fill="#336f16"/>
+    </g>
+    <path class="anillo" d="M-4,535 A520,130 -14 0 0 1004,286"/>
+    <g class="estrellas">
+      <use href="#estrella" transform="translate(330,40) scale(1.4) rotate(12)" fill="#f39a2a"/>
+      <use href="#estrella" transform="translate(210,78) scale(1.1) rotate(-8)" fill="#ef4b23"/>
+      <use href="#estrella" transform="translate(660,32) scale(1.5) rotate(20)" fill="#ef4b23"/>
+      <use href="#estrella" transform="translate(742,88) scale(0.9)" fill="#ef4b23"/>
+      <use href="#estrella" transform="translate(800,120) scale(1.6) rotate(-15)" fill="#ef4b23"/>
+      <use href="#estrella" transform="translate(905,140) scale(1.2) rotate(8)" fill="#f39a2a"/>
+      <use href="#estrella" transform="translate(255,112) scale(0.8)" fill="#f39a2a"/>
+      <use href="#estrella" transform="translate(60,420) scale(1.2) rotate(-20)" fill="#f39a2a"/>
+      <use href="#estrella" transform="translate(28,470) scale(0.8)" fill="#f39a2a"/>
+      <use href="#estrella" transform="translate(965,380) scale(0.8)" fill="#f39a2a"/>
+      <use href="#estrella" transform="translate(760,672) scale(1.3) rotate(10)" fill="#f39a2a"/>
+      <use href="#estrella" transform="translate(700,690) scale(1.1)" fill="#ef4b23"/>
+      <use href="#estrella" transform="translate(250,672) scale(0.8)" fill="#f39a2a"/>
+      <use href="#estrella" transform="translate(320,694) scale(1.0)" fill="#ef4b23"/>
+      <use href="#estrella" transform="translate(120,200) scale(0.9) rotate(30)" fill="#ef4b23"/>
+      <use href="#estrella" transform="translate(940,560) scale(1.1) rotate(-5)" fill="#ef4b23"/>
+    </g>
+  </svg>
+
   <header class="barra">
-    <div>
-      <h1>MG Items</h1>
+    <div class="marca">
+      <h1 class="logo">MG Items</h1>
       <p class="subtitulo">Agregá Items a tu inventario de Mundo Gaturro</p>
     </div>
     <button id="abrir-entorno" class="estado-entorno" disabled>
