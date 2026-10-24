@@ -5,7 +5,7 @@ import pytest
 
 from mgitems.fuente import URL_ASSETS
 from mgitems.nucleo import Nucleo
-from mgitems.prendas import leer_prenda
+from mgitems.prendas import leer_item_base
 from fuente_falsa import FuenteFalsa
 from procesos_falso import ProcesosFalso
 from sistema_falso import SistemaFalso
@@ -141,7 +141,7 @@ def test_aplicar_un_look_truca_la_prenda_base_con_todas_sus_piezas(nucleo, ffdec
     clase, fuente = ffdec.trucos[0]
     assert clase == "remera5"
     # Las del mismo SWF van sin prefijo; las de otro, con su SWF.
-    assert leer_prenda(fuente).partes == {
+    assert leer_item_base(fuente).partes == {
         "hats": "costumes.coronaRey_on",
         "cloth": "costumes.capaRey_on",
         "grip": "gorra1_on",
@@ -169,7 +169,7 @@ def test_la_prenda_base_puede_ser_de_un_swf_que_no_es_el_abierto(nucleo, ffdec):
 
     assert resultado["ok"], resultado
     assert resultado["prenda"]["ruta"] == "antro2017/wears.buzo1"
-    assert leer_prenda(ffdec.trucos[0][1]).partes == {"hats": "costumes.coronaRey_on", "grip": "gorra1_on"}
+    assert leer_item_base(ffdec.trucos[0][1]).partes == {"hats": "costumes.coronaRey_on", "grip": "gorra1_on"}
     assert nucleo.piezas()["swf"] == "clothes1"  # el SWF abierto no cambia
 
 

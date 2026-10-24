@@ -935,3 +935,18 @@ dialog.grande {
   body { height: auto; overflow: auto; }
   .paneles { grid-template-columns: 1fr; }
 }
+
+/* Dónde queda un Item base en el juego. */
+.resultados-swf li .tipo-mochila,
+.resultados-swf li .tipo-prenda {
+  flex: none;
+  overflow: visible;
+  white-space: nowrap;
+  margin-left: auto;
+  padding: 0 8px;
+  border-radius: 10px;
+  font-size: 0.8em;
+}
+.resultados-swf li .tipo-mochila { background: #f6d610; color: #5a3d00; }
+.resultados-swf.con-iconos { overflow-x: hidden; }
+.resultados-swf.con-iconos li .nombre { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
