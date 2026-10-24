@@ -51,7 +51,7 @@ class SistemaFalso(Sistema):
             "DisplayIcon": f'"{carpeta / "App.ico"}"',
         })
         (self.documentos / "Fiddler2").mkdir(parents=True)
-        self.ajustes = {"CaptureCONNECT": "True", "CaptureHTTPS": "True" if https else "False"}
+        self.ajustes = {"CaptureCONNECT": "True", "CaptureHTTPS": "True" if https else "False", "ListenPort": "8888"}
         if certificado:
             self.certificados.add(CERTIFICADO_FIDDLER)
         return exe

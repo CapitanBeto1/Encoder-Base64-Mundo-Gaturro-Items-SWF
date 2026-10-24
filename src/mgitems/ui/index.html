@@ -65,6 +65,7 @@
         <button id="copiar" disabled>Copiar</button>
         <button id="guardar" disabled>Guardar como…</button>
       </div>
+      <button id="entregar" class="primario entregar" disabled>Agregar al juego</button>
       <p id="mensaje-encode" class="mensaje" role="status" aria-live="polite"></p>
     </section>
   </main>
@@ -95,7 +96,21 @@
       <p id="mensaje-entorno" class="mensaje" role="status" aria-live="polite"></p>
       <div class="acciones">
         <button id="revisar-entorno" class="primario">Revisar de nuevo</button>
+        <button id="desactivar-reglas" title="Quita de Fiddler la regla que puso MG Items para Lola; tus reglas no se tocan">
+          Quitar la regla de Fiddler
+        </button>
         <button id="cerrar-entorno" class="derecha">Cerrar</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="dialogo-entrega">
+    <div class="panel">
+      <h2 id="titulo-entrega">Agregando al juego…</h2>
+      <ol id="pasos-entrega" class="pasos"></ol>
+      <div id="resultado-entrega" class="resultado" hidden></div>
+      <div class="acciones">
+        <button id="cerrar-entrega" class="derecha" disabled>Cerrar</button>
       </div>
     </div>
   </dialog>

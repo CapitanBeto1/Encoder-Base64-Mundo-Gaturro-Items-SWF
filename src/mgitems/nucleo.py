@@ -8,6 +8,7 @@ from dataclasses import asdict
 from pathlib import Path
 
 from mgitems.entorno import Entorno, Sistema
+from mgitems.entrega import PUERTO_FIDDLER_POR_DEFECTO, QUE_HACER_EN_EL_JUEGO, Entrega, PasoFallido, Procesos
 from mgitems.items import (
     es_ruta_valida,
     filtrar_por_prefijos,
@@ -20,10 +21,75 @@ from mgitems.swf import SwfInvalido, leer_clases
 
 
 class Nucleo:
-    def __init__(self, sistema: Sistema | None = None):
+    def __init__(self, sistema: Sistema | None = None, procesos: Procesos | None = None):
         self._swf_abierto: str | None = None
         self._items_del_swf: list[str] = []
         self._entorno = Entorno(sistema or Sistema())
+        self._procesos = procesos or Procesos()
+
+    def juego_abierto(self) -> bool:
+        juego = self._entorno.ruta("juego")
+        return bool(juego) and self._procesos.corriendo(juego)
+
+    def entregar_encode(self, encode: str) -> dict:
+        """Entrega el Encode al juego: regla de Fiddler para Lola, caché borrado, Fiddler y juego reabiertos."""
+        try:
+            decodificar(encode)
+        except EncodeInvalido as e:
+            return {"ok": False, "error": f"{e}."}
+        entrega, error = self._preparar_entrega()
+        if error:
+            return error
+        try:
+            entrega.entregar(encode)
+        except PasoFallido as e:
+            return self._resultado_fallido(entrega, e)
+        return {"ok": True, "pasos": [asdict(p) for p in entrega.pasos], "que_hacer": QUE_HACER_EN_EL_JUEGO}
+
+    def desactivar_reglas(self) -> dict:
+        """Quita de Fiddler las reglas que puso el programa; las del jugador no se tocan."""
+        entrega, error = self._preparar_entrega(necesita=("fiddler", "reglas"))
+        if error:
+            return error
+        try:
+            quitadas = entrega.desactivar()
+        except PasoFallido as e:
+            return self._resultado_fallido(entrega, e)
+        return {"ok": True, "quitadas": quitadas, "pasos": [asdict(p) for p in entrega.pasos]}
+
+    def _preparar_entrega(self, necesita=None) -> tuple[Entrega | None, dict | None]:
+        componentes = self._entorno.componentes()
+        faltan = [c for c in componentes if not c.ok and (necesita is None or c.id in necesita)]
+        if faltan:
+            return None, {
+                "ok": False,
+                "error": "Falta configurar: " + ", ".join(c.nombre for c in faltan) + ". Abrí Configuración para ver cómo.",
+                "falta_configurar": True,
+            }
+        rutas = {c.id: Path(c.ruta) for c in componentes if c.ruta}
+        try:
+            carpeta_entregas = self._entorno.carpeta_programa() / "entregas"
+        except OSError as e:
+            return None, {"ok": False, "error": str(e)}
+        return Entrega(
+            juego=rutas.get("juego"),
+            perfil=rutas.get("perfil"),
+            fiddler=rutas["fiddler"],
+            carpeta_reglas=rutas["reglas"],
+            carpeta_entregas=carpeta_entregas,
+            puerto_fiddler=self._entorno.puerto_fiddler(PUERTO_FIDDLER_POR_DEFECTO),
+            procesos=self._procesos,
+        ), None
+
+    @staticmethod
+    def _resultado_fallido(entrega: Entrega, e: PasoFallido) -> dict:
+        fallido = entrega.pasos[-1].nombre
+        return {
+            "ok": False,
+            "error": f"Falló el paso «{fallido}»: {e.detalle}",
+            "que_hacer": e.que_hacer,
+            "pasos": [asdict(p) for p in entrega.pasos],
+        }
 
     def estado_entorno(self) -> dict:
         """Qué hay instalado y configurado para entregar Items al juego, con instrucciones para lo que falta."""

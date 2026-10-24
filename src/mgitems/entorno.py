@@ -110,11 +110,24 @@ class Entorno:
     def __init__(self, sistema: Sistema):
         self._sistema = sistema
 
+    def carpeta_programa(self) -> Path:
+        """Donde el programa guarda su configuración y sus entregas."""
+        appdata = self._sistema.variable("APPDATA")
+        if not appdata:
+            raise OSError("No se encontró la carpeta APPDATA")
+        return Path(appdata) / "MGItems"
+
+    def puerto_fiddler(self, por_defecto: int) -> int:
+        valor = self._sistema.ajuste_fiddler("ListenPort")
+        return int(valor) if valor and valor.isdigit() else por_defecto
+
     # --- Rutas elegidas a mano ---
 
     def _archivo_config(self) -> Path | None:
-        appdata = self._sistema.variable("APPDATA")
-        return Path(appdata) / "MGItems" / "config.json" if appdata else None
+        try:
+            return self.carpeta_programa() / "config.json"
+        except OSError:
+            return None
 
     def _config(self) -> dict:
         archivo = self._archivo_config()
