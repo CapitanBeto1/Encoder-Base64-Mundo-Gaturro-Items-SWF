@@ -26,9 +26,15 @@
   <main class="paneles">
     <section class="panel">
       <h2>Buscar en un SWF</h2>
+      <div class="selector-swf">
+        <input id="buscar-swf" type="text" spellcheck="false" autocomplete="off" disabled
+               placeholder="Elegí un SWF del juego, ej: clothes1, costumes"
+               role="combobox" aria-expanded="false" aria-controls="resultados-swf" aria-autocomplete="list">
+        <ul id="resultados-swf" class="resultados-swf" role="listbox" hidden></ul>
+      </div>
       <div class="fila">
-        <button id="abrir" disabled>Abrir SWF…</button>
         <span id="swf" class="ayuda">Ningún SWF abierto</span>
+        <button id="abrir" class="enlace derecha" disabled>Abrir archivo…</button>
       </div>
       <form id="form-buscar" class="fila">
         <input id="prefijos" type="text" spellcheck="false" autocomplete="off"

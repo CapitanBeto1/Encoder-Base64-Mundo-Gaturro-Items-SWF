@@ -356,6 +356,51 @@ input[type="text"]:focus {
 
 input:disabled { opacity: 0.45; }
 
+.selector-swf {
+  position: relative;
+  display: flex;
+}
+
+.resultados-swf {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 10;
+  max-height: 260px;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  overflow-y: auto;
+  background: var(--panel);
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.45);
+}
+
+.resultados-swf[hidden] { display: none; }
+
+.resultados-swf li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font: 13px/1.5 Consolas, monospace;
+}
+
+.resultados-swf li .ayuda { font-family: "Segoe UI", system-ui, sans-serif; }
+
+.resultados-swf li:hover,
+.resultados-swf li.activo { background: var(--borde); }
+
+.resultados-swf li.vacio {
+  cursor: default;
+  color: var(--texto-suave);
+  font-family: "Segoe UI", system-ui, sans-serif;
+}
+
 .encabezado-lista {
   display: flex;
   justify-content: space-between;

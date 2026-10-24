@@ -15,6 +15,8 @@ function avisar(elemento, texto, tipo = "") {
   elemento.className = "mensaje " + tipo;
 }
 
+const contarItems = (n) => (n === 1 ? "1 Item" : `${n} Items`);
+
 const avisarLista = (texto, tipo) => avisar($("mensaje"), texto, tipo);
 const avisarEncode = (texto, tipo) => avisar($("mensaje-encode"), texto, tipo);
 
@@ -92,7 +94,7 @@ function mostrarEncode(resultado) {
   $("encode").value = resultado ? resultado.encode : "";
   if (resultado) {
     const n = resultado.items.length;
-    $("resumen").textContent = n === 1 ? "Encode con 1 Item." : `Encode con ${n} Items.`;
+    $("resumen").textContent = `Encode con ${contarItems(n)}.`;
   } else {
     $("resumen").textContent = items.length
       ? "Generá el Encode con los Items de la lista."
@@ -104,7 +106,7 @@ function mostrarEncode(resultado) {
 
 function actualizarControles() {
   const listo = conectado && !ocupado;
-  $("abrir").disabled = !listo;
+  $("abrir").disabled = $("buscar-swf").disabled = !listo;
   $("prefijos").disabled = $("buscar").disabled = !listo || !swfAbierto;
   $("manual").disabled = $("agregar").disabled = !listo;
   $("quitar-todos").disabled = !listo || items.length === 0;
@@ -114,16 +116,97 @@ function actualizarControles() {
   $("copiar").disabled = $("guardar").disabled = $("entregar").disabled = !listo || !$("encode").value;
 }
 
-async function abrirSwf() {
-  const resultado = await mientras("Abriendo SWF…", () => api().abrir_swf());
+function mostrarSwfAbierto(resultado) {
   if (resultado.cancelado) return avisarLista("");
   if (!resultado.ok) return avisarLista(resultado.error, "error");
   swfAbierto = true;
   actualizarControles();
-  $("swf").textContent = `${resultado.swf}.swf · ${resultado.cantidad_items} Items`;
-  avisarLista("SWF abierto. Escribí el comienzo de un nombre para buscar.", "exito");
+  $("swf").textContent = `${resultado.swf}.swf · ${contarItems(resultado.cantidad_items)}`;
+  if (resultado.aviso) avisarLista(resultado.aviso, "advertencia");
+  else avisarLista("SWF abierto. Escribí el comienzo de un nombre para buscar.", "exito");
   $("prefijos").focus();
 }
+
+async function abrirArchivo() {
+  mostrarSwfAbierto(await mientras("Abriendo SWF…", () => api().abrir_swf()));
+}
+
+// --- Elegir un SWF del catálogo ---
+
+let resultadosSwf = [];
+let activo = -1;
+
+function cerrarResultadosSwf() {
+  $("resultados-swf").hidden = true;
+  $("buscar-swf").setAttribute("aria-expanded", "false");
+  activo = -1;
+}
+
+function marcarActivo(indice) {
+  const filas = $("resultados-swf").querySelectorAll("li[role=option]");
+  filas.forEach((fila, i) => fila.classList.toggle("activo", i === indice));
+  filas[indice]?.scrollIntoView({ block: "nearest" });
+  activo = indice;
+}
+
+async function mostrarResultadosSwf() {
+  const texto = $("buscar-swf").value;
+  const { swfs } = await api().buscar_en_catalogo(texto);
+  if (texto !== $("buscar-swf").value) return; // llegó tarde: el jugador siguió escribiendo
+  resultadosSwf = swfs.slice(0, 80);
+  const lista = $("resultados-swf");
+  if (!resultadosSwf.length) {
+    lista.replaceChildren(Object.assign(document.createElement("li"), { className: "vacio", textContent: "No hay SWF con ese nombre." }));
+  } else {
+    lista.replaceChildren(
+      ...resultadosSwf.map(({ swf, items }) => {
+        const fila = document.createElement("li");
+        fila.setAttribute("role", "option");
+        const nombre = Object.assign(document.createElement("span"), { textContent: swf });
+        const cantidad = Object.assign(document.createElement("span"), { className: "ayuda", textContent: contarItems(items) });
+        fila.append(nombre, cantidad);
+        // mousedown en vez de click: se dispara antes de que el campo pierda el foco y cierre la lista.
+        fila.addEventListener("mousedown", (e) => {
+          e.preventDefault();
+          abrirDelCatalogo(swf);
+        });
+        return fila;
+      })
+    );
+  }
+  lista.hidden = false;
+  $("buscar-swf").setAttribute("aria-expanded", "true");
+  activo = -1;
+}
+
+async function abrirDelCatalogo(nombre) {
+  cerrarResultadosSwf();
+  $("buscar-swf").value = nombre;
+  mostrarSwfAbierto(await mientras(`Abriendo ${nombre} (se descarga del juego si hace falta)…`, () => api().abrir_swf_del_cdn(nombre)));
+}
+
+function teclaEnBuscarSwf(e) {
+  const abierta = !$("resultados-swf").hidden;
+  if (e.key === "ArrowDown") {
+    e.preventDefault();
+    if (!abierta) return mostrarResultadosSwf();
+    marcarActivo(Math.min(activo + 1, resultadosSwf.length - 1));
+  } else if (e.key === "ArrowUp" && abierta) {
+    e.preventDefault();
+    marcarActivo(Math.max(activo - 1, 0));
+  } else if (e.key === "Enter") {
+    e.preventDefault();
+    const elegido = resultadosSwf[activo] ?? (resultadosSwf.length === 1 ? resultadosSwf[0] : null);
+    if (abierta && elegido) abrirDelCatalogo(elegido.swf);
+  } else if (e.key === "Escape") {
+    cerrarResultadosSwf();
+  }
+}
+
+$("buscar-swf").addEventListener("input", mostrarResultadosSwf);
+$("buscar-swf").addEventListener("focus", mostrarResultadosSwf);
+$("buscar-swf").addEventListener("blur", cerrarResultadosSwf);
+$("buscar-swf").addEventListener("keydown", teclaEnBuscarSwf);
 
 async function buscar(evento) {
   evento.preventDefault();
@@ -134,8 +217,8 @@ async function buscar(evento) {
   const encontrados = resultado.items.length;
   avisarLista(
     agregados === encontrados
-      ? `Se agregaron ${encontrados} Items.`
-      : `Se encontraron ${encontrados} Items (${agregados} nuevos en la lista).`,
+      ? `Se agregaron a la lista: ${contarItems(encontrados)}.`
+      : `Se encontraron ${contarItems(encontrados)} (${agregados} nuevos en la lista).`,
     "exito"
   );
 }
@@ -191,7 +274,7 @@ function aplicarImportado(resultado) {
   mostrarLista();
 
   const n = items.length;
-  const avisos = [n === 1 ? "Encode importado: 1 Item." : `Encode importado: ${n} Items.`];
+  const avisos = [`Encode importado: ${contarItems(n)}.`];
   if (resultado.otros_comandos) {
     avisos.push("Este Encode hacía otras cosas además de agregar Items; al generarlo de nuevo solo se conservan los Items.");
   }
@@ -393,7 +476,7 @@ $("ver-entorno").addEventListener("click", abrirEntorno);
 $("revisar-entorno").addEventListener("click", revisarEntorno);
 $("cerrar-entorno").addEventListener("click", () => $("dialogo-entorno").close());
 
-$("abrir").addEventListener("click", abrirSwf);
+$("abrir").addEventListener("click", abrirArchivo);
 $("form-buscar").addEventListener("submit", buscar);
 $("form-agregar").addEventListener("submit", agregarAMano);
 $("quitar-todos").addEventListener("click", () => {
