@@ -162,7 +162,7 @@ def test_el_encode_contiene_solo_los_items_que_quedan_en_la_lista(nucleo, clothe
     resultado = nucleo.generar_encode(elegidos)
 
     script = base64.b64decode(resultado["encode"]).decode("utf-8")
-    assert resultado["items"] == ["clothes1.gorra1", "clothes1.remera5", "clothes1.remera_onda"]
+    assert [i["ruta"] for i in resultado["items"]] == ["clothes1.gorra1", "clothes1.remera5", "clothes1.remera_onda"]
     assert "inventory.add 1 clothes1.gorra1\n" in script
     assert "inventory.add 1 clothes1.remera5\n" in script
     assert "inventory.add 1 clothes1.remera_onda\n" in script

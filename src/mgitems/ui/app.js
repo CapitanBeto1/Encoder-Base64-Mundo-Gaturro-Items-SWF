@@ -1,5 +1,6 @@
 // La interfaz no tiene lógica de dominio: todo pasa por window.pywebview.api (el núcleo).
-// Solo guarda la lista de Items elegidos, que el jugador arma buscando o a mano.
+// Solo guarda la lista de Items elegidos ({ruta, cantidad}), que el jugador arma
+// buscando, a mano o importando un Encode.
 
 const $ = (id) => document.getElementById(id);
 const api = () => window.pywebview.api;
@@ -30,40 +31,61 @@ async function mientras(texto, tarea) {
   }
 }
 
-function agregarItems(nuevos) {
-  const antes = items.length;
-  items = [...new Set([...items, ...nuevos])];
+// Agrega rutas nuevas con cantidad 1; las que ya están en la lista no cambian.
+function agregarItems(rutas) {
+  const nuevas = rutas.filter((ruta) => !items.some((i) => i.ruta === ruta));
+  items = [...items, ...nuevas.map((ruta) => ({ ruta, cantidad: 1 }))];
   mostrarLista();
-  return items.length - antes;
+  return nuevas.length;
 }
 
-function quitarItem(item) {
-  items = items.filter((i) => i !== item);
+function quitarItem(ruta) {
+  items = items.filter((i) => i.ruta !== ruta);
   mostrarLista();
+}
+
+function cambiarCantidad(ruta, valor) {
+  const item = items.find((i) => i.ruta === ruta);
+  if (item) item.cantidad = valor;
+  // El Encode mostrado deja de corresponder a la lista.
+  mostrarEncode(null);
+}
+
+function filaDeItem({ ruta, cantidad }) {
+  const fila = document.createElement("li");
+
+  const nombre = document.createElement("span");
+  nombre.className = "nombre";
+  nombre.textContent = ruta;
+  nombre.title = ruta;
+
+  const campoCantidad = document.createElement("input");
+  campoCantidad.type = "number";
+  campoCantidad.min = "1";
+  campoCantidad.step = "1";
+  campoCantidad.value = cantidad;
+  campoCantidad.className = "cantidad";
+  campoCantidad.title = "Cantidad";
+  campoCantidad.setAttribute("aria-label", `Cantidad de ${ruta}`);
+  campoCantidad.addEventListener("input", () => cambiarCantidad(ruta, campoCantidad.value));
+
+  const quitar = document.createElement("button");
+  quitar.className = "quitar";
+  quitar.textContent = "✕";
+  quitar.title = `Quitar ${ruta}`;
+  quitar.setAttribute("aria-label", `Quitar ${ruta}`);
+  quitar.addEventListener("click", () => quitarItem(ruta));
+
+  fila.append(nombre, campoCantidad, quitar);
+  return fila;
 }
 
 function mostrarLista() {
-  const lista = $("lista");
-  lista.replaceChildren(
-    ...items.map((item) => {
-      const fila = document.createElement("li");
-      const nombre = document.createElement("span");
-      nombre.textContent = item;
-      const quitar = document.createElement("button");
-      quitar.className = "quitar";
-      quitar.textContent = "✕";
-      quitar.title = `Quitar ${item}`;
-      quitar.setAttribute("aria-label", `Quitar ${item}`);
-      quitar.addEventListener("click", () => quitarItem(item));
-      fila.append(nombre, quitar);
-      return fila;
-    })
-  );
+  $("lista").replaceChildren(...items.map(filaDeItem));
   $("cantidad").textContent = items.length ? `(${items.length})` : "";
   $("lista-vacia").hidden = items.length > 0;
   // El Encode mostrado deja de corresponder a la lista.
   mostrarEncode(null);
-  actualizarControles();
 }
 
 function mostrarEncode(resultado) {
@@ -86,6 +108,7 @@ function actualizarControles() {
   $("prefijos").disabled = $("buscar").disabled = !listo || !swfAbierto;
   $("manual").disabled = $("agregar").disabled = !listo;
   $("quitar-todos").disabled = !listo || items.length === 0;
+  $("importar").disabled = !listo;
   $("generar").disabled = !listo || items.length === 0;
   $("copiar").disabled = $("guardar").disabled = !listo || !$("encode").value;
 }
@@ -97,7 +120,7 @@ async function abrirSwf() {
   swfAbierto = true;
   actualizarControles();
   $("swf").textContent = `${resultado.swf}.swf · ${resultado.cantidad_items} Items`;
-  avisarLista(`SWF abierto. Escribí el comienzo de un nombre para buscar.`, "exito");
+  avisarLista("SWF abierto. Escribí el comienzo de un nombre para buscar.", "exito");
   $("prefijos").focus();
 }
 
@@ -148,6 +171,45 @@ async function guardar() {
   else if (!resultado.cancelado) avisarEncode(resultado.error, "error");
 }
 
+// --- Importar un Encode ---
+
+function abrirImportar() {
+  $("texto-importar").value = "";
+  avisar($("mensaje-importar"), "");
+  $("dialogo-importar").showModal();
+  $("texto-importar").focus();
+}
+
+// Reemplaza la lista por los Items del Encode importado.
+function aplicarImportado(resultado) {
+  if (!resultado.ok) return avisar($("mensaje-importar"), resultado.error, "error");
+  if (items.length && !confirm("La lista actual se va a reemplazar por los Items del Encode. ¿Seguir?")) return;
+
+  $("dialogo-importar").close();
+  items = resultado.items.map(({ ruta, cantidad }) => ({ ruta, cantidad }));
+  mostrarLista();
+
+  const n = items.length;
+  const avisos = [n === 1 ? "Encode importado: 1 Item." : `Encode importado: ${n} Items.`];
+  if (resultado.otros_comandos) {
+    avisos.push("Este Encode hacía otras cosas además de agregar Items; al generarlo de nuevo solo se conservan los Items.");
+  }
+  if (resultado.ignorados.length) {
+    avisos.push(`Se ignoraron Items con formato inválido: ${resultado.ignorados.join(", ")}.`);
+  }
+  avisarLista(avisos.join(" "), resultado.otros_comandos || resultado.ignorados.length ? "advertencia" : "exito");
+}
+
+async function importarPegado(evento) {
+  evento.preventDefault();
+  aplicarImportado(await api().importar_encode($("texto-importar").value));
+}
+
+async function importarDeArchivo() {
+  const resultado = await api().importar_encode_de_archivo();
+  if (!resultado.cancelado) aplicarImportado(resultado);
+}
+
 $("abrir").addEventListener("click", abrirSwf);
 $("form-buscar").addEventListener("submit", buscar);
 $("form-agregar").addEventListener("submit", agregarAMano);
@@ -158,6 +220,11 @@ $("quitar-todos").addEventListener("click", () => {
 $("generar").addEventListener("click", generar);
 $("copiar").addEventListener("click", copiar);
 $("guardar").addEventListener("click", guardar);
+$("importar").addEventListener("click", abrirImportar);
+$("form-importar").addEventListener("submit", importarPegado);
+$("importar-archivo").addEventListener("click", importarDeArchivo);
+$("cancelar-importar").addEventListener("click", () => $("dialogo-importar").close());
+$("texto-importar").addEventListener("input", () => avisar($("mensaje-importar"), ""));
 
 window.addEventListener("pywebviewready", () => {
   conectado = true;

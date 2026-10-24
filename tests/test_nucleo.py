@@ -18,7 +18,7 @@ def test_encode_de_un_item_contiene_el_script_esperado(nucleo):
     resultado = nucleo.generar_encode("clothes1.remera5")
 
     assert resultado["ok"]
-    assert resultado["items"] == ["clothes1.remera5"]
+    assert resultado["items"] == [{"ruta": "clothes1.remera5", "cantidad": 1}]
     assert decodificar(resultado["encode"]) == (
         "INICIO: DO\n"
         "    on activate A1\n"
@@ -75,13 +75,13 @@ def test_acepta_items_por_linea_o_separados_por_coma(nucleo, texto):
     resultado = nucleo.generar_encode(texto)
 
     assert resultado["ok"]
-    assert resultado["items"] == ["clothes1.remera5", "costumes.costumeUnicornio"]
+    assert [i["ruta"] for i in resultado["items"]] == ["clothes1.remera5", "costumes.costumeUnicornio"]
 
 
 def test_un_item_repetido_se_agrega_una_sola_vez(nucleo):
     resultado = nucleo.generar_encode("clothes1.remera5, clothes1.remera5")
 
-    assert resultado["items"] == ["clothes1.remera5"]
+    assert resultado["items"] == [{"ruta": "clothes1.remera5", "cantidad": 1}]
 
 
 @pytest.mark.parametrize("texto", ["", "   ", "\n , \n"])

@@ -32,8 +32,17 @@ class Puente:
     def interpretar_items(self, texto: str) -> dict:
         return self._nucleo.interpretar_items(texto)
 
-    def generar_encode(self, items: list[str]) -> dict:
+    def generar_encode(self, items: list[dict]) -> dict:
         return self._nucleo.generar_encode(items)
+
+    def importar_encode(self, encode: str) -> dict:
+        return self._nucleo.importar_encode(encode)
+
+    def importar_encode_de_archivo(self) -> dict:
+        ruta = _dialogo(webview.FileDialog.OPEN, file_types=("Texto (*.txt)", "Todos los archivos (*.*)"))
+        if not ruta:
+            return {"ok": False, "cancelado": True}
+        return self._nucleo.importar_encode_de_archivo(ruta)
 
     def guardar_encode(self, encode: str) -> dict:
         ruta = _dialogo(

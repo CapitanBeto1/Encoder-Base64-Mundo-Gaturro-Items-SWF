@@ -8,6 +8,7 @@
   --acento-hover: #2f6fd8;
   --error: #f87171;
   --exito: #4ade80;
+  --advertencia: #fbbf24;
   --radio: 10px;
   color-scheme: dark;
 }
@@ -132,6 +133,41 @@ button.primario:hover:not(:disabled) { background: var(--acento-hover); filter: 
 .mensaje.error { color: var(--error); }
 .mensaje.exito { color: var(--exito); }
 .mensaje.progreso { color: var(--texto-suave); }
+.mensaje.advertencia { color: var(--advertencia); }
+
+dialog {
+  width: min(560px, 90vw);
+  height: min(420px, 80vh);
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--texto);
+}
+
+dialog::backdrop { background: rgb(0 0 0 / 0.6); }
+
+dialog .panel { height: 100%; }
+
+button.derecha { margin-left: auto; }
+
+input.cantidad {
+  flex: none;
+  width: 64px;
+  padding: 3px 6px;
+  background: var(--panel);
+  color: var(--texto);
+  border: 1px solid var(--borde);
+  border-radius: 6px;
+  font: inherit;
+  text-align: right;
+}
+
+input.cantidad:focus {
+  outline: 2px solid var(--acento);
+  outline-offset: -1px;
+}
+
+input.cantidad:invalid { border-color: var(--error); }
 
 .fila {
   display: flex;
@@ -206,7 +242,8 @@ button.enlace {
 
 .lista li:hover { background: var(--panel); }
 
-.lista li span {
+.lista li .nombre {
+  flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
