@@ -6,3 +6,4 @@ El programa se escribe en Python, con la interfaz en HTML/CSS/JS dentro de una v
 
 - El instalador pesa decenas de MB más por el Java embebido.
 - La decisión entre exportar Piezas a PNG o renderizar con Ruffle se posterga a un prototipo en la fase del editor visual.
+- La lista de clases de un SWF de assets (de donde salen los Items y las Piezas) se lee directamente en Python desde el tag `SymbolClass`, sin FFDec: es instantáneo y no necesita Java. FFDec se usa solo para lo que exige interpretar el contenido (imágenes, AS3 al trucar).

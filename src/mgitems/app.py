@@ -20,20 +20,38 @@ class Puente:
     def __init__(self, nucleo: Nucleo):
         self._nucleo = nucleo
 
-    def generar_encode(self, texto: str) -> dict:
-        return self._nucleo.generar_encode(texto)
+    def abrir_swf(self) -> dict:
+        ruta = _dialogo(webview.FileDialog.OPEN, file_types=("SWF (*.swf)", "Todos los archivos (*.*)"))
+        if not ruta:
+            return {"ok": False, "cancelado": True}
+        return self._nucleo.abrir_swf(ruta)
+
+    def buscar_items(self, texto_prefijos: str) -> dict:
+        return self._nucleo.buscar_items(texto_prefijos)
+
+    def interpretar_items(self, texto: str) -> dict:
+        return self._nucleo.interpretar_items(texto)
+
+    def generar_encode(self, items: list[str]) -> dict:
+        return self._nucleo.generar_encode(items)
 
     def guardar_encode(self, encode: str) -> dict:
-        ruta = webview.windows[0].create_file_dialog(
+        ruta = _dialogo(
             webview.FileDialog.SAVE,
             save_filename="items.txt",
             file_types=("Texto (*.txt)", "Todos los archivos (*.*)"),
         )
         if not ruta:
             return {"ok": False, "cancelado": True}
-        if isinstance(ruta, (list, tuple)):
-            ruta = ruta[0]
         return self._nucleo.guardar_encode(encode, ruta)
+
+
+def _dialogo(tipo, **opciones) -> str | None:
+    """Ruta elegida en un diálogo de archivos, o None si se canceló."""
+    ruta = webview.windows[0].create_file_dialog(tipo, **opciones)
+    if isinstance(ruta, (list, tuple)):
+        ruta = ruta[0] if ruta else None
+    return ruta or None
 
 
 def main() -> None:

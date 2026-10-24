@@ -14,15 +14,31 @@
 
   <main class="paneles">
     <section class="panel">
-      <h2>Items</h2>
-      <label for="entrada" class="ayuda">
-        Escribí un Item por línea o separalos con coma, con el formato <code>swf.Clase</code>.
-      </label>
-      <textarea id="entrada" spellcheck="false"
-                placeholder="clothes1.remera5&#10;costumes.costumeUnicornio"></textarea>
-      <div class="acciones">
-        <button id="generar" class="primario" disabled>Generar Encode</button>
+      <h2>Buscar en un SWF</h2>
+      <div class="fila">
+        <button id="abrir" disabled>Abrir SWF…</button>
+        <span id="swf" class="ayuda">Ningún SWF abierto</span>
       </div>
+      <form id="form-buscar" class="fila">
+        <input id="prefijos" type="text" spellcheck="false" autocomplete="off"
+               placeholder="Comienzo del nombre, ej: remera, zapa" disabled>
+        <button id="buscar" class="primario" disabled>Buscar</button>
+      </form>
+
+      <div class="encabezado-lista">
+        <h2>Items <span id="cantidad" class="ayuda"></span></h2>
+        <button id="quitar-todos" class="enlace" disabled>Quitar todos</button>
+      </div>
+      <ul id="lista" class="lista" aria-live="polite"></ul>
+      <p id="lista-vacia" class="ayuda vacia">
+        Buscá en un SWF o agregá Items a mano.
+      </p>
+
+      <form id="form-agregar" class="fila">
+        <input id="manual" type="text" spellcheck="false" autocomplete="off"
+               placeholder="Agregar a mano: clothes1.remera5" disabled>
+        <button id="agregar" disabled>Agregar</button>
+      </form>
       <p id="mensaje" class="mensaje" role="status" aria-live="polite"></p>
     </section>
 
@@ -31,9 +47,11 @@
       <p class="ayuda" id="resumen">Todavía no generaste ningún Encode.</p>
       <textarea id="encode" readonly spellcheck="false"></textarea>
       <div class="acciones">
+        <button id="generar" class="primario" disabled>Generar Encode</button>
         <button id="copiar" disabled>Copiar</button>
         <button id="guardar" disabled>Guardar como…</button>
       </div>
+      <p id="mensaje-encode" class="mensaje" role="status" aria-live="polite"></p>
     </section>
   </main>
 
