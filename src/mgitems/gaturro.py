@@ -36,6 +36,9 @@ PARTES = ["hats", "hairs", "mouths", "neck", "accesories", "accesories2", "cloth
 
 # La versión actual no está publicada sin cifrar.
 AVISO_VERSION_ANTERIOR = "Gaturro de una versión anterior del juego: la nariz y «Accesorio 2» pueden verse distinto."
+AVISO_HIPOTESIS = ("Gaturro de una versión anterior del juego. La nariz y «Accesorio 2» siguen una hipótesis "
+                   "que falta confirmar en el juego; la nariz no cambia de color.")
+_MARCA_HIPOTESIS = "<!-- mgitems: nariz y accesories2 según la hipótesis (ADR 0003) -->"
 
 # Colores de fábrica del juego (ColorPickerModal): pelaje, panza y ojos.
 COLORES = {"color1": "#FFF200", "color2": "#DDB42D", "color3": "#FFFFFF"}
@@ -112,8 +115,52 @@ def tiene_color_de_nariz(cuerpo: str) -> bool:
 
 
 def es_version_anterior(cuerpo: str) -> bool:
-    """El Gaturro del juego actual tiene un lugar para «Accesorio 2»; el de las copias publicadas, no."""
-    return not tiene_lugar(cuerpo, "accesories2")
+    """El Gaturro del juego actual tiene un lugar para «Accesorio 2»; el de las copias publicadas, no
+    (si se lo agregó la hipótesis, sigue siendo la versión anterior)."""
+    return not tiene_lugar(cuerpo, "accesories2") or usa_hipotesis(cuerpo)
+
+
+def usa_hipotesis(cuerpo: str) -> bool:
+    return _MARCA_HIPOTESIS in cuerpo
+
+
+def aplicar_hipotesis_nariz(cuerpo: str) -> str:
+    """HIPÓTESIS A CONFIRMAR (ADR 0003): la cabeza del Gaturro actual, a partir de la publicada.
+
+    - La nariz y la Boca (`mouths`) van como en la cabeza del álbum de Navidad 2018 (la misma
+      plantilla, con la nariz como clip `nose`): ojos, nariz, `mouths`, Pelo. Así el Pelo tapa la
+      nariz, como se ve en el juego.
+    - `accesories2` va en la capa donde estaba la nariz (arriba de Accesorio, debajo del Sombrero; en
+      el juego se ve delante del Pelo) y en la posición de la nariz (eso último no tiene respaldo).
+
+    Solo se aplica a una cabeza con la forma conocida (… eye2 … hairs accesories <nariz> hats) y sin
+    `accesories2`; si no, el cuerpo queda igual.
+    """
+    if tiene_lugar(cuerpo, "accesories2"):
+        return cuerpo
+    for cabeza in re.finditer(r'<g id="sprite\d+">(?P<hijos>.*?)</g>', cuerpo, re.S):
+        hijos = cabeza.group("hijos")
+        clips = re.findall(r"<use [^>]*/>", hijos)
+        ids = [(re.search(r'\bid="([^"]+)"', c) or [None, None])[1] for c in clips]
+        if not {"hairs", "accesories", "hats", "mouths", "eye2"} <= set(ids):
+            continue
+        i_acc = ids.index("accesories")
+        if i_acc + 2 >= len(ids) or ids[i_acc + 1] is not None or ids[i_acc + 2] != "hats":
+            return cuerpo  # no es la forma conocida: no se toca
+        nariz, boca = clips[i_acc + 1], clips[ids.index("mouths")]
+        transformacion = _TRANSFORMACION.search(nariz)
+        vacio = re.search(r'xlink:href="(#[^"]+)"', _hueco("hats").search(hijos).group(0)).group(1)
+        atributo = f' transform="{transformacion.group(1)}"' if transformacion else ""
+        accesorio2 = f'<use height="0.0" id="accesories2"{atributo} width="0.0" xlink:href="{vacio}"/>'
+        orden = [c for c in clips if c not in (nariz, boca)]
+        despues_de_ojos = orden.index(clips[ids.index("eye2")]) + 1
+        orden[despues_de_ojos:despues_de_ojos] = [nariz, boca]
+        orden.insert(orden.index(clips[i_acc]) + 1, accesorio2)
+        nuevos = "\n      " + "\n      ".join(orden) + "\n    "
+        cuerpo = cuerpo.replace(cabeza.group(0), cabeza.group(0).replace(hijos, nuevos, 1), 1)
+        # La marca va adentro del <svg> (antes de `<?xml` el SVG no sería válido).
+        return re.sub(r"(<svg\b[^>]*>)", lambda m: m.group(1) + _MARCA_HIPOTESIS, cuerpo, count=1)
+    return cuerpo
 
 
 def _pieza(svg: str, prefijo: str) -> tuple[str, str] | None:
