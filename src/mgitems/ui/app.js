@@ -627,17 +627,30 @@ function mostrarGrillaLooks() {
   mostrarLookElegido();
 }
 
+// El escenario muestra el Look puesto (el que se está editando, con sus cambios sin guardar) hasta que
+// se toca otro de la grilla; ↻ vuelve a mostrar el puesto.
+let mostrandoPuesto = true;
+
 function mostrarLookElegido() {
   const look = looksGuardados.find((l) => l.id === lookElegido);
   document.querySelectorAll("#grilla-looks .casillero-look:not(.nuevo)").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.id === lookElegido)));
+  $("exportar-look").disabled = $("duplicar-look").disabled = $("eliminar-look-elegido").disabled = !look;
+  if (mostrandoPuesto) {
+    $("nombre-look-elegido").textContent = `${lookActual.nombre || "Look nuevo"} (puesto)`;
+    $("equipar-look").disabled = true; // ya está puesto
+    $("gaturro-mis-looks").hidden = false;
+    pedirGaturro($("gaturro-mis-looks"), coloresDe(lookActual), lookActual.partes);
+    return;
+  }
   $("nombre-look-elegido").textContent = look ? look.nombre : "Tocá un Look para verlo";
-  $("equipar-look").disabled = $("exportar-look").disabled = $("duplicar-look").disabled = $("eliminar-look-elegido").disabled = !look;
+  $("equipar-look").disabled = !look;
   $("gaturro-mis-looks").hidden = !look;
   if (look) pedirGaturro($("gaturro-mis-looks"), coloresDe(look), look.partes);
 }
 
 function elegirLook(id) {
   lookElegido = id;
+  mostrandoPuesto = false;
   mostrarLookElegido();
 }
 
@@ -650,13 +663,21 @@ function equiparLook(id) {
   avisarLista(`Se abrió el Look «${look.nombre}».`, "exito");
 }
 
+// Al abrir se ve el Look puesto, como en el juego.
+function verLookPuesto() {
+  lookElegido = lookActual.id || null;
+  mostrandoPuesto = true;
+}
+
 $("abrir-mis-looks").addEventListener("click", () => {
-  lookElegido = lookActual.id || looksGuardados[0]?.id || null;
-  $("gaturro-mis-looks").classList.remove("girado");
+  verLookPuesto();
   $("dialogo-mis-looks").showModal();
   mostrarGrillaLooks();
 });
-$("girar-look").addEventListener("click", () => $("gaturro-mis-looks").classList.toggle("girado"));
+$("reiniciar-look").addEventListener("click", () => {
+  verLookPuesto();
+  mostrarLookElegido();
+});
 // Las barritas de zoom: cambian el encuadre de su imagen sin volver a pedir el Gaturro.
 for (const barra of [$("zoom-gaturro"), $("zoom-escenario")]) {
   barra.addEventListener("input", () => {
@@ -678,6 +699,7 @@ $("eliminar-look-elegido").addEventListener("click", async () => {
   }
   const quedan = looksGuardados.filter((l) => l.id !== look.id);
   lookElegido = quedan[Math.min(posicion, quedan.length - 1)]?.id ?? null;
+  mostrandoPuesto = !lookElegido;
   avisarLista(`Se eliminó «${look.nombre}».`, "exito");
   await cargarLooks();
 });
@@ -1191,6 +1213,7 @@ async function duplicarLook() {
   const resultado = await api().duplicar_look(lookElegido);
   if (!resultado.ok) return avisarLista(resultado.error, "error");
   lookElegido = resultado.look.id;
+  mostrandoPuesto = false;
   avisarLista(`Se creó «${resultado.look.nombre}».`, "exito");
   await cargarLooks();
 }
@@ -1272,6 +1295,7 @@ $("importar-look").addEventListener("click", async () => {
   if (resultado.cancelado) return;
   if (!resultado.ok) return avisarLista(resultado.error, "error");
   lookElegido = resultado.look.id;
+  mostrandoPuesto = false;
   await cargarLooks();
   avisarLista(`Se importó el Look «${resultado.look.nombre}». Tocá «Equipar» para abrirlo.`, "exito");
 });

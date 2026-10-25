@@ -1301,7 +1301,6 @@ dialog.dialogo-mis-looks { position: fixed; inset: 0; margin: auto; width: fit-c
     repeating-linear-gradient(to right, #c9707c 0 22px, #b65e6b 22px 26px, #d07b87 26px 44px);
 }
 .escenario-look img { width: 370px; height: 370px; }
-.escenario-look img.girado { transform: scaleX(-1); }
 .escenario-look img[hidden] { display: none; }
 .nombre-look-elegido { margin: 0 0 10px; padding: 3px 12px; border-radius: 10px; background: rgba(34, 42, 69, 0.75); font-size: 13px; }
 .girar-look {
