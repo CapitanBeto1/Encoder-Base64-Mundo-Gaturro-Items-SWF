@@ -18,8 +18,8 @@ from mgitems.entrega import PUERTO_FIDDLER_POR_DEFECTO, QUE_HACER_EN_EL_JUEGO, U
 from mgitems.ffdec import FFDecNoDisponible
 from mgitems.fuente import URL_ASSETS, FuenteCDN, SinConexion, SwfNoEncontrado, Version
 from mgitems.gaturro import (
-    AVISO_VERSION_ANTERIOR, CLASE_CUERPO, COLORES, SWF_CUERPO, ImagenesPiezas, componer, es_version_anterior,
-    tiene_color_de_nariz, tiene_lugar,
+    AVISO_VERSION_ANTERIOR, CLASE_CUERPO, CLASE_PLANTILLA, COLORES, SWF_CUERPO, SWF_PLANTILLA, ImagenesPiezas, componer,
+    completar_con_plantilla, es_version_anterior, tiene_color_de_nariz, tiene_lugar,
 )
 from mgitems.iconos import ExportadorFFDec, IconosItems, version_de
 from mgitems.items import (
@@ -721,14 +721,21 @@ class Nucleo:
                 "colores_de_fabrica": COLORES, "color_de_nariz": tiene_color_de_nariz(cuerpo)}
 
     def _cuerpo_gaturro(self) -> str | None:
-        """El SVG de `assets.GaturroMC` del primer SWF del juego que lo traiga."""
+        """El SVG de `assets.GaturroMC` del primer SWF del juego que lo traiga, con los huecos del torso
+        de la plantilla de 2025 que le faltan (si se consigue)."""
         imagenes = ImagenesPiezas(self._entorno.carpeta_cache() / "gaturro", self._exportador)
         for swf in SWF_CUERPO:
             if self._preparar_svg(imagenes, swf, lambda clases: {CLASE_CUERPO} & set(clases)):
                 cuerpo = imagenes.svg(swf, CLASE_CUERPO)
                 if cuerpo:
-                    return cuerpo
-        return None
+                    break
+        else:
+            return None
+        if self._preparar_svg(imagenes, SWF_PLANTILLA, lambda clases: {CLASE_PLANTILLA} & set(clases)):
+            plantilla = imagenes.svg(SWF_PLANTILLA, CLASE_PLANTILLA)
+            if plantilla:
+                cuerpo = completar_con_plantilla(cuerpo, plantilla)
+        return cuerpo
 
     def _preparar_svg(self, imagenes: ImagenesPiezas, swf: str, elegir) -> bool:
         """Exporta (una vez por versión) a SVG las clases de `swf` que `elegir(clases)` devuelve; False si no se pudo."""

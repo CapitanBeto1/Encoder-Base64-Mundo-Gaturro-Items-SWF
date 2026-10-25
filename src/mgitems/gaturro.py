@@ -23,6 +23,11 @@ CLASE_CUERPO = "assets.GaturroMC"
 # Son una versión anterior a la del cliente actual (ver `es_version_anterior`).
 SWF_CUERPO = ("fashion_nuevo", "superHeroesTrajes")
 
+# Un maniquí de 2025 armado con la plantilla del Gaturro (sus huecos coinciden con los del Gaturro al
+# decimal), con un torso más nuevo: trae los clips `clothBack` (Espalda) y `clothFront`, que el
+# Gaturro publicado no tiene. De ahí se toman su posición y su capa.
+SWF_PLANTILLA, CLASE_PLANTILLA = "fashion2025", "maniqui_so"
+
 # Las Partes del cuerpo en el orden en que el juego las pone (AvatarBodyEnum.getList): si dos van
 # al mismo clip, queda la última (por ejemplo, `gripFore` gana sobre `grip` en el clip `gripFore`).
 # `accesories2` existe en el juego actual (se ve), aunque no en la versión del cliente que se leyó.
@@ -30,7 +35,8 @@ PARTES = ["hats", "hairs", "mouths", "neck", "accesories", "accesories2", "cloth
           "foot", "arm", "armFore", "armBack", "glove", "gloveFore", "gloveBack", "grip", "gripFore", "gripBack"]
 
 # La versión actual no está publicada sin cifrar.
-AVISO_VERSION_ANTERIOR = "Gaturro de una versión anterior del juego: la nariz y «Accesorio 2» pueden verse distinto."
+AVISO_VERSION_ANTERIOR = ("Gaturro de una versión anterior del juego: la nariz y «Accesorio 2» pueden verse distinto. "
+                          "La Espalda va donde la pone la plantilla de 2025 del juego.")
 
 # Colores de fábrica del juego (ColorPickerModal): pelaje, panza y ojos.
 COLORES = {"color1": "#FFF200", "color2": "#DDB42D", "color3": "#FFFFFF"}
@@ -57,6 +63,44 @@ _TODOS_LOS_HUECOS = {h for p in PARTES for h in huecos_de(p)}
 def tiene_lugar(cuerpo: str, parte: str) -> bool:
     """Si el cuerpo tiene algún clip donde poner la Pieza de esa Parte."""
     return parte in PARTES and any(_hueco(h).search(cuerpo) for h in huecos_de(parte))
+
+
+def _torso(svg: str) -> re.Match | None:
+    """El sprite del torso tal como lo exporta FFDec: el que tiene el clip `cloth`."""
+    return next((m for m in re.finditer(r'<g id="sprite\d+">(?P<hijos>.*?)</g>', svg, re.S) if _hueco("cloth").search(m.group("hijos"))), None)
+
+
+def completar_con_plantilla(cuerpo: str, plantilla: str) -> str:
+    """El cuerpo con los huecos del torso de la plantilla de 2025 que le faltan (Espalda, `clothFront`).
+
+    Cada hueco nuevo va con la transformación de la plantilla y en su misma capa: delante del hueco de
+    la plantilla que lo precede y que el cuerpo también tiene, o al fondo si no hay ninguno antes
+    (la Espalda va detrás del dibujo del torso).
+    """
+    torso, del_molde = _torso(cuerpo), _torso(plantilla)
+    if not torso or not del_molde:
+        return cuerpo
+    vacio = re.search(r'xlink:href="(#[^"]+)"', _hueco("cloth").search(torso.group("hijos")).group(0)).group(1)
+    hijos = torso.group("hijos")
+    anterior = None  # el último hueco de la plantilla que el cuerpo también tiene
+    for clip in re.findall(r"<use [^>]*/>", del_molde.group("hijos")):
+        nombre = re.search(r'\bid="([^"]+)"', clip)
+        if not nombre or not _hueco(nombre.group(1)).search(clip):
+            continue  # el dibujo del maniquí no se copia
+        nombre = nombre.group(1)
+        if _hueco(nombre).search(hijos):
+            anterior = nombre
+            continue
+        transformacion = _TRANSFORMACION.search(clip)
+        atributo = f' transform="{transformacion.group(1)}"' if transformacion else ""
+        nuevo = f'<use height="0.0" id="{nombre}"{atributo} width="0.0" xlink:href="{vacio}"/>'
+        if anterior:
+            existente = _hueco(anterior).search(hijos).group(0)
+            hijos = hijos.replace(existente, existente + nuevo, 1)
+        else:
+            hijos = nuevo + hijos
+        anterior = nombre
+    return cuerpo.replace(torso.group(0), torso.group(0).replace(torso.group("hijos"), hijos, 1), 1)
 
 
 def tiene_color_de_nariz(cuerpo: str) -> bool:
