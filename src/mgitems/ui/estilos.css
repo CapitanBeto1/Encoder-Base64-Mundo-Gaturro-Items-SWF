@@ -1388,3 +1388,8 @@ dialog.dialogo-mis-looks { position: fixed; inset: 0; margin: auto; width: fit-c
 .escenario-look .girar-look, .escenario-look .nombre-look-elegido { position: relative; z-index: 2; }
 .escenario-look .girar-look { position: absolute; }
 .nombre-look-elegido { flex: none; margin: 0; }
+
+/* Barritas de zoom del Gaturro. */
+.zoom-gaturro { flex: none; display: flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 12px; background: rgba(0, 0, 0, 0.22); color: #fff; font-size: 14px; line-height: 1; }
+.zoom-gaturro input[type="range"] { width: 120px; accent-color: var(--amarillo); cursor: pointer; }
+.zoom-escenario { position: relative; z-index: 2; margin-bottom: 6px; background: rgba(34, 42, 69, 0.75); }

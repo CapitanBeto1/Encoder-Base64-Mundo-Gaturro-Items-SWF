@@ -162,7 +162,12 @@
             <div class="escena">
               <ul id="casilleros-cabeza" class="casilleros" aria-label="Partes de la cabeza"></ul>
               <figure id="gaturro" class="gaturro">
-                <img id="imagen-gaturro" alt="Tu Gaturro con las Piezas del Look, como se ve en el juego">
+                <img id="imagen-gaturro" data-zoom="1" alt="Tu Gaturro con las Piezas del Look, como se ve en el juego">
+                <label class="zoom-gaturro" title="Acercar o alejar el Gaturro">
+                  <span aria-hidden="true">−</span>
+                  <input id="zoom-gaturro" type="range" min="0.4" max="1.6" step="0.05" value="1" aria-label="Zoom del Gaturro" data-img="imagen-gaturro">
+                  <span aria-hidden="true">+</span>
+                </label>
                 <figcaption id="estado-gaturro" class="ayuda"></figcaption>
               </figure>
               <ul id="casilleros-cuerpo" class="casilleros" aria-label="Partes del cuerpo"></ul>
@@ -249,7 +254,12 @@
           <div class="escenario-look">
             <button type="button" id="girar-look" class="girar-look" title="Girar el Gaturro" aria-label="Girar el Gaturro">↻</button>
             <button type="button" id="eliminar-look-elegido" class="girar-look eliminar-look" title="Eliminar el Look elegido" aria-label="Eliminar el Look elegido">🗑</button>
-            <img id="gaturro-mis-looks" alt="El Look elegido">
+            <img id="gaturro-mis-looks" data-zoom="1" alt="El Look elegido">
+            <label class="zoom-gaturro zoom-escenario" title="Acercar o alejar el Gaturro">
+              <span aria-hidden="true">−</span>
+              <input id="zoom-escenario" type="range" min="0.4" max="1.6" step="0.05" value="1" aria-label="Zoom del Gaturro" data-img="gaturro-mis-looks">
+              <span aria-hidden="true">+</span>
+            </label>
             <p id="nombre-look-elegido" class="nombre-look-elegido"></p>
           </div>
           <div class="pie-mis-looks">
