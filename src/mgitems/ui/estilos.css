@@ -305,13 +305,6 @@ button.chip-look[aria-pressed="true"] {
   width: 92px;
 }
 
-/* Partes del cuerpo de un Look: rótulo, imagen, Pieza, selector y quitar. */
-#partes-look {
-  flex: none;
-  min-height: auto;
-  overflow: visible;
-}
-
 .partes li .parte {
   flex: none;
   width: 124px;
@@ -952,51 +945,132 @@ dialog.grande {
 .resultados-swf.con-iconos li .nombre { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .botones-encabezado { display: flex; gap: 8px; }
 
-/* --- El Gaturro del Look --- */
+/* --- Pestaña Looks: como el inventario del juego --- */
 
-.gaturro {
+main.modo-looks { grid-template-columns: minmax(0, 2.3fr) minmax(0, 1fr); }
+main.modo-looks .buscador-swf { display: none; }
+.buscador-swf { display: contents; }
+
+.encabezado-looks { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+.encabezado-looks .lista-looks { flex: 1 1 auto; min-width: 0; }
+.encabezado-looks .botones-encabezado { flex-wrap: wrap; gap: 4px; }
+.encabezado-looks .enlace { font-size: 10px; padding: 2px 6px; }
+
+.inventario {
   flex: none;
   display: flex;
-  align-items: center;
   gap: 10px;
-  margin: 0;
-  padding: 0 10px;
-  background: #fff;
-  border: 2px solid #2a5d74;
-  border-radius: 12px;
+  align-items: stretch;
 }
-.gaturro[hidden] { display: none; }
-.gaturro img { height: 180px; aspect-ratio: 1; }
-.gaturro img[hidden] { display: none; }
-.gaturro figcaption { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-.gaturro #estado-gaturro { display: flex; flex-direction: column; gap: 4px; color: var(--texto); font-size: 12px; line-height: 1.25; }
-.gaturro #estado-gaturro:empty { display: none; }
-.colores-gaturro { display: flex; flex-direction: column; gap: 4px; }
-.colores-gaturro label { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--texto); }
-.colores-gaturro input { width: 38px; height: 24px; padding: 0; border: 2px solid #2a5d74; border-radius: 6px; cursor: pointer; }
 
-/* --- Grilla de Piezas del Look --- */
-
-.grilla-piezas {
+/* Izquierda: la tarjeta del Gaturro. */
+.tarjeta-gaturro {
   flex: none;
+  width: 190px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding-bottom: 8px;
+  background: #4f9a3a;
+  border: 3px solid #f6d610;
+  border-radius: 14px;
+  overflow: hidden;
+}
+.tarjeta-gaturro .nombre-tarjeta {
+  flex: none;
+  width: 100%;
+  border: 0;
+  border-radius: 0;
+  padding: 7px 8px;
+  background: #b3202a;
+  color: #fff;
+  text-align: center;
+  text-transform: uppercase;
+  font-size: 15px;
+  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.18);
+}
+.tarjeta-gaturro .nombre-tarjeta::placeholder { color: rgba(255, 255, 255, 0.7); }
+.tarjeta-gaturro .nombre-tarjeta:focus { box-shadow: inset 0 0 0 3px var(--amarillo); border: 0; }
+.gaturro {
+  margin: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.gaturro img { width: 140px; aspect-ratio: 1; }
+.gaturro img[hidden] { display: none; }
+.gaturro figcaption { display: flex; flex-direction: column; gap: 3px; padding: 0 8px; color: #fff; font-size: 10px; line-height: 1.2; text-align: center; }
+.gaturro figcaption:empty { display: none; }
+.colores-gaturro { display: flex; gap: 6px; }
+.colores-gaturro label { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 11px; color: #fff; }
+.colores-gaturro input { width: 34px; height: 22px; padding: 0; border: 2px solid #2a5d74; border-radius: 6px; cursor: pointer; }
+.botones-tarjeta { display: flex; gap: 8px; }
+.boton-cuadrado {
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  font-size: 26px;
+  line-height: 1;
+  background: var(--amarillo);
+  border-color: var(--amarillo-contorno);
+}
+#guardar-look { color: #16801f; }
+#descartar-look { color: #c41a1a; }
+
+/* Derecha: el armario, con las zonas del cuerpo como pestañas. */
+.armario {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 6px;
+  padding: 8px;
+  background: #4f9a3a;
+  border: 3px solid #f6d610;
+  border-radius: 14px;
 }
-.grilla-piezas .ayuda { margin: 0; }
+.armario .fila { gap: 6px; }
+.fila-armario .selector-swf { flex: 1 1 0; min-width: 0; width: auto; }
+.fila-armario .selector-swf input { width: 100%; }
+.armario .fila .etiqueta-campo { color: #fff; flex: none; width: auto; }
+.armario .fila input { padding: 4px 8px; font-size: 13px; }
+.grupos-partes { display: flex; gap: 4px; }
+.grupo-partes {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 4px 2px;
+  border-radius: 10px 10px 4px 4px;
+  background: #3c7d2b;
+  border-color: #2f6421;
+  color: #fff;
+}
+.grupo-partes .icono-grupo { font-size: 19px; line-height: 1; }
+/* Como en el juego, solo el ícono; el nombre queda para lectores de pantalla y al pasar el mouse. */
+.grupo-partes .nombre-grupo { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.grupo-partes[aria-selected="true"] { background: #6fc054; border-color: #f6d610; }
+.grupo-partes { position: relative; }
+.grupo-partes.con-pieza::after { content: "•"; position: absolute; top: 0; right: 5px; color: var(--amarillo); font-size: 16px; }
+.partes-grupo { display: flex; flex-wrap: wrap; gap: 3px; }
+.parte-grupo { padding: 2px 6px; font-size: 9px; border-radius: 8px; }
+.parte-grupo.con-pieza::after { content: " •"; color: #16801f; }
+.parte-grupo[aria-pressed="true"] { background: var(--amarillo); border-color: var(--amarillo-contorno); }
+.armario #filtro-piezas { flex: 1; min-width: 0; font-size: 12px; padding: 4px 8px; }
 .grilla {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(58px, 1fr));
+  grid-template-columns: repeat(5, 52px);
+  justify-content: center;
+  grid-auto-rows: 1fr;
   gap: 6px;
-  max-height: 210px;
-  overflow-y: auto;
   margin: 0;
-  padding: 6px;
+  padding: 0;
   list-style: none;
-  background: rgba(255, 255, 255, 0.35);
-  border-radius: 10px;
 }
-.grilla:empty { display: none; }
 .pieza-grilla {
   width: 100%;
   aspect-ratio: 1;
@@ -1004,11 +1078,14 @@ dialog.grande {
   place-items: center;
   padding: 3px;
   border-radius: 10px;
+  background: var(--amarillo);
+  border-color: var(--amarillo-contorno);
 }
 .pieza-grilla .icono { width: 100%; height: 100%; box-shadow: none; background: transparent; }
 .pieza-grilla .icono img { max-width: 100%; max-height: 100%; }
-.pieza-grilla[aria-pressed="true"] { background: var(--amarillo); box-shadow: 0 0 0 3px var(--amarillo-contorno); }
-
-/* La Parte del cuerpo elegida para la grilla. */
-.partes li .parte { cursor: pointer; border: 0; }
-.partes li.elegida .parte { background: var(--amarillo); color: var(--texto); box-shadow: 0 0 0 2px var(--amarillo-contorno); }
+.pieza-grilla[aria-pressed="true"] { background: #6fc054; border-color: #2f6421; box-shadow: inset 0 0 0 3px #2f6421; }
+.paginas { display: flex; align-items: center; gap: 6px; }
+.paginas .flecha { flex: none; width: 32px; height: 28px; font-size: 14px; color: #c4401a; }
+.paginas #numero-pagina { flex: none; color: #fff; min-width: 42px; text-align: center; font-size: 12px; }
+.armario #ayuda-grilla { margin: 0; color: #fff; font-size: 11px; text-align: center; }
+.armario #ayuda-grilla:empty { display: none; }
