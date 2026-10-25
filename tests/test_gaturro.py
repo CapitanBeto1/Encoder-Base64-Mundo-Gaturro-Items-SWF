@@ -362,3 +362,53 @@ def test_sin_la_plantilla_la_espalda_no_se_dibuja(tmp_path):
 
     assert resultado["ok"]
     assert resultado["sin_lugar"] == ["clothes1.capa1_on"]
+
+
+# --- Hipótesis de la nariz y «Accesorio 2» (a confirmar en el juego) ---
+
+# Una cabeza con la forma de la publicada: … eye2 … hairs accesories <nariz sin nombre> hats.
+CABEZA_PUBLICADA = '''    <g id="sprite3">
+      <use ffdec:characterId="6" height="40.0" id="color1" transform="matrix(1.0, 0.0, 0.0, 1.0, -30.0, -20.0)" width="60.0" xlink:href="#shape0"/>
+      <use ffdec:characterId="2" height="0.0" id="mouths" transform="matrix(1.0, 0.0, 0.0, 1.0, -2.8, 28.8)" width="0.0" xlink:href="#sprite0"/>
+      <use ffdec:characterId="56" height="8.0" id="eye1" transform="matrix(1.0, 0.0, 0.0, 1.0, -21.75, -9.9)" width="8.0" xlink:href="#shape0"/>
+      <use ffdec:characterId="60" height="8.0" id="eye2" transform="matrix(1.0, 0.0, 0.0, 1.0, 17.0, -9.45)" width="8.0" xlink:href="#shape0"/>
+      <use ffdec:characterId="2" height="0.0" id="hairs" transform="matrix(1.0, 0.0, 0.0, 1.0, -4.1, -7.2)" width="0.0" xlink:href="#sprite0"/>
+      <use ffdec:characterId="2" height="0.0" id="accesories" transform="matrix(1.0, 0.0, 0.0, 1.0, -4.5, 14.65)" width="0.0" xlink:href="#sprite0"/>
+      <use ffdec:characterId="62" height="6.0" transform="matrix(1.0, 0.0, 0.0, 1.0, -2.95, 17.9)" width="9.0" xlink:href="#shape0"/>
+      <use ffdec:characterId="2" height="0.0" id="hats" transform="matrix(1.0, 0.0, 0.0, 1.0, -2.25, -1.8)" width="0.0" xlink:href="#sprite0"/>
+    </g>
+'''
+CUERPO_CABEZA_PUBLICADA = re.sub(r'    <g id="sprite3">.*?</g>\n', lambda _: CABEZA_PUBLICADA, CUERPO, count=1, flags=re.S)
+
+
+class ExportadorCabezaPublicada(ExportadorConGaturro):
+    def exportar(self, swf, simbolos, destino, formato="png"):
+        super().exportar(swf, simbolos, destino, formato)
+        if formato == "svg" and "assets.GaturroMC" in simbolos.values():
+            (destino / "assets.GaturroMC.svg").write_text(CUERPO_CABEZA_PUBLICADA, encoding="utf-8")
+
+
+def hijos_de_la_cabeza(svg: str) -> list[str]:
+    cabeza = next(g for g in raiz(svg).iter(f"{SVG}g")
+                  if any(h.attrib.get("id") == "eye2" for h in g))
+    return [h.attrib.get("data-parte") or h.attrib.get("id") or "nariz" for h in cabeza]
+
+
+def test_hipotesis_nariz_debajo_del_pelo_y_accesorio_2_en_su_capa(tmp_path, fuente):
+    nucleo = Nucleo(SistemaFalso(tmp_path), fuente=fuente, catalogo=[], exportador=ExportadorCabezaPublicada())
+
+    resultado = nucleo.gaturro({"accesories2": "clothes1.gorra1_on", "hairs": "clothes1.remera5_on"})
+
+    assert resultado["ok"], resultado
+    assert resultado["sin_lugar"] == []
+    # Como la cabeza del álbum 2018: ojos, nariz, Boca, Pelo; Accesorio 2 donde estaba la nariz.
+    assert hijos_de_la_cabeza(resultado["svg"]) == ["color1", "eye1", "eye2", "nariz", "mouths", "hairs", "accesories", "accesories2", "hats"]
+    assert puestas(resultado["svg"])["accesories2"] == ["matrix(1.0, 0.0, 0.0, 1.0, -2.95, 17.9)"]
+    assert "hipótesis" in resultado["aviso"]
+
+
+def test_sin_la_forma_conocida_la_cabeza_no_se_toca(nucleo):
+    resultado = nucleo.gaturro({"accesories2": "clothes1.gorra1_on"})
+
+    assert resultado["sin_lugar"] == ["clothes1.gorra1_on"]
+    assert "hipótesis" not in resultado["aviso"]

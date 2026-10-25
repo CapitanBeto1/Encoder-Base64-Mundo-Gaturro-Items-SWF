@@ -19,7 +19,8 @@ from mgitems.ffdec import FFDecNoDisponible
 from mgitems.fuente import URL_ASSETS, FuenteCDN, SinConexion, SwfNoEncontrado, Version
 from mgitems.gaturro import (
     AVISO_VERSION_ANTERIOR, CLASE_CUERPO, CLASE_PLANTILLA, COLORES, SWF_CUERPO, SWF_PLANTILLA, ImagenesPiezas, componer,
-    completar_con_plantilla, es_version_anterior, tiene_color_de_nariz, tiene_lugar,
+    AVISO_HIPOTESIS, aplicar_hipotesis_nariz, completar_con_plantilla, es_version_anterior, tiene_color_de_nariz,
+    tiene_lugar, usa_hipotesis,
 )
 from mgitems.iconos import ExportadorFFDec, IconosItems, version_de
 from mgitems.items import (
@@ -717,7 +718,7 @@ class Nucleo:
             else:
                 piezas[parte] = (clase, svg)
         return {"ok": True, "svg": componer(cuerpo, piezas, colores), "sin_imagen": sin_imagen, "sin_lugar": sin_lugar,
-                "aviso": AVISO_VERSION_ANTERIOR if es_version_anterior(cuerpo) else None,
+                "aviso": AVISO_HIPOTESIS if usa_hipotesis(cuerpo) else AVISO_VERSION_ANTERIOR if es_version_anterior(cuerpo) else None,
                 "colores_de_fabrica": COLORES, "color_de_nariz": tiene_color_de_nariz(cuerpo)}
 
     def _cuerpo_gaturro(self) -> str | None:
@@ -735,7 +736,7 @@ class Nucleo:
             plantilla = imagenes.svg(SWF_PLANTILLA, CLASE_PLANTILLA)
             if plantilla:
                 cuerpo = completar_con_plantilla(cuerpo, plantilla)
-        return cuerpo
+        return aplicar_hipotesis_nariz(cuerpo)
 
     def _preparar_svg(self, imagenes: ImagenesPiezas, swf: str, elegir) -> bool:
         """Exporta (una vez por versión) a SVG las clases de `swf` que `elegir(clases)` devuelve; False si no se pudo."""
