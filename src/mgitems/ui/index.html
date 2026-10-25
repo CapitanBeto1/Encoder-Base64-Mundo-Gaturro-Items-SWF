@@ -245,18 +245,21 @@
         <button type="button" id="cerrar-mis-looks" class="cerrar-redondo cerrar-amarillo" title="Cerrar" aria-label="Cerrar">✕</button>
       </div>
       <div class="cuerpo-mis-looks">
-        <div class="escenario-look">
-          <button type="button" id="girar-look" class="girar-look" title="Girar el Gaturro" aria-label="Girar el Gaturro">↻</button>
-          <img id="gaturro-mis-looks" alt="El Look elegido">
-          <p id="nombre-look-elegido" class="nombre-look-elegido"></p>
+        <div class="columna-escenario">
+          <div class="escenario-look">
+            <button type="button" id="girar-look" class="girar-look" title="Girar el Gaturro" aria-label="Girar el Gaturro">↻</button>
+            <button type="button" id="eliminar-look-elegido" class="girar-look eliminar-look" title="Eliminar el Look elegido" aria-label="Eliminar el Look elegido">🗑</button>
+            <img id="gaturro-mis-looks" alt="El Look elegido">
+            <p id="nombre-look-elegido" class="nombre-look-elegido"></p>
+          </div>
+          <div class="pie-mis-looks">
+            <button type="button" id="cancelar-mis-looks" class="boton-juego">CANCELAR</button>
+            <button type="button" id="equipar-look" class="boton-juego">EQUIPAR</button>
+          </div>
         </div>
         <ul id="grilla-looks" class="grilla-looks" aria-label="Looks guardados">
           <li><button type="button" id="nuevo-look" class="casillero-look nuevo" title="Un Look nuevo" aria-label="Un Look nuevo">+</button></li>
         </ul>
-      </div>
-      <div class="pie-mis-looks">
-        <button type="button" id="cancelar-mis-looks" class="pastilla-colores">CANCELAR</button>
-        <button type="button" id="equipar-look" class="pastilla-colores">EQUIPAR</button>
       </div>
     </div>
   </dialog>

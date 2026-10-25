@@ -629,7 +629,7 @@ function mostrarLookElegido() {
   const look = looksGuardados.find((l) => l.id === lookElegido);
   document.querySelectorAll("#grilla-looks .casillero-look:not(.nuevo)").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.id === lookElegido)));
   $("nombre-look-elegido").textContent = look ? look.nombre : "Tocá un Look para verlo";
-  $("equipar-look").disabled = $("exportar-look").disabled = $("duplicar-look").disabled = !look;
+  $("equipar-look").disabled = $("exportar-look").disabled = $("duplicar-look").disabled = $("eliminar-look-elegido").disabled = !look;
   $("gaturro-mis-looks").hidden = !look;
   if (look) pedirGaturro($("gaturro-mis-looks"), coloresGaturro, look.partes);
 }
@@ -655,6 +655,22 @@ $("abrir-mis-looks").addEventListener("click", () => {
   mostrarGrillaLooks();
 });
 $("girar-look").addEventListener("click", () => $("gaturro-mis-looks").classList.toggle("girado"));
+// Elimina el Look elegido; si es el que se está editando, el editor queda con un Look nuevo.
+$("eliminar-look-elegido").addEventListener("click", async () => {
+  const look = looksGuardados.find((l) => l.id === lookElegido);
+  if (!look || !confirm(`¿Eliminar el Look «${look.nombre}»?`)) return;
+  const resultado = await api().borrar_look(look.id);
+  if (!resultado.ok) return avisarLista(resultado.error, "error");
+  const posicion = looksGuardados.indexOf(look);
+  if (lookActual.id === look.id) {
+    lookActual = nuevoLook();
+    mostrarLook();
+  }
+  const quedan = looksGuardados.filter((l) => l.id !== look.id);
+  lookElegido = quedan[Math.min(posicion, quedan.length - 1)]?.id ?? null;
+  avisarLista(`Se eliminó «${look.nombre}».`, "exito");
+  await cargarLooks();
+});
 $("equipar-look").addEventListener("click", () => equiparLook(lookElegido));
 $("cancelar-mis-looks").addEventListener("click", () => $("dialogo-mis-looks").close());
 $("cerrar-mis-looks").addEventListener("click", () => $("dialogo-mis-looks").close());
