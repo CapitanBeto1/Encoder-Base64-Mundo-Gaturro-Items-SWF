@@ -1378,9 +1378,13 @@ dialog.dialogo-mis-looks { position: fixed; inset: 0; margin: auto; width: fit-c
 .dialogo-mis-looks .boton-juego::before { display: none; }
 .dialogo-mis-looks .boton-juego:hover:not(:disabled) { background: #5a67a0; }
 .dialogo-mis-looks .boton-juego:disabled { background: #343d61; color: #8c95b8; box-shadow: 0 3px 0 #262d49; }
-/* Las miniaturas traen margen alrededor del Gaturro: se agrandan dentro del casillero. */
-.casillero-look { overflow: hidden; }
-.casillero-look img { transform: scale(1.45); transform-origin: 50% 62%; }
-.escenario-look img:not(.girado) { transform: scale(1.12); transform-origin: 50% 80%; }
-.escenario-look img.girado { transform: scale(-1.12, 1.12); transform-origin: 50% 80%; }
-.nombre-casillero-look { position: relative; z-index: 1; }
+/* El Gaturro viene encuadrado justo (encuadrar() en app.js): sin escalas que lo saquen de su lugar.
+   Los botones del escenario y los nombres quedan siempre por encima y en su propio espacio. */
+.casillero-look { overflow: hidden; gap: 4px; }
+.casillero-look img { flex: 1; min-height: 0; width: 100%; padding: 2px 6px 0; object-fit: contain; }
+.nombre-casillero-look { flex: none; padding: 1px 8px; border-radius: 8px; background: #11162a; }
+.escenario-look { padding: 10px 0 10px; }
+.escenario-look img { flex: 1; min-height: 0; width: 100%; height: auto; padding: 40px 24px 6px; object-fit: contain; object-position: center bottom; }
+.escenario-look .girar-look, .escenario-look .nombre-look-elegido { position: relative; z-index: 2; }
+.escenario-look .girar-look { position: absolute; }
+.nombre-look-elegido { flex: none; margin: 0; }

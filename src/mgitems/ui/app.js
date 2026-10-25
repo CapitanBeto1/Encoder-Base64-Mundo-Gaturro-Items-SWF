@@ -934,6 +934,33 @@ try {
 
 // Si se piden varios seguidos, se muestra solo el último (cada imagen lleva su propio contador).
 const pedidosGaturro = new Map();
+// El SVG encuadrado justo en lo que se dibuja (cuerpo y Piezas), con un poco de aire: así una Pieza
+// grande (un vestido puesto en los pies, unas alas) se ve entera y un Gaturro sin nada no queda chico.
+// Se mide dibujándolo un momento fuera de la vista.
+function encuadrar(svg) {
+  const documento = new DOMParser().parseFromString(svg, "image/svg+xml");
+  const raiz = documento.documentElement;
+  if (raiz.nodeName !== "svg") return svg;
+  const medidor = document.createElement("div");
+  medidor.style.cssText = "position:absolute;left:-10000px;top:0;width:10px;height:10px;overflow:hidden;visibility:hidden";
+  const copia = document.importNode(raiz, true);
+  medidor.append(copia);
+  document.body.append(medidor);
+  try {
+    const caja = copia.getBBox();
+    if (!caja.width || !caja.height) return svg;
+    const aire = Math.max(caja.width, caja.height) * 0.04;
+    raiz.setAttribute("viewBox", `${caja.x - aire} ${caja.y - aire} ${caja.width + 2 * aire} ${caja.height + 2 * aire}`);
+    raiz.removeAttribute("width");
+    raiz.removeAttribute("height");
+    return new XMLSerializer().serializeToString(documento);
+  } catch {
+    return svg;
+  } finally {
+    medidor.remove();
+  }
+}
+
 async function pedirGaturro(img, colores, partes = lookActual.partes) {
   const pedido = (pedidosGaturro.get(img) ?? 0) + 1;
   pedidosGaturro.set(img, pedido);
@@ -941,7 +968,7 @@ async function pedirGaturro(img, colores, partes = lookActual.partes) {
   if (pedidosGaturro.get(img) !== pedido) return null;
   img.hidden = !resultado.ok; // sin el Gaturro original no se muestra ninguno
   if (resultado.ok) {
-    img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(resultado.svg);
+    img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(encuadrar(resultado.svg));
     coloresDeFabrica = resultado.colores_de_fabrica;
     tieneColorDeNariz = resultado.color_de_nariz;
   }
