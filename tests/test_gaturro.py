@@ -406,7 +406,7 @@ def test_la_nariz_va_debajo_del_pelo_como_en_la_cabeza_del_album_2018(tmp_path, 
     assert puestas(resultado["svg"])["accesories2"] == ["matrix(1.0, 0.0, 0.0, 1.0, -4.5, 14.65)"]
     assert resultado["sin_lugar"] == []
     # Sigue siendo la versión anterior: el hueco lo agregó el programa.
-    assert "falta confirmarlo" in resultado["aviso"]
+    assert "versión anterior" in resultado["aviso"]
 
 
 def test_sin_la_forma_conocida_la_cabeza_no_se_toca(nucleo):
