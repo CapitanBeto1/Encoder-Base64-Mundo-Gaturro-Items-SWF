@@ -400,11 +400,13 @@ def test_la_nariz_va_debajo_del_pelo_como_en_la_cabeza_del_album_2018(tmp_path, 
     resultado = nucleo.gaturro({"hairs": "clothes1.remera5_on", "accesories2": "clothes1.gorra1_on"})
 
     assert resultado["ok"], resultado
-    # Ojos, nariz, Boca, Pelo (lo que va en Pelo tapa la nariz).
-    assert hijos_de_la_cabeza(resultado["svg"]) == ["color1", "eye1", "eye2", "nariz", "mouths", "hairs", "accesories", "hats"]
-    # La posición de «Accesorio 2» no se conoce (la hipótesis no coincidió con el juego): no se dibuja.
-    assert resultado["sin_lugar"] == ["clothes1.gorra1_on"]
-    assert "versión anterior" in resultado["aviso"]
+    # Ojos, nariz, Boca, Pelo (lo que va en Pelo tapa la nariz); «Accesorio 2» arriba de Accesorio.
+    assert hijos_de_la_cabeza(resultado["svg"]) == ["color1", "eye1", "eye2", "nariz", "mouths", "hairs", "accesories", "accesories2", "hats"]
+    # En el mismo lugar que Accesorio (las Piezas de nariz están dibujadas para ese hueco).
+    assert puestas(resultado["svg"])["accesories2"] == ["matrix(1.0, 0.0, 0.0, 1.0, -4.5, 14.65)"]
+    assert resultado["sin_lugar"] == []
+    # Sigue siendo la versión anterior: el hueco lo agregó el programa.
+    assert "falta confirmarlo" in resultado["aviso"]
 
 
 def test_sin_la_forma_conocida_la_cabeza_no_se_toca(nucleo):

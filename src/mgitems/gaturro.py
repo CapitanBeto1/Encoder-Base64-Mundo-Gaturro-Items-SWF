@@ -35,7 +35,9 @@ PARTES = ["hats", "hairs", "mouths", "neck", "accesories", "accesories2", "cloth
           "foot", "arm", "armFore", "armBack", "glove", "gloveFore", "gloveBack", "grip", "gripFore", "gripBack"]
 
 # La versión actual no está publicada sin cifrar.
-AVISO_VERSION_ANTERIOR = "Gaturro de una versión anterior del juego: la nariz y «Accesorio 2» pueden verse distinto."
+AVISO_VERSION_ANTERIOR = ("Gaturro de una versión anterior del juego: la nariz no cambia de color, y «Accesorio 2» "
+                          "va en el lugar de Accesorio (falta confirmarlo en el juego).")
+_MARCA_ACCESORIO_2 = 'data-mgitems="como-accesories"'
 
 # Colores de fábrica del juego (ColorPickerModal): pelaje, panza y ojos.
 COLORES = {"color1": "#FFF200", "color2": "#DDB42D", "color3": "#FFFFFF"}
@@ -112,8 +114,26 @@ def tiene_color_de_nariz(cuerpo: str) -> bool:
 
 
 def es_version_anterior(cuerpo: str) -> bool:
-    """El Gaturro del juego actual tiene un lugar para «Accesorio 2»; el de las copias publicadas, no."""
-    return not tiene_lugar(cuerpo, "accesories2")
+    """El Gaturro del juego actual tiene un lugar para «Accesorio 2»; el de las copias publicadas, no
+    (el que agrega `accesorio_2_como_accesorio` no cuenta)."""
+    return not tiene_lugar(cuerpo, "accesories2") or _MARCA_ACCESORIO_2 in cuerpo
+
+
+def accesorio_2_como_accesorio(cuerpo: str) -> str:
+    """Un hueco `accesories2` en el mismo lugar que `accesories` y en la capa de arriba (ADR 0003).
+
+    Deducción a confirmar: las Piezas de aritos de nariz del juego están dibujadas para Accesorio, y en
+    «Accesorio 2» el juego las muestra colgando de la nariz, igual que con la transformación de
+    Accesorio. En la capa de arriba de Accesorio, donde estaba la nariz vieja, se ve delante del Pelo,
+    como en el juego. Si el cuerpo ya tiene `accesories2`, queda igual.
+    """
+    if tiene_lugar(cuerpo, "accesories2"):
+        return cuerpo
+    accesorio = _hueco("accesories").search(cuerpo)
+    if not accesorio:
+        return cuerpo
+    segundo = accesorio.group(0).replace('id="accesories"', f'id="accesories2" {_MARCA_ACCESORIO_2}', 1)
+    return cuerpo.replace(accesorio.group(0), accesorio.group(0) + segundo, 1)
 
 
 def nariz_debajo_del_pelo(cuerpo: str) -> str:
