@@ -974,3 +974,41 @@ dialog.grande {
 .colores-gaturro { display: flex; flex-direction: column; gap: 4px; }
 .colores-gaturro label { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--texto); }
 .colores-gaturro input { width: 38px; height: 24px; padding: 0; border: 2px solid #2a5d74; border-radius: 6px; cursor: pointer; }
+
+/* --- Grilla de Piezas del Look --- */
+
+.grilla-piezas {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.grilla-piezas .ayuda { margin: 0; }
+.grilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(58px, 1fr));
+  gap: 6px;
+  max-height: 210px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  background: rgba(255, 255, 255, 0.35);
+  border-radius: 10px;
+}
+.grilla:empty { display: none; }
+.pieza-grilla {
+  width: 100%;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  padding: 3px;
+  border-radius: 10px;
+}
+.pieza-grilla .icono { width: 100%; height: 100%; box-shadow: none; background: transparent; }
+.pieza-grilla .icono img { max-width: 100%; max-height: 100%; }
+.pieza-grilla[aria-pressed="true"] { background: var(--amarillo); box-shadow: 0 0 0 3px var(--amarillo-contorno); }
+
+/* La Parte del cuerpo elegida para la grilla. */
+.partes li .parte { cursor: pointer; border: 0; }
+.partes li.elegida .parte { background: var(--amarillo); color: var(--texto); box-shadow: 0 0 0 2px var(--amarillo-contorno); }
