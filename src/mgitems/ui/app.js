@@ -566,6 +566,7 @@ let lookActual = nuevoLook();
 let partesConocidas = []; // [{id, nombre}]
 let piezasLook = []; // Piezas del SWF elegido en "Piezas de:"
 let swfPiezasLook = null;
+let parteElegida = "hats"; // a qué Parte del cuerpo va la Pieza que se toca en la grilla
 let iconosPreparados = new Set(); // SWF cuyas imágenes ya se pidieron preparar
 
 function nuevoLook() {
@@ -654,7 +655,14 @@ function filaDeParteLook({ id, nombre }) {
     mostrarLook();
   });
 
-  fila.append(etiqueta(nombre, "parte"), icono, selector, quitar);
+  const rotulo = Object.assign(document.createElement("button"), { className: "parte", textContent: nombre, title: `Elegir ${nombre} para la grilla` });
+  rotulo.setAttribute("aria-pressed", String(id === parteElegida));
+  rotulo.addEventListener("click", () => {
+    parteElegida = id;
+    mostrarLook();
+  });
+  fila.classList.toggle("elegida", id === parteElegida);
+  fila.append(rotulo, icono, selector, quitar);
   return fila;
 }
 
@@ -665,9 +673,46 @@ function mostrarLook() {
   const extra = Object.keys(lookActual.partes).filter((p) => !conocidas.has(p)).map((id) => ({ id, nombre: id }));
   $("partes-look").replaceChildren(...[...partesConocidas, ...extra].map(filaDeParteLook));
   cargarIconos(Object.values(lookActual.partes));
+  mostrarGrilla();
   mostrarEncode(null);
   dibujarGaturro();
 }
+
+// --- Grilla: las Piezas del SWF de "Piezas de:" con su imagen; tocar una la pone en la Parte elegida ---
+
+const MAXIMO_GRILLA = 300;
+
+function mostrarGrilla() {
+  const nombreParte = [...partesConocidas, { id: parteElegida, nombre: parteElegida }].find((p) => p.id === parteElegida).nombre;
+  const texto = $("filtro-piezas").value.trim().toLowerCase();
+  const piezas = piezasLook.filter((p) => p.clase.toLowerCase().includes(texto));
+  const visibles = piezas.slice(0, MAXIMO_GRILLA);
+  $("ayuda-grilla").textContent = !piezasLook.length
+    ? "Elegí de qué SWF son las Piezas (Piezas de:)."
+    : !piezas.length
+      ? "Ninguna Pieza se llama así."
+      : `Tocá una Pieza para ponerla en ${nombreParte}` +
+        (piezas.length > visibles.length ? ` (se ven ${visibles.length} de ${piezas.length}: filtrá por nombre).` : ".");
+  $("grilla-piezas").replaceChildren(
+    ...visibles.map((pieza) => {
+      const boton = Object.assign(document.createElement("button"), { className: "pieza-grilla", title: pieza.clase });
+      boton.setAttribute("aria-label", pieza.clase);
+      boton.setAttribute("aria-pressed", String(lookActual.partes[parteElegida] === pieza.ruta));
+      boton.disabled = ocupado;
+      boton.addEventListener("click", () => {
+        lookActual.partes[parteElegida] = pieza.ruta;
+        mostrarLook();
+      });
+      boton.append(elementoIcono(pieza.ruta));
+      const li = document.createElement("li");
+      li.append(boton);
+      return li;
+    })
+  );
+  cargarIconos(visibles.map((p) => p.ruta));
+}
+
+$("filtro-piezas").addEventListener("input", mostrarGrilla);
 
 // --- El Gaturro original del juego con las Piezas del Look ---
 
@@ -715,6 +760,7 @@ async function usarPiezasLookDe(swf) {
   if (!resultado.ok) return avisarLista(resultado.error, "error");
   swfPiezasLook = swf;
   piezasLook = resultado.piezas;
+  $("filtro-piezas").value = "";
   avisarLista(`${piezasLook.length} Piezas de ${swf} para elegir.`, "exito");
   mostrarLook();
   prepararIconosDe(swf);
