@@ -1158,7 +1158,7 @@ dialog.dialogo-colores { width: auto; max-width: 96vw; padding: 0; border: 0; ba
 .escena-colores { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 10px; }
 .escena-colores img { width: 300px; aspect-ratio: 1; }
 .acciones-colores { display: flex; gap: 10px; }
-.dialogo-colores .pastilla-colores {
+.dialogo-colores .pastilla-colores, .dialogo-mis-looks .pastilla-colores {
   padding: 8px 22px;
   border-radius: 12px;
   background: #4a5683;
@@ -1168,7 +1168,7 @@ dialog.dialogo-colores { width: auto; max-width: 96vw; padding: 0; border: 0; ba
   letter-spacing: 0.04em;
   box-shadow: none;
 }
-.dialogo-colores .pastilla-colores:hover:not(:disabled) { background: #5b689a; }
+.dialogo-colores .pastilla-colores:hover:not(:disabled), .dialogo-mis-looks .pastilla-colores:hover:not(:disabled) { background: #5b689a; }
 
 .dialogo-colores .panel-colores {
   flex: none;
@@ -1240,3 +1240,122 @@ dialog.dialogo-colores { width: auto; max-width: 96vw; padding: 0; border: 0; ba
 .selector-color.deshabilitado { opacity: 0.35; }
 .selector-color.deshabilitado .zona-color { cursor: not-allowed; }
 .selector-color.deshabilitado .barra-tono, .selector-color.deshabilitado .cuadro-color { cursor: not-allowed; }
+
+/* --- Mis Looks: botón de la pestaña y ventana "Guarda tu Look", como en el juego --- */
+
+.boton-mis-looks { display: inline-flex; align-items: center; gap: 6px; padding: 5px 14px; font-size: 14px; }
+.cantidad-looks { font-size: 12px; opacity: 0.8; }
+.look-abierto { font-size: 12px; }
+
+dialog.dialogo-mis-looks { width: auto; height: auto; max-width: 96vw; max-height: 94vh; padding: 0; border: 0; background: transparent; overflow: visible; }
+.dialogo-mis-looks::backdrop { background: rgba(10, 14, 30, 0.6); }
+.panel-mis-looks {
+  width: min(860px, 94vw);
+  padding: 14px 18px 18px;
+  border-radius: 18px;
+  background: #222a45;
+  color: #fff;
+}
+.titulo-mis-looks { position: relative; display: flex; align-items: center; gap: 12px; margin-bottom: 12px; padding-right: 44px; }
+.titulo-mis-looks .martillo { font-size: 28px; filter: grayscale(1) brightness(1.4); }
+.titulo-mis-looks h2 { display: flex; flex-direction: column; margin: 0; padding: 0; background: none; color: #8f9cc8; font-size: 22px; line-height: 1; }
+.titulo-mis-looks h2 .sub { color: #fff; font-size: 13px; margin-top: 3px; }
+.acciones-mis-looks { display: flex; gap: 6px; margin-left: auto; }
+.dialogo-mis-looks .pastilla-chica {
+  padding: 4px 10px;
+  border-radius: 10px;
+  background: #3a4470;
+  border: 2px solid #6d7bb0;
+  color: #fff;
+  font-size: 11px;
+  box-shadow: none;
+}
+.dialogo-mis-looks .pastilla-chica:hover:not(:disabled) { background: #4a5683; }
+.dialogo-mis-looks .cerrar-redondo {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 50%;
+  border: 3px solid #22283f;
+  font-size: 18px;
+}
+.dialogo-mis-looks .cerrar-amarillo { background: #ff6a1a; color: #ffe14d; }
+
+.cuerpo-mis-looks { display: grid; grid-template-columns: 360px minmax(0, 1fr); gap: 16px; }
+.escenario-look {
+  position: relative;
+  height: 390px;
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  /* Telón y piso, como el escenario del juego. */
+  background:
+    linear-gradient(to bottom, transparent 62%, #5fa8b8 62%),
+    repeating-linear-gradient(to right, #c9707c 0 22px, #b65e6b 22px 26px, #d07b87 26px 44px);
+}
+.escenario-look img { width: 300px; height: 300px; }
+.escenario-look img.girado { transform: scaleX(-1); }
+.escenario-look img[hidden] { display: none; }
+.nombre-look-elegido { margin: 0 0 10px; padding: 3px 12px; border-radius: 10px; background: rgba(34, 42, 69, 0.75); font-size: 13px; }
+.girar-look {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 8px;
+  background: rgba(60, 40, 60, 0.45);
+  border: 0;
+  color: #fff;
+  font-size: 20px;
+  box-shadow: none;
+}
+
+.grilla-looks {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-rows: 136px;
+  gap: 12px;
+  max-height: 432px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0 4px 0 0;
+  list-style: none;
+}
+.grilla-looks li { min-height: 0; }
+.casillero-vacio { border-radius: 10px; background: #2b3352; }
+.casillero-look {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 10px;
+  background: #1b2138;
+  border: 2px solid transparent;
+  color: #fff;
+  box-shadow: none;
+}
+.casillero-look:hover:not(:disabled) { background: #2b3352; }
+.casillero-look[aria-pressed="true"] { border-color: #ffd23a; background: #2b3352; }
+.casillero-look img { flex: 1; min-height: 0; width: 100%; object-fit: contain; }
+.nombre-casillero-look { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }
+.casillero-look.nuevo { background: #3a4470; color: #8f9cc8; font-size: 40px; }
+.casillero-look.nuevo:hover:not(:disabled) { background: #4a5683; color: #fff; }
+
+.pie-mis-looks { display: flex; gap: 12px; margin-top: 14px; }
+.pie-mis-looks .pastilla-colores { min-width: 150px; }
+.pie-mis-looks .pastilla-colores:disabled { opacity: 0.5; }
+/* En la ventana del juego los casilleros y botones son planos: sin el brillo de los botones del programa. */
+.dialogo-mis-looks .casillero-look::before,
+.dialogo-mis-looks .girar-look::before,
+.dialogo-mis-looks .pastilla-chica::before { display: none; }
