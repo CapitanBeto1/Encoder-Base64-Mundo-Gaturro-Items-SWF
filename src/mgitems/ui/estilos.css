@@ -1455,5 +1455,8 @@ dialog.dialogo-base { width: min(860px, 94vw); height: min(640px, 90vh); }
 .filtro-tipo .cantidad-tipo { font-size: 11px; opacity: 0.8; }
 .filtro-mochila { background: #ffe2bd; border-color: #ff9a1f; color: #4a2300; }
 .filtro-guardarropa { background: #d4e4fb; border-color: #3d7bd9; color: #14315e; }
-.filtro-mochila[aria-pressed="true"] { background: #ff9a1f; border-color: #c46a00; color: #2b1400; box-shadow: 0 0 0 3px #fff; }
-.filtro-guardarropa[aria-pressed="true"] { background: #3d7bd9; border-color: #1f4f99; color: #fff; box-shadow: 0 0 0 3px #fff; }
+.filtro-mochila[aria-checked="true"] { background: #ff9a1f; border-color: #c46a00; color: #2b1400; box-shadow: 0 0 0 3px #fff; }
+.filtro-guardarropa[aria-checked="true"] { background: #3d7bd9; border-color: #1f4f99; color: #fff; box-shadow: 0 0 0 3px #fff; }
+.tipos-base { display: inline-flex; gap: 6px; }
+.filtro-ambos { background: #f1ecd8; border-color: #9a8a4a; color: #3b3210; }
+.filtro-ambos[aria-checked="true"] { background: #7a6a2a; border-color: #4f4416; color: #fff; box-shadow: 0 0 0 3px #fff; }
