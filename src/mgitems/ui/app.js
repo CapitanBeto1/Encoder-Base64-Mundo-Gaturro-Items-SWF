@@ -597,6 +597,7 @@ async function cargarLooks() {
 // --- Mis Looks: la ventana "Guarda tu Look", como en el juego ---
 
 let lookElegido = null; // el Look tocado en la ventana (su id), o null
+const ZOOM_MINIATURAS = "0.85"; // todas las miniaturas a la misma escala
 const MINIMO_CASILLEROS = 9; // la grilla se completa con casilleros vacíos, como en el juego
 
 function mostrarListaLooks() {
@@ -612,6 +613,7 @@ function mostrarGrillaLooks() {
     boton.dataset.id = look.id;
     boton.setAttribute("aria-pressed", String(look.id === lookElegido));
     const miniatura = Object.assign(document.createElement("img"), { alt: look.nombre });
+    miniatura.dataset.zoom = ZOOM_MINIATURAS;
     boton.append(miniatura, etiqueta(look.nombre, "nombre-casillero-look"));
     boton.addEventListener("click", () => elegirLook(look.id));
     boton.addEventListener("dblclick", () => equiparLook(look.id));
@@ -655,6 +657,14 @@ $("abrir-mis-looks").addEventListener("click", () => {
   mostrarGrillaLooks();
 });
 $("girar-look").addEventListener("click", () => $("gaturro-mis-looks").classList.toggle("girado"));
+// Las barritas de zoom: cambian el encuadre de su imagen sin volver a pedir el Gaturro.
+for (const barra of [$("zoom-gaturro"), $("zoom-escenario")]) {
+  barra.addEventListener("input", () => {
+    const img = $(barra.dataset.img);
+    img.dataset.zoom = barra.value;
+    mostrarGaturroEn(img);
+  });
+}
 // Elimina el Look elegido; si es el que se está editando, el editor queda con un Look nuevo.
 $("eliminar-look-elegido").addEventListener("click", async () => {
   const look = looksGuardados.find((l) => l.id === lookElegido);
@@ -934,23 +944,26 @@ try {
 
 // Si se piden varios seguidos, se muestra solo el último (cada imagen lleva su propio contador).
 const pedidosGaturro = new Map();
-// El SVG encuadrado justo en lo que se dibuja (cuerpo y Piezas), con un poco de aire: así una Pieza
-// grande (un vestido puesto en los pies, unas alas) se ve entera y un Gaturro sin nada no queda chico.
-// Se mide dibujándolo un momento fuera de la vista.
-function encuadrar(svg) {
+// El SVG encuadrado en el CUERPO del Gaturro (sin las Piezas), así todos los Gaturros se ven del mismo
+// tamaño. `zoom` 1 es "grande" (el cuerpo llena el cuadro); menos aleja (se ven enteras las Piezas
+// grandes, como un vestido puesto en los pies), más acerca. Se mide dibujándolo un momento fuera de la vista.
+function encuadrar(svg, zoom = 1) {
   const documento = new DOMParser().parseFromString(svg, "image/svg+xml");
   const raiz = documento.documentElement;
   if (raiz.nodeName !== "svg") return svg;
   const medidor = document.createElement("div");
   medidor.style.cssText = "position:absolute;left:-10000px;top:0;width:10px;height:10px;overflow:hidden;visibility:hidden";
   const copia = document.importNode(raiz, true);
+  copia.querySelectorAll("[data-parte]").forEach((pieza) => pieza.setAttribute("display", "none"));
   medidor.append(copia);
   document.body.append(medidor);
   try {
     const caja = copia.getBBox();
     if (!caja.width || !caja.height) return svg;
-    const aire = Math.max(caja.width, caja.height) * 0.04;
-    raiz.setAttribute("viewBox", `${caja.x - aire} ${caja.y - aire} ${caja.width + 2 * aire} ${caja.height + 2 * aire}`);
+    const lado = (Math.max(caja.width, caja.height) * 1.12) / zoom;
+    const x = caja.x + caja.width / 2 - lado / 2;
+    const y = caja.y + caja.height / 2 - lado / 2;
+    raiz.setAttribute("viewBox", `${x} ${y} ${lado} ${lado}`);
     raiz.removeAttribute("width");
     raiz.removeAttribute("height");
     return new XMLSerializer().serializeToString(documento);
@@ -961,6 +974,13 @@ function encuadrar(svg) {
   }
 }
 
+// Zoom de cada imagen del Gaturro (data-zoom); el SVG recibido se guarda para cambiar el zoom sin pedirlo otra vez.
+const svgsGaturro = new WeakMap();
+function mostrarGaturroEn(img) {
+  const svg = svgsGaturro.get(img);
+  if (svg) img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(encuadrar(svg, Number(img.dataset.zoom) || 1));
+}
+
 async function pedirGaturro(img, colores, partes = lookActual.partes) {
   const pedido = (pedidosGaturro.get(img) ?? 0) + 1;
   pedidosGaturro.set(img, pedido);
@@ -968,7 +988,8 @@ async function pedirGaturro(img, colores, partes = lookActual.partes) {
   if (pedidosGaturro.get(img) !== pedido) return null;
   img.hidden = !resultado.ok; // sin el Gaturro original no se muestra ninguno
   if (resultado.ok) {
-    img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(encuadrar(resultado.svg));
+    svgsGaturro.set(img, resultado.svg);
+    mostrarGaturroEn(img);
     coloresDeFabrica = resultado.colores_de_fabrica;
     tieneColorDeNariz = resultado.color_de_nariz;
   }

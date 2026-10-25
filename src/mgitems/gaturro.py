@@ -118,6 +118,20 @@ def es_version_anterior(cuerpo: str) -> bool:
     return not tiene_lugar(cuerpo, "accesories2") or _MARCA_ACCESORIO_2 in cuerpo
 
 
+def sin_sombra(cuerpo: str) -> str:
+    """El cuerpo sin la sombra que trae `GaturroMC` en su primera capa (una forma sin nombre, antes de
+    `transport`). En el juego la sombra queda centrada debajo de los pies; con este cuerpo queda corrida,
+    y no se sabe de dónde sale la del juego: es mejor no mostrar ninguna que una que no coincide.
+    """
+    raiz = re.search(r"<svg\b[^>]*>\s*<g [^>]*>(?P<hijos>.*?)</g>\s*<defs>", cuerpo, re.S)
+    if not raiz:
+        return cuerpo
+    clips = re.findall(r"<use [^>]*/>", raiz.group("hijos"))
+    if len(clips) < 2 or 'id="' in clips[0] or 'id="transport"' not in clips[1]:
+        return cuerpo  # no es la forma conocida: no se toca
+    return cuerpo.replace(clips[0], "", 1)
+
+
 def accesorio_2_como_accesorio(cuerpo: str) -> str:
     """Un hueco `accesories2` en el mismo lugar que `accesories` y en la capa de arriba (ADR 0003).
 

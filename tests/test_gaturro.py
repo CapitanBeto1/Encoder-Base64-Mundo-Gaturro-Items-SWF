@@ -413,3 +413,23 @@ def test_sin_la_forma_conocida_la_cabeza_no_se_toca(nucleo):
     resultado = nucleo.gaturro({})
 
     assert por_id(resultado["svg"], "hairs") and "nariz" not in resultado["svg"]
+
+
+def test_el_gaturro_va_sin_la_sombra_que_trae_el_cuerpo(tmp_path, fuente):
+    # Como el GaturroMC publicado: una forma sin nombre (la sombra) antes de `transport`.
+    con_sombra = CUERPO.replace(
+        '<use ffdec:characterId="20" height="20.0" id="belly"',
+        '<use ffdec:characterId="145" height="13.0" transform="matrix(1.0, 0.0, 0.0, 1.0, -27.4, -5.4)" width="53.7" xlink:href="#shape0"/>\n'
+        '    <use ffdec:characterId="2" height="0.0" id="transport" transform="matrix(1.0, 0.0, 0.0, 1.0, 0.0, 0.0)" width="0.0" xlink:href="#sprite0"/>\n'
+        '    <use ffdec:characterId="20" height="20.0" id="belly"', 1)
+
+    class ConSombra(ExportadorConGaturro):
+        def exportar(self, swf, simbolos, destino, formato="png"):
+            super().exportar(swf, simbolos, destino, formato)
+            if formato == "svg" and "assets.GaturroMC" in simbolos.values():
+                (destino / "assets.GaturroMC.svg").write_text(con_sombra, encoding="utf-8")
+
+    svg = Nucleo(SistemaFalso(tmp_path), fuente=fuente, catalogo=[], exportador=ConSombra()).gaturro({})["svg"]
+
+    assert 'ffdec:characterId="145"' not in svg
+    assert por_id(svg, "transport") and por_id(svg, "belly")
