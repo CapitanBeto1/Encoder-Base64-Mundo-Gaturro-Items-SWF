@@ -1143,11 +1143,7 @@ main.modo-looks .buscador-swf { display: none; }
 .barra-look .entregar { width: auto; }
 
 /* Ventanitas de la pestaña. */
-#dialogo-base .panel, #dialogo-ver-encode .panel { width: min(520px, 90vw); }
-.lista-bases { max-height: 300px; overflow-y: auto; }
-.fila-base { width: 100%; display: flex; align-items: center; gap: 8px; justify-content: flex-start; padding: 3px 8px; }
-.fila-base .tipo-mochila, .fila-base .tipo-prenda { margin-left: auto; }
-.fila-base[aria-pressed="true"] { background: var(--amarillo); }
+#dialogo-ver-encode .panel { width: min(520px, 90vw); }
 #texto-ver-encode { min-height: 120px; }
 
 /* --- "Elige tus colores", como en el juego --- */
@@ -1392,3 +1388,59 @@ dialog.dialogo-mis-looks { position: fixed; inset: 0; margin: auto; width: fit-c
 .zoom-gaturro { flex: none; display: flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 12px; background: rgba(0, 0, 0, 0.22); color: #fff; font-size: 14px; line-height: 1; }
 .zoom-gaturro input[type="range"] { width: 120px; accent-color: var(--amarillo); cursor: pointer; }
 .zoom-escenario { position: relative; z-index: 2; margin-bottom: 6px; background: rgba(34, 42, 69, 0.75); }
+
+/* --- Ventana del Item base: grande, con la lista ocupando el espacio --- */
+
+dialog.dialogo-base { width: min(860px, 94vw); height: min(640px, 90vh); }
+.dialogo-base .panel { display: flex; flex-direction: column; gap: 10px; padding: 22px 26px; overflow: hidden; }
+.dialogo-base .panel > * { flex: none; }
+.fila-swf-base .etiqueta-campo { width: auto; font-weight: 900; }
+.fila-swf-base .selector-swf { flex: 1; }
+/* El buscador: más bajo, redondeado y con lupa, para no confundirlo con el selector de SWF. */
+.filtro-base {
+  align-self: flex-start;
+  width: min(360px, 100%);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: #fff8d6;
+  border: 2px dashed #c9a400;
+}
+.filtro-base input {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  font-size: 13px;
+}
+.filtro-base input:focus { box-shadow: none; outline: none; }
+.filtro-base:focus-within { border-style: solid; border-color: var(--amarillo-contorno); }
+.dialogo-base .lista-bases {
+  flex: 1 1 auto;
+  min-height: 0;
+  margin: 0;
+  padding: 4px;
+  overflow-y: auto;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-auto-rows: 64px;
+  gap: 8px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.45);
+}
+.fila-base { width: 100%; height: 100%; display: flex; align-items: center; gap: 10px; justify-content: flex-start; padding: 4px 10px; text-align: left; }
+.fila-base .icono { width: 48px; height: 48px; }
+.fila-base .nombre { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+.fila-base .tipo-mochila, .fila-base .tipo-prenda { margin-left: auto; flex: none; }
+.fila-base[aria-pressed="true"] { background: var(--amarillo); border-color: var(--amarillo-contorno); }
+.dialogo-base .mensaje:empty { display: none; }
+/* Nombre arriba y tipo abajo, para que el nombre entre entero (sin las mayúsculas de los botones). */
+.fila-base { display: grid; grid-template-columns: 48px minmax(0, 1fr); grid-template-rows: auto auto; column-gap: 10px; align-content: center; text-transform: none; }
+.fila-base .icono { grid-row: 1 / span 2; }
+.fila-base .nombre { grid-column: 2; font-size: 13px; letter-spacing: 0; }
+.fila-base .tipo-mochila, .fila-base .tipo-prenda { grid-column: 2; justify-self: start; margin: 0; font-size: 10px; text-transform: uppercase; }

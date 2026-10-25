@@ -137,7 +137,7 @@ class ItemsBaseFFDec:
         """Los Items base entre las `clases` del SWF (Prendas e Items de mochila)."""
         if not clases:
             return {}
-        with tempfile.TemporaryDirectory(prefix="mgitems-") as temporal:
+        with tempfile.TemporaryDirectory(prefix="mgitems-", ignore_cleanup_errors=True) as temporal:
             swf = Path(temporal) / "assets.swf"
             swf.write_bytes(data)
             salida = Path(temporal) / "scripts"
@@ -151,7 +151,7 @@ class ItemsBaseFFDec:
 
     def trucar(self, data: bytes, clase: str, fuente: str, partes: dict[str, str]) -> bytes:
         """El SWF con la clase reemplazada por `fuente`, verificado: la clase trucada declara `partes`."""
-        with tempfile.TemporaryDirectory(prefix="mgitems-") as temporal:
+        with tempfile.TemporaryDirectory(prefix="mgitems-", ignore_cleanup_errors=True) as temporal:
             entrada = Path(temporal) / "original.swf"
             salida = Path(temporal) / "trucado.swf"
             scripts = Path(temporal) / "scripts"
