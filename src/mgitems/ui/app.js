@@ -126,8 +126,8 @@ function actualizarControles() {
   const puedeGenerar = { agregar: items.length > 0, trucar: base && pieza && parte, looks: Object.keys(lookActual.partes).length > 0 }[vista];
   $("generar").disabled = !listo || !puedeGenerar;
   $("guardar-look").disabled = $("descartar-look").disabled = $("nuevo-look").disabled = $("importar-look").disabled = !listo;
-  $("exportar-look").disabled = !listo || !Object.keys(lookActual.partes).length;
-  $("duplicar-look").disabled = $("borrar-look").disabled = !listo || !lookActual.id;
+  $("abrir-mis-looks").disabled = !listo;
+  $("borrar-look").disabled = !listo || !lookActual.id;
   $("nombre-look").disabled = $("cambiar-base").disabled = $("agregar-fuente").disabled = $("todas-las-fuentes").disabled = !listo;
   mostrarBarraLook();
   $("buscar-base").disabled = $("buscar-pieza").disabled = $("buscar-parte").disabled = !listo || !prendas.length;
@@ -594,21 +594,70 @@ async function cargarLooks() {
   if (!inventario.cargado) await cargarInventario();
 }
 
+// --- Mis Looks: la ventana "Guarda tu Look", como en el juego ---
+
+let lookElegido = null; // el Look tocado en la ventana (su id), o null
+const MINIMO_CASILLEROS = 9; // la grilla se completa con casilleros vacíos, como en el juego
+
 function mostrarListaLooks() {
-  const lista = $("lista-looks");
-  if (!looksGuardados.length) {
-    lista.replaceChildren(etiqueta("Todavía no guardaste ningún Look.", "ayuda vacia-chica"));
-    return;
-  }
-  lista.replaceChildren(
-    ...looksGuardados.map((look) => {
-      const boton = Object.assign(document.createElement("button"), { className: "chip-look", textContent: look.nombre });
-      boton.setAttribute("aria-pressed", String(look.id === lookActual.id));
-      boton.addEventListener("click", () => abrirLook(look));
-      return boton;
-    })
-  );
+  $("cantidad-looks").textContent = looksGuardados.length ? `(${looksGuardados.length})` : "";
+  $("look-abierto").textContent = lookActual.id ? `Editando «${lookActual.nombre}»` : lookActual.nombre ? `«${lookActual.nombre}» (sin guardar)` : "Look nuevo (sin guardar)";
+  if ($("dialogo-mis-looks").open) mostrarGrillaLooks();
 }
+
+function mostrarGrillaLooks() {
+  const casilleros = looksGuardados.map((look) => {
+    const li = document.createElement("li");
+    const boton = Object.assign(document.createElement("button"), { type: "button", className: "casillero-look", title: look.nombre });
+    boton.dataset.id = look.id;
+    boton.setAttribute("aria-pressed", String(look.id === lookElegido));
+    const miniatura = Object.assign(document.createElement("img"), { alt: look.nombre });
+    boton.append(miniatura, etiqueta(look.nombre, "nombre-casillero-look"));
+    boton.addEventListener("click", () => elegirLook(look.id));
+    boton.addEventListener("dblclick", () => equiparLook(look.id));
+    pedirGaturro(miniatura, coloresGaturro, look.partes);
+    li.append(boton);
+    return li;
+  });
+  const vacios = Math.max(0, MINIMO_CASILLEROS - 1 - casilleros.length);
+  for (let i = 0; i < vacios; i++) casilleros.push(Object.assign(document.createElement("li"), { className: "casillero-vacio" }));
+  $("grilla-looks").replaceChildren($("nuevo-look").parentElement, ...casilleros);
+  mostrarLookElegido();
+}
+
+function mostrarLookElegido() {
+  const look = looksGuardados.find((l) => l.id === lookElegido);
+  document.querySelectorAll("#grilla-looks .casillero-look:not(.nuevo)").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.id === lookElegido)));
+  $("nombre-look-elegido").textContent = look ? look.nombre : "Tocá un Look para verlo";
+  $("equipar-look").disabled = $("exportar-look").disabled = $("duplicar-look").disabled = !look;
+  $("gaturro-mis-looks").hidden = !look;
+  if (look) pedirGaturro($("gaturro-mis-looks"), coloresGaturro, look.partes);
+}
+
+function elegirLook(id) {
+  lookElegido = id;
+  mostrarLookElegido();
+}
+
+function equiparLook(id) {
+  const look = looksGuardados.find((l) => l.id === id);
+  if (!look) return;
+  $("dialogo-mis-looks").close();
+  casilleroMarcado = null;
+  abrirLook(look);
+  avisarLista(`Se abrió el Look «${look.nombre}».`, "exito");
+}
+
+$("abrir-mis-looks").addEventListener("click", () => {
+  lookElegido = lookActual.id || looksGuardados[0]?.id || null;
+  $("gaturro-mis-looks").classList.remove("girado");
+  $("dialogo-mis-looks").showModal();
+  mostrarGrillaLooks();
+});
+$("girar-look").addEventListener("click", () => $("gaturro-mis-looks").classList.toggle("girado"));
+$("equipar-look").addEventListener("click", () => equiparLook(lookElegido));
+$("cancelar-mis-looks").addEventListener("click", () => $("dialogo-mis-looks").close());
+$("cerrar-mis-looks").addEventListener("click", () => $("dialogo-mis-looks").close());
 
 function abrirLook(look) {
   lookActual = structuredClone(look);
@@ -869,10 +918,10 @@ try {
 
 // Si se piden varios seguidos, se muestra solo el último (cada imagen lleva su propio contador).
 const pedidosGaturro = new Map();
-async function pedirGaturro(img, colores) {
+async function pedirGaturro(img, colores, partes = lookActual.partes) {
   const pedido = (pedidosGaturro.get(img) ?? 0) + 1;
   pedidosGaturro.set(img, pedido);
-  const resultado = await api().gaturro({ ...lookActual.partes }, colores);
+  const resultado = await api().gaturro({ ...partes }, colores);
   if (pedidosGaturro.get(img) !== pedido) return null;
   img.hidden = !resultado.ok; // sin el Gaturro original no se muestra ninguno
   if (resultado.ok) {
@@ -1076,11 +1125,12 @@ async function guardarLook() {
   await cargarLooks();
 }
 
+// Duplica el Look elegido en "Mis Looks" y elige la copia.
 async function duplicarLook() {
-  const resultado = await api().duplicar_look(lookActual.id);
+  const resultado = await api().duplicar_look(lookElegido);
   if (!resultado.ok) return avisarLista(resultado.error, "error");
-  lookActual = resultado.look;
-  avisarLista(`Se creó «${lookActual.nombre}».`, "exito");
+  lookElegido = resultado.look.id;
+  avisarLista(`Se creó «${resultado.look.nombre}».`, "exito");
   await cargarLooks();
 }
 
@@ -1132,6 +1182,7 @@ $("nombre-look").addEventListener("input", () => {
 });
 
 $("nuevo-look").addEventListener("click", () => {
+  $("dialogo-mis-looks").close();
   lookActual = nuevoLook();
   casilleroMarcado = null;
   mostrarListaLooks();
@@ -1148,17 +1199,20 @@ $("descartar-look").addEventListener("click", () => {
   avisarLista(guardado ? `Se descartaron los cambios de «${guardado.nombre}».` : "", "exito");
 });
 $("exportar-look").addEventListener("click", async () => {
-  const resultado = await api().exportar_look(lookActual);
+  const look = looksGuardados.find((l) => l.id === lookElegido);
+  if (!look) return;
+  const resultado = await api().exportar_look(look);
   if (resultado.ok) avisarLista(`Look exportado en ${resultado.ruta}`, "exito");
   else if (!resultado.cancelado) avisarLista(resultado.error, "error");
 });
+// El Look importado queda elegido en "Mis Looks" (EQUIPAR lo abre).
 $("importar-look").addEventListener("click", async () => {
   const resultado = await api().importar_look();
   if (resultado.cancelado) return;
   if (!resultado.ok) return avisarLista(resultado.error, "error");
+  lookElegido = resultado.look.id;
   await cargarLooks();
-  abrirLook(resultado.look);
-  avisarLista(`Se importó el Look «${resultado.look.nombre}». Tocá «Aplicar Look» para usarlo.`, "exito");
+  avisarLista(`Se importó el Look «${resultado.look.nombre}». Tocá «Equipar» para abrirlo.`, "exito");
 });
 $("duplicar-look").addEventListener("click", duplicarLook);
 $("borrar-look").addEventListener("click", borrarLook);

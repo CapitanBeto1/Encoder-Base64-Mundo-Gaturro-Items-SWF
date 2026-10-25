@@ -143,14 +143,10 @@
 
       <div id="vista-looks" class="vista" role="tabpanel" hidden>
         <div class="encabezado-looks">
-          <h2>Mis Looks</h2>
-          <div id="lista-looks" class="lista-looks"></div>
-          <span class="botones-encabezado">
-            <button id="nuevo-look" class="enlace">+ Nuevo</button>
-            <button id="duplicar-look" class="enlace">Duplicar</button>
-            <button id="importar-look" class="enlace" title="Agregar a Mis Looks el archivo de Look de otra persona">Importar</button>
-            <button id="exportar-look" class="enlace" title="Guardar el Look en un archivo para pasárselo a otra persona">Exportar</button>
-          </span>
+          <button id="abrir-mis-looks" class="boton-mis-looks" title="Ver, abrir, importar y exportar tus Looks guardados">
+            <span aria-hidden="true">👕</span> Mis Looks <span id="cantidad-looks" class="cantidad-looks"></span>
+          </button>
+          <span id="look-abierto" class="ayuda look-abierto"></span>
         </div>
 
         <div class="inventario">
@@ -235,6 +231,35 @@
       <p id="mensaje-encode" class="mensaje" role="status" aria-live="polite"></p>
     </section>
   </main>
+
+  <dialog id="dialogo-mis-looks" class="dialogo-mis-looks">
+    <div class="panel-mis-looks">
+      <div class="titulo-mis-looks">
+        <span class="martillo" aria-hidden="true">🔨</span>
+        <h2><span>GUARDA TU LOOK</span><span class="sub">GUARDA TUS LOOKS FAVORITOS</span></h2>
+        <span class="acciones-mis-looks">
+          <button type="button" id="importar-look" class="pastilla-chica" title="Agregar el archivo de Look de otra persona">IMPORTAR</button>
+          <button type="button" id="exportar-look" class="pastilla-chica" title="Guardar el Look elegido en un archivo para pasárselo a otra persona">EXPORTAR</button>
+          <button type="button" id="duplicar-look" class="pastilla-chica" title="Hacer una copia del Look elegido">DUPLICAR</button>
+        </span>
+        <button type="button" id="cerrar-mis-looks" class="cerrar-redondo cerrar-amarillo" title="Cerrar" aria-label="Cerrar">✕</button>
+      </div>
+      <div class="cuerpo-mis-looks">
+        <div class="escenario-look">
+          <button type="button" id="girar-look" class="girar-look" title="Girar el Gaturro" aria-label="Girar el Gaturro">↻</button>
+          <img id="gaturro-mis-looks" alt="El Look elegido">
+          <p id="nombre-look-elegido" class="nombre-look-elegido"></p>
+        </div>
+        <ul id="grilla-looks" class="grilla-looks" aria-label="Looks guardados">
+          <li><button type="button" id="nuevo-look" class="casillero-look nuevo" title="Un Look nuevo" aria-label="Un Look nuevo">+</button></li>
+        </ul>
+      </div>
+      <div class="pie-mis-looks">
+        <button type="button" id="cancelar-mis-looks" class="pastilla-colores">CANCELAR</button>
+        <button type="button" id="equipar-look" class="pastilla-colores">EQUIPAR</button>
+      </div>
+    </div>
+  </dialog>
 
   <dialog id="dialogo-base">
     <div class="panel">
