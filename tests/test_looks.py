@@ -211,3 +211,43 @@ def test_las_partes_del_cuerpo_estan_sin_swf_abierto(sistema, ffdec):
 
     assert {"id": "hats", "nombre": "Sombrero"} in partes
     assert {"id": "grip", "nombre": "Mano"} in partes
+
+
+# --- Colores de cada Look (solo para verlo en el programa) ---
+
+def test_cada_look_guarda_sus_colores(nucleo, sistema, fuente, ffdec):
+    azul = nucleo.guardar_look(dict(REY, colores={"color1": "#3366CC", "color2": "#112244"}))["look"]
+    sin = nucleo.guardar_look(dict(REY, nombre="Normal"))["look"]
+
+    guardados = {l["nombre"]: l for l in nuevo_nucleo(sistema, fuente, ffdec).looks()["looks"]}
+
+    assert guardados["Rey"]["colores"] == {"color1": "#3366CC", "color2": "#112244"}
+    assert guardados["Normal"]["colores"] == {}  # los de fábrica
+    assert azul["id"] != sin["id"]
+
+
+def test_colores_invalidos(nucleo):
+    for colores in ({"color9": "#FFFFFF"}, {"color1": "rojo"}, ["#FFFFFF"], {"color1": '"/><script>'}):
+        resultado = nucleo.guardar_look(dict(REY, colores=colores))
+        assert not resultado["ok"]
+        assert "colores" in resultado["error"]
+
+
+def test_duplicar_copia_los_colores(nucleo):
+    original = nucleo.guardar_look(dict(REY, colores={"color3": "#FF0000"}))["look"]
+
+    assert nucleo.duplicar_look(original["id"])["look"]["colores"] == {"color3": "#FF0000"}
+
+
+def test_exportar_e_importar_conserva_los_colores(nucleo, tmp_path):
+    archivo = tmp_path / "Rey.mglook"
+    nucleo.exportar_look(dict(REY, colores={"color1": "#00AA00"}), str(archivo))
+
+    assert nucleo.importar_look_de_archivo(str(archivo))["look"]["colores"] == {"color1": "#00AA00"}
+
+
+def test_aplicar_no_depende_de_los_colores(nucleo):
+    con = nucleo.aplicar_look(dict(REY, colores={"color1": "#00AA00"}))
+    sin = nucleo.aplicar_look(REY)
+
+    assert con["encode"] == sin["encode"]

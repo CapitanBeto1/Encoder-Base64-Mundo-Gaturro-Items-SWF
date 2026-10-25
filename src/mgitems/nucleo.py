@@ -350,7 +350,7 @@ class Nucleo:
             if original is None:
                 return {"ok": False, "error": "Ese Look ya no existe."}
             nombre = _nombre_libre(f"{original.nombre} (copia)", {l.nombre for l in almacen.todos()}, "copia ")
-            copia = almacen.guardar(Look(nombre, original.base, dict(original.partes)))
+            copia = almacen.guardar(Look(nombre, original.base, dict(original.partes), colores=dict(original.colores)))
         except OSError as e:
             return {"ok": False, "error": f"No se pudo duplicar el Look: {e}"}
         return {"ok": True, "look": asdict(copia)}
