@@ -858,42 +858,159 @@ crearDesplegable({
 
 // --- El Gaturro original del juego con las Piezas del Look ---
 
-const COLORES_GATURRO = ["color1", "color2", "color3"];
+// Colores del jugador (como en el juego: cara, cuerpo, ojos). Se recuerdan en esta computadora.
+let coloresDeFabrica = { color1: "#FFF200", color2: "#DDB42D", color3: "#FFFFFF" };
+let coloresGaturro = { ...coloresDeFabrica };
+let tieneColorDeNariz = false;
 try {
   const guardados = JSON.parse(localStorage.getItem("coloresGaturro") || "{}");
-  for (const c of COLORES_GATURRO) if (/^#[0-9a-f]{6}$/i.test(guardados[c] ?? "")) $(c).value = guardados[c];
+  for (const [c, valor] of Object.entries(guardados)) if (c in coloresGaturro && /^#[0-9a-f]{6}$/i.test(valor)) coloresGaturro[c] = valor;
 } catch {}
-for (const c of COLORES_GATURRO) {
-  $(c).addEventListener("input", () => {
-    try {
-      localStorage.setItem("coloresGaturro", JSON.stringify(Object.fromEntries(COLORES_GATURRO.map((k) => [k, $(k).value]))));
-    } catch {}
-    dibujarGaturro();
-  });
+
+// Si se piden varios seguidos, se muestra solo el último (cada imagen lleva su propio contador).
+const pedidosGaturro = new Map();
+async function pedirGaturro(img, colores) {
+  const pedido = (pedidosGaturro.get(img) ?? 0) + 1;
+  pedidosGaturro.set(img, pedido);
+  const resultado = await api().gaturro({ ...lookActual.partes }, colores);
+  if (pedidosGaturro.get(img) !== pedido) return null;
+  img.hidden = !resultado.ok; // sin el Gaturro original no se muestra ninguno
+  if (resultado.ok) {
+    img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(resultado.svg);
+    coloresDeFabrica = resultado.colores_de_fabrica;
+    tieneColorDeNariz = resultado.color_de_nariz;
+  }
+  return resultado;
 }
 
-// Si se piden varios seguidos, se muestra solo el último.
-let pedidoGaturro = 0;
 async function dibujarGaturro() {
-  const pedido = ++pedidoGaturro;
-  const colores = Object.fromEntries(COLORES_GATURRO.map((c) => [c, $(c).value]));
-  const espera = setTimeout(() => pedido === pedidoGaturro && ($("estado-gaturro").textContent = "Preparando las imágenes…"), 400);
-  const resultado = await api().gaturro({ ...lookActual.partes }, colores);
+  const espera = setTimeout(() => ($("estado-gaturro").textContent = "Preparando las imágenes…"), 400);
+  const resultado = await pedirGaturro($("imagen-gaturro"), coloresGaturro);
   clearTimeout(espera);
-  if (pedido !== pedidoGaturro) return;
-  // Sin el Gaturro original no se muestra ninguno.
-  $("imagen-gaturro").hidden = !resultado.ok;
+  if (!resultado) return;
   if (!resultado.ok) {
     $("estado-gaturro").textContent = resultado.error;
     return;
   }
-  $("imagen-gaturro").src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(resultado.svg);
   const clases = (rutas) => rutas.map(claseDeRuta).join(", ");
   const avisos = resultado.aviso ? [resultado.aviso] : [];
   if (resultado.sin_lugar.length) avisos.push(`No se dibuja: ${clases(resultado.sin_lugar)}.`);
   if (resultado.sin_imagen.length) avisos.push(`Sin imagen: ${clases(resultado.sin_imagen)}.`);
   $("estado-gaturro").replaceChildren(...avisos.map((a) => etiqueta(a, "aviso-gaturro")));
 }
+
+// --- "Elige tus colores": un selector de tono + saturación y brillo por color, como en el juego ---
+
+function hexAHsv(hex) {
+  const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
+  const max = Math.max(r, g, b);
+  const d = max - Math.min(r, g, b);
+  const h = d === 0 ? 0 : max === r ? ((g - b) / d + 6) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  return { h: h * 60, s: max === 0 ? 0 : d / max, v: max };
+}
+
+function hsvAHex({ h, s, v }) {
+  const f = (n) => {
+    const k = (n + h / 60) % 6;
+    return v - v * s * Math.max(0, Math.min(k, 4 - k, 1));
+  };
+  return "#" + [f(5), f(3), f(1)].map((x) => Math.round(x * 255).toString(16).padStart(2, "0")).join("").toUpperCase();
+}
+
+let coloresEnEdicion = {};
+const selectoresColor = {};
+
+// Arrastrar dentro de un elemento: llama a `mover(x, y)` con la posición entre 0 y 1.
+function arrastrable(elemento, mover) {
+  const actualizar = (e) => {
+    const caja = elemento.getBoundingClientRect();
+    mover(Math.min(Math.max((e.clientX - caja.left) / caja.width, 0), 1), Math.min(Math.max((e.clientY - caja.top) / caja.height, 0), 1));
+  };
+  elemento.addEventListener("pointerdown", (e) => {
+    if (elemento.closest(".deshabilitado")) return;
+    try {
+      elemento.setPointerCapture(e.pointerId);
+    } catch {}
+    actualizar(e);
+  });
+  elemento.addEventListener("pointermove", (e) => {
+    if (elemento.hasPointerCapture(e.pointerId)) actualizar(e);
+  });
+}
+
+function crearSelectorColor(contenedor) {
+  const clave = contenedor.dataset.color;
+  const tono = Object.assign(document.createElement("div"), { className: "barra-tono" });
+  const marcaTono = Object.assign(document.createElement("span"), { className: "marca-color" });
+  tono.append(marcaTono);
+  const cuadro = Object.assign(document.createElement("div"), { className: "cuadro-color" });
+  const marcaCuadro = Object.assign(document.createElement("span"), { className: "marca-color" });
+  cuadro.append(marcaCuadro);
+  const zona = Object.assign(document.createElement("div"), { className: "zona-color" });
+  zona.append(tono, cuadro);
+  contenedor.append(zona);
+  let hsv = { h: 0, s: 0, v: 1 };
+
+  const pintar = () => {
+    cuadro.style.backgroundColor = hsvAHex({ h: hsv.h, s: 1, v: 1 });
+    marcaTono.style.top = `${(hsv.h / 360) * 100}%`;
+    marcaCuadro.style.left = `${hsv.s * 100}%`;
+    marcaCuadro.style.top = `${(1 - hsv.v) * 100}%`;
+    marcaCuadro.style.backgroundColor = hsvAHex(hsv);
+  };
+  const cambiar = () => {
+    pintar();
+    coloresEnEdicion[clave] = hsvAHex(hsv);
+    pedirGaturro($("gaturro-colores"), coloresEnEdicion);
+  };
+  arrastrable(tono, (_, y) => {
+    hsv = { ...hsv, h: Math.min(y * 360, 359.9) };
+    cambiar();
+  });
+  arrastrable(cuadro, (x, y) => {
+    hsv = { ...hsv, s: x, v: 1 - y };
+    cambiar();
+  });
+  selectoresColor[clave] = {
+    mostrar(hex) {
+      hsv = hexAHsv(hex);
+      pintar();
+    },
+  };
+}
+
+document.querySelectorAll(".selector-color").forEach(crearSelectorColor);
+
+function mostrarSelectoresColor() {
+  for (const [clave, selector] of Object.entries(selectoresColor)) {
+    const habilitado = clave !== "color4" || tieneColorDeNariz;
+    const contenedor = document.querySelector(`.selector-color[data-color="${clave}"]`);
+    contenedor.classList.toggle("deshabilitado", !habilitado);
+    contenedor.title = habilitado ? "" : "Este Gaturro (una versión anterior del juego) no tiene color de nariz.";
+    selector.mostrar(coloresEnEdicion[clave] ?? "#F49AC1");
+  }
+}
+
+$("colores-look").addEventListener("click", () => {
+  coloresEnEdicion = { ...coloresGaturro };
+  mostrarSelectoresColor();
+  $("gaturro-colores").src = $("imagen-gaturro").src;
+  $("dialogo-colores").showModal();
+});
+$("reiniciar-colores").addEventListener("click", () => {
+  coloresEnEdicion = { ...coloresDeFabrica };
+  mostrarSelectoresColor();
+  pedirGaturro($("gaturro-colores"), coloresEnEdicion);
+});
+$("guardar-colores").addEventListener("click", () => {
+  coloresGaturro = { ...coloresEnEdicion };
+  try {
+    localStorage.setItem("coloresGaturro", JSON.stringify(coloresGaturro));
+  } catch {}
+  $("dialogo-colores").close();
+  dibujarGaturro();
+});
+$("cerrar-colores").addEventListener("click", () => $("dialogo-colores").close());
 
 // --- Dónde se guarda el Look (Item base): cualquier Prenda o Item de mochila de cualquier SWF ---
 
@@ -1045,8 +1162,6 @@ $("importar-look").addEventListener("click", async () => {
 });
 $("duplicar-look").addEventListener("click", duplicarLook);
 $("borrar-look").addEventListener("click", borrarLook);
-$("colores-look").addEventListener("click", () => $("dialogo-colores").showModal());
-$("cerrar-colores").addEventListener("click", () => $("dialogo-colores").close());
 $("pestana-looks").addEventListener("click", () => cambiarVista("looks"));
 
 // --- Importar un Encode ---

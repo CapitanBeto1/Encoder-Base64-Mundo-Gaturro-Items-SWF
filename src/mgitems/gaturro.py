@@ -59,6 +59,15 @@ def tiene_lugar(cuerpo: str, parte: str) -> bool:
     return parte in PARTES and any(_hueco(h).search(cuerpo) for h in huecos_de(parte))
 
 
+def tiene_color_de_nariz(cuerpo: str) -> bool:
+    """Si el cuerpo tiene una zona de color además de cara, cuerpo y ojos (la del Gaturro actual es la nariz).
+
+    La versión publicada no la tiene; no se sabe cómo se llama en la actual, así que vale cualquier
+    clip `color…` que no sea de los conocidos.
+    """
+    return any(nombre not in _CLIP_DE_COLOR for nombre in re.findall(r'\bid="(color[A-Za-z0-9]*)"', cuerpo))
+
+
 def es_version_anterior(cuerpo: str) -> bool:
     """El Gaturro del juego actual tiene un lugar para «Accesorio 2»; el de las copias publicadas, no."""
     return not tiene_lugar(cuerpo, "accesories2")
