@@ -35,8 +35,7 @@ PARTES = ["hats", "hairs", "mouths", "neck", "accesories", "accesories2", "cloth
           "foot", "arm", "armFore", "armBack", "glove", "gloveFore", "gloveBack", "grip", "gripFore", "gripBack"]
 
 # La versión actual no está publicada sin cifrar.
-AVISO_VERSION_ANTERIOR = ("Gaturro de una versión anterior del juego: la nariz no cambia de color, y «Accesorio 2» "
-                          "va en el lugar de Accesorio (falta confirmarlo en el juego).")
+AVISO_VERSION_ANTERIOR = "Gaturro de una versión anterior del juego: la nariz no cambia de color."
 _MARCA_ACCESORIO_2 = 'data-mgitems="como-accesories"'
 
 # Colores de fábrica del juego (ColorPickerModal): pelaje, panza y ojos.
@@ -122,7 +121,8 @@ def es_version_anterior(cuerpo: str) -> bool:
 def accesorio_2_como_accesorio(cuerpo: str) -> str:
     """Un hueco `accesories2` en el mismo lugar que `accesories` y en la capa de arriba (ADR 0003).
 
-    Deducción a confirmar: las Piezas de aritos de nariz del juego están dibujadas para Accesorio, y en
+    Confirmado contra el juego (aritos de nariz, anteojos y un acebo): las Piezas de aritos de nariz del
+    juego están dibujadas para Accesorio, y en
     «Accesorio 2» el juego las muestra colgando de la nariz, igual que con la transformación de
     Accesorio. En la capa de arriba de Accesorio, donde estaba la nariz vieja, se ve delante del Pelo,
     como en el juego. Si el cuerpo ya tiene `accesories2`, queda igual.
