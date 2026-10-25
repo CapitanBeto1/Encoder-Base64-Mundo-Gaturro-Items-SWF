@@ -293,3 +293,72 @@ def test_un_gaturro_con_otra_zona_de_color_tiene_color_de_nariz(tmp_path, fuente
     nucleo = Nucleo(SistemaFalso(tmp_path), fuente=fuente, catalogo=[], exportador=ConNariz())
 
     assert nucleo.gaturro({})["color_de_nariz"] is True
+
+
+# --- Espalda: el hueco de la plantilla de 2025 (fashion2025.maniqui_so) ---
+
+# El Gaturro publicado no tiene `clothBack`; el torso del maniquí de 2025 sí (y `clothFront`).
+CUERPO_SIN_ESPALDA = re.sub(r'\s*<use [^>]*id="clothBack"[^>]*/>', "", CUERPO)
+PLANTILLA = '''<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns:ffdec="https://www.free-decompiler.com/flash" xmlns:xlink="http://www.w3.org/1999/xlink" ffdec:objectType="frame" height="120.0px" width="80.0px" xmlns="http://www.w3.org/2000/svg">
+  <g transform="matrix(1.0, 0.0, 0.0, 1.0, 40.0, 110.0)">
+    <use ffdec:characterId="52" height="20.0" id="belly" transform="matrix(-0.807, 0.0, 0.0, 0.807, -2.15, -45.7)" width="20.0" xlink:href="#sprite1"/>
+  </g>
+  <defs>
+    <g id="sprite0"/>
+    <g id="sprite1">
+      <use ffdec:characterId="2" height="0.0" id="clothBack" transform="matrix(1.0, 0.0, 0.0, 1.0, -1.55, 1.15)" width="0.0" xlink:href="#sprite0"/>
+      <use ffdec:characterId="51" height="15.0" transform="matrix(1.0, 0.0, 0.0, 1.0, -8.0, -7.0)" width="15.0" xlink:href="#shape0"/>
+      <use ffdec:characterId="2" height="0.0" id="cloth" transform="matrix(1.0, 0.0, 0.0, 0.7676, -1.55, 1.1)" width="0.0" xlink:href="#sprite0"/>
+      <use ffdec:characterId="2" height="0.0" id="clothFront" transform="matrix(1.0, 0.0, 0.0, 1.0, -1.55, 1.05)" width="0.0" xlink:href="#sprite0"/>
+      <use ffdec:characterId="2" height="0.0" id="neck" transform="matrix(1.0, 0.0, 0.0, 0.7676, -1.55, -3.65)" width="0.0" xlink:href="#sprite0"/>
+    </g>
+    <g id="shape0"><path d="M0.0 0.0 L10.0 10.0" fill="#cccccc"/></g>
+  </defs>
+</svg>
+'''
+
+
+class ExportadorConPlantilla(ExportadorConGaturro):
+    def exportar(self, swf, simbolos, destino, formato="png"):
+        super().exportar(swf, simbolos, destino, formato)
+        if formato == "svg" and "assets.GaturroMC" in simbolos.values():
+            (destino / "assets.GaturroMC.svg").write_text(CUERPO_SIN_ESPALDA, encoding="utf-8")
+        if formato == "svg" and "maniqui_so" in simbolos.values():
+            (destino / "maniqui_so.svg").write_text(PLANTILLA, encoding="utf-8")
+
+
+def nucleo_espalda(tmp_path, con_plantilla=True):
+    fuente = fuente_con("fashion_nuevo")
+    if con_plantilla:
+        fuente.publicar("fashion2025", crear_swf(["maniqui_so", "otraCosa_so"]), '"v1"')
+    return Nucleo(SistemaFalso(tmp_path), fuente=fuente, catalogo=[], exportador=ExportadorConPlantilla())
+
+
+def hijos_del_torso(svg: str) -> list[str]:
+    torso = next(g for g in raiz(svg).iter(f"{SVG}g") if any(h.attrib.get("data-parte") == "cloth" or h.attrib.get("id") == "cloth" for h in g))
+    return [h.attrib.get("data-parte") or h.attrib.get("id") or "·" for h in torso]
+
+
+def test_la_espalda_va_donde_la_pone_la_plantilla_de_2025(tmp_path):
+    resultado = nucleo_espalda(tmp_path).gaturro({"clothBack": "clothes1.capa1_on", "cloth": "clothes1.remera5_on"})
+
+    assert resultado["ok"], resultado
+    assert resultado["sin_lugar"] == []
+    assert puestas(resultado["svg"])["clothBack"] == ["matrix(1.0, 0.0, 0.0, 1.0, -1.55, 1.15)"]
+    # Detrás de todo el torso, como en la plantilla; clothFront, justo delante del Torso; y lo que falte
+    # del torso de la plantilla (acá, el Cuello), en su capa.
+    assert hijos_del_torso(resultado["svg"]) == ["clothBack", "color2", "cloth", "clothFront", "neck"]
+
+
+def test_del_maniqui_solo_se_copian_los_huecos(tmp_path):
+    svg = nucleo_espalda(tmp_path).gaturro({})["svg"]
+
+    assert "#cccccc" not in svg  # el dibujo del maniquí no se copia
+
+
+def test_sin_la_plantilla_la_espalda_no_se_dibuja(tmp_path):
+    resultado = nucleo_espalda(tmp_path, con_plantilla=False).gaturro({"clothBack": "clothes1.capa1_on"})
+
+    assert resultado["ok"]
+    assert resultado["sin_lugar"] == ["clothes1.capa1_on"]
