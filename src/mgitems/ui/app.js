@@ -1151,21 +1151,21 @@ $("cerrar-colores").addEventListener("click", () => $("dialogo-colores").close()
 
 let basesDelSwf = []; // [{ruta, clase, tipo}]
 
-// Filtros por tipo: con uno activo se ve solo ese tipo; sin ninguno (o con los dos), todos.
-function tiposVisibles() {
-  const tipos = [["mochila", $("solo-mochila")], ["prenda", $("solo-guardarropa")]]
-    .filter(([, boton]) => boton.getAttribute("aria-pressed") === "true")
-    .map(([tipo]) => tipo);
-  return tipos.length ? tipos : ["mochila", "prenda"];
-}
+// Qué Items se muestran: "ambos", "mochila" o "prenda" (guardarropa). Uno solo a la vez.
+let tipoBase = "ambos";
+const BOTONES_TIPO = ["tipo-ambos", "solo-mochila", "solo-guardarropa"];
 
 function mostrarBases() {
   const texto = $("filtro-base").value.trim().toLowerCase();
   const porNombre = basesDelSwf.filter((b) => b.clase.toLowerCase().includes(texto));
-  $("solo-mochila").querySelector(".cantidad-tipo").textContent = `(${porNombre.filter((b) => b.tipo === "mochila").length})`;
-  $("solo-guardarropa").querySelector(".cantidad-tipo").textContent = `(${porNombre.filter((b) => b.tipo !== "mochila").length})`;
-  const tipos = tiposVisibles();
-  const visibles = porNombre.filter((b) => tipos.includes(b.tipo === "mochila" ? "mochila" : "prenda")).slice(0, 200);
+  const deMochila = porNombre.filter((b) => b.tipo === "mochila").length;
+  $("tipo-ambos").querySelector(".cantidad-tipo").textContent = `(${porNombre.length})`;
+  $("solo-mochila").querySelector(".cantidad-tipo").textContent = `(${deMochila})`;
+  $("solo-guardarropa").querySelector(".cantidad-tipo").textContent = `(${porNombre.length - deMochila})`;
+  for (const id of BOTONES_TIPO) $(id).setAttribute("aria-checked", String($(id).dataset.tipo === tipoBase));
+  const visibles = porNombre
+    .filter((b) => tipoBase === "ambos" || (b.tipo === "mochila" ? "mochila" : "prenda") === tipoBase)
+    .slice(0, 200);
   $("lista-bases").replaceChildren(
     ...visibles.map((b) => {
       const li = document.createElement("li");
@@ -1217,9 +1217,9 @@ crearDesplegable({
   vacio: "No hay SWF con ese nombre.",
 });
 $("filtro-base").addEventListener("input", mostrarBases);
-for (const boton of [$("solo-mochila"), $("solo-guardarropa")]) {
-  boton.addEventListener("click", () => {
-    boton.setAttribute("aria-pressed", String(boton.getAttribute("aria-pressed") !== "true"));
+for (const id of BOTONES_TIPO) {
+  $(id).addEventListener("click", () => {
+    tipoBase = $(id).dataset.tipo;
     mostrarBases();
   });
 }

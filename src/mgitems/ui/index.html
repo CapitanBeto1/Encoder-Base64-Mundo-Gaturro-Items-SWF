@@ -291,8 +291,11 @@
           <span aria-hidden="true">🔍</span>
           <input id="filtro-base" type="search" spellcheck="false" autocomplete="off" placeholder="Buscar en este SWF por nombre" aria-label="Buscar los Items base de este SWF por nombre">
         </label>
-        <button type="button" id="solo-mochila" class="filtro-tipo filtro-mochila" aria-pressed="false" title="Mostrar solo los Items de mochila (consumibles)">🎒 Mochila <span class="cantidad-tipo"></span></button>
-        <button type="button" id="solo-guardarropa" class="filtro-tipo filtro-guardarropa" aria-pressed="false" title="Mostrar solo las Prendas (guardarropa)">👕 Guardarropa <span class="cantidad-tipo"></span></button>
+        <span class="tipos-base" role="radiogroup" aria-label="Qué Items mostrar">
+          <button type="button" id="tipo-ambos" class="filtro-tipo filtro-ambos" role="radio" aria-checked="true" data-tipo="ambos" title="Mostrar los de mochila y los de guardarropa">Ambos <span class="cantidad-tipo"></span></button>
+          <button type="button" id="solo-mochila" class="filtro-tipo filtro-mochila" role="radio" aria-checked="false" data-tipo="mochila" title="Mostrar solo los Items de mochila (consumibles)">🎒 Mochila <span class="cantidad-tipo"></span></button>
+          <button type="button" id="solo-guardarropa" class="filtro-tipo filtro-guardarropa" role="radio" aria-checked="false" data-tipo="prenda" title="Mostrar solo las Prendas (guardarropa)">👕 Guardarropa <span class="cantidad-tipo"></span></button>
+        </span>
       </div>
       <ul id="lista-bases" class="lista-bases"></ul>
       <p id="mensaje-base" class="mensaje" role="status" aria-live="polite"></p>
