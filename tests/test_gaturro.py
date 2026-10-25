@@ -394,21 +394,20 @@ def hijos_de_la_cabeza(svg: str) -> list[str]:
     return [h.attrib.get("data-parte") or h.attrib.get("id") or "nariz" for h in cabeza]
 
 
-def test_hipotesis_nariz_debajo_del_pelo_y_accesorio_2_en_su_capa(tmp_path, fuente):
+def test_la_nariz_va_debajo_del_pelo_como_en_la_cabeza_del_album_2018(tmp_path, fuente):
     nucleo = Nucleo(SistemaFalso(tmp_path), fuente=fuente, catalogo=[], exportador=ExportadorCabezaPublicada())
 
-    resultado = nucleo.gaturro({"accesories2": "clothes1.gorra1_on", "hairs": "clothes1.remera5_on"})
+    resultado = nucleo.gaturro({"hairs": "clothes1.remera5_on", "accesories2": "clothes1.gorra1_on"})
 
     assert resultado["ok"], resultado
-    assert resultado["sin_lugar"] == []
-    # Como la cabeza del álbum 2018: ojos, nariz, Boca, Pelo; Accesorio 2 donde estaba la nariz.
-    assert hijos_de_la_cabeza(resultado["svg"]) == ["color1", "eye1", "eye2", "nariz", "mouths", "hairs", "accesories", "accesories2", "hats"]
-    assert puestas(resultado["svg"])["accesories2"] == ["matrix(1.0, 0.0, 0.0, 1.0, -2.95, 17.9)"]
-    assert "hipótesis" in resultado["aviso"]
+    # Ojos, nariz, Boca, Pelo (lo que va en Pelo tapa la nariz).
+    assert hijos_de_la_cabeza(resultado["svg"]) == ["color1", "eye1", "eye2", "nariz", "mouths", "hairs", "accesories", "hats"]
+    # La posición de «Accesorio 2» no se conoce (la hipótesis no coincidió con el juego): no se dibuja.
+    assert resultado["sin_lugar"] == ["clothes1.gorra1_on"]
+    assert "versión anterior" in resultado["aviso"]
 
 
 def test_sin_la_forma_conocida_la_cabeza_no_se_toca(nucleo):
-    resultado = nucleo.gaturro({"accesories2": "clothes1.gorra1_on"})
+    resultado = nucleo.gaturro({})
 
-    assert resultado["sin_lugar"] == ["clothes1.gorra1_on"]
-    assert "hipótesis" not in resultado["aviso"]
+    assert por_id(resultado["svg"], "hairs") and "nariz" not in resultado["svg"]
