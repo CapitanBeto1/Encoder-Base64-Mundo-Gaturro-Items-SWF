@@ -202,3 +202,15 @@ def test_con_ffdec_real_una_pocima_viste_al_usarla(sistema):
     item = ItemsBaseFFDec().analizar(trucado, ["pocimaAchicadora"])["pocimaAchicadora"]
     assert item.partes == {"hats": "costumes.coronaRey_on"}
     assert item.usos == USOS_ILIMITADOS
+
+
+def test_items_base_de_cualquier_swf_sin_abrirlo(sistema, fuente, ffdec):
+    nucleo = Nucleo(sistema, ProcesosFalso(), fuente=fuente, catalogo=[], prendas_ffdec=ffdec)
+    nucleo.abrir_swf_del_cdn("clothes1")
+
+    resultado = nucleo.items_base("bruja")
+
+    assert resultado["ok"], resultado
+    assert [(i["clase"], i["tipo"]) for i in resultado["items"]] == [("jugo1", "mochila"), ("pocima1", "mochila")]
+    assert resultado["items"][0]["ruta"] == "bruja.jugo1"
+    assert nucleo.items_base("noExiste")["ok"] is False

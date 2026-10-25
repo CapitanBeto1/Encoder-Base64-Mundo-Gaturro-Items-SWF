@@ -38,6 +38,12 @@ class Puente:
     def prendas(self) -> dict:
         return self._nucleo.prendas()
 
+    def items_base(self, swf: str) -> dict:
+        return self._nucleo.items_base(swf)
+
+    def piezas_de_swfs(self, swfs: list | None = None) -> dict:
+        return self._nucleo.piezas_de_swfs(swfs)
+
     def piezas(self, swf: str | None = None) -> dict:
         return self._nucleo.piezas(swf)
 
@@ -160,8 +166,8 @@ def main() -> None:
         TITULO,
         url=str(UI),
         js_api=Puente(Nucleo()),
-        width=960,
-        height=680,
+        width=1100,
+        height=720,
         min_size=(720, 520),
         background_color="#f6d610",
     )
