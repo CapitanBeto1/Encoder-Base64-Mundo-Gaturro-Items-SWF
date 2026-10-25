@@ -945,36 +945,38 @@ dialog.grande {
 .resultados-swf.con-iconos li .nombre { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .botones-encabezado { display: flex; gap: 8px; }
 
-/* --- Pestaña Looks: como el inventario del juego --- */
+/* --- Pestaña Looks: como el inventario del juego, a pantalla completa --- */
 
-main.modo-looks { grid-template-columns: minmax(0, 2.3fr) minmax(0, 1fr); }
+main.modo-looks { grid-template-columns: minmax(0, 1fr); }
+main.modo-looks > .panel:last-child { display: none; } /* el Encode va en la barra de abajo */
 main.modo-looks .buscador-swf { display: none; }
 .buscador-swf { display: contents; }
+#vista-looks:not([hidden]) { display: flex; flex-direction: column; gap: 8px; min-height: 0; flex: 1; overflow: hidden; }
 
-.encabezado-looks { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+.encabezado-looks { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
 .encabezado-looks .lista-looks { flex: 1 1 auto; min-width: 0; }
 .encabezado-looks .botones-encabezado { flex-wrap: wrap; gap: 4px; }
-.encabezado-looks .enlace { font-size: 10px; padding: 2px 6px; }
+.encabezado-looks .enlace { font-size: 11px; padding: 3px 8px; }
 
 .inventario {
-  flex: none;
-  display: flex;
-  gap: 10px;
-  align-items: stretch;
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
 }
 
-/* Izquierda: la tarjeta del Gaturro. */
+/* Mitad izquierda: la tarjeta del Gaturro. */
 .tarjeta-gaturro {
-  flex: none;
-  width: 190px;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   gap: 6px;
-  padding-bottom: 8px;
+  padding-bottom: 10px;
   background: #4f9a3a;
   border: 3px solid #f6d610;
-  border-radius: 14px;
+  border-radius: 16px;
   overflow: hidden;
 }
 .tarjeta-gaturro .nombre-tarjeta {
@@ -982,110 +984,171 @@ main.modo-looks .buscador-swf { display: none; }
   width: 100%;
   border: 0;
   border-radius: 0;
-  padding: 7px 8px;
+  padding: 8px;
   background: #b3202a;
   color: #fff;
   text-align: center;
   text-transform: uppercase;
-  font-size: 15px;
+  font-size: 17px;
   box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.18);
 }
 .tarjeta-gaturro .nombre-tarjeta::placeholder { color: rgba(255, 255, 255, 0.7); }
 .tarjeta-gaturro .nombre-tarjeta:focus { box-shadow: inset 0 0 0 3px var(--amarillo); border: 0; }
-.gaturro {
-  margin: 0;
-  width: 100%;
+.se-guarda-en { flex: none; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 0 10px; color: #fff; font-size: 12px; }
+.se-guarda-en .ayuda { color: #e9ffd9; }
+.base-look { display: flex; align-items: center; gap: 4px; min-width: 0; }
+.base-look .icono { width: 26px; height: 26px; }
+.base-look .nombre { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.se-guarda-en .enlace { font-size: 10px; padding: 2px 7px; }
+
+.escena {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px;
+}
+.gaturro { margin: 0; min-height: 0; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.gaturro img { width: 100%; height: 100%; min-height: 0; object-fit: contain; }
+.gaturro img[hidden] { display: none; }
+.gaturro figcaption { flex: none; display: flex; flex-direction: column; gap: 2px; color: #fff; font-size: 10px; line-height: 1.2; text-align: center; }
+.gaturro figcaption:empty { display: none; }
+
+.casilleros { display: grid; grid-template-columns: repeat(2, 50px); align-content: center; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.casilleros li { position: relative; }
+.casillero {
+  width: 50px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 1px;
+  padding: 3px;
+  border-radius: 10px;
+  background: var(--amarillo);
+  border-color: var(--amarillo-contorno);
 }
-.gaturro img { width: 140px; aspect-ratio: 1; }
-.gaturro img[hidden] { display: none; }
-.gaturro figcaption { display: flex; flex-direction: column; gap: 3px; padding: 0 8px; color: #fff; font-size: 10px; line-height: 1.2; text-align: center; }
-.gaturro figcaption:empty { display: none; }
-.colores-gaturro { display: flex; gap: 6px; }
-.colores-gaturro label { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 11px; color: #fff; }
-.colores-gaturro input { width: 34px; height: 22px; padding: 0; border: 2px solid #2a5d74; border-radius: 6px; cursor: pointer; }
-.botones-tarjeta { display: flex; gap: 8px; }
+.casillero .icono { width: 30px; height: 30px; box-shadow: none; background: rgba(255, 255, 255, 0.55); }
+.casillero .nombre-casillero { max-width: 100%; overflow: hidden; text-overflow: ellipsis; font-size: 7px; line-height: 1.1; text-transform: uppercase; color: var(--texto); white-space: nowrap; }
+.casillero[aria-pressed="true"] { background: #6fc054; border-color: #2f6421; box-shadow: 0 0 0 3px #fff; }
+.casilleros .sacar-pieza { position: absolute; top: -4px; right: -4px; width: 18px; height: 18px; font-size: 10px; padding: 0; }
+
+.botones-tarjeta { flex: none; display: flex; justify-content: center; gap: 8px; }
 .boton-cuadrado {
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   padding: 0;
-  font-size: 26px;
+  font-size: 24px;
   line-height: 1;
   background: var(--amarillo);
   border-color: var(--amarillo-contorno);
 }
-#guardar-look { color: #16801f; }
-#descartar-look { color: #c41a1a; }
+.boton-colores:hover:not(:disabled) { background: #6fc054; border-color: #2f6421; }
+.boton-guardar { color: #16801f; }
+.boton-descartar { color: #c41a1a; }
 
-/* Derecha: el armario, con las zonas del cuerpo como pestañas. */
+/* Mitad derecha: el inventario. */
 .armario {
-  flex: 1;
-  min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 6px;
   padding: 8px;
   background: #4f9a3a;
   border: 3px solid #f6d610;
-  border-radius: 14px;
+  border-radius: 16px;
 }
-.armario .fila { gap: 6px; }
-.fila-armario .selector-swf { flex: 1 1 0; min-width: 0; width: auto; }
-.fila-armario .selector-swf input { width: 100%; }
-.armario .fila .etiqueta-campo { color: #fff; flex: none; width: auto; }
-.armario .fila input { padding: 4px 8px; font-size: 13px; }
-.grupos-partes { display: flex; gap: 4px; }
-.grupo-partes {
-  flex: 1;
-  min-width: 0;
+.fuentes { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; }
+.fuentes .etiqueta-campo { color: #fff; width: auto; }
+.lista-fuentes { display: flex; flex-wrap: wrap; gap: 4px; }
+.chip-fuente { display: inline-flex; align-items: center; gap: 4px; padding: 2px 4px 2px 8px; border-radius: 10px; background: #fff; color: var(--texto); font-size: 11px; }
+.chip-fuente .quitar { width: 16px; height: 16px; font-size: 9px; padding: 0; }
+.agregar-fuente { width: 130px; }
+.agregar-fuente input { padding: 3px 8px; font-size: 12px; }
+#todas-las-fuentes { font-size: 11px; padding: 3px 8px; }
+#todas-las-fuentes[aria-pressed="true"] { background: var(--amarillo); border-color: var(--amarillo-contorno); }
+
+.categorias { flex: none; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 3px; }
+.categoria {
+  position: relative;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 3px;
-  padding: 4px 2px;
-  border-radius: 10px 10px 4px 4px;
+  padding: 3px 1px 2px;
+  border-radius: 9px;
   background: #3c7d2b;
   border-color: #2f6421;
   color: #fff;
 }
-.grupo-partes .icono-grupo { font-size: 19px; line-height: 1; }
-/* Como en el juego, solo el ícono; el nombre queda para lectores de pantalla y al pasar el mouse. */
-.grupo-partes .nombre-grupo { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
-.grupo-partes[aria-selected="true"] { background: #6fc054; border-color: #f6d610; }
-.grupo-partes { position: relative; }
-.grupo-partes.con-pieza::after { content: "•"; position: absolute; top: 0; right: 5px; color: var(--amarillo); font-size: 16px; }
-.partes-grupo { display: flex; flex-wrap: wrap; gap: 3px; }
-.parte-grupo { padding: 2px 6px; font-size: 9px; border-radius: 8px; }
-.parte-grupo.con-pieza::after { content: " •"; color: #16801f; }
-.parte-grupo[aria-pressed="true"] { background: var(--amarillo); border-color: var(--amarillo-contorno); }
-.armario #filtro-piezas { flex: 1; min-width: 0; font-size: 12px; padding: 4px 8px; }
+.categoria .icono-categoria { font-size: 18px; line-height: 1.1; }
+.categoria .cantidad-categoria { font-size: 9px; line-height: 1; }
+.categoria .nombre-categoria { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.categoria[aria-selected="true"] { background: #6fc054; border-color: #f6d610; }
+
+.poniendo-en { flex: none; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 3px 8px; border-radius: 10px; background: #fff; color: var(--texto); font-size: 12px; }
+.poniendo-en[hidden] { display: none; }
+.poniendo-en .quitar { width: 20px; height: 20px; font-size: 10px; padding: 0; }
+.armario #filtro-piezas { flex: none; font-size: 12px; padding: 4px 8px; }
+
+.estante { flex: 1; min-height: 0; display: flex; align-items: stretch; gap: 6px; overflow: hidden; }
+.estante .flecha-grande { align-self: center; }
+.flecha-grande {
+  flex: none;
+  width: 34px;
+  height: 64px;
+  padding: 0;
+  font-size: 20px;
+  color: #c4401a;
+  background: var(--amarillo);
+  border-color: var(--amarillo-contorno);
+}
 .grilla {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
   display: grid;
-  grid-template-columns: repeat(5, 52px);
-  justify-content: center;
-  grid-auto-rows: 1fr;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-rows: repeat(3, minmax(0, 1fr));
   gap: 6px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
+.grilla li { min-height: 0; }
 .pieza-grilla {
   width: 100%;
-  aspect-ratio: 1;
+  height: 100%;
   display: grid;
   place-items: center;
-  padding: 3px;
-  border-radius: 10px;
+  padding: 4px;
+  border-radius: 12px;
   background: var(--amarillo);
   border-color: var(--amarillo-contorno);
 }
 .pieza-grilla .icono { width: 100%; height: 100%; box-shadow: none; background: transparent; }
 .pieza-grilla .icono img { max-width: 100%; max-height: 100%; }
+.pieza-grilla .icono.sin-imagen::after { content: "…"; color: #9a8400; font-size: 18px; }
+.pieza-grilla.en-uso { box-shadow: inset 0 0 0 3px rgba(22, 128, 31, 0.5); }
 .pieza-grilla[aria-pressed="true"] { background: #6fc054; border-color: #2f6421; box-shadow: inset 0 0 0 3px #2f6421; }
-.paginas { display: flex; align-items: center; gap: 6px; }
-.paginas .flecha { flex: none; width: 32px; height: 28px; font-size: 14px; color: #c4401a; }
-.paginas #numero-pagina { flex: none; color: #fff; min-width: 42px; text-align: center; font-size: 12px; }
-.armario #ayuda-grilla { margin: 0; color: #fff; font-size: 11px; text-align: center; }
+.armario #ayuda-grilla { flex: none; margin: 0; color: #fff; font-size: 11px; text-align: center; }
 .armario #ayuda-grilla:empty { display: none; }
+.numero-pagina { flex: none; align-self: center; color: #fff; font-size: 12px; }
+
+/* Abajo: aplicar y agregar al juego. */
+.barra-look { flex: none; display: flex; align-items: center; gap: 8px; }
+.barra-look #resumen-look { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.barra-look .primario { padding: 8px 16px; font-size: 14px; }
+.barra-look .entregar { width: auto; }
+
+/* Ventanitas de la pestaña. */
+#dialogo-base .panel, #dialogo-ver-encode .panel { width: min(520px, 90vw); }
+.lista-bases { max-height: 300px; overflow-y: auto; }
+.fila-base { width: 100%; display: flex; align-items: center; gap: 8px; justify-content: flex-start; padding: 3px 8px; }
+.fila-base .tipo-mochila, .fila-base .tipo-prenda { margin-left: auto; }
+.fila-base[aria-pressed="true"] { background: var(--amarillo); }
+#texto-ver-encode { min-height: 120px; }
+.colores-gaturro { display: flex; gap: 14px; }
+.colores-gaturro label { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 12px; }
+.colores-gaturro input { width: 48px; height: 32px; padding: 0; border: 2px solid #2a5d74; border-radius: 6px; cursor: pointer; }

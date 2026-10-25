@@ -148,60 +148,72 @@
           <span class="botones-encabezado">
             <button id="nuevo-look" class="enlace">+ Nuevo</button>
             <button id="duplicar-look" class="enlace">Duplicar</button>
-            <button id="borrar-look" class="enlace">Borrar</button>
             <button id="importar-look" class="enlace" title="Agregar a Mis Looks el archivo de Look de otra persona">Importar</button>
             <button id="exportar-look" class="enlace" title="Guardar el Look en un archivo para pasárselo a otra persona">Exportar</button>
           </span>
         </div>
 
         <div class="inventario">
+          <!-- Mitad izquierda: el Gaturro, protagonista. -->
           <div class="tarjeta-gaturro">
             <input id="nombre-look" class="nombre-tarjeta" type="text" spellcheck="false" autocomplete="off"
                    placeholder="NOMBRE DEL LOOK" aria-label="Nombre del Look">
-            <figure id="gaturro" class="gaturro">
-              <img id="imagen-gaturro" alt="Tu Gaturro con las Piezas del Look, como se ve en el juego">
-              <figcaption id="estado-gaturro" class="ayuda"></figcaption>
-            </figure>
-            <div class="colores-gaturro">
-              <label title="Pelaje"><input id="color1" type="color" value="#fff200"> Pelaje</label>
-              <label title="Panza"><input id="color2" type="color" value="#ddb42d"> Panza</label>
-              <label title="Ojos"><input id="color3" type="color" value="#ffffff"> Ojos</label>
+            <div class="se-guarda-en">
+              <span class="ayuda">Se guarda en:</span>
+              <span id="base-look" class="base-look"></span>
+              <button id="cambiar-base" class="enlace">Cambiar…</button>
+            </div>
+            <div class="escena">
+              <ul id="casilleros-cabeza" class="casilleros" aria-label="Partes de la cabeza"></ul>
+              <figure id="gaturro" class="gaturro">
+                <img id="imagen-gaturro" alt="Tu Gaturro con las Piezas del Look, como se ve en el juego">
+                <figcaption id="estado-gaturro" class="ayuda"></figcaption>
+              </figure>
+              <ul id="casilleros-cuerpo" class="casilleros" aria-label="Partes del cuerpo"></ul>
             </div>
             <div class="botones-tarjeta">
-              <button id="guardar-look" class="boton-cuadrado" title="Guardar el Look" aria-label="Guardar el Look">✓</button>
-              <button id="descartar-look" class="boton-cuadrado" title="Descartar los cambios" aria-label="Descartar los cambios">✗</button>
+              <button id="colores-look" class="boton-cuadrado boton-colores" title="Colores del Gaturro" aria-label="Colores del Gaturro">⚙</button>
+              <button id="borrar-look" class="boton-cuadrado" title="Borrar el Look" aria-label="Borrar el Look">🗑</button>
+              <button id="descartar-look" class="boton-cuadrado boton-descartar" title="Descartar los cambios" aria-label="Descartar los cambios">✗</button>
+              <button id="guardar-look" class="boton-cuadrado boton-guardar" title="Guardar el Look" aria-label="Guardar el Look">✓</button>
             </div>
           </div>
 
+          <!-- Mitad derecha: el inventario. -->
           <div class="armario">
-            <div class="fila fila-armario">
-              <span class="ayuda etiqueta-campo">SWF</span>
-              <div class="selector-swf">
-                <input id="buscar-swf-look" type="text" spellcheck="false" autocomplete="off"
-                       placeholder="ej: clothes1"
-                       role="combobox" aria-expanded="false" aria-controls="resultados-swf-look" aria-autocomplete="list">
-                <ul id="resultados-swf-look" class="resultados-swf" role="listbox" hidden></ul>
+            <div class="fuentes">
+              <span class="ayuda etiqueta-campo">De:</span>
+              <div id="lista-fuentes" class="lista-fuentes"></div>
+              <div class="selector-swf agregar-fuente">
+                <input id="agregar-fuente" type="text" spellcheck="false" autocomplete="off"
+                       placeholder="+ Agregar SWF" aria-label="Agregar un SWF a las fuentes"
+                       role="combobox" aria-expanded="false" aria-controls="resultados-fuente" aria-autocomplete="list">
+                <ul id="resultados-fuente" class="resultados-swf" role="listbox" hidden></ul>
               </div>
-              <span class="ayuda etiqueta-campo" title="Item base: lo que vas a recibir">Base</span>
-              <div class="selector-swf">
-                <input id="buscar-base-look" type="text" spellcheck="false" autocomplete="off"
-                       placeholder="Prenda o mochila"
-                       role="combobox" aria-expanded="false" aria-controls="resultados-base-look" aria-autocomplete="list">
-                <ul id="resultados-base-look" class="resultados-swf con-iconos" role="listbox" hidden></ul>
-              </div>
+              <button id="todas-las-fuentes" class="enlace" aria-pressed="false" title="Las Piezas de todos los SWF del juego">Todos</button>
             </div>
-            <div id="grupos-partes" class="grupos-partes" role="tablist" aria-label="Zonas del cuerpo"></div>
-            <div id="partes-grupo" class="partes-grupo" aria-label="Partes del cuerpo"></div>
+            <div id="categorias" class="categorias" role="tablist" aria-label="Categorías de Piezas"></div>
+            <div id="poniendo-en" class="poniendo-en" hidden>
+              <span id="texto-poniendo-en"></span>
+              <button id="dejar-de-poner" class="quitar" title="Volver a poner cada Pieza en su Parte">✕</button>
+            </div>
+            <input id="filtro-piezas" type="text" spellcheck="false" autocomplete="off"
+                   placeholder="Filtrar por nombre" aria-label="Filtrar las Piezas por nombre">
+            <div class="estante">
+              <button id="pagina-anterior" class="flecha-grande" title="Página anterior" aria-label="Página anterior">◀</button>
+              <ul id="grilla-piezas" class="grilla" aria-label="Piezas para elegir"></ul>
+              <button id="pagina-siguiente" class="flecha-grande" title="Página siguiente" aria-label="Página siguiente">▶</button>
+            </div>
             <p id="ayuda-grilla" class="ayuda"></p>
-            <ul id="grilla-piezas" class="grilla" aria-label="Piezas para elegir"></ul>
-            <div class="paginas">
-              <button id="pagina-anterior" class="boton-cuadrado flecha" title="Página anterior" aria-label="Página anterior">◀</button>
-              <span id="numero-pagina" class="ayuda"></span>
-              <button id="pagina-siguiente" class="boton-cuadrado flecha" title="Página siguiente" aria-label="Página siguiente">▶</button>
-              <input id="filtro-piezas" type="text" spellcheck="false" autocomplete="off"
-                     placeholder="Filtrar por nombre" aria-label="Filtrar las Piezas por nombre">
-            </div>
+            <span id="numero-pagina" class="numero-pagina"></span>
           </div>
+        </div>
+
+        <div class="barra-look">
+          <span id="resumen-look" class="ayuda"></span>
+          <button id="ver-encode" class="enlace">Ver Encode…</button>
+          <button id="aplicar-look" class="primario">Aplicar Look</button>
+          <button id="entregar-look" class="primario entregar">Agregar al juego</button>
         </div>
       </div>
       <p id="mensaje" class="mensaje" role="status" aria-live="polite"></p>
@@ -223,6 +235,51 @@
       <p id="mensaje-encode" class="mensaje" role="status" aria-live="polite"></p>
     </section>
   </main>
+
+  <dialog id="dialogo-base">
+    <div class="panel">
+      <h2>¿Dónde se guarda el Look?</h2>
+      <p class="ayuda">El Item base es lo que vas a recibir: una Prenda (guardarropa) o un Item de mochila. Puede ser de cualquier SWF.</p>
+      <div class="selector-swf">
+        <input id="swf-base" type="text" spellcheck="false" autocomplete="off" placeholder="SWF, ej: virtualGoods"
+               role="combobox" aria-expanded="false" aria-controls="resultados-swf-base" aria-autocomplete="list">
+        <ul id="resultados-swf-base" class="resultados-swf" role="listbox" hidden></ul>
+      </div>
+      <input id="filtro-base" type="text" spellcheck="false" autocomplete="off" placeholder="Filtrar por nombre" aria-label="Filtrar los Items base">
+      <ul id="lista-bases" class="lista con-iconos lista-bases"></ul>
+      <p id="mensaje-base" class="mensaje" role="status" aria-live="polite"></p>
+      <div class="acciones">
+        <button type="button" id="cerrar-base" class="derecha">Cerrar</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="dialogo-ver-encode">
+    <div class="panel">
+      <h2>Encode del Look</h2>
+      <p id="resumen-ver-encode" class="ayuda"></p>
+      <textarea id="texto-ver-encode" readonly spellcheck="false"></textarea>
+      <div class="acciones">
+        <button type="button" id="copiar-look">Copiar</button>
+        <button type="button" id="guardar-encode-look">Guardar como…</button>
+        <button type="button" id="cerrar-ver-encode" class="derecha">Cerrar</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="dialogo-colores">
+    <div class="panel">
+      <h2>Colores del Gaturro</h2>
+      <div class="colores-gaturro">
+        <label>Cara <input id="color1" type="color" value="#fff200"></label>
+        <label>Cuerpo <input id="color2" type="color" value="#ddb42d"></label>
+        <label>Ojos <input id="color3" type="color" value="#ffffff"></label>
+      </div>
+      <div class="acciones">
+        <button type="button" id="cerrar-colores" class="derecha">Cerrar</button>
+      </div>
+    </div>
+  </dialog>
 
   <dialog id="dialogo-importar">
     <form id="form-importar" class="panel">

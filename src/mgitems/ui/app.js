@@ -128,7 +128,8 @@ function actualizarControles() {
   $("guardar-look").disabled = $("descartar-look").disabled = $("nuevo-look").disabled = $("importar-look").disabled = !listo;
   $("exportar-look").disabled = !listo || !Object.keys(lookActual.partes).length;
   $("duplicar-look").disabled = $("borrar-look").disabled = !listo || !lookActual.id;
-  $("nombre-look").disabled = $("buscar-base-look").disabled = $("buscar-swf-look").disabled = !listo;
+  $("nombre-look").disabled = $("cambiar-base").disabled = $("agregar-fuente").disabled = $("todas-las-fuentes").disabled = !listo;
+  mostrarBarraLook();
   $("buscar-base").disabled = $("buscar-pieza").disabled = $("buscar-parte").disabled = !listo || !prendas.length;
   $("buscar-swf-pieza").disabled = !listo || !prendas.length;
   $("pestana-agregar").disabled = $("pestana-trucar").disabled = $("pestana-looks").disabled = !conectado || ocupado;
@@ -201,7 +202,7 @@ function mostrarSwfAbierto(resultado) {
 
 // Lo que necesita la pestaña elegida, en orden (las cargas no se pisan entre sí).
 async function cargarParaLaVista() {
-  if ((vista === "trucar" || vista === "looks") && swfAbierto && !prendas.length) await cargarPrendas();
+  if (vista === "trucar" && swfAbierto && !prendas.length) await cargarPrendas();
   if (vista === "looks") await cargarLooks();
 }
 
@@ -559,13 +560,11 @@ $("pestana-agregar").addEventListener("click", () => cambiarVista("agregar"));
 $("pestana-trucar").addEventListener("click", () => cambiarVista("trucar"));
 
 // --- Looks: un Item base con una Pieza (de cualquier SWF) en cada una de varias Partes del cuerpo ---
+// La pestaña se acomoda como el inventario del juego: el Gaturro a la izquierda, el inventario a la derecha.
 
 let looksGuardados = [];
 let lookActual = nuevoLook();
 let partesConocidas = []; // [{id, nombre}]
-let piezasLook = []; // Piezas del SWF elegido en "Piezas de:"
-let swfPiezasLook = null;
-let parteElegida = "hats"; // a qué Parte del cuerpo va la Pieza que se toca en la grilla
 let iconosPreparados = new Set(); // SWF cuyas imágenes ya se pidieron preparar
 
 function nuevoLook() {
@@ -582,6 +581,8 @@ async function prepararIconosDe(swf) {
 }
 
 const swfDeRuta = (ruta) => ruta.slice(0, ruta.lastIndexOf("."));
+const claseDeRuta = (ruta) => ruta.slice(ruta.lastIndexOf(".") + 1);
+const nombreDeParte = (id) => partesConocidas.find((p) => p.id === id)?.nombre ?? id;
 
 async function cargarLooks() {
   if (!partesConocidas.length) partesConocidas = (await api().partes_del_cuerpo()).partes_del_cuerpo;
@@ -590,7 +591,7 @@ async function cargarLooks() {
   looksGuardados = resultado.looks;
   mostrarListaLooks();
   mostrarLook();
-  if (swfAbierto && swfPiezasLook !== swfAbiertoActual) await usarPiezasLookDe(swfAbiertoActual);
+  if (!inventario.cargado) await cargarInventario();
 }
 
 function mostrarListaLooks() {
@@ -611,7 +612,6 @@ function mostrarListaLooks() {
 
 function abrirLook(look) {
   lookActual = structuredClone(look);
-  paginaGrilla = null;
   mostrarListaLooks();
   mostrarLook();
   // Las imágenes de todas las Piezas del Look (pueden ser de varios SWF).
@@ -619,124 +619,241 @@ function abrirLook(look) {
   if (lookActual.base) prepararIconosDe(swfDeRuta(lookActual.base));
 }
 
-// Zonas del cuerpo (pestañas del inventario) y sus Partes.
-const GRUPOS_PARTES = [
-  { id: "cabeza", nombre: "Cabeza", icono: "🎩", partes: ["hats", "hairs", "mouths", "accesories", "accesories2"] },
-  { id: "torso", nombre: "Torso", icono: "👕", partes: ["cloth", "neck", "clothBack", "arm"] },
-  { id: "manos", nombre: "Manos", icono: "✋", partes: ["grip", "gripFore"] },
-  { id: "piernas", nombre: "Piernas", icono: "👖", partes: ["leg"] },
-  { id: "pies", nombre: "Pies", icono: "👟", partes: ["foot"] },
-];
-
-// Las zonas, más "Otras" si el Look tiene Partes que no están en ninguna.
-function gruposDelLook() {
-  const conocidas = new Set(GRUPOS_PARTES.flatMap((g) => g.partes));
-  const otras = [...new Set([...partesConocidas.map((p) => p.id), ...Object.keys(lookActual.partes)])].filter((p) => !conocidas.has(p));
-  return otras.length ? [...GRUPOS_PARTES, { id: "otras", nombre: "Otras", icono: "✨", partes: otras }] : GRUPOS_PARTES;
+function mostrarLook() {
+  $("nombre-look").value = lookActual.nombre;
+  const base = lookActual.base;
+  $("base-look").replaceChildren(
+    ...(base ? [elementoIcono(base), etiqueta(`${claseDeRuta(base)} (${swfDeRuta(base)})`, "nombre")] : [etiqueta("se elige al aplicar", "ayuda")])
+  );
+  mostrarCasilleros();
+  cargarIconos([...Object.values(lookActual.partes), ...(base ? [base] : [])]);
+  mostrarInventario();
+  mostrarEncode(null);
+  mostrarBarraLook();
+  dibujarGaturro();
 }
 
-const nombreDeParte = (id) => partesConocidas.find((p) => p.id === id)?.nombre ?? id;
-const claseDeRuta = (ruta) => ruta.slice(ruta.lastIndexOf(".") + 1);
+// --- Casilleros: una Parte del cuerpo cada uno, a los costados del Gaturro ---
 
-function mostrarPartes() {
-  const grupos = gruposDelLook();
-  const grupo = grupos.find((g) => g.partes.includes(parteElegida)) ?? grupos[0];
-  $("grupos-partes").replaceChildren(
-    ...grupos.map((g) => {
-      const pestana = Object.assign(document.createElement("button"), { className: "grupo-partes", title: g.nombre });
+const CASILLEROS_CABEZA = ["hats", "hairs", "mouths", "accesories", "accesories2", "neck"];
+const CASILLEROS_CUERPO = ["cloth", "arm", "clothBack", "grip", "gripFore", "leg", "foot"];
+let casilleroMarcado = null; // si hay uno, toda Pieza que se toque va a esa Parte
+
+function casillero(id) {
+  const ruta = lookActual.partes[id];
+  const li = document.createElement("li");
+  const boton = Object.assign(document.createElement("button"), { className: "casillero" });
+  boton.title = ruta ? `${nombreDeParte(id)}: ${claseDeRuta(ruta)} · ${swfDeRuta(ruta)}` : `${nombreDeParte(id)}: vacío. Tocá para poner acá las Piezas que elijas.`;
+  boton.setAttribute("aria-pressed", String(id === casilleroMarcado));
+  boton.append(ruta ? elementoIcono(ruta) : Object.assign(document.createElement("span"), { className: "icono vacio" }), etiqueta(nombreDeParte(id), "nombre-casillero"));
+  boton.addEventListener("click", () => {
+    casilleroMarcado = casilleroMarcado === id ? null : id;
+    mostrarLook();
+  });
+  li.append(boton);
+  if (ruta) {
+    const quitar = Object.assign(document.createElement("button"), { className: "quitar sacar-pieza", textContent: "✕", title: `Sacar la Pieza de ${nombreDeParte(id)}` });
+    quitar.addEventListener("click", () => {
+      delete lookActual.partes[id];
+      mostrarLook();
+    });
+    li.append(quitar);
+  }
+  return li;
+}
+
+function mostrarCasilleros() {
+  const ubicadas = new Set([...CASILLEROS_CABEZA, ...CASILLEROS_CUERPO]);
+  // Partes del Look que no tienen casillero (de un Look importado, por ejemplo): van con el cuerpo.
+  const extra = Object.keys(lookActual.partes).filter((p) => !ubicadas.has(p));
+  $("casilleros-cabeza").replaceChildren(...CASILLEROS_CABEZA.map(casillero));
+  $("casilleros-cuerpo").replaceChildren(...[...CASILLEROS_CUERPO, ...extra].map(casillero));
+  $("poniendo-en").hidden = !casilleroMarcado;
+  $("texto-poniendo-en").textContent = casilleroMarcado ? `Poniendo en: ${nombreDeParte(casilleroMarcado)}` : "";
+}
+
+$("dejar-de-poner").addEventListener("click", () => {
+  casilleroMarcado = null;
+  mostrarLook();
+});
+
+// --- Inventario: Piezas de una o varias fuentes, por categoría, 5×3 por página ---
+
+// Cada categoría junta las Piezas que el juego usa en esas Partes; tocar una la pone en `parte`.
+const CATEGORIAS = [
+  { id: "hats", nombre: "Sombreros", icono: "🎩", partes: ["hats"] },
+  { id: "hairs", nombre: "Pelos", icono: "💇", partes: ["hairs"] },
+  { id: "mouths", nombre: "Bocas", icono: "👄", partes: ["mouths"] },
+  { id: "accesories", nombre: "Accesorios", icono: "👓", partes: ["accesories", "accesories2"] },
+  { id: "neck", nombre: "Cuello", icono: "🧣", partes: ["neck"] },
+  { id: "cloth", nombre: "Torso", icono: "👕", partes: ["cloth", "clothFront"] },
+  { id: "arm", nombre: "Mangas", icono: "💪", partes: ["arm", "armFore", "armBack"] },
+  { id: "clothBack", nombre: "Espalda", icono: "🎒", partes: ["clothBack"] },
+  { id: "grip", nombre: "Mano", icono: "✋", partes: ["grip", "gripFore", "gripBack", "glove", "gloveFore", "gloveBack"] },
+  { id: "leg", nombre: "Piernas", icono: "👖", partes: ["leg"] },
+  { id: "foot", nombre: "Pies", icono: "👟", partes: ["foot"] },
+  { id: "otros", nombre: "Otros", icono: "✨", partes: [] },
+];
+const POR_PAGINA = 15;
+const PARTES_CON_CATEGORIA = new Set(CATEGORIAS.flatMap((c) => c.partes));
+
+const inventario = {
+  cargado: false,
+  piezas: [], // [{ruta, clase, swf, partes}] de las fuentes
+  categoria: "hats",
+  pagina: 0,
+};
+
+// Las fuentes se recuerdan en esta computadora.
+let fuentes = { todos: false, swfs: ["clothes1"] };
+try {
+  const guardadas = JSON.parse(localStorage.getItem("fuentesLooks") || "null");
+  if (guardadas && Array.isArray(guardadas.swfs)) fuentes = { todos: Boolean(guardadas.todos), swfs: guardadas.swfs.filter((s) => typeof s === "string") };
+} catch {}
+
+function guardarFuentes() {
+  try {
+    localStorage.setItem("fuentesLooks", JSON.stringify(fuentes));
+  } catch {}
+}
+
+const enCategoria = (pieza, categoria) =>
+  categoria.id === "otros" ? !pieza.partes.some((p) => PARTES_CON_CATEGORIA.has(p)) : pieza.partes.some((p) => categoria.partes.includes(p));
+
+async function cargarInventario() {
+  const pedido = fuentes.todos ? null : fuentes.swfs;
+  if (!fuentes.todos && !fuentes.swfs.length) {
+    inventario.piezas = [];
+  } else {
+    const espera = fuentes.todos ? "Leyendo las Piezas de todos los SWF…" : `Leyendo las Piezas de ${fuentes.swfs.join(", ")}…`;
+    const resultado = await mientras(espera, () => api().piezas_de_swfs(pedido));
+    if (!resultado.ok) return avisarLista(resultado.error, "error");
+    inventario.piezas = resultado.piezas;
+    const errores = Object.entries(resultado.errores);
+    avisarLista(errores.length ? `No se pudieron leer: ${errores.map(([s, e]) => `${s} (${e})`).join("; ")}` : "", "advertencia");
+  }
+  inventario.cargado = true;
+  inventario.pagina = 0;
+  mostrarLook();
+}
+
+function mostrarFuentes() {
+  $("todas-las-fuentes").setAttribute("aria-pressed", String(fuentes.todos));
+  $("lista-fuentes").replaceChildren(
+    ...(fuentes.todos
+      ? [etiqueta("todos los SWF del juego", "chip-fuente")]
+      : fuentes.swfs.map((swf) => {
+          const chip = etiqueta(swf, "chip-fuente");
+          const quitar = Object.assign(document.createElement("button"), { className: "quitar", textContent: "✕", title: `Sacar ${swf} de las fuentes` });
+          quitar.addEventListener("click", () => {
+            fuentes.swfs = fuentes.swfs.filter((s) => s !== swf);
+            guardarFuentes();
+            cargarInventario();
+          });
+          chip.append(quitar);
+          return chip;
+        }))
+  );
+}
+
+function mostrarInventario() {
+  mostrarFuentes();
+  const texto = $("filtro-piezas").value.trim().toLowerCase();
+  const categoria = CATEGORIAS.find((c) => c.id === inventario.categoria);
+  $("categorias").replaceChildren(
+    ...CATEGORIAS.map((c) => {
+      const cantidad = inventario.piezas.filter((p) => enCategoria(p, c)).length;
+      const pestana = Object.assign(document.createElement("button"), { className: "categoria", title: `${c.nombre} (${cantidad})` });
       pestana.setAttribute("role", "tab");
-      pestana.setAttribute("aria-selected", String(g === grupo));
-      pestana.classList.toggle("con-pieza", g.partes.some((p) => lookActual.partes[p]));
-      pestana.append(etiqueta(g.icono, "icono-grupo"), etiqueta(g.nombre, "nombre-grupo"));
+      pestana.setAttribute("aria-selected", String(c === categoria));
+      pestana.append(etiqueta(c.icono, "icono-categoria"), etiqueta(String(cantidad), "cantidad-categoria"), etiqueta(c.nombre, "nombre-categoria"));
       pestana.addEventListener("click", () => {
-        if (g === grupo) return;
-        parteElegida = g.partes.find((p) => lookActual.partes[p]) ?? g.partes[0];
-        paginaGrilla = null;
-        mostrarLook();
+        inventario.categoria = c.id;
+        inventario.pagina = 0;
+        mostrarInventario();
       });
       return pestana;
     })
   );
-  $("partes-grupo").replaceChildren(
-    ...grupo.partes.map((id) => {
-      const ruta = lookActual.partes[id];
-      const ficha = Object.assign(document.createElement("button"), { className: "parte-grupo", textContent: nombreDeParte(id) });
-      ficha.title = ruta ? `${nombreDeParte(id)}: ${claseDeRuta(ruta)}` : `${nombreDeParte(id)}: vacío`;
-      ficha.setAttribute("aria-pressed", String(id === parteElegida));
-      ficha.classList.toggle("con-pieza", Boolean(ruta));
-      ficha.addEventListener("click", () => {
-        parteElegida = id;
-        paginaGrilla = null;
-        mostrarLook();
-      });
-      return ficha;
-    })
-  );
-}
 
-function mostrarLook() {
-  $("nombre-look").value = lookActual.nombre;
-  $("buscar-base-look").value = lookActual.base ?? "";
-  mostrarPartes();
-  cargarIconos(Object.values(lookActual.partes));
-  mostrarGrilla();
-  mostrarEncode(null);
-  dibujarGaturro();
-}
-
-// --- Grilla del inventario: 5×3 Piezas por página; tocar una la pone en la Parte elegida (y otra vez, la saca) ---
-
-const POR_PAGINA = 15;
-let paginaGrilla = null; // null: la que tiene la Pieza puesta en la Parte elegida (o la primera)
-
-function mostrarGrilla() {
-  const texto = $("filtro-piezas").value.trim().toLowerCase();
-  const piezas = piezasLook.filter((p) => p.clase.toLowerCase().includes(texto));
+  const piezas = inventario.piezas.filter((p) => enCategoria(p, categoria) && p.clase.toLowerCase().includes(texto));
   const paginas = Math.max(1, Math.ceil(piezas.length / POR_PAGINA));
-  if (paginaGrilla === null) {
-    const puesta = piezas.findIndex((p) => p.ruta === lookActual.partes[parteElegida]);
-    paginaGrilla = puesta >= 0 ? Math.floor(puesta / POR_PAGINA) : 0;
-  }
-  paginaGrilla = Math.min(Math.max(paginaGrilla, 0), paginas - 1);
-  const visibles = piezas.slice(paginaGrilla * POR_PAGINA, (paginaGrilla + 1) * POR_PAGINA);
-  // La ayuda solo aparece si no hay nada para elegir; si no, va como título de la grilla.
-  $("ayuda-grilla").textContent = !piezasLook.length ? "Elegí un SWF del juego arriba (SWF)." : !piezas.length ? "Ninguna Pieza se llama así." : "";
-  $("grilla-piezas").title = `Tocá una Pieza para ponerla en ${nombreDeParte(parteElegida)}; otra vez, para sacarla.`;
+  inventario.pagina = Math.min(Math.max(inventario.pagina, 0), paginas - 1);
+  const visibles = piezas.slice(inventario.pagina * POR_PAGINA, (inventario.pagina + 1) * POR_PAGINA);
+  const destino = casilleroMarcado ?? (categoria.id === "otros" ? null : categoria.id);
+
   $("grilla-piezas").replaceChildren(
     ...visibles.map((pieza) => {
-      const puesta = lookActual.partes[parteElegida] === pieza.ruta;
-      const boton = Object.assign(document.createElement("button"), { className: "pieza-grilla", title: pieza.clase });
-      boton.setAttribute("aria-label", pieza.clase);
-      boton.setAttribute("aria-pressed", String(puesta));
+      const puesta = destino && lookActual.partes[destino] === pieza.ruta;
+      const enUso = Object.values(lookActual.partes).includes(pieza.ruta);
+      const boton = Object.assign(document.createElement("button"), { className: "pieza-grilla", title: `${pieza.clase} · ${pieza.swf}` });
+      boton.setAttribute("aria-label", `${pieza.clase} de ${pieza.swf}`);
+      boton.setAttribute("aria-pressed", String(Boolean(puesta)));
+      boton.classList.toggle("en-uso", enUso && !puesta);
       boton.disabled = ocupado;
-      boton.addEventListener("click", () => {
-        if (puesta) delete lookActual.partes[parteElegida];
-        else lookActual.partes[parteElegida] = pieza.ruta;
-        mostrarLook();
-      });
+      boton.addEventListener("click", () => ponerPieza(pieza, destino));
       boton.append(elementoIcono(pieza.ruta));
       const li = document.createElement("li");
       li.append(boton);
       return li;
     })
   );
-  $("numero-pagina").textContent = piezas.length ? `${paginaGrilla + 1} / ${paginas}` : "";
-  $("pagina-anterior").disabled = paginaGrilla === 0;
-  $("pagina-siguiente").disabled = paginaGrilla >= paginas - 1;
+  $("ayuda-grilla").textContent = !fuentes.todos && !fuentes.swfs.length
+    ? "Agregá un SWF arriba (+ Agregar SWF) o tocá «Todos»."
+    : !inventario.piezas.length
+      ? ""
+      : !piezas.length
+        ? texto ? "Ninguna Pieza se llama así." : "No hay Piezas de esta categoría en estas fuentes."
+        : !destino
+          ? "Estas Piezas no tienen una Parte propia: tocá primero un casillero del Gaturro."
+          : "";
+  $("numero-pagina").textContent = piezas.length ? `${inventario.pagina + 1} / ${paginas}` : "";
+  $("pagina-anterior").disabled = inventario.pagina === 0;
+  $("pagina-siguiente").disabled = inventario.pagina >= paginas - 1;
+  // Las imágenes de lo que se ve: se preparan por SWF a medida que hacen falta.
   cargarIconos(visibles.map((p) => p.ruta));
+  for (const swf of new Set(visibles.map((p) => p.swf))) prepararIconosDe(swf);
+}
+
+function ponerPieza(pieza, destino) {
+  if (!destino) {
+    avisarLista("Tocá primero el casillero de la Parte donde va esta Pieza.", "advertencia");
+    return;
+  }
+  if (lookActual.partes[destino] === pieza.ruta) delete lookActual.partes[destino];
+  else lookActual.partes[destino] = pieza.ruta;
+  mostrarLook();
 }
 
 $("filtro-piezas").addEventListener("input", () => {
-  paginaGrilla = 0;
-  mostrarGrilla();
+  inventario.pagina = 0;
+  mostrarInventario();
 });
 $("pagina-anterior").addEventListener("click", () => {
-  paginaGrilla--;
-  mostrarGrilla();
+  inventario.pagina--;
+  mostrarInventario();
 });
 $("pagina-siguiente").addEventListener("click", () => {
-  paginaGrilla++;
-  mostrarGrilla();
+  inventario.pagina++;
+  mostrarInventario();
+});
+$("todas-las-fuentes").addEventListener("click", () => {
+  fuentes.todos = !fuentes.todos;
+  guardarFuentes();
+  cargarInventario();
+});
+crearDesplegable({
+  campo: $("agregar-fuente"),
+  lista: $("resultados-fuente"),
+  consultar: async (t) => (await api().buscar_en_catalogo(t)).swfs.filter((s) => !fuentes.swfs.includes(s.swf)).slice(0, 80),
+  fila: ({ swf, items }) => [etiqueta(swf, "nombre"), etiqueta(contarItems(items), "ayuda")],
+  elegir: ({ swf }) => {
+    fuentes = { todos: false, swfs: [...fuentes.swfs, swf] };
+    guardarFuentes();
+    $("agregar-fuente").value = "";
+    cargarInventario();
+  },
+  vacio: "No hay SWF con ese nombre.",
 });
 
 // --- El Gaturro original del juego con las Piezas del Look ---
@@ -771,28 +888,68 @@ async function dibujarGaturro() {
     return;
   }
   $("imagen-gaturro").src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(resultado.svg);
-  const clases = (rutas) => rutas.map((r) => r.slice(r.lastIndexOf(".") + 1)).join(", ");
+  const clases = (rutas) => rutas.map(claseDeRuta).join(", ");
   const avisos = resultado.aviso ? [resultado.aviso] : [];
   if (resultado.sin_lugar.length) avisos.push(`No se dibuja: ${clases(resultado.sin_lugar)}.`);
   if (resultado.sin_imagen.length) avisos.push(`Sin imagen: ${clases(resultado.sin_imagen)}.`);
   $("estado-gaturro").replaceChildren(...avisos.map((a) => etiqueta(a, "aviso-gaturro")));
 }
 
-async function usarPiezasLookDe(swf) {
-  // "SWF:" abre ese SWF: de ahí salen las Piezas y el Item base (al abrirse, se vuelve a llamar).
-  if (swf !== swfAbiertoActual) return abrirDelCatalogo(swf);
-  $("buscar-swf-look").value = swf;
-  if (swf === swfPiezasLook) return;
-  const resultado = await mientras(`Leyendo las Piezas de ${swf}…`, () => api().piezas(swf));
-  if (!resultado.ok) return avisarLista(resultado.error, "error");
-  swfPiezasLook = swf;
-  piezasLook = resultado.piezas;
-  $("filtro-piezas").value = "";
-  paginaGrilla = null;
-  avisarLista(`${piezasLook.length} Piezas de ${swf} para elegir.`, "exito");
-  mostrarLook();
+// --- Dónde se guarda el Look (Item base): cualquier Prenda o Item de mochila de cualquier SWF ---
+
+let basesDelSwf = []; // [{ruta, clase, tipo}]
+
+function mostrarBases() {
+  const texto = $("filtro-base").value.trim().toLowerCase();
+  const visibles = basesDelSwf.filter((b) => b.clase.toLowerCase().includes(texto)).slice(0, 200);
+  $("lista-bases").replaceChildren(
+    ...visibles.map((b) => {
+      const li = document.createElement("li");
+      const boton = Object.assign(document.createElement("button"), { className: "fila-base", title: b.ruta });
+      boton.setAttribute("aria-pressed", String(lookActual.base === b.ruta));
+      boton.append(...filaDeBase(b));
+      boton.addEventListener("click", () => {
+        lookActual.base = b.ruta;
+        $("dialogo-base").close();
+        mostrarLook();
+      });
+      li.append(boton);
+      return li;
+    })
+  );
+  cargarIconos(visibles.map((b) => b.ruta));
+}
+
+async function usarBasesDe(swf) {
+  $("swf-base").value = swf;
+  avisar($("mensaje-base"), `Leyendo los Items base de ${swf}… (la primera vez tarda unos segundos)`);
+  const resultado = await api().items_base(swf);
+  if (!resultado.ok) return avisar($("mensaje-base"), resultado.error, "error");
+  basesDelSwf = resultado.items;
+  avisar($("mensaje-base"), basesDelSwf.length ? "" : "Este SWF no tiene Prendas ni Items de mochila.", "advertencia");
+  mostrarBases();
   prepararIconosDe(swf);
 }
+
+$("cambiar-base").addEventListener("click", () => {
+  $("dialogo-base").showModal();
+  $("filtro-base").value = "";
+  const swf = lookActual.base ? swfDeRuta(lookActual.base) : fuentes.swfs[0];
+  if (swf) usarBasesDe(swf);
+  else $("swf-base").focus();
+});
+crearDesplegable({
+  campo: $("swf-base"),
+  lista: $("resultados-swf-base"),
+  consultar: async (t) => (await api().buscar_en_catalogo(t)).swfs.slice(0, 80),
+  fila: ({ swf, items }) => [etiqueta(swf, "nombre"), etiqueta(contarItems(items), "ayuda")],
+  elegir: ({ swf }) => usarBasesDe(swf),
+  vacio: "No hay SWF con ese nombre.",
+});
+$("filtro-base").addEventListener("input", mostrarBases);
+$("cerrar-base").addEventListener("click", () => $("dialogo-base").close());
+
+// --- Guardar, descartar, borrar, duplicar ---
 
 async function guardarLook() {
   const resultado = await api().guardar_look(lookActual);
@@ -819,43 +976,47 @@ async function borrarLook() {
   await cargarLooks();
 }
 
+// --- Aplicar y agregar al juego (barra de abajo) ---
+
+function mostrarBarraLook() {
+  const n = Object.keys(lookActual.partes).length;
+  const listo = conectado && !ocupado;
+  $("aplicar-look").disabled = !listo || !n;
+  $("entregar-look").disabled = $("ver-encode").disabled = !listo || !$("encode").value;
+  $("resumen-look").textContent = $("encode").value ? $("resumen").textContent : n ? "Tocá «Aplicar Look» para generar el Encode." : "Elegí las Piezas del Look.";
+}
+
 async function aplicarLook() {
   const resultado = await mientras("Aplicando el Look… (tarda unos segundos)", () => api().aplicar_look(lookActual));
   if (!resultado.ok) return avisarLista(resultado.error, "error");
-  avisarLista(resultado.look.base_propuesta ? `Se usó ${resultado.look.base} como Item base.` : "");
   mostrarEncode(resultado);
-  avisarEncode("Look aplicado. Tocá «Agregar al juego» para recibirlo.", "exito");
+  avisarLista(
+    (resultado.look.base_propuesta ? `Se usó ${resultado.look.base} como Item base. ` : "") + "Look aplicado: tocá «Agregar al juego» para recibirlo.",
+    "exito"
+  );
+  mostrarBarraLook();
 }
+
+$("aplicar-look").addEventListener("click", aplicarLook);
+$("entregar-look").addEventListener("click", entregar);
+$("ver-encode").addEventListener("click", () => {
+  $("resumen-ver-encode").textContent = $("resumen").textContent;
+  $("texto-ver-encode").value = $("encode").value;
+  $("dialogo-ver-encode").showModal();
+});
+$("copiar-look").addEventListener("click", copiar);
+$("guardar-encode-look").addEventListener("click", guardar);
+$("cerrar-ver-encode").addEventListener("click", () => $("dialogo-ver-encode").close());
 
 $("nombre-look").addEventListener("input", () => {
   lookActual.nombre = $("nombre-look").value;
   mostrarEncode(null);
-});
-
-crearDesplegable({
-  campo: $("buscar-base-look"),
-  lista: $("resultados-base-look"),
-  consultar: async (t) => filtrarPorNombre(prendas, t),
-  fila: filaDeBase,
-  elegir: (p) => {
-    lookActual.base = p.ruta;
-    mostrarLook();
-  },
-  vacio: "Nada del SWF abierto se llama así (abrí otro SWF arriba).",
-});
-
-crearDesplegable({
-  campo: $("buscar-swf-look"),
-  lista: $("resultados-swf-look"),
-  consultar: async (t) => (await api().buscar_en_catalogo(t)).swfs.slice(0, 80),
-  fila: ({ swf, items }) => [etiqueta(swf, "nombre"), etiqueta(contarItems(items), "ayuda")],
-  elegir: ({ swf }) => usarPiezasLookDe(swf),
-  vacio: "No hay SWF con ese nombre.",
+  mostrarBarraLook();
 });
 
 $("nuevo-look").addEventListener("click", () => {
   lookActual = nuevoLook();
-  paginaGrilla = null;
+  casilleroMarcado = null;
   mostrarListaLooks();
   mostrarLook();
   $("nombre-look").focus();
@@ -865,7 +1026,6 @@ $("guardar-look").addEventListener("click", guardarLook);
 $("descartar-look").addEventListener("click", () => {
   const guardado = looksGuardados.find((l) => l.id === lookActual.id);
   lookActual = guardado ? structuredClone(guardado) : nuevoLook();
-  paginaGrilla = null;
   mostrarListaLooks();
   mostrarLook();
   avisarLista(guardado ? `Se descartaron los cambios de «${guardado.nombre}».` : "", "exito");
@@ -885,6 +1045,8 @@ $("importar-look").addEventListener("click", async () => {
 });
 $("duplicar-look").addEventListener("click", duplicarLook);
 $("borrar-look").addEventListener("click", borrarLook);
+$("colores-look").addEventListener("click", () => $("dialogo-colores").showModal());
+$("cerrar-colores").addEventListener("click", () => $("dialogo-colores").close());
 $("pestana-looks").addEventListener("click", () => cambiarVista("looks"));
 
 // --- Importar un Encode ---
