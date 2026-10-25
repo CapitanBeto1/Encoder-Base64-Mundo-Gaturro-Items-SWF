@@ -19,7 +19,8 @@ from mgitems.ffdec import FFDecNoDisponible
 from mgitems.fuente import URL_ASSETS, FuenteCDN, SinConexion, SwfNoEncontrado, Version
 from mgitems.gaturro import (
     AVISO_VERSION_ANTERIOR, CLASE_CUERPO, CLASE_PLANTILLA, COLORES, SWF_CUERPO, SWF_PLANTILLA, ImagenesPiezas, componer,
-    completar_con_plantilla, es_version_anterior, nariz_debajo_del_pelo, tiene_color_de_nariz, tiene_lugar,
+    accesorio_2_como_accesorio, completar_con_plantilla, es_version_anterior, nariz_debajo_del_pelo, tiene_color_de_nariz,
+    tiene_lugar,
 )
 from mgitems.iconos import ExportadorFFDec, IconosItems, version_de
 from mgitems.items import (
@@ -735,7 +736,7 @@ class Nucleo:
             plantilla = imagenes.svg(SWF_PLANTILLA, CLASE_PLANTILLA)
             if plantilla:
                 cuerpo = completar_con_plantilla(cuerpo, plantilla)
-        return nariz_debajo_del_pelo(cuerpo)
+        return accesorio_2_como_accesorio(nariz_debajo_del_pelo(cuerpo))
 
     def _preparar_svg(self, imagenes: ImagenesPiezas, swf: str, elegir) -> bool:
         """Exporta (una vez por versión) a SVG las clases de `swf` que `elegir(clases)` devuelve; False si no se pudo."""
