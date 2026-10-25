@@ -1444,3 +1444,16 @@ dialog.dialogo-base { width: min(860px, 94vw); height: min(640px, 90vh); }
 .fila-base .icono { grid-row: 1 / span 2; }
 .fila-base .nombre { grid-column: 2; font-size: 13px; letter-spacing: 0; }
 .fila-base .tipo-mochila, .fila-base .tipo-prenda { grid-column: 2; justify-self: start; margin: 0; font-size: 10px; text-transform: uppercase; }
+
+/* Mochila (naranja) y guardarropa (azul): distintos a simple vista, en las etiquetas y en los filtros. */
+.tipo-mochila, .tipo-prenda { display: inline-block; padding: 1px 8px; border-radius: 8px; font-weight: 900; letter-spacing: 0.02em; }
+.resultados-swf li .tipo-mochila, .fila-base .tipo-mochila { background: #ff9a1f; color: #4a2300; }
+.resultados-swf li .tipo-prenda, .fila-base .tipo-prenda { background: #3d7bd9; color: #fff; }
+.filtros-base { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.filtros-base .filtro-base { align-self: auto; }
+.filtro-tipo { padding: 4px 12px; font-size: 12px; border-radius: 999px; text-transform: none; }
+.filtro-tipo .cantidad-tipo { font-size: 11px; opacity: 0.8; }
+.filtro-mochila { background: #ffe2bd; border-color: #ff9a1f; color: #4a2300; }
+.filtro-guardarropa { background: #d4e4fb; border-color: #3d7bd9; color: #14315e; }
+.filtro-mochila[aria-pressed="true"] { background: #ff9a1f; border-color: #c46a00; color: #2b1400; box-shadow: 0 0 0 3px #fff; }
+.filtro-guardarropa[aria-pressed="true"] { background: #3d7bd9; border-color: #1f4f99; color: #fff; box-shadow: 0 0 0 3px #fff; }

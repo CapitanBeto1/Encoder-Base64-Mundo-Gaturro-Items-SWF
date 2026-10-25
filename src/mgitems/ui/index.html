@@ -286,10 +286,14 @@
           <ul id="resultados-swf-base" class="resultados-swf" role="listbox" hidden></ul>
         </div>
       </div>
-      <label class="filtro-base">
-        <span aria-hidden="true">🔍</span>
-        <input id="filtro-base" type="search" spellcheck="false" autocomplete="off" placeholder="Buscar en este SWF por nombre" aria-label="Buscar los Items base de este SWF por nombre">
-      </label>
+      <div class="filtros-base">
+        <label class="filtro-base">
+          <span aria-hidden="true">🔍</span>
+          <input id="filtro-base" type="search" spellcheck="false" autocomplete="off" placeholder="Buscar en este SWF por nombre" aria-label="Buscar los Items base de este SWF por nombre">
+        </label>
+        <button type="button" id="solo-mochila" class="filtro-tipo filtro-mochila" aria-pressed="false" title="Mostrar solo los Items de mochila (consumibles)">🎒 Mochila <span class="cantidad-tipo"></span></button>
+        <button type="button" id="solo-guardarropa" class="filtro-tipo filtro-guardarropa" aria-pressed="false" title="Mostrar solo las Prendas (guardarropa)">👕 Guardarropa <span class="cantidad-tipo"></span></button>
+      </div>
       <ul id="lista-bases" class="lista-bases"></ul>
       <p id="mensaje-base" class="mensaje" role="status" aria-live="polite"></p>
       <div class="acciones">

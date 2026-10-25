@@ -458,7 +458,10 @@ function filtrarPorNombre(lista, texto, nombreDe = (o) => o.clase) {
 
 const filaConImagen = (o) => [elementoIcono(o.ruta), etiqueta(o.clase, "nombre")];
 // Un Item base: dónde queda en el juego.
-const filaDeBase = (o) => [...filaConImagen(o), etiqueta(o.tipo === "mochila" ? "mochila" : "guardarropa", `ayuda tipo-${o.tipo}`)];
+const filaDeBase = (o) => [
+  ...filaConImagen(o),
+  etiqueta(o.tipo === "mochila" ? "🎒 mochila" : "👕 guardarropa", `ayuda tipo-${o.tipo === "mochila" ? "mochila" : "prenda"}`),
+];
 
 function mostrarTruco() {
   const caja = $("resumen-truco");
@@ -1148,9 +1151,21 @@ $("cerrar-colores").addEventListener("click", () => $("dialogo-colores").close()
 
 let basesDelSwf = []; // [{ruta, clase, tipo}]
 
+// Filtros por tipo: con uno activo se ve solo ese tipo; sin ninguno (o con los dos), todos.
+function tiposVisibles() {
+  const tipos = [["mochila", $("solo-mochila")], ["prenda", $("solo-guardarropa")]]
+    .filter(([, boton]) => boton.getAttribute("aria-pressed") === "true")
+    .map(([tipo]) => tipo);
+  return tipos.length ? tipos : ["mochila", "prenda"];
+}
+
 function mostrarBases() {
   const texto = $("filtro-base").value.trim().toLowerCase();
-  const visibles = basesDelSwf.filter((b) => b.clase.toLowerCase().includes(texto)).slice(0, 200);
+  const porNombre = basesDelSwf.filter((b) => b.clase.toLowerCase().includes(texto));
+  $("solo-mochila").querySelector(".cantidad-tipo").textContent = `(${porNombre.filter((b) => b.tipo === "mochila").length})`;
+  $("solo-guardarropa").querySelector(".cantidad-tipo").textContent = `(${porNombre.filter((b) => b.tipo !== "mochila").length})`;
+  const tipos = tiposVisibles();
+  const visibles = porNombre.filter((b) => tipos.includes(b.tipo === "mochila" ? "mochila" : "prenda")).slice(0, 200);
   $("lista-bases").replaceChildren(
     ...visibles.map((b) => {
       const li = document.createElement("li");
@@ -1169,10 +1184,16 @@ function mostrarBases() {
   cargarIconos(visibles.map((b) => b.ruta));
 }
 
+// Si se elige otro SWF antes de que llegue la respuesta, la vieja se descarta.
+let pedidoBases = 0;
 async function usarBasesDe(swf) {
+  const pedido = ++pedidoBases;
   $("swf-base").value = swf;
+  basesDelSwf = [];
+  mostrarBases();
   avisar($("mensaje-base"), `Leyendo los Items base de ${swf}… (la primera vez tarda unos segundos)`);
   const resultado = await api().items_base(swf);
+  if (pedido !== pedidoBases) return;
   if (!resultado.ok) return avisar($("mensaje-base"), resultado.error, "error");
   basesDelSwf = resultado.items;
   avisar($("mensaje-base"), basesDelSwf.length ? "" : "Este SWF no tiene Prendas ni Items de mochila.", "advertencia");
@@ -1196,6 +1217,12 @@ crearDesplegable({
   vacio: "No hay SWF con ese nombre.",
 });
 $("filtro-base").addEventListener("input", mostrarBases);
+for (const boton of [$("solo-mochila"), $("solo-guardarropa")]) {
+  boton.addEventListener("click", () => {
+    boton.setAttribute("aria-pressed", String(boton.getAttribute("aria-pressed") !== "true"));
+    mostrarBases();
+  });
+}
 $("cerrar-base").addEventListener("click", () => $("dialogo-base").close());
 
 // --- Guardar, descartar, borrar, duplicar ---
