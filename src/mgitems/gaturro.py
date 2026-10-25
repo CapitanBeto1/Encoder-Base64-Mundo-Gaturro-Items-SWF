@@ -35,8 +35,7 @@ PARTES = ["hats", "hairs", "mouths", "neck", "accesories", "accesories2", "cloth
           "foot", "arm", "armFore", "armBack", "glove", "gloveFore", "gloveBack", "grip", "gripFore", "gripBack"]
 
 # La versión actual no está publicada sin cifrar.
-AVISO_VERSION_ANTERIOR = ("Gaturro de una versión anterior del juego: la nariz y «Accesorio 2» pueden verse distinto. "
-                          "La Espalda va donde la pone la plantilla de 2025 del juego.")
+AVISO_VERSION_ANTERIOR = "Gaturro de una versión anterior del juego: la nariz y «Accesorio 2» pueden verse distinto."
 
 # Colores de fábrica del juego (ColorPickerModal): pelaje, panza y ojos.
 COLORES = {"color1": "#FFF200", "color2": "#DDB42D", "color3": "#FFFFFF"}
