@@ -1149,6 +1149,94 @@ main.modo-looks .buscador-swf { display: none; }
 .fila-base .tipo-mochila, .fila-base .tipo-prenda { margin-left: auto; }
 .fila-base[aria-pressed="true"] { background: var(--amarillo); }
 #texto-ver-encode { min-height: 120px; }
-.colores-gaturro { display: flex; gap: 14px; }
-.colores-gaturro label { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 12px; }
-.colores-gaturro input { width: 48px; height: 32px; padding: 0; border: 2px solid #2a5d74; border-radius: 6px; cursor: pointer; }
+
+/* --- "Elige tus colores", como en el juego --- */
+
+dialog.dialogo-colores { width: auto; max-width: 96vw; padding: 0; border: 0; background: transparent; box-shadow: none; overflow: visible; }
+.dialogo-colores::backdrop { background: rgba(10, 14, 30, 0.6); }
+.pantalla-colores { display: flex; align-items: stretch; gap: 16px; }
+.escena-colores { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 10px; }
+.escena-colores img { width: 300px; aspect-ratio: 1; }
+.acciones-colores { display: flex; gap: 10px; }
+.dialogo-colores .pastilla-colores {
+  padding: 8px 22px;
+  border-radius: 12px;
+  background: #4a5683;
+  border: 3px solid #8e9bc4;
+  color: #fff;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  box-shadow: none;
+}
+.dialogo-colores .pastilla-colores:hover:not(:disabled) { background: #5b689a; }
+
+.dialogo-colores .panel-colores {
+  flex: none;
+  width: 560px;
+  padding: 14px 18px 18px;
+  border-radius: 18px;
+  background: #222a45;
+  color: #fff;
+}
+.titulo-colores { position: relative; display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.titulo-colores .paleta { font-size: 34px; }
+.titulo-colores h2 { display: flex; flex-direction: column; margin: 0; padding: 0; background: none; font-size: 24px; line-height: 1; color: #fff; }
+.titulo-colores h2 .rojo { color: #ff5a5a; font-size: 20px; }
+.dialogo-colores .cerrar-redondo {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 50%;
+  background: #f04848;
+  border: 3px solid #22283f;
+  color: #22283f;
+  font-size: 18px;
+}
+.selectores-color { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 20px; }
+.selector-color { display: flex; flex-direction: column; gap: 8px; }
+.selector-color.abajo { flex-direction: column-reverse; }
+.dialogo-colores .rotulo-color {
+  white-space: nowrap;
+  align-self: stretch;
+  padding: 5px 10px;
+  border-radius: 14px;
+  background: #2f3858;
+  font-size: 12px;
+  text-align: center;
+  letter-spacing: 0.04em;
+}
+.zona-color { display: flex; gap: 10px; height: 150px; }
+.barra-tono {
+  position: relative;
+  flex: none;
+  width: 12px;
+  border-radius: 6px;
+  background: linear-gradient(to bottom, #f00 0%, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00 100%);
+  cursor: pointer;
+  touch-action: none;
+}
+.cuadro-color {
+  position: relative;
+  flex: 1;
+  border-radius: 4px;
+  background-image: linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, transparent);
+  cursor: crosshair;
+  touch-action: none;
+}
+.marca-color {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.barra-tono .marca-color { left: 50%; background: #e02020; }
+.selector-color.deshabilitado { opacity: 0.35; }
+.selector-color.deshabilitado .zona-color { cursor: not-allowed; }
+.selector-color.deshabilitado .barra-tono, .selector-color.deshabilitado .cuadro-color { cursor: not-allowed; }

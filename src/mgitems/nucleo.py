@@ -17,7 +17,10 @@ from mgitems.entorno import Entorno, Sistema
 from mgitems.entrega import PUERTO_FIDDLER_POR_DEFECTO, QUE_HACER_EN_EL_JUEGO, URL_LOLA, Entrega, PasoFallido, Procesos, SwfTrucado
 from mgitems.ffdec import FFDecNoDisponible
 from mgitems.fuente import URL_ASSETS, FuenteCDN, SinConexion, SwfNoEncontrado, Version
-from mgitems.gaturro import AVISO_VERSION_ANTERIOR, CLASE_CUERPO, SWF_CUERPO, ImagenesPiezas, componer, es_version_anterior, tiene_lugar
+from mgitems.gaturro import (
+    AVISO_VERSION_ANTERIOR, CLASE_CUERPO, COLORES, SWF_CUERPO, ImagenesPiezas, componer, es_version_anterior,
+    tiene_color_de_nariz, tiene_lugar,
+)
 from mgitems.iconos import ExportadorFFDec, IconosItems, version_de
 from mgitems.items import (
     es_ruta_valida,
@@ -714,7 +717,8 @@ class Nucleo:
             else:
                 piezas[parte] = (clase, svg)
         return {"ok": True, "svg": componer(cuerpo, piezas, colores), "sin_imagen": sin_imagen, "sin_lugar": sin_lugar,
-                "aviso": AVISO_VERSION_ANTERIOR if es_version_anterior(cuerpo) else None}
+                "aviso": AVISO_VERSION_ANTERIOR if es_version_anterior(cuerpo) else None,
+                "colores_de_fabrica": COLORES, "color_de_nariz": tiene_color_de_nariz(cuerpo)}
 
     def _cuerpo_gaturro(self) -> str | None:
         """El SVG de `assets.GaturroMC` del primer SWF del juego que lo traiga."""

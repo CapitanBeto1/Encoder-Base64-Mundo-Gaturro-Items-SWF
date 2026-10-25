@@ -267,16 +267,27 @@
     </div>
   </dialog>
 
-  <dialog id="dialogo-colores">
-    <div class="panel">
-      <h2>Colores del Gaturro</h2>
-      <div class="colores-gaturro">
-        <label>Cara <input id="color1" type="color" value="#fff200"></label>
-        <label>Cuerpo <input id="color2" type="color" value="#ddb42d"></label>
-        <label>Ojos <input id="color3" type="color" value="#ffffff"></label>
+  <dialog id="dialogo-colores" class="dialogo-colores">
+    <div class="pantalla-colores">
+      <div class="escena-colores">
+        <img id="gaturro-colores" alt="Tu Gaturro con los colores elegidos">
+        <div class="acciones-colores">
+          <button type="button" id="reiniciar-colores" class="pastilla-colores" title="Volver a los colores de fábrica del juego">REINICIAR</button>
+          <button type="button" id="guardar-colores" class="pastilla-colores">GUARDAR</button>
+        </div>
       </div>
-      <div class="acciones">
-        <button type="button" id="cerrar-colores" class="derecha">Cerrar</button>
+      <div class="panel-colores">
+        <div class="titulo-colores">
+          <span class="paleta" aria-hidden="true">🎨</span>
+          <h2><span>ELIGE</span><span class="rojo">TUS COLORES</span></h2>
+          <button type="button" id="cerrar-colores" class="cerrar-redondo" title="Cerrar sin guardar" aria-label="Cerrar sin guardar">✕</button>
+        </div>
+        <div class="selectores-color">
+          <div class="selector-color" data-color="color1"><span class="rotulo-color">- COLOR DE CARA -</span></div>
+          <div class="selector-color" data-color="color3"><span class="rotulo-color">- COLOR DE OJOS -</span></div>
+          <div class="selector-color abajo" data-color="color2"><span class="rotulo-color">- COLOR DE CUERPO -</span></div>
+          <div class="selector-color abajo" data-color="color4"><span class="rotulo-color">- COLOR DE NARIZ -</span></div>
+        </div>
       </div>
     </div>
   </dialog>
