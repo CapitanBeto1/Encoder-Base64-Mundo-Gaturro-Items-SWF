@@ -274,17 +274,23 @@
     </div>
   </dialog>
 
-  <dialog id="dialogo-base">
+  <dialog id="dialogo-base" class="dialogo-base">
     <div class="panel">
       <h2>¿Dónde se guarda el Look?</h2>
       <p class="ayuda">El Item base es lo que vas a recibir: una Prenda (guardarropa) o un Item de mochila. Puede ser de cualquier SWF.</p>
-      <div class="selector-swf">
-        <input id="swf-base" type="text" spellcheck="false" autocomplete="off" placeholder="SWF, ej: virtualGoods"
-               role="combobox" aria-expanded="false" aria-controls="resultados-swf-base" aria-autocomplete="list">
-        <ul id="resultados-swf-base" class="resultados-swf" role="listbox" hidden></ul>
+      <div class="fila fila-swf-base">
+        <span class="etiqueta-campo">SWF:</span>
+        <div class="selector-swf">
+          <input id="swf-base" type="text" spellcheck="false" autocomplete="off" placeholder="Elegí un SWF del juego, ej: virtualGoods"
+                 role="combobox" aria-expanded="false" aria-controls="resultados-swf-base" aria-autocomplete="list">
+          <ul id="resultados-swf-base" class="resultados-swf" role="listbox" hidden></ul>
+        </div>
       </div>
-      <input id="filtro-base" type="text" spellcheck="false" autocomplete="off" placeholder="Filtrar por nombre" aria-label="Filtrar los Items base">
-      <ul id="lista-bases" class="lista con-iconos lista-bases"></ul>
+      <label class="filtro-base">
+        <span aria-hidden="true">🔍</span>
+        <input id="filtro-base" type="search" spellcheck="false" autocomplete="off" placeholder="Buscar en este SWF por nombre" aria-label="Buscar los Items base de este SWF por nombre">
+      </label>
+      <ul id="lista-bases" class="lista-bases"></ul>
       <p id="mensaje-base" class="mensaje" role="status" aria-live="polite"></p>
       <div class="acciones">
         <button type="button" id="cerrar-base" class="derecha">Cerrar</button>

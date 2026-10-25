@@ -38,7 +38,7 @@ class ExportadorFFDec:
         ids = ",".join(str(i) for i in simbolos)
         cuadros = ",".join(f"{i}:1" for i in simbolos)
         zoom = ("-zoom", str(ZOOM)) if formato == "png" else ()
-        with tempfile.TemporaryDirectory(prefix="mgitems-") as temporal:
+        with tempfile.TemporaryDirectory(prefix="mgitems-", ignore_cleanup_errors=True) as temporal:
             self._ffdec.ejecutar(
                 "-selectid", ids, "-select", cuadros, *zoom,
                 "-format", f"sprite:{formato}", "-export", "sprite", temporal, str(swf),
@@ -74,7 +74,7 @@ class IconosItems:
         carpeta = self._carpeta_swf(swf)
         if carpeta.exists():
             shutil.rmtree(carpeta)
-        with tempfile.TemporaryDirectory(prefix="mgitems-") as temporal:
+        with tempfile.TemporaryDirectory(prefix="mgitems-", ignore_cleanup_errors=True) as temporal:
             archivo = Path(temporal) / "assets.swf"
             archivo.write_bytes(data)
             self._exportador.exportar(archivo, simbolos, carpeta, self.FORMATO)
