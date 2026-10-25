@@ -12,6 +12,8 @@ from pathlib import Path
 
 _RUTA = re.compile(r"^[A-Za-z0-9_\-]+(?:/[A-Za-z0-9_\-]+)*\.[A-Za-z_][A-Za-z0-9_]*$")
 _PARTE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+_COLOR = re.compile(r"^#[0-9a-fA-F]{6}$")
+_CLAVES_COLOR = {"color1", "color2", "color3"}
 
 
 class LookInvalido(ValueError):
@@ -24,6 +26,9 @@ class Look:
     base: str | None  # ruta de la Prenda base: "clothes1.remera5"; None si todavía no se eligió
     partes: dict[str, str] = field(default_factory=dict)  # Parte del cuerpo → ruta de la Pieza
     id: str = ""
+    # Colores del Gaturro con los que se ve el Look en el programa (cara, cuerpo, ojos: "#RRGGBB");
+    # los que falten, los de fábrica. Solo para la vista previa: no cambian lo que se entrega al juego.
+    colores: dict[str, str] = field(default_factory=dict)
 
     @classmethod
     def desde(cls, datos: dict) -> "Look":
@@ -42,7 +47,11 @@ class Look:
         for parte, pieza in partes.items():
             if not _PARTE.match(str(parte)) or not _RUTA.match(str(pieza)):
                 raise LookInvalido(f"Pieza no válida: {parte} → {pieza}")
-        return cls(nombre, base, {str(p): str(v) for p, v in partes.items()}, str(datos.get("id") or ""))
+        colores = datos.get("colores") or {}
+        if not isinstance(colores, dict) or any(c not in _CLAVES_COLOR or not isinstance(v, str) or not _COLOR.match(v)
+                                                for c, v in colores.items()):
+            raise LookInvalido("Los colores del Look no tienen la forma esperada.")
+        return cls(nombre, base, {str(p): str(v) for p, v in partes.items()}, str(datos.get("id") or ""), dict(colores))
 
 
 FORMATO = "mgitems-look"
@@ -51,7 +60,8 @@ VERSION_FORMATO = 1
 
 def archivo_de_look(look: Look) -> str:
     """El contenido de un archivo de Look: el Look sin su id (es de cada jugador)."""
-    datos = {"formato": FORMATO, "version": VERSION_FORMATO, "nombre": look.nombre, "base": look.base, "partes": look.partes}
+    datos = {"formato": FORMATO, "version": VERSION_FORMATO, "nombre": look.nombre, "base": look.base, "partes": look.partes,
+             "colores": look.colores}
     return json.dumps(datos, ensure_ascii=False, indent=1)
 
 
@@ -65,7 +75,7 @@ def look_de_archivo(contenido: str) -> Look:
         raise LookInvalido("Este archivo no es un Look de MG Items.")
     if not isinstance(datos.get("version"), int) or datos["version"] > VERSION_FORMATO:
         raise LookInvalido("Este Look es de una versión más nueva de MG Items: actualizá el programa.")
-    look = Look.desde({k: datos.get(k) for k in ("nombre", "base", "partes")})
+    look = Look.desde({k: datos.get(k) for k in ("nombre", "base", "partes", "colores")})
     if not look.partes:
         raise LookInvalido("El Look del archivo no tiene Piezas.")
     return look

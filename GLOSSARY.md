@@ -39,7 +39,7 @@ Un Item usable o consumible (poción, bebida, comida) que queda en la mochila; a
 _Avoid_: consumible (a secas), objeto de mochila
 
 **Look** _(provisional)_:
-Un conjunto de Piezas asignadas a varias Partes del cuerpo a la vez, con nombre, que se materializa en el juego como un Item base modificado (normalmente un Item de mochila). Se guarda y se comparte como archivo; con él se puede volver a generar.
+Un conjunto de Piezas asignadas a varias Partes del cuerpo a la vez, con nombre, que se materializa en el juego como un Item base modificado (normalmente un Item de mochila). Se guarda y se comparte como archivo; con él se puede volver a generar. Guarda también los colores con los que se ve el Gaturro en el programa (solo para mostrarlo; no cambian lo que se recibe en el juego).
 _Avoid_: Outfit, conjunto
 
 **Archivo de Look**:

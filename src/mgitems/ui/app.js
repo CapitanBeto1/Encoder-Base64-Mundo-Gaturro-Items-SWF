@@ -568,7 +568,7 @@ let partesConocidas = []; // [{id, nombre}]
 let iconosPreparados = new Set(); // SWF cuyas imágenes ya se pidieron preparar
 
 function nuevoLook() {
-  return { id: "", nombre: "", base: null, partes: {} };
+  return { id: "", nombre: "", base: null, partes: {}, colores: {} };
 }
 
 async function prepararIconosDe(swf) {
@@ -617,7 +617,7 @@ function mostrarGrillaLooks() {
     boton.append(miniatura, etiqueta(look.nombre, "nombre-casillero-look"));
     boton.addEventListener("click", () => elegirLook(look.id));
     boton.addEventListener("dblclick", () => equiparLook(look.id));
-    pedirGaturro(miniatura, coloresGaturro, look.partes);
+    pedirGaturro(miniatura, coloresDe(look), look.partes);
     li.append(boton);
     return li;
   });
@@ -633,7 +633,7 @@ function mostrarLookElegido() {
   $("nombre-look-elegido").textContent = look ? look.nombre : "Tocá un Look para verlo";
   $("equipar-look").disabled = $("exportar-look").disabled = $("duplicar-look").disabled = $("eliminar-look-elegido").disabled = !look;
   $("gaturro-mis-looks").hidden = !look;
-  if (look) pedirGaturro($("gaturro-mis-looks"), coloresGaturro, look.partes);
+  if (look) pedirGaturro($("gaturro-mis-looks"), coloresDe(look), look.partes);
 }
 
 function elegirLook(id) {
@@ -933,14 +933,12 @@ crearDesplegable({
 
 // --- El Gaturro original del juego con las Piezas del Look ---
 
-// Colores del jugador (como en el juego: cara, cuerpo, ojos). Se recuerdan en esta computadora.
+// Colores del Gaturro (como en el juego: cara, cuerpo, ojos). Cada Look tiene los suyos; los que no
+// tiene, los de fábrica del juego.
 let coloresDeFabrica = { color1: "#FFF200", color2: "#DDB42D", color3: "#FFFFFF" };
-let coloresGaturro = { ...coloresDeFabrica };
 let tieneColorDeNariz = false;
-try {
-  const guardados = JSON.parse(localStorage.getItem("coloresGaturro") || "{}");
-  for (const [c, valor] of Object.entries(guardados)) if (c in coloresGaturro && /^#[0-9a-f]{6}$/i.test(valor)) coloresGaturro[c] = valor;
-} catch {}
+const CLAVES_COLOR = ["color1", "color2", "color3"];
+const coloresDe = (look) => ({ ...coloresDeFabrica, ...(look?.colores ?? {}) });
 
 // Si se piden varios seguidos, se muestra solo el último (cada imagen lleva su propio contador).
 const pedidosGaturro = new Map();
@@ -998,7 +996,7 @@ async function pedirGaturro(img, colores, partes = lookActual.partes) {
 
 async function dibujarGaturro() {
   const espera = setTimeout(() => ($("estado-gaturro").textContent = "Preparando las imágenes…"), 400);
-  const resultado = await pedirGaturro($("imagen-gaturro"), coloresGaturro);
+  const resultado = await pedirGaturro($("imagen-gaturro"), coloresDe(lookActual));
   clearTimeout(espera);
   if (!resultado) return;
   if (!resultado.ok) {
@@ -1105,7 +1103,7 @@ function mostrarSelectoresColor() {
 }
 
 $("colores-look").addEventListener("click", () => {
-  coloresEnEdicion = { ...coloresGaturro };
+  coloresEnEdicion = coloresDe(lookActual);
   mostrarSelectoresColor();
   $("gaturro-colores").src = $("imagen-gaturro").src;
   $("dialogo-colores").showModal();
@@ -1115,13 +1113,12 @@ $("reiniciar-colores").addEventListener("click", () => {
   mostrarSelectoresColor();
   pedirGaturro($("gaturro-colores"), coloresEnEdicion);
 });
+// GUARDAR: los colores pasan a ser del Look abierto (se guardan con ✓, como cualquier cambio del Look).
 $("guardar-colores").addEventListener("click", () => {
-  coloresGaturro = { ...coloresEnEdicion };
-  try {
-    localStorage.setItem("coloresGaturro", JSON.stringify(coloresGaturro));
-  } catch {}
+  lookActual.colores = Object.fromEntries(CLAVES_COLOR.map((c) => [c, coloresEnEdicion[c]]));
   $("dialogo-colores").close();
   dibujarGaturro();
+  avisarLista(lookActual.id ? "Colores cambiados: tocá ✓ para guardarlos en el Look." : "Colores cambiados.", "exito");
 });
 $("cerrar-colores").addEventListener("click", () => $("dialogo-colores").close());
 
