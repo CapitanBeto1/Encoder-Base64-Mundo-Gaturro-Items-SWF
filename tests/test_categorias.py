@@ -191,3 +191,40 @@ def test_un_swf_que_no_existe_no_impide_los_demas(tmp_path, fuente, ffdec):
 
 def test_swfs_con_forma_invalida(tmp_path, fuente, ffdec):
     assert not nucleo_con(tmp_path, fuente, ffdec, {}).piezas_de_swfs("clothes1")["ok"]
+
+
+def test_los_items_de_un_swf_con_su_tipo(tmp_path, ffdec):
+    ffdec.codigo |= {
+        "pocima1": codigo_mochila("pocima1", "ConsumableMamboAsset", '         adds.hats = "varios.gorro1_on";'),
+        "skate1": clase_con("skate1", "TransportMamboAsset", 'vehicle = "skate1_on";'),
+        "silla1": clase_con("silla1", "HolderMamboAsset", ""),
+        "perroPirata": clase_con("perroPirata", "PetClothMamboAsset", 'clothes = {"hats":"varios.perro_gorroPirata_on"};'),
+        "remera5": codigo_prenda("remera5", {"cloth": "remera5_on", "arm": "remera5_brazo_on"}),
+        "ClothMamboAsset": clase_con("ClothMamboAsset", "GrabbableMamboAsset", ""),  # la clase base que trae el SWF
+    }
+    fuente = FuenteFalsa({"varios": crear_swf([
+        "pocima1", "skate1", "silla1", "perroPirata", "remera5", "remera5_on", "ClothMamboAsset", "evento1"])})
+
+    resultado = nucleo_con(tmp_path, fuente, ffdec, {}).items_de_swfs(["varios"])
+
+    assert resultado["ok"], resultado
+    assert {i["ruta"]: (i["tipo"], i["partes"]) for i in resultado["items"]} == {
+        "varios.perroPirata": ("mascota", []),
+        "varios.pocima1": ("mochila", []),
+        "varios.remera5": ("prenda", ["arm", "cloth"]),
+        "varios.silla1": ("casa", []),
+        "varios.skate1": ("transporte", []),
+    }
+
+
+def test_los_items_vienen_del_indice(tmp_path, fuente, ffdec):
+    nucleo = nucleo_con(tmp_path, fuente, ffdec, {"costumes": {
+        "version": "x", "piezas": {}, "items": {"coronaRey": {"tipo": "prenda", "partes": ["hats"]}, "trono": {"tipo": "casa"}}}})
+
+    resultado = nucleo.items_de_swfs(["costumes"])
+
+    assert resultado["items"] == [
+        {"ruta": "costumes.coronaRey", "clase": "coronaRey", "swf": "costumes", "tipo": "prenda", "partes": ["hats"]},
+        {"ruta": "costumes.trono", "clase": "trono", "swf": "costumes", "tipo": "casa", "partes": []},
+    ]
+    assert fuente.descargas == [] and ffdec.analisis == 0

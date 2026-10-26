@@ -44,6 +44,9 @@ class Puente:
     def piezas_de_swfs(self, swfs: list | None = None) -> dict:
         return self._nucleo.piezas_de_swfs(swfs)
 
+    def items_de_swfs(self, swfs: list | None = None) -> dict:
+        return self._nucleo.items_de_swfs(swfs)
+
     def piezas(self, swf: str | None = None) -> dict:
         return self._nucleo.piezas(swf)
 
