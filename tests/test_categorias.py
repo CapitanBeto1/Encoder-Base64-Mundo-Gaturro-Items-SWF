@@ -8,6 +8,7 @@ from mgitems.nucleo import Nucleo
 from fuente_falsa import FuenteFalsa
 from sistema_falso import SistemaFalso
 from swf_de_ejemplo import crear_swf
+from test_mochila import codigo_mochila
 from test_prendas import CLASES, COSTUMES, PrendasFalsas, codigo_prenda
 
 CLOTHES1 = crear_swf(CLASES)
@@ -70,6 +71,29 @@ def test_un_swf_fuera_del_indice_se_analiza_y_se_recuerda(tmp_path, fuente, ffde
 
     assert otra_vez["piezas"] == resultado["piezas"]
     assert ffdec.analisis == 1  # se recordó
+
+
+def test_lo_que_viste_un_item_de_mochila_tiene_parte(tmp_path, ffdec):
+    # Como una pócima que al tomarla te pone un sombrero: la animación al tomarla no viste.
+    ffdec.codigo["pocima1"] = codigo_mochila("pocima1", "ConsumableMamboAsset", '''         adds.action = "drink.bruja.pocima1_on";
+         adds.hats = "bruja.sombrero1_on";''')
+    fuente = FuenteFalsa({"bruja": crear_swf(["pocima1", "pocima1_on", "sombrero1_on"])})
+
+    piezas = por_ruta(nucleo_con(tmp_path, fuente, ffdec, {}).piezas_de_swfs(["bruja"]))
+
+    assert piezas["bruja.sombrero1_on"]["partes"] == ["hats"]
+    assert piezas["bruja.pocima1_on"]["partes"] == []
+
+
+def test_lo_clasificado_con_la_forma_anterior_se_vuelve_a_clasificar(tmp_path, fuente, ffdec):
+    nucleo_con(tmp_path, fuente, ffdec, {}).piezas_de_swfs(["clothes1"])
+    [guardado] = (tmp_path / "sistema").rglob("categorias/clothes1.json")
+    anterior = json.loads(guardado.read_text(encoding="utf-8"))
+    guardado.write_text(json.dumps({"version": anterior["version"], "piezas": {"remera5_on": ["leg"]}}), encoding="utf-8")
+
+    resultado = nucleo_con(tmp_path, fuente, ffdec, {}).piezas_de_swfs(["clothes1"])
+
+    assert por_ruta(resultado)["clothes1.remera5_on"]["partes"] == ["cloth", "clothBack"]
 
 
 def test_una_copia_de_otra_version_que_el_indice_se_analiza(tmp_path, fuente, ffdec):
