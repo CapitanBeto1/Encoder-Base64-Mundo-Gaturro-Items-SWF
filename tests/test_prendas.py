@@ -73,6 +73,10 @@ class PrendasFalsas(ItemsBaseFFDec):
         prendas = (leer_item_base(self.codigo[c]) for c in clases if c in self.codigo)
         return {p.clase: p for p in prendas if p}
 
+    def fuentes(self, data, clases):
+        self.analisis += 1
+        return {c: self.codigo[c] for c in clases if c in self.codigo}
+
     def trucar(self, data, clase, fuente, partes):
         if self.falla:
             raise TruqueoFallido("El SWF trucado no quedó con las Piezas elegidas")

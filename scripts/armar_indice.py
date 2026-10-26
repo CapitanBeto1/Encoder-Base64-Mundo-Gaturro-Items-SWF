@@ -8,15 +8,22 @@ Cada Pieza se ubica con lo primero que corresponda:
 
 1. Lo que la viste en el juego: una Prenda (`clothes`) o un Item de mochila (`adds`), de cualquier SWF.
 2. Si el juego la usa para otra cosa (vehículo de un transporte, animación de un Item de mochila,
-   decoración de la casa, ropa de la mascota), no es ropa: queda en "Otros".
+   decoración de la casa, ropa de la mascota), no es ropa: queda en "Otros" con ese uso. También la
+   ropa de mascota de otro SWF, que empieza como la de la mascota (`mono_`, `dragon_`).
 3. Si otro SWF tiene una Pieza con el mismo nombre y el mismo dibujo, y esa Pieza tiene Parte, es
    la misma Pieza: toma esa Parte.
 4. Si ningún Item la usa: dónde está dibujada respecto del punto donde el juego la pega al Gaturro
    (un sombrero queda arriba, un zapato abajo), más las palabras de su nombre, comparadas con las
-   Piezas ya ubicadas. Solo se usa si la comparación está muy segura; si no, queda en "Otros".
+   Piezas ya ubicadas, si la comparación está muy segura.
+5. Las que quedan (dibujadas para otro cuerpo, como los trajes de los duendes): la Parte más
+   probable entre la que sugiere su dibujo y la que sugiere su nombre leído por partes (`zapatos`
+   como `zapato`, `torsoDuende` con `torso`). Queda en "Otros" solo si el dibujo y el nombre, cada
+   uno por su lado, dicen que no es ropa...
+6. ...salvo que la primera palabra de su nombre casi siempre vaya en la misma Parte en el juego
+   (`remeraGranjero` → Torso, `remeraGranjero_brazo` → Brazos).
 
 Tarda: FFDec analiza cada SWF (unos segundos cada uno). Necesita Java y FFDec en `vendor/`, y
-scikit-learn para el paso 4 (`pip install -e ".[indice]"`).
+scikit-learn para los pasos 4 y 5 (`pip install -e ".[indice]"`).
 
 El análisis de cada SWF se guarda en una carpeta de trabajo (`--trabajo`, por defecto en la carpeta
 temporal): si se corta (por ejemplo, sin internet), al volver a correrlo solo se analiza lo que falta
@@ -41,23 +48,19 @@ RAIZ = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(RAIZ / "src"))
 
 from mgitems.catalogo import cargar_catalogo  # noqa: E402
-from mgitems.categorias import ARCHIVO_INDICE, PARTES_QUE_VISTEN, categorias, usos_de_piezas  # noqa: E402
+from mgitems.categorias import ARCHIVO_INDICE, MASCOTA, categorias, otros_usos, usos_de_piezas  # noqa: E402
 from mgitems.fuente import FuenteCDN, SwfNoEncontrado  # noqa: E402
 from mgitems.iconos import version_de  # noqa: E402
 from mgitems.items import items_del_swf, piezas_del_swf  # noqa: E402
-from mgitems.prendas import MOCHILA, ItemsBaseFFDec, leer_item_base  # noqa: E402
+from mgitems.prendas import ItemsBaseFFDec, leer_item_base  # noqa: E402
 from mgitems.swf import SwfInvalido, leer_clases, limites_de_simbolos  # noqa: E402
 
 # Sube cuando cambia lo que se guarda de cada SWF en la carpeta de trabajo.
-FORMATO_TRABAJO = 3
-# Seguridad mínima para ubicar una Pieza por su dibujo (paso 4). Con 0.7, al probarlo con las
-# Piezas que el juego ya ubica, acertó el 99 %.
+FORMATO_TRABAJO = 4
+# Seguridad mínima para ubicar una Pieza en el paso 4. Con 0.7, al probarlo con las Piezas que el
+# juego ya ubica, acertó el 98-99 %.
 SEGURIDAD_MINIMA = 0.7
-# Items cuya Pieza `<Item>_on` no es ropa del Gaturro.
-PADRES_QUE_NO_VISTEN = {"HouseMamboAsset": "casa", "HouseDecorationMamboAsset": "casa"}
-_CLASE = re.compile(r"\bclass\s+(\w+)\s+extends\s+(\w+)")
-_VEHICULO = re.compile(r'\bvehicle\s*=\s*"([^"]+)"')
-_PIEZA_EN_MAPA = re.compile(r'"\w+"\s*:\s*"([^"]+_on)"')
+NO_ES_ROPA = "otros"
 
 
 def descargar(fuente: FuenteCDN, swf: str, intentos: int = 4) -> bytes:
@@ -72,37 +75,9 @@ def descargar(fuente: FuenteCDN, swf: str, intentos: int = 4) -> bytes:
             time.sleep(5 * (intento + 1))
 
 
-def no_ropa(swf: str, fuentes: dict[str, str]) -> dict[str, dict[str, str]]:
-    """SWF → Pieza → para qué la usa el juego, de las Piezas que los Items de `swf` usan sin vestir."""
-    usos: dict[str, dict[str, str]] = defaultdict(dict)
-
-    def anotar(valor: str, motivo: str) -> None:
-        partes = valor.split(".")  # "pieza", "swf.pieza" o "acción.swf.pieza"
-        usos[partes[-2] if len(partes) > 1 else swf][partes[-1]] = motivo
-
-    for fuente in fuentes.values():
-        clase = _CLASE.search(fuente)
-        if not clase:
-            continue
-        nombre, padre = clase.groups()
-        if padre in PADRES_QUE_NO_VISTEN:
-            anotar(f"{nombre}_on", PADRES_QUE_NO_VISTEN[padre])
-        elif padre == "PetClothMamboAsset":  # su `clothes` viste a la mascota
-            for pieza in _PIEZA_EN_MAPA.findall(fuente):
-                anotar(pieza, "mascota")
-        elif padre == "TransportMamboAsset":
-            for vehiculo in _VEHICULO.findall(fuente):
-                anotar(vehiculo, "transporte")
-        elif (item := leer_item_base(fuente)) and item.tipo == MOCHILA:
-            for parte, valor in item.partes.items():
-                if parte not in PARTES_QUE_VISTEN and valor.endswith("_on"):
-                    anotar(valor, "acción")
-    return usos
-
-
 def analizar(fuente: FuenteCDN, ffdec: ItemsBaseFFDec, trabajo: Path, swf: str) -> tuple[str, dict | None, str]:
-    """(swf, {"version", "piezas", "usos", "no_ropa", "limites"}, error). Reusa el análisis guardado si
-    el SWF no cambió."""
+    """(swf, {"version", "piezas", "usos", "otros_usos", "limites"}, error). Reusa el análisis guardado
+    si el SWF no cambió."""
     try:
         data = descargar(fuente, swf)
     except SwfNoEncontrado:
@@ -131,7 +106,7 @@ def analizar(fuente: FuenteCDN, ffdec: ItemsBaseFFDec, trabajo: Path, swf: str) 
             for destino, piezas in usos_de_piezas(swf, items_base).items()}
     datos = {
         "formato": FORMATO_TRABAJO, "version": version_de(data), "piezas": piezas, "usos": usos,
-        "no_ropa": no_ropa(swf, fuentes), "limites": {p: limites[p] for p in piezas if p in limites},
+        "otros_usos": otros_usos(swf, fuentes), "limites": {p: limites[p] for p in piezas if p in limites},
     }
     guardado.write_text(json.dumps(datos, ensure_ascii=False), encoding="utf-8")
     return swf, datos, ""
@@ -142,16 +117,42 @@ def palabras(pieza: str) -> str:
     return " ".join(p.lower() for p in re.findall(r"[A-Z]?[a-z]+|[A-Z]+(?![a-z])", pieza.removesuffix("_on")))
 
 
-def ubicar_por_dibujo(partes: dict, sin_ropa: set, limites: dict) -> dict[tuple[str, str], tuple[str, float]]:
-    """(SWF, Pieza) → (Parte, seguridad) de las Piezas sin Parte que no se sabe si son ropa (paso 4).
+def primera_palabra(pieza: str) -> tuple[str, bool] | None:
+    """`remeraGranjero_brazo_on` → ("remera", True): la primera palabra y si es una manga."""
+    palabra = re.match(r"[a-z]+", pieza)
+    return (palabra.group(0), "_brazo" in pieza) if palabra else None
 
-    Aprende de las Piezas que el juego ubica en una sola Parte y de las que usa para otra cosa ("otros").
+
+def partes_por_primera_palabra(partes: dict, minimo: int = 10, proporcion: float = 0.8) -> dict:
+    """Primera palabra → Parte, de las palabras que en el juego casi siempre van en la misma Parte
+    (`pantalon` → leg, `remera` con `_brazo` → arm)."""
+    cuentas = defaultdict(Counter)
+    for (_, pieza), ps in partes.items():
+        if len(ps) == 1:
+            cuentas[primera_palabra(pieza)][ps[0]] += 1
+    reglas = {}
+    for palabra, cuenta in cuentas.items():
+        parte, veces = cuenta.most_common(1)[0]
+        if palabra and veces >= minimo and veces / cuenta.total() >= proporcion:
+            reglas[palabra] = parte
+    return reglas
+
+
+def nombre_sin_numeros(pieza: str) -> str:
+    return re.sub(r"\d+", "", pieza.removesuffix("_on")).lower()
+
+
+def ubicar_por_dibujo(partes: dict, usos: dict, limites: dict) -> dict[tuple[str, str], str]:
+    """(SWF, Pieza) → Parte (o NO_ES_ROPA) de las Piezas sin Parte ni uso (pasos 4 y 5).
+
+    Aprende de las Piezas que el juego ubica en una sola Parte y de las que usa para otra cosa.
     """
     from scipy.sparse import csr_matrix, hstack
     from sklearn.ensemble import RandomForestClassifier
-    from sklearn.feature_extraction.text import CountVectorizer
+    from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
+    from sklearn.linear_model import LogisticRegression
 
-    def numeros(claves):
+    def dibujo(claves):
         filas = []
         for clave in claves:
             x0, y0, x1, y1 = limites[clave]
@@ -159,18 +160,40 @@ def ubicar_por_dibujo(partes: dict, sin_ropa: set, limites: dict) -> dict[tuple[
         return csr_matrix(filas)
 
     ejemplos = [(clave, ps[0]) for clave, ps in partes.items() if len(ps) == 1 and clave in limites]
-    ejemplos += [(clave, "otros") for clave in sin_ropa if clave in limites]
-    a_ubicar = [clave for clave, ps in partes.items() if not ps and clave not in sin_ropa and clave in limites]
+    ejemplos += [(clave, NO_ES_ROPA) for clave in usos if clave in limites]
+    a_ubicar = [clave for clave, ps in partes.items() if not ps and clave not in usos and clave in limites]
     if not ejemplos or not a_ubicar:
         return {}
+    claves, etiquetas = [c for c, _ in ejemplos], [e for _, e in ejemplos]
+
+    # Paso 4: dibujo + palabras del nombre, solo si es muy seguro.
     vocabulario = CountVectorizer(token_pattern=r"\S+", binary=True)
-    x = hstack([numeros(c for c, _ in ejemplos), vocabulario.fit_transform(palabras(p) for (_, p), _ in ejemplos)]).tocsr()
-    modelo = RandomForestClassifier(500, n_jobs=-1, random_state=0).fit(x, [parte for _, parte in ejemplos])
-    x = hstack([numeros(a_ubicar), vocabulario.transform(palabras(p) for _, p in a_ubicar)]).tocsr()
+    x = hstack([dibujo(claves), vocabulario.fit_transform(palabras(p) for _, p in claves)]).tocsr()
+    junto = RandomForestClassifier(500, n_jobs=-1, random_state=0).fit(x, etiquetas)
+    probabilidades = junto.predict_proba(hstack([dibujo(a_ubicar), vocabulario.transform(palabras(p) for _, p in a_ubicar)]).tocsr())
+
+    # Paso 5: el dibujo y el nombre por separado, promediados (sirve cuando el dibujo es de otro cuerpo).
+    solo_dibujo = RandomForestClassifier(500, n_jobs=-1, random_state=0).fit(dibujo(claves), etiquetas)
+    trozos = TfidfVectorizer(analyzer="char_wb", ngram_range=(3, 5), min_df=2, sublinear_tf=True)
+    solo_nombre = LogisticRegression(max_iter=3000, C=5).fit(trozos.fit_transform(nombre_sin_numeros(p) for _, p in claves), etiquetas)
+    promedio = (solo_dibujo.predict_proba(dibujo(a_ubicar))
+                + solo_nombre.predict_proba(trozos.transform(nombre_sin_numeros(p) for _, p in a_ubicar))) / 2
+
+    # No es ropa solo si el dibujo y el nombre, cada uno por su lado, dicen que no lo es.
+    clases = list(solo_dibujo.classes_)
+    no_es_ropa = clases.index(NO_ES_ROPA)
+    dice_dibujo = solo_dibujo.predict_proba(dibujo(a_ubicar)).argmax(1) == no_es_ropa
+    dice_nombre = solo_nombre.predict_proba(trozos.transform(nombre_sin_numeros(p) for _, p in a_ubicar)).argmax(1) == no_es_ropa
     ubicadas = {}
-    for clave, probabilidades in zip(a_ubicar, modelo.predict_proba(x)):
-        mejor = probabilidades.argmax()
-        ubicadas[clave] = (modelo.classes_[mejor], float(probabilidades[mejor]))
+    for i, (clave, segura, probable) in enumerate(zip(a_ubicar, probabilidades, promedio)):
+        mejor = segura.argmax()
+        if segura[mejor] >= SEGURIDAD_MINIMA:
+            ubicadas[clave] = junto.classes_[mejor]
+        elif dice_dibujo[i] and dice_nombre[i]:
+            ubicadas[clave] = NO_ES_ROPA
+        else:
+            probable[no_es_ropa] = -1
+            ubicadas[clave] = clases[probable.argmax()]
     return ubicadas
 
 
@@ -186,7 +209,7 @@ def main() -> None:
     args.trabajo.mkdir(parents=True, exist_ok=True)
     analizados, errores = {}, []
     usos: dict[str, dict[str, set[str]]] = defaultdict(lambda: defaultdict(set))
-    sin_ropa = set()
+    otros: dict[tuple[str, str], str] = {}
     with concurrent.futures.ThreadPoolExecutor(args.hilos) as hilos:
         for n, (swf, datos, error) in enumerate(hilos.map(lambda s: analizar(fuente, ffdec, args.trabajo, s), nombres), 1):
             if datos is None:
@@ -196,16 +219,29 @@ def main() -> None:
                 for destino, piezas in datos["usos"].items():
                     for pieza, partes in piezas.items():
                         usos[destino][pieza] |= set(partes)
-                sin_ropa |= {(destino, pieza) for destino, piezas in datos["no_ropa"].items() for pieza in piezas}
+                for destino, piezas in datos["otros_usos"].items():
+                    for pieza, uso in piezas.items():
+                        otros[(destino, pieza)] = uso
             print(f"\r{n}/{len(nombres)} {swf:40}", end="", flush=True)
     print()
 
     # 1. Lo que el juego viste.
     partes = {(swf, pieza): ps for swf, datos in analizados.items()
               for pieza, ps in categorias(datos["piezas"], usos.get(swf, {})).items()}
+    por_palabra = partes_por_primera_palabra(partes)
     limites = {(swf, pieza): tuple(r) for swf, datos in analizados.items() for pieza, r in datos["limites"].items()}
-    sin_ropa = {clave for clave in sin_ropa if clave in partes and not partes[clave]}  # 2. Lo que no es ropa.
-    motivos = Counter({"vestida por un Item": sum(1 for ps in partes.values() if ps), "usada para otra cosa": len(sin_ropa)})
+    otros = {clave: uso for clave, uso in otros.items() if clave in partes and not partes[clave]}  # 2. Lo que no es ropa.
+    motivos = Counter({"vestida por un Item": sum(1 for ps in partes.values() if ps), "usada para otra cosa": len(otros)})
+
+    # 2b. Ropa de mascota de otro SWF: empieza como la de la mascota (`mono_`, `dragon_`).
+    def prefijo(pieza):
+        return pieza.split("_", 1)[0] if "_" in pieza.removesuffix("_on") else None
+    de_ropa = {prefijo(pieza) for (_, pieza), ps in partes.items() if ps}
+    de_mascota = {prefijo(pieza) for (_, pieza), uso in otros.items() if uso == MASCOTA} - de_ropa - {None}
+    for clave, ps in partes.items():
+        if not ps and clave not in otros and prefijo(clave[1]) in de_mascota:
+            otros[clave] = MASCOTA
+            motivos["ropa de mascota por su nombre"] += 1
 
     # 3. La misma Pieza (mismo nombre y mismo dibujo) en otro SWF.
     con_parte = defaultdict(list)
@@ -213,23 +249,36 @@ def main() -> None:
         if ps:
             con_parte[pieza].append((swf, ps))
     for (swf, pieza), ps in partes.items():
-        if ps or (swf, pieza) in sin_ropa or (swf, pieza) not in limites:
+        if ps or (swf, pieza) in otros or (swf, pieza) not in limites:
             continue
         iguales = [ps2 for swf2, ps2 in con_parte.get(pieza, []) if limites.get((swf2, pieza)) == limites[(swf, pieza)]]
         if iguales:
             partes[(swf, pieza)] = iguales[0]
             motivos["misma Pieza en otro SWF"] += 1
 
-    # 4. Dónde está dibujada.
-    for clave, (parte, seguridad) in ubicar_por_dibujo(partes, sin_ropa, limites).items():
-        if parte != "otros" and seguridad >= SEGURIDAD_MINIMA:
+    # 4 y 5. Dónde está dibujada y cómo se llama.
+    for clave, parte in ubicar_por_dibujo(partes, otros, limites).items():
+        if parte != NO_ES_ROPA:
             partes[clave] = [parte]
-            motivos["por su dibujo"] += 1
+            motivos["por su dibujo y su nombre"] += 1
+
+    # 6. Lo que sigue sin Parte ni uso (no parece ropa, o no tiene dibujo): `remeraGranjero` es una remera.
+    for clave, ps in partes.items():
+        if ps or clave in otros:
+            continue
+        parte = por_palabra.get(primera_palabra(clave[1]))
+        if parte and parte != NO_ES_ROPA:
+            partes[clave] = [parte]
+            motivos["por la primera palabra del nombre"] += 1
         else:
-            motivos["sin pista segura"] += 1
+            motivos["no parece ropa"] += 1
 
     indice = {"swfs": {
-        swf: {"version": datos["version"], "piezas": {pieza: partes[(swf, pieza)] for pieza in datos["piezas"]}}
+        swf: {
+            "version": datos["version"],
+            "piezas": {pieza: partes[(swf, pieza)] for pieza in datos["piezas"]},
+            "otros_usos": {pieza: otros[(swf, pieza)] for pieza in datos["piezas"] if (swf, pieza) in otros},
+        }
         for swf, datos in sorted(analizados.items(), key=lambda s: s[0].lower())
     }}
     ARCHIVO_INDICE.write_text(json.dumps(indice, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")

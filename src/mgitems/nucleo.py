@@ -12,7 +12,7 @@ from pathlib import Path
 
 from mgitems.cache_swf import CacheSwf
 from mgitems.catalogo import buscar_en_catalogo, cargar_catalogo
-from mgitems.categorias import CacheCategorias, IndicePiezas, categorias, usos_de_piezas
+from mgitems.categorias import CacheCategorias, IndicePiezas, categorias, otros_usos, usos_de_piezas
 from mgitems.entorno import Entorno, Sistema
 from mgitems.entrega import PUERTO_FIDDLER_POR_DEFECTO, QUE_HACER_EN_EL_JUEGO, URL_LOLA, Entrega, PasoFallido, Procesos, SwfTrucado
 from mgitems.ffdec import FFDecNoDisponible
@@ -33,7 +33,9 @@ from mgitems.items import (
     separar_rutas,
 )
 from mgitems.looks import AlmacenLooks, Look, LookInvalido, archivo_de_look, look_de_archivo
-from mgitems.prendas import MOCHILA, PARTES_DEL_CUERPO, PRENDA, CacheItemsBase, ItemBase, ItemsBaseFFDec, TruqueoFallido, reescribir_partes
+from mgitems.prendas import (
+    MOCHILA, PARTES_DEL_CUERPO, PRENDA, CacheItemsBase, ItemBase, ItemsBaseFFDec, TruqueoFallido, leer_item_base, reescribir_partes,
+)
 from mgitems.script import EncodeInvalido, codificar, decodificar, generar_script, leer_script
 from mgitems.swf import SwfInvalido, leer_simbolos
 
@@ -159,8 +161,9 @@ class Nucleo:
         ]}
 
     def piezas_de_swfs(self, swfs: list | None = None) -> dict:
-        """Las Piezas de varios SWF (None: todos los del juego) con su SWF y las Partes del cuerpo donde
-        el juego las usa ([] si ninguna Prenda las usa: "Otros").
+        """Las Piezas de varios SWF (None: todos los del juego) con su SWF, las Partes del cuerpo donde
+        el juego las usa ([] si ningún Item las viste: "Otros") y, si no visten, para qué las usa el
+        juego (`uso`: "transporte", "accion", "casa", "mascota", o None si no se sabe).
 
         Usa el índice que trae el programa. Un SWF que no está en el índice, o cuya copia descargada es
         de otra versión, se analiza acá (la primera vez tarda unos segundos) y se recuerda.
@@ -175,12 +178,15 @@ class Nucleo:
             if not obtenido["ok"]:
                 errores[swf] = obtenido["error"]
                 continue
-            piezas += [{"ruta": f"{swf}.{clase}", "clase": clase, "swf": swf, "partes": partes}
+            otros = obtenido["otros_usos"]
+            piezas += [{"ruta": f"{swf}.{clase}", "clase": clase, "swf": swf, "partes": partes,
+                        "uso": None if partes else otros.get(clase)}
                        for clase, partes in obtenido["piezas"].items()]
         return {"ok": True, "piezas": piezas, "errores": errores}
 
     def _categorias_de(self, swf: str) -> dict:
-        """`{"ok", "piezas": {Pieza: [Partes]}}` de un SWF: del índice, o analizado acá si no está o cambió."""
+        """`{"ok", "piezas": {Pieza: [Partes]}, "otros_usos": {Pieza: uso}}` de un SWF: del índice, o
+        analizado acá si no está o cambió."""
         if not _NOMBRE_SWF.match(swf):
             return {"ok": False, "error": f"Nombre de SWF inválido: {swf}"}
         del_indice = self._indice.leer(swf)
@@ -192,7 +198,7 @@ class Nucleo:
                 guardado = None
             data = guardado[0] if guardado else None
         if del_indice and (data is None or version_de(data) == del_indice.get("version")):
-            return {"ok": True, "piezas": del_indice["piezas"]}
+            return {"ok": True, "piezas": del_indice["piezas"], "otros_usos": del_indice.get("otros_usos", {})}
         if data is None:
             obtenido = self._datos_de_otro_swf(swf)
             if not obtenido["ok"]:
@@ -204,15 +210,20 @@ class Nucleo:
             cache = CacheCategorias(self._entorno.carpeta_cache() / "categorias")
             guardadas = cache.leer(swf, version)
             if guardadas is not None:
-                return {"ok": True, "piezas": guardadas}
-            piezas = piezas_del_swf([clase for _, clase in leer_simbolos(data)])
-            resultado = categorias(piezas, usos_de_piezas(swf, self._prendas_de(swf, data)).get(swf, {}))
-            cache.guardar(swf, version, resultado)
+                return {"ok": True, **guardadas}
+            clases = [clase for _, clase in leer_simbolos(data)]
+            items = items_del_swf(clases)
+            with self._candado_ffdec:
+                fuentes = self._prendas_ffdec.fuentes(data, items)
+            items_base = {i.clase: i for i in map(leer_item_base, fuentes.values()) if i and i.clase in items}
+            piezas = categorias(piezas_del_swf(clases), usos_de_piezas(swf, items_base).get(swf, {}))
+            otros = {p: uso for p, uso in otros_usos(swf, fuentes).get(swf, {}).items() if p in piezas and not piezas[p]}
+            cache.guardar(swf, version, piezas, otros)
         except FFDecNoDisponible as e:
             return {"ok": False, "error": f"{e}: no se pueden clasificar las Piezas de {swf}."}
         except (OSError, SwfInvalido, subprocess.SubprocessError) as e:
             return {"ok": False, "error": f"No se pudieron clasificar las Piezas de {swf}: {e}"}
-        return {"ok": True, "piezas": resultado}
+        return {"ok": True, "piezas": piezas, "otros_usos": otros}
 
     def _datos_de_otro_swf(self, swf: str) -> dict:
         """Un SWF del CDN que no es el abierto (se recuerda mientras dura el programa)."""

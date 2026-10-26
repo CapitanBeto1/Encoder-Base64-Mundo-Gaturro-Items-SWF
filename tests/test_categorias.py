@@ -14,6 +14,21 @@ from test_prendas import CLASES, COSTUMES, PrendasFalsas, codigo_prenda
 CLOTHES1 = crear_swf(CLASES)
 
 
+def clase_con(clase: str, padre: str, cuerpo: str) -> str:
+    """Código AS3 como el que exporta FFDec para un Item que no es Item base (transporte, casa, mascota)."""
+    return f'''package
+{{
+   public dynamic class {clase} extends {padre}
+   {{
+      internal function frame1() : *
+      {{
+         {cuerpo}
+      }}
+   }}
+}}
+'''
+
+
 def indice(tmp_path, swfs: dict) -> IndicePiezas:
     archivo = tmp_path / "indice.json"
     archivo.write_text(json.dumps({"swfs": swfs}), encoding="utf-8")
@@ -51,7 +66,7 @@ def test_del_indice_sin_descargar_ni_analizar(tmp_path, fuente, ffdec):
 
     assert resultado["ok"], resultado
     assert por_ruta(resultado)["costumes.coronaRey_on"] == {
-        "ruta": "costumes.coronaRey_on", "clase": "coronaRey_on", "swf": "costumes", "partes": ["hats"]}
+        "ruta": "costumes.coronaRey_on", "clase": "coronaRey_on", "swf": "costumes", "partes": ["hats"], "uso": None}
     assert por_ruta(resultado)["costumes.raro_on"]["partes"] == []  # "Otros"
     assert fuente.descargas == [] and ffdec.analisis == 0
 
@@ -85,6 +100,37 @@ def test_lo_que_viste_un_item_de_mochila_tiene_parte(tmp_path, ffdec):
     assert piezas["bruja.pocima1_on"]["partes"] == []
 
 
+def test_para_que_usa_el_juego_lo_que_no_viste(tmp_path, ffdec):
+    ffdec.codigo |= {
+        "pocima1": codigo_mochila("pocima1", "ConsumableMamboAsset", '         adds.action = "drink.varios.pocima1_on";'),
+        "skate1": clase_con("skate1", "TransportMamboAsset", 'vehicle = "skate1_on";'),
+        "pared1": clase_con("pared1", "HouseMamboAsset", ""),
+        "perroPirata": clase_con("perroPirata", "PetClothMamboAsset", 'clothes = {"hats":"varios.perro_gorroPirata_on"};'),
+    }
+    fuente = FuenteFalsa({"varios": crear_swf([
+        "pocima1", "pocima1_on", "skate1", "skate1_on", "pared1", "pared1_on", "perroPirata", "perro_gorroPirata_on", "raro_on"])})
+
+    piezas = por_ruta(nucleo_con(tmp_path, fuente, ffdec, {}).piezas_de_swfs(["varios"]))
+
+    assert {ruta: (p["partes"], p["uso"]) for ruta, p in piezas.items()} == {
+        "varios.pocima1_on": ([], "accion"),
+        "varios.skate1_on": ([], "transporte"),
+        "varios.pared1_on": ([], "casa"),
+        "varios.perro_gorroPirata_on": ([], "mascota"),
+        "varios.raro_on": ([], None),
+    }
+
+
+def test_el_uso_de_lo_que_no_viste_viene_del_indice(tmp_path, fuente, ffdec):
+    nucleo = nucleo_con(tmp_path, fuente, ffdec, {"costumes": {
+        "version": "x", "piezas": {"coronaRey_on": ["hats"], "capaRey_on": []}, "otros_usos": {"capaRey_on": "casa"}}})
+
+    piezas = por_ruta(nucleo.piezas_de_swfs(["costumes"]))
+
+    assert piezas["costumes.capaRey_on"]["uso"] == "casa"
+    assert piezas["costumes.coronaRey_on"]["uso"] is None
+
+
 def test_lo_clasificado_con_la_forma_anterior_se_vuelve_a_clasificar(tmp_path, fuente, ffdec):
     nucleo_con(tmp_path, fuente, ffdec, {}).piezas_de_swfs(["clothes1"])
     [guardado] = (tmp_path / "sistema").rglob("categorias/clothes1.json")
@@ -111,7 +157,7 @@ def test_una_copia_de_la_misma_version_usa_el_indice(tmp_path, fuente, ffdec):
 
     resultado = nucleo.piezas_de_swfs(["clothes1"])
 
-    assert resultado["piezas"] == [{"ruta": "clothes1.remera5_on", "clase": "remera5_on", "swf": "clothes1", "partes": ["leg"]}]
+    assert resultado["piezas"] == [{"ruta": "clothes1.remera5_on", "clase": "remera5_on", "swf": "clothes1", "partes": ["leg"], "uso": None}]
     assert ffdec.analisis == 0
 
 
