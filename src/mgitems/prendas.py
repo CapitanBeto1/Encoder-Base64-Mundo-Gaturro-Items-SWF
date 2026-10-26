@@ -135,6 +135,11 @@ class ItemsBaseFFDec:
 
     def analizar(self, data: bytes, clases: list[str]) -> dict[str, ItemBase]:
         """Los Items base entre las `clases` del SWF (Prendas e Items de mochila)."""
+        items = (leer_item_base(fuente) for fuente in self.fuentes(data, clases).values())
+        return {item.clase: item for item in items if item and item.clase in clases}
+
+    def fuentes(self, data: bytes, clases: list[str]) -> dict[str, str]:
+        """Clase → su código AS3, para las `clases` del SWF (y las de las que heredan)."""
         if not clases:
             return {}
         with tempfile.TemporaryDirectory(prefix="mgitems-", ignore_cleanup_errors=True) as temporal:
@@ -142,12 +147,7 @@ class ItemsBaseFFDec:
             swf.write_bytes(data)
             salida = Path(temporal) / "scripts"
             self._ffdec.ejecutar("-selectclass", ",".join(clases), "-export", "script", str(salida), str(swf))
-            items = {}
-            for archivo in salida.rglob("*.as"):
-                item = leer_item_base(archivo.read_text(encoding="utf-8", errors="replace"))
-                if item and item.clase in clases:
-                    items[item.clase] = item
-            return items
+            return {archivo.stem: archivo.read_text(encoding="utf-8", errors="replace") for archivo in salida.rglob("*.as")}
 
     def trucar(self, data: bytes, clase: str, fuente: str, partes: dict[str, str]) -> bytes:
         """El SWF con la clase reemplazada por `fuente`, verificado: la clase trucada declara `partes`."""

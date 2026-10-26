@@ -13,6 +13,7 @@ dependencies = ["pywebview>=6.0"]
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "pyinstaller>=6.10"]
+indice = ["scikit-learn>=1.5"]  # para scripts/armar_indice.py
 
 [project.gui-scripts]
 mgitems = "mgitems.app:main"
