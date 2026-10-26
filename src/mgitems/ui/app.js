@@ -88,6 +88,7 @@ function mostrarLista() {
   cargarIconos(items.map((i) => i.ruta));
   $("cantidad").textContent = items.length ? `(${items.length})` : "";
   $("lista-vacia").hidden = items.length > 0;
+  if (buscador.cargado) mostrarBuscador(); // los elegidos se marcan en la grilla
   // El Encode mostrado deja de corresponder a la lista.
   mostrarEncode(null);
 }
@@ -118,7 +119,8 @@ function mostrarEncode(resultado) {
 function actualizarControles() {
   const listo = conectado && !ocupado;
   $("abrir").disabled = $("buscar-swf").disabled = !listo;
-  $("prefijos").disabled = $("buscar").disabled = !listo || !swfAbierto;
+  $("agregar-fuente-items").disabled = $("todas-las-fuentes-items").disabled = $("abrir-archivo-items").disabled = !listo;
+  $("agregar-todos").disabled = !listo || !itemsVisibles().length;
   $("manual").disabled = $("agregar").disabled = !listo;
   $("quitar-todos").disabled = !listo || items.length === 0;
   $("importar").disabled = !listo;
@@ -193,17 +195,17 @@ function mostrarSwfAbierto(resultado) {
   actualizarControles();
   $("nombre-swf").textContent = `${resultado.swf}.swf · ${contarItems(resultado.cantidad_items)}`;
   if (resultado.aviso) avisarLista(resultado.aviso, "advertencia");
-  else avisarLista("SWF abierto. Escribí el comienzo de un nombre para buscar.", "exito");
+  else avisarLista(`SWF abierto: ${resultado.swf}.`, "exito");
   olvidarPrendas();
   prepararIconos(resultado.swf);
-  if (vista === "agregar") $("prefijos").focus();
-  else cargarParaLaVista();
+  cargarParaLaVista();
 }
 
 // Lo que necesita la pestaña elegida, en orden (las cargas no se pisan entre sí).
 async function cargarParaLaVista() {
   if (vista === "trucar" && swfAbierto && !prendas.length) await cargarPrendas();
   if (vista === "looks") await cargarLooks();
+  if (vista === "agregar" && !buscador.cargado) await cargarItemsBuscados();
 }
 
 async function abrirArchivo() {
@@ -324,40 +326,6 @@ async function abrirDelCatalogo(nombre) {
   mostrarSwfAbierto(await mientras(`Abriendo ${nombre} (se descarga del juego si hace falta)…`, () => api().abrir_swf_del_cdn(nombre)));
 }
 
-// Elegir Items del SWF abierto mientras se escribe.
-const sugerencias = crearDesplegable({
-  campo: $("prefijos"),
-  lista: $("sugerencias-items"),
-  consultar: async (t) => {
-    const resultado = await api().sugerir_items(t);
-    for (const { ruta, icono } of resultado.items) if (icono) imagenes.set(ruta, icono);
-    return resultado.items;
-  },
-  fila: ({ ruta }) => [elementoIcono(ruta), etiqueta(ruta.slice(ruta.lastIndexOf(".") + 1), "nombre")],
-  elegir: ({ ruta }) => {
-    const agregado = agregarItems([ruta]);
-    avisarLista(agregado ? `Se agregó ${ruta}.` : `${ruta} ya estaba en la lista.`, "exito");
-  },
-  vacio: "Ningún Item empieza así.",
-  sinElegir: () => $("form-buscar").requestSubmit(),
-});
-
-async function buscar(evento) {
-  evento.preventDefault();
-  sugerencias.cerrar();
-  const resultado = await mientras("Buscando…", () => api().buscar_items($("prefijos").value));
-  if (!resultado.ok) return avisarLista(resultado.error, "error");
-  if (!resultado.items.length) return avisarLista("No se encontraron Items con ese comienzo.", "error");
-  const agregados = agregarItems(resultado.items);
-  const encontrados = resultado.items.length;
-  avisarLista(
-    agregados === encontrados
-      ? `Se agregaron a la lista: ${contarItems(encontrados)}.`
-      : `Se encontraron ${contarItems(encontrados)} (${agregados} nuevos en la lista).`,
-    "exito"
-  );
-}
-
 async function agregarAMano(evento) {
   evento.preventDefault();
   const resultado = await api().interpretar_items($("manual").value);
@@ -403,6 +371,8 @@ function cambiarVista(nueva) {
     $(`pestana-${nombre}`).setAttribute("aria-selected", String(nombre === vista));
   }
   document.querySelector("main").classList.toggle("modo-looks", vista === "looks");
+  document.querySelector("main").classList.toggle("modo-agregar", vista === "agregar");
+  $("items-a-recibir").hidden = vista !== "agregar";
   $("generar").textContent = { agregar: "Generar Encode", trucar: "Trucar Prenda", looks: "Aplicar Look" }[vista];
   avisarLista("");
   mostrarEncode(null);
@@ -1567,7 +1537,197 @@ $("revisar-entorno").addEventListener("click", revisarEntorno);
 $("cerrar-entorno").addEventListener("click", () => $("dialogo-entorno").close());
 
 $("abrir").addEventListener("click", abrirArchivo);
-$("form-buscar").addEventListener("submit", buscar);
+// --- Agregar Items: los Items de una o varias fuentes, por categoría, 5×3 por página ---
+
+// Las Prendas van en la categoría de su casillero (las Mangas de una remera no cuentan aparte); las
+// que ocupan varios, en Disfraces. Los demás tipos, cada uno en la suya.
+const CATEGORIAS_ITEMS = [
+  { id: "todos", nombre: "Todos", icono: "🔎" },
+  ...CATEGORIAS.filter((c) => c.que),
+  { id: "disfraces", nombre: "Disfraces", que: "Disfraz", icono: "🦸" },
+  { id: "mochila", nombre: "Mochila", que: "Mochila", icono: "🧪" },
+  { id: "transporte", nombre: "Transportes", que: "Transporte", icono: "🛹" },
+  { id: "casa", nombre: "Decoración", que: "Decoración", icono: "🛋️" },
+  { id: "mascota", nombre: "Mascotas", que: "Mascota", icono: "🐾" },
+  { id: "otros", nombre: "Otros", que: "Otro", icono: "✨" },
+];
+
+const buscador = {
+  cargado: false,
+  items: [], // [{ruta, clase, swf, tipo, partes}] de las fuentes
+  categoria: "todos",
+  pagina: 0,
+};
+
+let fuentesItems = { todos: false, swfs: [] };
+try {
+  const guardadas = JSON.parse(localStorage.getItem("fuentesAgregar") || "null");
+  if (guardadas && Array.isArray(guardadas.swfs)) fuentesItems = { todos: Boolean(guardadas.todos), swfs: guardadas.swfs.filter((s) => typeof s === "string") };
+} catch {}
+
+function guardarFuentesItems() {
+  try {
+    localStorage.setItem("fuentesAgregar", JSON.stringify(fuentesItems));
+  } catch {}
+}
+
+// La categoría de un Item (una sola).
+function categoriaDeItem(item) {
+  if (item.tipo !== "prenda") return CATEGORIAS_ITEMS.find((c) => c.id === item.tipo) ?? CATEGORIAS_ITEMS.at(-1);
+  let casilleros = CATEGORIAS.filter((c) => c.que && item.partes.some((p) => c.partes.includes(p)));
+  if (casilleros.length > 1) casilleros = casilleros.filter((c) => c.id !== "arm");
+  if (casilleros.length === 1) return casilleros[0];
+  return CATEGORIAS_ITEMS.find((c) => c.id === (casilleros.length ? "disfraces" : "otros"));
+}
+
+const enCategoriaItems = (item, categoria) => categoria.id === "todos" || categoriaDeItem(item).id === categoria.id;
+
+// Los que coinciden con la categoría y con el comienzo del nombre (varios, separados por coma).
+function itemsVisibles() {
+  const categoria = CATEGORIAS_ITEMS.find((c) => c.id === buscador.categoria);
+  const comienzos = $("filtro-items").value.split(",").map((t) => t.trim().toLowerCase()).filter(Boolean);
+  return buscador.items.filter((i) => enCategoriaItems(i, categoria) && (!comienzos.length || comienzos.some((t) => i.clase.toLowerCase().startsWith(t))));
+}
+
+async function cargarItemsBuscados() {
+  const pedido = fuentesItems.todos ? null : fuentesItems.swfs;
+  if (!fuentesItems.todos && !fuentesItems.swfs.length) {
+    buscador.items = [];
+  } else {
+    const espera = fuentesItems.todos ? "Leyendo los Items de todos los SWF…" : `Leyendo los Items de ${fuentesItems.swfs.join(", ")}…`;
+    const resultado = await mientras(espera, () => api().items_de_swfs(pedido));
+    if (!resultado.ok) return avisarLista(resultado.error, "error");
+    buscador.items = resultado.items;
+    const errores = Object.entries(resultado.errores);
+    avisarLista(errores.length ? `No se pudieron leer: ${errores.map(([s, e]) => `${s} (${e})`).join("; ")}` : "", "advertencia");
+  }
+  buscador.cargado = true;
+  buscador.pagina = 0;
+  mostrarBuscador();
+}
+
+function mostrarFuentesItems() {
+  $("todas-las-fuentes-items").setAttribute("aria-pressed", String(fuentesItems.todos));
+  $("lista-fuentes-items").replaceChildren(
+    ...(fuentesItems.todos
+      ? [etiqueta("todos los SWF del juego", "chip-fuente")]
+      : fuentesItems.swfs.map((swf) => {
+          const chip = etiqueta(swf, "chip-fuente");
+          const quitar = Object.assign(document.createElement("button"), { className: "quitar", textContent: "✕", title: `Sacar ${swf} de las fuentes` });
+          quitar.addEventListener("click", () => {
+            fuentesItems.swfs = fuentesItems.swfs.filter((s) => s !== swf);
+            guardarFuentesItems();
+            cargarItemsBuscados();
+          });
+          chip.append(quitar);
+          return chip;
+        }))
+  );
+}
+
+function mostrarBuscador() {
+  mostrarFuentesItems();
+  const categoria = CATEGORIAS_ITEMS.find((c) => c.id === buscador.categoria);
+  $("categorias-items").replaceChildren(
+    ...CATEGORIAS_ITEMS.map((c) => {
+      const cantidad = buscador.items.filter((i) => enCategoriaItems(i, c)).length;
+      const pestana = Object.assign(document.createElement("button"), { className: "categoria", title: `${c.nombre} (${cantidad})` });
+      pestana.setAttribute("role", "tab");
+      pestana.setAttribute("aria-selected", String(c === categoria));
+      pestana.append(etiqueta(c.icono, "icono-categoria"), etiqueta(String(cantidad), "cantidad-categoria"), etiqueta(c.nombre, "nombre-categoria"));
+      pestana.addEventListener("click", () => {
+        buscador.categoria = c.id;
+        buscador.pagina = 0;
+        mostrarBuscador();
+      });
+      return pestana;
+    })
+  );
+
+  const visibles = itemsVisibles();
+  const paginas = Math.max(1, Math.ceil(visibles.length / POR_PAGINA));
+  buscador.pagina = Math.min(Math.max(buscador.pagina, 0), paginas - 1);
+  const pagina = visibles.slice(buscador.pagina * POR_PAGINA, (buscador.pagina + 1) * POR_PAGINA);
+  $("grilla-items").replaceChildren(
+    ...pagina.map((item) => {
+      const que = categoriaDeItem(item).que;
+      const boton = Object.assign(document.createElement("button"), { className: "pieza-grilla item-grilla", title: `${item.clase} · ${item.swf} · ${que}` });
+      boton.setAttribute("aria-label", `${item.clase} de ${item.swf}`);
+      boton.setAttribute("aria-pressed", String(items.some((i) => i.ruta === item.ruta)));
+      boton.disabled = ocupado;
+      boton.addEventListener("click", () => {
+        if (items.some((i) => i.ruta === item.ruta)) quitarItem(item.ruta);
+        else agregarItems([item.ruta]);
+      });
+      const tipo = etiqueta(que, "tipo-pieza");
+      tipo.dataset.uso = item.tipo === "prenda" ? "ropa" : item.tipo === "otro" ? "objeto" : item.tipo;
+      boton.append(elementoIcono(item.ruta), etiqueta(item.clase, "nombre-item"), tipo);
+      const li = document.createElement("li");
+      li.append(boton);
+      return li;
+    })
+  );
+  $("ayuda-grilla-items").textContent = !fuentesItems.todos && !fuentesItems.swfs.length
+    ? "Agregá un SWF arriba (+ Agregar SWF) o tocá «Todos»."
+    : !buscador.items.length || visibles.length
+      ? ""
+      : $("filtro-items").value.trim() ? "Ningún Item empieza así." : "No hay Items de esta categoría en estas fuentes.";
+  $("numero-pagina-items").textContent = visibles.length ? `${contarItems(visibles.length)} · ${buscador.pagina + 1} / ${paginas}` : "";
+  $("pagina-anterior-items").disabled = buscador.pagina === 0;
+  $("pagina-siguiente-items").disabled = buscador.pagina >= paginas - 1;
+  $("agregar-todos").disabled = !conectado || ocupado || !visibles.length;
+  cargarIconos(pagina.map((i) => i.ruta));
+  for (const swf of new Set(pagina.map((i) => i.swf))) prepararIconosDe(swf);
+}
+
+function agregarTodos() {
+  const visibles = itemsVisibles();
+  const agregados = agregarItems(visibles.map((i) => i.ruta));
+  avisarLista(agregados === visibles.length ? `Se agregaron ${contarItems(agregados)}.` : `Se agregaron ${agregados} (los demás ya estaban).`, "exito");
+}
+
+async function abrirArchivoItems() {
+  const resultado = await mientras("Abriendo SWF…", () => api().abrir_swf());
+  mostrarSwfAbierto(resultado);
+  if (!resultado.ok) return;
+  fuentesItems = { todos: false, swfs: [...fuentesItems.swfs.filter((s) => s !== resultado.swf), resultado.swf] };
+  guardarFuentesItems();
+  cargarItemsBuscados();
+}
+
+crearDesplegable({
+  campo: $("agregar-fuente-items"),
+  lista: $("resultados-fuente-items"),
+  consultar: async (t) => (await api().buscar_en_catalogo(t)).swfs.filter((s) => !fuentesItems.swfs.includes(s.swf)).slice(0, 80),
+  fila: ({ swf, items }) => [etiqueta(swf, "nombre"), etiqueta(contarItems(items), "ayuda")],
+  elegir: ({ swf }) => {
+    fuentesItems = { todos: false, swfs: [...fuentesItems.swfs, swf] };
+    guardarFuentesItems();
+    $("agregar-fuente-items").value = "";
+    cargarItemsBuscados();
+  },
+  vacio: "No hay SWF con ese nombre.",
+});
+$("todas-las-fuentes-items").addEventListener("click", () => {
+  fuentesItems.todos = !fuentesItems.todos;
+  guardarFuentesItems();
+  cargarItemsBuscados();
+});
+$("abrir-archivo-items").addEventListener("click", abrirArchivoItems);
+$("filtro-items").addEventListener("input", () => {
+  buscador.pagina = 0;
+  mostrarBuscador();
+});
+$("pagina-anterior-items").addEventListener("click", () => {
+  buscador.pagina--;
+  mostrarBuscador();
+});
+$("pagina-siguiente-items").addEventListener("click", () => {
+  buscador.pagina++;
+  mostrarBuscador();
+});
+$("agregar-todos").addEventListener("click", agregarTodos);
+
 $("form-agregar").addEventListener("submit", agregarAMano);
 $("quitar-todos").addEventListener("click", () => {
   items = [];
@@ -1586,5 +1746,6 @@ window.addEventListener("pywebviewready", async () => {
   conectado = true;
   actualizarControles();
   mostrarEntorno(await api().estado_entorno());
+  cargarParaLaVista();
 });
 mostrarLista();

@@ -1,8 +1,8 @@
-"""Arma el índice de categorías de Piezas que viene incluido en el programa.
+"""Arma el índice de categorías de Piezas y tipos de Items que viene incluido en el programa.
 
-Para cada SWF del catálogo: lo descarga del CDN del juego, lee sus Items con FFDec y anota en qué
-Parte(s) del cuerpo viste cada Pieza. Escribe `src/mgitems/datos/indice_piezas.json` (solo nombres
-de clases, nada de arte del juego).
+Para cada SWF del catálogo: lo descarga del CDN del juego, lee sus Items con FFDec y anota de qué
+tipo es cada Item y en qué Parte(s) del cuerpo viste cada Pieza. Escribe
+`src/mgitems/datos/indice_piezas.json` (solo nombres de clases, nada de arte del juego).
 
 Cada Pieza se ubica con lo primero que corresponda:
 
@@ -48,7 +48,7 @@ RAIZ = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(RAIZ / "src"))
 
 from mgitems.catalogo import cargar_catalogo  # noqa: E402
-from mgitems.categorias import ARCHIVO_INDICE, MASCOTA, categorias, otros_usos, usos_de_piezas  # noqa: E402
+from mgitems.categorias import ARCHIVO_INDICE, MASCOTA, categorias, otros_usos, tipos_de_items, usos_de_piezas  # noqa: E402
 from mgitems.fuente import FuenteCDN, SwfNoEncontrado  # noqa: E402
 from mgitems.iconos import version_de  # noqa: E402
 from mgitems.items import items_del_swf, piezas_del_swf  # noqa: E402
@@ -56,7 +56,7 @@ from mgitems.prendas import ItemsBaseFFDec, leer_item_base  # noqa: E402
 from mgitems.swf import SwfInvalido, leer_clases, limites_de_simbolos  # noqa: E402
 
 # Sube cuando cambia lo que se guarda de cada SWF en la carpeta de trabajo.
-FORMATO_TRABAJO = 4
+FORMATO_TRABAJO = 5
 # Seguridad mínima para ubicar una Pieza en el paso 4. Con 0.7, al probarlo con las Piezas que el
 # juego ya ubica, acertó el 98-99 %.
 SEGURIDAD_MINIMA = 0.7
@@ -76,7 +76,7 @@ def descargar(fuente: FuenteCDN, swf: str, intentos: int = 4) -> bytes:
 
 
 def analizar(fuente: FuenteCDN, ffdec: ItemsBaseFFDec, trabajo: Path, swf: str) -> tuple[str, dict | None, str]:
-    """(swf, {"version", "piezas", "usos", "otros_usos", "limites"}, error). Reusa el análisis guardado
+    """(swf, {"version", "piezas", "usos", "otros_usos", "limites", "items"}, error). Reusa el análisis guardado
     si el SWF no cambió."""
     try:
         data = descargar(fuente, swf)
@@ -107,6 +107,7 @@ def analizar(fuente: FuenteCDN, ffdec: ItemsBaseFFDec, trabajo: Path, swf: str) 
     datos = {
         "formato": FORMATO_TRABAJO, "version": version_de(data), "piezas": piezas, "usos": usos,
         "otros_usos": otros_usos(swf, fuentes), "limites": {p: limites[p] for p in piezas if p in limites},
+        "items": {clase: tipo for clase, tipo in tipos_de_items(fuentes).items() if clase in items},
     }
     guardado.write_text(json.dumps(datos, ensure_ascii=False), encoding="utf-8")
     return swf, datos, ""
@@ -278,6 +279,7 @@ def main() -> None:
             "version": datos["version"],
             "piezas": {pieza: partes[(swf, pieza)] for pieza in datos["piezas"]},
             "otros_usos": {pieza: otros[(swf, pieza)] for pieza in datos["piezas"] if (swf, pieza) in otros},
+            "items": datos["items"],
         }
         for swf, datos in sorted(analizados.items(), key=lambda s: s[0].lower())
     }}

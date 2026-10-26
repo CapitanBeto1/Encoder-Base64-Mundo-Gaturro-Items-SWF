@@ -65,7 +65,7 @@
     <button id="pestana-looks" class="pestana" role="tab" aria-selected="false" aria-controls="vista-looks">Looks</button>
   </nav>
 
-  <main class="paneles">
+  <main class="paneles modo-agregar">
     <section class="panel">
       <div class="buscador-swf">
       <h2>Buscar en un SWF</h2>
@@ -81,30 +81,34 @@
       </div>
       </div>
       <div id="vista-agregar" class="vista" role="tabpanel">
-      <form id="form-buscar" class="fila">
-        <div class="selector-swf">
-          <input id="prefijos" type="text" spellcheck="false" autocomplete="off"
-                 placeholder="Comienzo del nombre, ej: remera, zapa" disabled
-                 role="combobox" aria-expanded="false" aria-controls="sugerencias-items" aria-autocomplete="list">
-          <ul id="sugerencias-items" class="resultados-swf con-iconos" role="listbox" hidden></ul>
+        <h2>Buscar Items</h2>
+        <div class="armario buscador-items">
+          <div class="fuentes">
+            <span class="ayuda etiqueta-campo">De:</span>
+            <div id="lista-fuentes-items" class="lista-fuentes"></div>
+            <div class="selector-swf agregar-fuente">
+              <input id="agregar-fuente-items" type="text" spellcheck="false" autocomplete="off"
+                     placeholder="+ Agregar SWF" aria-label="Agregar un SWF a las fuentes"
+                     role="combobox" aria-expanded="false" aria-controls="resultados-fuente-items" aria-autocomplete="list">
+              <ul id="resultados-fuente-items" class="resultados-swf" role="listbox" hidden></ul>
+            </div>
+            <button id="todas-las-fuentes-items" class="enlace boton-todos" aria-pressed="false" title="Los Items de todos los SWF del juego">Todos</button>
+            <button id="abrir-archivo-items" class="enlace boton-todos" title="Un SWF de tu computadora">Archivo…</button>
+          </div>
+          <div id="categorias-items" class="categorias categorias-items" role="tablist" aria-label="Categorías de Items"></div>
+          <input id="filtro-items" type="text" spellcheck="false" autocomplete="off"
+                 placeholder="Comienzo del nombre, ej: remera, zapa" aria-label="Filtrar los Items por el comienzo del nombre">
+          <div class="estante">
+            <button id="pagina-anterior-items" class="flecha-grande" title="Página anterior" aria-label="Página anterior">◀</button>
+            <ul id="grilla-items" class="grilla" aria-label="Items para elegir"></ul>
+            <button id="pagina-siguiente-items" class="flecha-grande" title="Página siguiente" aria-label="Página siguiente">▶</button>
+          </div>
+          <div class="pie-grilla">
+            <span id="ayuda-grilla-items" class="ayuda-grilla"></span>
+            <span id="numero-pagina-items" class="numero-pagina"></span>
+            <button id="agregar-todos" class="enlace" title="Pasa a «Items a recibir» todos los de esta búsqueda">Agregar todos</button>
+          </div>
         </div>
-        <button id="buscar" class="primario" disabled title="Agrega todos los Items que empiezan así">Buscar</button>
-      </form>
-
-      <div class="encabezado-lista">
-        <h2>Items <span id="cantidad" class="ayuda"></span></h2>
-        <button id="quitar-todos" class="enlace" disabled>Quitar todos</button>
-      </div>
-      <ul id="lista" class="lista" aria-live="polite"></ul>
-      <p id="lista-vacia" class="ayuda vacia">
-        Buscá en un SWF o agregá Items a mano.
-      </p>
-
-      <form id="form-agregar" class="fila">
-        <input id="manual" type="text" spellcheck="false" autocomplete="off"
-               placeholder="Agregar a mano: clothes1.remera5" disabled>
-        <button id="agregar" disabled>Agregar</button>
-      </form>
       </div>
 
       <div id="vista-trucar" class="vista" role="tabpanel" hidden>
@@ -221,6 +225,19 @@
     </section>
 
     <section class="panel">
+      <div id="items-a-recibir" class="items-a-recibir">
+        <div class="encabezado-lista">
+          <h2>Items a recibir <span id="cantidad" class="ayuda"></span></h2>
+          <button id="quitar-todos" class="enlace" disabled>Quitar todos</button>
+        </div>
+        <ul id="lista" class="lista" aria-live="polite"></ul>
+        <p id="lista-vacia" class="ayuda vacia">Tocá Items de la grilla o agregalos a mano.</p>
+        <form id="form-agregar" class="fila">
+          <input id="manual" type="text" spellcheck="false" autocomplete="off"
+                 placeholder="Agregar a mano: clothes1.remera5" disabled>
+          <button id="agregar" disabled>Agregar</button>
+        </form>
+      </div>
       <div class="encabezado-lista">
         <h2>Encode</h2>
         <button id="importar" class="enlace" disabled>Importar Encode…</button>
