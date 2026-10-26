@@ -1121,13 +1121,35 @@ main.modo-looks .buscador-swf { display: none; }
   width: 100%;
   height: 100%;
   display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
   place-items: center;
-  padding: 4px;
+  gap: 1px;
+  padding: 4px 3px 3px;
   border-radius: 12px;
   background: var(--amarillo);
   border-color: var(--amarillo-contorno);
 }
-.pieza-grilla .icono { width: 100%; height: 100%; box-shadow: none; background: transparent; }
+.pieza-grilla .icono { width: 100%; height: 100%; min-height: 0; box-shadow: none; background: transparent; }
+/* Lo que es la Pieza, debajo: verde si se viste, otro color si el juego la usa para otra cosa. */
+.tipo-pieza {
+  max-width: 100%;
+  padding: 0 3px;
+  border-radius: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 8px;
+  letter-spacing: 0;
+  text-transform: none;
+  line-height: 12px;
+  color: #fff;
+  background: #2f7d24;
+}
+.tipo-pieza[data-uso="transporte"] { background: #2a6db5; }
+.tipo-pieza[data-uso="casa"] { background: #8a5a2b; }
+.tipo-pieza[data-uso="mascota"] { background: #b0418f; }
+.tipo-pieza[data-uso="accion"] { background: #c4661a; }
+.tipo-pieza[data-uso="objeto"] { background: #6d6d6d; }
 .pieza-grilla .icono img { max-width: 100%; max-height: 100%; }
 .pieza-grilla .icono.sin-imagen::after { content: "…"; color: #9a8400; font-size: 18px; }
 .pieza-grilla.en-uso { box-shadow: inset 0 0 0 3px rgba(22, 128, 31, 0.5); }

@@ -780,20 +780,23 @@ $("dejar-de-poner").addEventListener("click", () => {
 // --- Inventario: Piezas de una o varias fuentes, por categoría, 5×3 por página ---
 
 // Cada categoría junta las Piezas que el juego usa en esas Partes; tocar una la pone en `parte`.
+// `que` es lo que se lee debajo de cada Pieza: el casillero del Gaturro donde va.
 const CATEGORIAS = [
-  { id: "hats", nombre: "Sombreros", icono: "🎩", partes: ["hats"] },
-  { id: "hairs", nombre: "Pelos", icono: "💇", partes: ["hairs"] },
-  { id: "mouths", nombre: "Bocas", icono: "👄", partes: ["mouths"] },
-  { id: "accesories", nombre: "Accesorios", icono: "👓", partes: ["accesories", "accesories2"] },
-  { id: "neck", nombre: "Cuello", icono: "🧣", partes: ["neck"] },
-  { id: "cloth", nombre: "Torso", icono: "👕", partes: ["cloth", "clothFront"] },
-  { id: "arm", nombre: "Mangas", icono: "💪", partes: ["arm", "armFore", "armBack"] },
-  { id: "clothBack", nombre: "Espalda", icono: "🎒", partes: ["clothBack"] },
-  { id: "grip", nombre: "Mano", icono: "✋", partes: ["grip", "gripFore", "gripBack", "glove", "gloveFore", "gloveBack"] },
-  { id: "leg", nombre: "Piernas", icono: "👖", partes: ["leg"] },
-  { id: "foot", nombre: "Pies", icono: "👟", partes: ["foot"] },
+  { id: "hats", nombre: "Sombreros", que: "Sombrero", icono: "🎩", partes: ["hats"] },
+  { id: "hairs", nombre: "Pelos", que: "Pelo", icono: "💇", partes: ["hairs"] },
+  { id: "mouths", nombre: "Bocas", que: "Boca", icono: "👄", partes: ["mouths"] },
+  { id: "accesories", nombre: "Accesorios", que: "Accesorio", icono: "👓", partes: ["accesories", "accesories2"] },
+  { id: "neck", nombre: "Cuello", que: "Cuello", icono: "🧣", partes: ["neck"] },
+  { id: "cloth", nombre: "Torso", que: "Torso", icono: "👕", partes: ["cloth", "clothFront"] },
+  { id: "arm", nombre: "Mangas", que: "Brazos", icono: "💪", partes: ["arm", "armFore", "armBack"] },
+  { id: "clothBack", nombre: "Espalda", que: "Espalda", icono: "🎒", partes: ["clothBack"] },
+  { id: "grip", nombre: "Mano", que: "Mano", icono: "✋", partes: ["grip", "gripFore", "gripBack", "glove", "gloveFore", "gloveBack"] },
+  { id: "leg", nombre: "Piernas", que: "Piernas", icono: "👖", partes: ["leg"] },
+  { id: "foot", nombre: "Pies", que: "Pies", icono: "👟", partes: ["foot"] },
   { id: "otros", nombre: "Otros", icono: "✨", partes: [] },
 ];
+// Para qué usa el juego una Pieza que no viste al Gaturro (sin uso conocido: "Objeto").
+const USOS = { transporte: "Transporte", accion: "Acción", casa: "Decoración", mascota: "Mascota" };
 const POR_PAGINA = 15;
 const PARTES_CON_CATEGORIA = new Set(CATEGORIAS.flatMap((c) => c.partes));
 
@@ -815,6 +818,14 @@ function guardarFuentes() {
   try {
     localStorage.setItem("fuentesLooks", JSON.stringify(fuentes));
   } catch {}
+}
+
+// Lo que es una Pieza: los casilleros del Gaturro donde va, o para qué la usa el juego.
+function queEs(pieza) {
+  const casilleros = CATEGORIAS.filter((c) => c.que && pieza.partes.some((p) => c.partes.includes(p))).map((c) => c.que);
+  if (casilleros.length) return { texto: casilleros.join(" · "), uso: "ropa" };
+  if (pieza.partes.includes("transport")) return { texto: USOS.transporte, uso: "transporte" };
+  return { texto: USOS[pieza.uso] ?? "Objeto", uso: pieza.uso ?? "objeto" };
 }
 
 const enCategoria = (pieza, categoria) =>
@@ -892,7 +903,11 @@ function mostrarInventario() {
       boton.classList.toggle("en-uso", enUso && !puesta);
       boton.disabled = ocupado;
       boton.addEventListener("click", () => ponerPieza(pieza, destino));
-      boton.append(elementoIcono(pieza.ruta));
+      const que = queEs(pieza);
+      const tipo = etiqueta(que.texto, "tipo-pieza");
+      tipo.dataset.uso = que.uso;
+      boton.title += ` · ${que.texto}`;
+      boton.append(elementoIcono(pieza.ruta), tipo);
       const li = document.createElement("li");
       li.append(boton);
       return li;
