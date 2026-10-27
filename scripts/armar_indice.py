@@ -57,7 +57,7 @@ from mgitems.prendas import PRENDA, ItemsBaseFFDec, leer_item_base  # noqa: E402
 from mgitems.swf import SwfInvalido, leer_clases, limites_de_simbolos  # noqa: E402
 
 # Sube cuando cambia lo que se guarda de cada SWF en la carpeta de trabajo.
-FORMATO_TRABAJO = 11
+FORMATO_TRABAJO = 12
 # Seguridad mínima para ubicar una Pieza en el paso 4. Con 0.7, al probarlo con las Piezas que el
 # juego ya ubica, acertó el 98-99 %.
 SEGURIDAD_MINIMA = 0.7

@@ -21,6 +21,8 @@ Se confirmó en el juego con un Encode de prueba (`pet.koala`, `pet.koalaHouse`,
 
 Después, la mochila no muestra la ropa de mascota (`attr_pet_*`): solo aparece al personalizar una mascota. Y `shouldAppear` oculta los `granja.*`, `penguin*` y `privateRoom*`. El inventario no tiene límite de lugar (`gameplay.json`: `"limit": false`).
 
+Pasaporte (`PassportControl.VIP_PACKS`): las Piezas o Items con `invisibles/`, `invisible_`, `mime.disfrazMimo`, `jeanMimo_on`, `gorroMimo_on`, `gatupacks/hw18.hide_hw18_on` o `easter2021.disfrazBunny` solo se los puede poner quien tiene pasaporte: sin pasaporte, el guardarropa dice «ESTE OBJETO REQUIERE PASAPORTE» y el Gaturro no los dibuja. Se marcan con «Pasaporte» en «Agregar Items» y en Looks.
+
 `mgitems.destinos` copia esas reglas. El índice guarda, para cada Item, su destino y, si no llega bien, el motivo. «Agregar Items» lo muestra debajo de cada Item (en rojo si no llega bien). «Agregar todos» saltea los descartados. Generar el Encode avisa cuáles no van a quedar bien.
 
 ## Considered Options

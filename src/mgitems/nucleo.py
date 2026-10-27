@@ -13,7 +13,7 @@ from pathlib import Path
 from mgitems.cache_swf import CacheSwf
 from mgitems.catalogo import buscar_en_catalogo, cargar_catalogo
 from mgitems.categorias import CacheCategorias, IndicePiezas, categorias, otros_usos, tipos_de_items, usos_de_piezas
-from mgitems.destinos import DESCARTADO, descarte_por_nombre
+from mgitems.destinos import DESCARTADO, descarte_por_nombre, es_de_pasaporte
 from mgitems.entorno import Entorno, Sistema
 from mgitems.entrega import PUERTO_FIDDLER_POR_DEFECTO, QUE_HACER_EN_EL_JUEGO, URL_LOLA, Entrega, PasoFallido, Procesos, SwfTrucado
 from mgitems.ffdec import FFDecNoDisponible
@@ -164,7 +164,8 @@ class Nucleo:
     def piezas_de_swfs(self, swfs: list | None = None) -> dict:
         """Las Piezas de varios SWF (None: todos los del juego) con su SWF, las Partes del cuerpo donde
         el juego las usa ([] si ningún Item las viste: "Otros") y, si no visten, para qué las usa el
-        juego (`uso`: "transporte", "accion", "casa", "mascota", o None si no se sabe).
+        juego (`uso`: "transporte", "accion", "casa", "mascota", o None si no se sabe) y si es de pasaporte
+        (`pasaporte`: sin pasaporte, el juego no la dibuja).
 
         Usa el índice que trae el programa. Un SWF que no está en el índice, o cuya copia descargada es
         de otra versión, se analiza acá (la primera vez tarda unos segundos) y se recuerda.
@@ -172,7 +173,7 @@ class Nucleo:
         def piezas(swf, obtenido):
             otros = obtenido["otros_usos"]
             return [{"ruta": f"{swf}.{clase}", "clase": clase, "swf": swf, "partes": partes,
-                     "uso": None if partes else otros.get(clase)}
+                     "uso": None if partes else otros.get(clase), "pasaporte": es_de_pasaporte(f"{swf}.{clase}")}
                     for clase, partes in obtenido["piezas"].items()]
 
         return self._de_varios_swf(swfs, "piezas", piezas)
@@ -181,14 +182,15 @@ class Nucleo:
         """Los Items de varios SWF (None: todos los del juego) con su SWF, su tipo ("prenda", "mochila",
         "transporte", "casa", "mascota", "ropa_mascota", "comida_mascota", "juguete_mascota" u "otro"),
         las Partes del cuerpo que viste si es una Prenda, para qué mascota es (`mascota`, o None) y dónde
-        llega al juego (`destino`, ver `destinos`; `motivo` si no llega bien, o None).
+        llega al juego (`destino`, ver `destinos`; `motivo` si no llega bien, o None) y si solo se la
+        puede poner quien tiene pasaporte (`pasaporte`).
 
         Como `piezas_de_swfs`: del índice que trae el programa, o analizados acá si no están o cambiaron.
         """
         def items(swf, obtenido):
             return [{"ruta": f"{swf}.{clase}", "clase": clase, "swf": swf, "tipo": item["tipo"], "partes": item.get("partes", []),
                      "mascota": item.get("mascota"), "destino": item.get("destino"), "motivo": item.get("motivo"),
-                     "parecido": item.get("parecido", [])}
+                     "parecido": item.get("parecido", []), "pasaporte": item.get("pasaporte", False)}
                     for clase, item in sorted(obtenido["items"].items(), key=lambda i: orden_natural(i[0]))]
 
         return self._de_varios_swf(swfs, "items", items)

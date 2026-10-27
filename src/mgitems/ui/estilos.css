@@ -1528,3 +1528,20 @@ main.modo-agregar #encode { flex: none; height: 64px; min-height: 0; }
 }
 .destino-item[data-bien="false"] { color: #fff; background: #c41a1a; padding: 0 4px; border-radius: 5px; }
 .item-grilla.no-llega-bien { border-color: #c41a1a; }
+
+/* Exclusivo de pasaporte: una etiqueta dorada arriba a la izquierda. */
+.pieza-grilla { position: relative; }
+.marca-pasaporte {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  padding: 0 4px;
+  border-radius: 5px;
+  background: linear-gradient(#ffe066, #e0a800);
+  border: 1px solid #8a5a00;
+  color: #5a3a00;
+  font-size: 8px;
+  line-height: 11px;
+  letter-spacing: 0;
+  text-transform: none;
+}

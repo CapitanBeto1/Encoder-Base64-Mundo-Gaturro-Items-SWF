@@ -62,6 +62,30 @@ PARTES_DEL_GATURRO = {
     "armBack", "grip", "gripFore", "gripBack", "glove", "gloveFore", "gloveBack", "leg", "foot", "transport",
     "customization", "special_ph", "medal_ph",
 }
+# `PassportControl.VIP_PACKS`: una Pieza (o un Item) que contenga alguno de estos nombres solo se la
+# puede poner quien tiene pasaporte (sin pasaporte, el guardarropa dice «ESTE OBJETO REQUIERE PASAPORTE»
+# y el Gaturro no la dibuja).
+DE_PASAPORTE = [
+    "invisibles/", "invisible_", "mime.disfrazMimo", "gatupacks/hw18.hide_hw18_on", "jeanMimo_on", "gorroMimo_on",
+    "easter2021.disfrazBunny",
+]
+_VALOR_EN_MAPA = re.compile(r'"\w+"\s*:\s*"([^"]+)"')
+_VEHICULO = re.compile(r'\bvehicle\s*=\s*"([^"]+)"')
+
+
+def es_de_pasaporte(ruta: str) -> bool:
+    """Si la Pieza o el Item `ruta` (`swf.Clase`) es de pasaporte (`PassportControl.isVipPack`)."""
+    return "." in ruta and any(nombre in ruta for nombre in DE_PASAPORTE)
+
+
+def requiere_pasaporte(ruta: str, fuente: str) -> bool:
+    """Si para ponerse el Item hace falta pasaporte: él o alguna de las Piezas que muestra es de pasaporte."""
+    swf = ruta.rpartition(".")[0]
+    clothes = _CLOTHES.search(fuente)
+    piezas = (_VALOR_EN_MAPA.findall(clothes.group("cuerpo")) if clothes else []) + _VEHICULO.findall(fuente)
+    return es_de_pasaporte(ruta) or any(es_de_pasaporte(p if "." in p else f"{swf}.{p}") for p in piezas)
+
+
 # Clases del juego que hacen al Item "agarrable" (`grabbable`: va a la mochila si no es ropa ni transporte).
 _AGARRABLES = {
     "GrabbableMamboAsset", "ClothMamboAsset", "UsableMamboAsset", "ConsumableMamboAsset", "TransportMamboAsset",
