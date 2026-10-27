@@ -98,7 +98,11 @@
           <div id="categorias-items" class="categorias categorias-items" role="tablist" aria-label="Categorías de Items"></div>
           <div class="filtros-items">
             <input id="filtro-items" type="text" spellcheck="false" autocomplete="off"
-                   placeholder="Comienzo del nombre, ej: remera, zapa" aria-label="Filtrar los Items por el comienzo del nombre">
+                   placeholder="Nombre, ej: remera, zapa" aria-label="Filtrar los Items por el nombre">
+            <select id="modo-nombre-items" class="filtro-lista" aria-label="Cómo busca el nombre">
+              <option value="empieza">Empieza con</option>
+              <option value="contiene">Contiene</option>
+            </select>
             <select id="orden-items" class="filtro-lista" aria-label="Orden de los Items">
               <option value="exclusivos">Orden: recomendado</option>
               <option value="az">Orden: A-Z</option>
