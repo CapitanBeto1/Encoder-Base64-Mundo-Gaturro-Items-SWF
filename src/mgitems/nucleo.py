@@ -13,6 +13,7 @@ from pathlib import Path
 from mgitems.cache_swf import CacheSwf
 from mgitems.catalogo import buscar_en_catalogo, cargar_catalogo
 from mgitems.categorias import CacheCategorias, IndicePiezas, categorias, otros_usos, tipos_de_items, usos_de_piezas
+from mgitems.destinos import DESCARTADO, descarte_por_nombre
 from mgitems.entorno import Entorno, Sistema
 from mgitems.entrega import PUERTO_FIDDLER_POR_DEFECTO, QUE_HACER_EN_EL_JUEGO, URL_LOLA, Entrega, PasoFallido, Procesos, SwfTrucado
 from mgitems.ffdec import FFDecNoDisponible
@@ -178,12 +179,16 @@ class Nucleo:
 
     def items_de_swfs(self, swfs: list | None = None) -> dict:
         """Los Items de varios SWF (None: todos los del juego) con su SWF, su tipo ("prenda", "mochila",
-        "transporte", "casa", "mascota" u "otro") y, si es una Prenda, las Partes del cuerpo que viste.
+        "transporte", "casa", "mascota", "ropa_mascota", "comida_mascota", "juguete_mascota" u "otro"),
+        las Partes del cuerpo que viste si es una Prenda, para qué mascota es (`mascota`, o None) y dónde
+        llega al juego (`destino`, ver `destinos`; `motivo` si no llega bien, o None).
 
         Como `piezas_de_swfs`: del índice que trae el programa, o analizados acá si no están o cambiaron.
         """
         def items(swf, obtenido):
-            return [{"ruta": f"{swf}.{clase}", "clase": clase, "swf": swf, "tipo": item["tipo"], "partes": item.get("partes", [])}
+            return [{"ruta": f"{swf}.{clase}", "clase": clase, "swf": swf, "tipo": item["tipo"], "partes": item.get("partes", []),
+                     "mascota": item.get("mascota"), "destino": item.get("destino"), "motivo": item.get("motivo"),
+                     "parecido": item.get("parecido", [])}
                     for clase, item in sorted(obtenido["items"].items(), key=lambda i: orden_natural(i[0]))]
 
         return self._de_varios_swf(swfs, "items", items)
@@ -238,7 +243,7 @@ class Nucleo:
             items_base = {i.clase: i for i in map(leer_item_base, fuentes.values()) if i and i.clase in items}
             piezas = categorias(piezas_del_swf(clases), usos_de_piezas(swf, items_base).get(swf, {}))
             otros = {p: uso for p, uso in otros_usos(swf, fuentes).get(swf, {}).items() if p in piezas and not piezas[p]}
-            tipos = {clase: tipo for clase, tipo in tipos_de_items(fuentes).items() if clase in items}
+            tipos = {clase: tipo for clase, tipo in tipos_de_items(swf, fuentes).items() if clase in items}
             cache.guardar(swf, version, piezas, otros, tipos)
         except FFDecNoDisponible as e:
             return {"ok": False, "error": f"{e}: no se pueden clasificar los Items de {swf}."}
@@ -845,7 +850,17 @@ class Nucleo:
 
         pedidos = [(ruta, _cantidad(cantidad)) for ruta, cantidad in pedidos]
         script = generar_script(pedidos)
-        return {"ok": True, "items": _como_items(pedidos), "script": script, "encode": codificar(script)}
+        avisos = [{"ruta": ruta, **aviso} for ruta, _ in pedidos if (aviso := self._aviso_de_destino(ruta))]
+        return {"ok": True, "items": _como_items(pedidos), "script": script, "encode": codificar(script), "avisos": avisos}
+
+    def _aviso_de_destino(self, ruta: str) -> dict | None:
+        """{"destino", "motivo"} si el Item no va a llegar bien al juego (según el índice o su nombre), o None."""
+        swf, _, clase = ruta.rpartition(".")
+        item = ((self._indice.leer(swf) or {}).get("items") or {}).get(clase)
+        if item:
+            return {"destino": item["destino"], "motivo": item["motivo"]} if item.get("motivo") else None
+        motivo = descarte_por_nombre(ruta)
+        return {"destino": DESCARTADO, "motivo": motivo} if motivo else None
 
     def importar_encode(self, encode: str) -> dict:
         """Items y cantidades que agrega un Encode existente."""

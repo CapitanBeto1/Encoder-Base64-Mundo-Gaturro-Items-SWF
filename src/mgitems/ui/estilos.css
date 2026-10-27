@@ -1489,7 +1489,7 @@ main.modo-agregar .buscador-swf { display: none; }
 .buscador-items { flex: 1; }
 .boton-todos { font-size: 11px; padding: 3px 8px; }
 .boton-todos[aria-pressed="true"] { background: var(--amarillo); border-color: var(--amarillo-contorno); }
-.categorias-items { grid-template-columns: repeat(9, minmax(0, 1fr)); }
+.categorias-items { grid-template-columns: repeat(10, minmax(0, 1fr)); }
 #filtro-items { flex: none; font-size: 12px; padding: 4px 8px; }
 .item-grilla { grid-template-rows: minmax(0, 1fr) auto auto; overflow: hidden; }
 .item-grilla .icono { overflow: hidden; }
@@ -1512,3 +1512,19 @@ main.modo-agregar .buscador-swf { display: none; }
 .items-a-recibir[hidden] { display: none; }
 .items-a-recibir .encabezado-lista { margin-top: 0; }
 main.modo-agregar #encode { flex: none; height: 64px; min-height: 0; }
+
+/* Dónde llega cada Item al juego: rojo si no llega bien. */
+.item-grilla { grid-template-rows: minmax(0, 1fr) auto auto auto; }
+.destino-item {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 8px;
+  line-height: 10px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #2f6421;
+}
+.destino-item[data-bien="false"] { color: #fff; background: #c41a1a; padding: 0 4px; border-radius: 5px; }
+.item-grilla.no-llega-bien { border-color: #c41a1a; }

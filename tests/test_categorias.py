@@ -198,33 +198,102 @@ def test_los_items_de_un_swf_con_su_tipo(tmp_path, ffdec):
         "pocima1": codigo_mochila("pocima1", "ConsumableMamboAsset", '         adds.hats = "varios.gorro1_on";'),
         "skate1": clase_con("skate1", "TransportMamboAsset", 'vehicle = "skate1_on";'),
         "silla1": clase_con("silla1", "HolderMamboAsset", ""),
-        "perroPirata": clase_con("perroPirata", "PetClothMamboAsset", 'clothes = {"hats":"varios.perro_gorroPirata_on"};'),
+        "perroPirata": clase_con("perroPirata", "PetClothMamboAsset", 'clothes = {"petType":"perro","hats":"varios.perro_gorroPirata_on"};'),
+        "pez1": clase_con("pez1", "PetFoodMamboAsset", 'energy = 5; forPetType = "acuario";'),
+        "pelota1": clase_con("pelota1", "PetToyMamboAsset", "love = 3;"),
+        "dino1": clase_con("dino1", "OwnedNpcMamboAsset", 'nameOwnedNpc = "Dino";'),
         "remera5": codigo_prenda("remera5", {"cloth": "remera5_on", "arm": "remera5_brazo_on"}),
         "ClothMamboAsset": clase_con("ClothMamboAsset", "GrabbableMamboAsset", ""),  # la clase base que trae el SWF
     }
     fuente = FuenteFalsa({"varios": crear_swf([
-        "pocima1", "skate1", "silla1", "perroPirata", "remera5", "remera5_on", "ClothMamboAsset", "evento1"])})
+        "pocima1", "skate1", "silla1", "perroPirata", "pez1", "pelota1", "dino1", "remera5", "remera5_on", "ClothMamboAsset", "evento1"])})
 
     resultado = nucleo_con(tmp_path, fuente, ffdec, {}).items_de_swfs(["varios"])
 
     assert resultado["ok"], resultado
-    assert {i["ruta"]: (i["tipo"], i["partes"]) for i in resultado["items"]} == {
-        "varios.perroPirata": ("mascota", []),
-        "varios.pocima1": ("mochila", []),
-        "varios.remera5": ("prenda", ["arm", "cloth"]),
-        "varios.silla1": ("casa", []),
-        "varios.skate1": ("transporte", []),
+    assert {i["ruta"]: (i["tipo"], i["partes"], i["mascota"]) for i in resultado["items"]} == {
+        "varios.dino1": ("casa", [], None),  # no es una mascota válida del juego: no da una mascota
+        "varios.pelota1": ("juguete_mascota", [], None),
+        "varios.perroPirata": ("ropa_mascota", [], "perro"),
+        "varios.pez1": ("comida_mascota", [], "acuario"),
+        "varios.pocima1": ("mochila", [], None),
+        "varios.remera5": ("prenda", ["arm", "cloth"], None),
+        "varios.silla1": ("casa", [], None),
+        "varios.skate1": ("transporte", [], None),
     }
 
 
 def test_los_items_vienen_del_indice(tmp_path, fuente, ffdec):
     nucleo = nucleo_con(tmp_path, fuente, ffdec, {"costumes": {
-        "version": "x", "piezas": {}, "items": {"coronaRey": {"tipo": "prenda", "partes": ["hats"]}, "trono": {"tipo": "casa"}}}})
+        "version": "x", "piezas": {}, "items": {
+            "coronaRey": {"tipo": "prenda", "partes": ["hats"], "destino": "guardarropa"},
+            "trono": {"tipo": "casa", "destino": "casa"}}}})
 
     resultado = nucleo.items_de_swfs(["costumes"])
 
     assert resultado["items"] == [
-        {"ruta": "costumes.coronaRey", "clase": "coronaRey", "swf": "costumes", "tipo": "prenda", "partes": ["hats"]},
-        {"ruta": "costumes.trono", "clase": "trono", "swf": "costumes", "tipo": "casa", "partes": []},
+        {"ruta": "costumes.coronaRey", "clase": "coronaRey", "swf": "costumes", "tipo": "prenda", "partes": ["hats"], "mascota": None,
+         "destino": "guardarropa", "motivo": None, "parecido": []},
+        {"ruta": "costumes.trono", "clase": "trono", "swf": "costumes", "tipo": "casa", "partes": [], "mascota": None,
+         "destino": "casa", "motivo": None, "parecido": []},
     ]
     assert fuente.descargas == [] and ffdec.analisis == 0
+
+
+def test_donde_llega_cada_item_al_juego(tmp_path, ffdec):
+    ffdec.codigo |= {
+        "remera5": codigo_prenda("remera5", {"cloth": "remera5_on"}),
+        "skate1": clase_con("skate1", "TransportMamboAsset", 'vehicle = "skate1_on";'),
+        "pocima1": codigo_mochila("pocima1", "ConsumableMamboAsset", '         adds.action = "drink.varios.pocima1_on";'),
+        "pocimaSesion": codigo_mochila("pocimaSesion", "ConsumableMamboAsset", "         session = true;"),
+        "pocimaAlas": clase_con("pocimaAlas", "TransportMamboAsset", 'questItem = true; session = true; vehicle = "pocimaAlas_on";'),
+        "silla1": clase_con("silla1", "HolderMamboAsset", ""),
+        "perroPirata": clase_con("perroPirata", "PetClothMamboAsset", 'clothes = {"petType":"perro","hats":"varios.perro_gorroPirata_on"};'),
+        "premio_catalog": clase_con("premio_catalog", "HouseDecorationMamboAsset", ""),
+    }
+    fuente = FuenteFalsa({"varios": crear_swf(list(ffdec.codigo)), "pet": crear_swf(["koala", "koalaHouse"])})
+    # Confirmado en el juego: la mascota dada directo llega a la casa como adorno; la mascota es su casita.
+    ffdec.codigo["koala"] = clase_con("koala", "NpcMamboAsset", 'behavior = "pets";')
+    ffdec.codigo["koalaHouse"] = clase_con("koalaHouse", "OwnedNpcMamboAsset", 'nameOwnedNpc = "pet.koala"; behaviorOwnedNpc = "pets";')
+
+    resultado = nucleo_con(tmp_path, fuente, ffdec, {}).items_de_swfs(["varios"])
+
+    destinos = {i["clase"]: i["destino"] for i in resultado["items"]}
+    assert {c: destinos[c] for c in ["remera5", "skate1", "pocima1", "pocimaSesion", "pocimaAlas", "silla1", "perroPirata", "premio_catalog"]} == {
+        "remera5": "guardarropa",
+        "skate1": "guardarropa",
+        "pocima1": "mochila",
+        "pocimaSesion": "sesion",  # el juego no se lo pide al servidor: se borra al salir
+        "pocimaAlas": "oculto",  # de misión: el guardarropa no muestra los Items de misión (confirmado en el juego)
+        "silla1": "casa",
+        "perroPirata": "pantalla_mascota",  # la mochila no muestra la ropa de mascota
+        "premio_catalog": "descartado",  # exclusivo de catálogo
+    }
+    assert all(i["motivo"] for i in resultado["items"] if i["destino"] in ("sesion", "pantalla_mascota", "descartado"))
+    mascotas = {i["clase"]: (i["tipo"], i["destino"]) for i in nucleo_con(tmp_path, fuente, ffdec, {}).items_de_swfs(["pet"])["items"]}
+    assert mascotas == {"koala": ("casa", "casa"), "koalaHouse": ("mascota", "mascota")}
+
+
+def test_el_encode_avisa_lo_que_no_va_a_llegar_bien(tmp_path, fuente, ffdec):
+    nucleo = nucleo_con(tmp_path, fuente, ffdec, {"costumes": {"version": "x", "piezas": {}, "items": {
+        "coronaRey": {"tipo": "prenda", "destino": "guardarropa"},
+        "pocimaRey": {"tipo": "mochila", "destino": "sesion", "motivo": "es de sesión"}}}})
+
+    resultado = nucleo.generar_encode(["costumes.coronaRey", "costumes.pocimaRey", "achievements.acc1"])
+
+    assert resultado["ok"]
+    assert [(a["ruta"], a["destino"]) for a in resultado["avisos"]] == [
+        ("costumes.pocimaRey", "sesion"), ("achievements.acc1", "descartado")]
+
+
+def test_las_prendas_rotas_avisan_por_que(tmp_path, ffdec):
+    ffdec.codigo |= {
+        "collar1": clase_con("collar1", "ClothMamboAsset", ""),  # no declara Piezas
+        "gorroRaro": codigo_prenda("gorroRaro", {"hat": "gorroRaro_on"}),  # Parte que el Gaturro no tiene
+    }
+    fuente = FuenteFalsa({"varios": crear_swf(["collar1", "collar1_on", "gorroRaro", "gorroRaro_on"])})
+
+    items = {i["clase"]: i for i in nucleo_con(tmp_path, fuente, ffdec, {}).items_de_swfs(["varios"])["items"]}
+
+    assert items["collar1"]["destino"] == "mochila" and "no se puede poner" in items["collar1"]["motivo"]
+    assert items["gorroRaro"]["destino"] == "guardarropa" and "«hat»" in items["gorroRaro"]["motivo"]

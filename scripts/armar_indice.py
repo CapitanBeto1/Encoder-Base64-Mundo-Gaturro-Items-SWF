@@ -52,11 +52,12 @@ from mgitems.categorias import ARCHIVO_INDICE, MASCOTA, categorias, otros_usos, 
 from mgitems.fuente import FuenteCDN, SwfNoEncontrado  # noqa: E402
 from mgitems.iconos import version_de  # noqa: E402
 from mgitems.items import items_del_swf, piezas_del_swf  # noqa: E402
-from mgitems.prendas import ItemsBaseFFDec, leer_item_base  # noqa: E402
+from mgitems.destinos import PARTES_DEL_GATURRO  # noqa: E402
+from mgitems.prendas import PRENDA, ItemsBaseFFDec, leer_item_base  # noqa: E402
 from mgitems.swf import SwfInvalido, leer_clases, limites_de_simbolos  # noqa: E402
 
 # Sube cuando cambia lo que se guarda de cada SWF en la carpeta de trabajo.
-FORMATO_TRABAJO = 5
+FORMATO_TRABAJO = 11
 # Seguridad mínima para ubicar una Pieza en el paso 4. Con 0.7, al probarlo con las Piezas que el
 # juego ya ubica, acertó el 98-99 %.
 SEGURIDAD_MINIMA = 0.7
@@ -107,7 +108,7 @@ def analizar(fuente: FuenteCDN, ffdec: ItemsBaseFFDec, trabajo: Path, swf: str) 
     datos = {
         "formato": FORMATO_TRABAJO, "version": version_de(data), "piezas": piezas, "usos": usos,
         "otros_usos": otros_usos(swf, fuentes), "limites": {p: limites[p] for p in piezas if p in limites},
-        "items": {clase: tipo for clase, tipo in tipos_de_items(fuentes).items() if clase in items},
+        "items": {clase: tipo for clase, tipo in tipos_de_items(swf, fuentes).items() if clase in items},
     }
     guardado.write_text(json.dumps(datos, ensure_ascii=False), encoding="utf-8")
     return swf, datos, ""
@@ -198,6 +199,29 @@ def ubicar_por_dibujo(partes: dict, usos: dict, limites: dict) -> dict[tuple[str
     return ubicadas
 
 
+def completar_prendas_rotas(analizados: dict, partes: dict, por_palabra: dict) -> None:
+    """A las Prendas que no declaran Piezas, o solo en Partes que el Gaturro no tiene, les anota
+    "parecido": las Partes de su Pieza `<Item>_on`, de una Prenda que funciona y se llama igual en
+    otro SWF, o de la primera palabra de su nombre, para ubicarlas en su categoría. Si hay una que funciona, la sugiere en el motivo."""
+    que_funcionan = defaultdict(list)
+    for swf, datos in analizados.items():
+        for clase, item in datos["items"].items():
+            if item["tipo"] == PRENDA and not item.get("motivo") and set(item.get("partes", [])) & PARTES_DEL_GATURRO:
+                que_funcionan[clase].append((swf, item["partes"]))
+    for swf, datos in analizados.items():
+        for clase, item in datos["items"].items():
+            if item["tipo"] != PRENDA or set(item.get("partes", [])) & PARTES_DEL_GATURRO:
+                continue
+            otra = next(iter(que_funcionan.get(clase, [])), None)
+            de_la_pieza = [p for p in partes.get((swf, f"{clase}_on"), []) if p in PARTES_DEL_GATURRO]
+            por_nombre = [p for p in [por_palabra.get(primera_palabra(clase))] if p in PARTES_DEL_GATURRO]
+            parecido = de_la_pieza or (otra[1] if otra else []) or por_nombre
+            if parecido:
+                item["parecido"] = parecido
+            if otra and item.get("motivo"):
+                item["motivo"] += f" (la que funciona: {otra[0]}.{clase})"
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--hilos", type=int, default=4)
@@ -273,6 +297,8 @@ def main() -> None:
             motivos["por la primera palabra del nombre"] += 1
         else:
             motivos["no parece ropa"] += 1
+
+    completar_prendas_rotas(analizados, partes, por_palabra)
 
     indice = {"swfs": {
         swf: {

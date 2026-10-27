@@ -20,16 +20,19 @@ import re
 from collections import defaultdict
 from pathlib import Path
 
+from mgitems.destinos import destino_de_item
 from mgitems.prendas import MOCHILA, PARTES_DEL_CUERPO, PRENDA, ItemBase, leer_item_base
 
 ARCHIVO_INDICE = Path(__file__).parent / "datos" / "indice_piezas.json"
 # Lo que un Item de mochila agrega y viste al Gaturro (el resto de `adds`, como `action`, no viste).
 PARTES_QUE_VISTEN = set(PARTES_DEL_CUERPO) | {"clothFront", "armFore", "armBack", "gripBack", "glove", "gloveFore", "gloveBack"}
 # Sube cuando cambia cómo se clasifica, para no usar lo analizado antes en la computadora del jugador.
-FORMATO = 4
+FORMATO = 10
 
 # Para qué usa el juego una Pieza que no viste al Gaturro; también, tipos de Items.
 TRANSPORTE, ACCION, CASA, MASCOTA = "transporte", "accion", "casa", "mascota"
+# Cosas para la mascota: el juego las trata como consumibles (van a la mochila y se usan en la mascota).
+ROPA_MASCOTA, COMIDA_MASCOTA, JUGUETE_MASCOTA = "ropa_mascota", "comida_mascota", "juguete_mascota"
 OTRO = "otro"
 # Tipo de Item según la clase del juego de la que hereda (las demás clases del SWF no son Items).
 TIPOS_DE_ITEM = {
@@ -39,9 +42,12 @@ TIPOS_DE_ITEM = {
     # Muebles, paredes y pisos, asientos y camas (Holder), objetos que se colocan (Npc y los demás).
     "HouseMamboAsset": CASA, "HouseDecorationMamboAsset": CASA, "HolderMamboAsset": CASA,
     "NpcMamboAsset": CASA, "HomeInteractiveMamboAsset": CASA, "GrabbableMamboAsset": CASA, "MamboAsset": CASA,
-    "PetClothMamboAsset": MASCOTA, "PetFoodMamboAsset": MASCOTA, "PetToyMamboAsset": MASCOTA, "OwnedNpcMamboAsset": MASCOTA,
+    "OwnedNpcMamboAsset": MASCOTA,
+    "PetClothMamboAsset": ROPA_MASCOTA, "PetFoodMamboAsset": COMIDA_MASCOTA, "PetToyMamboAsset": JUGUETE_MASCOTA,
     "BannerMamboAsset": OTRO, "VendorMamboAsset": OTRO,
 }
+# Para qué mascota es: la ropa lo dice en `clothes` ("petType"), la comida en `forPetType`.
+_PARA_MASCOTA = re.compile(r'"petType"\s*:\s*"(\w+)"|\bforPetType\s*=\s*"(\w+)"')
 # Items cuya Pieza `<Item>_on` es de la casa.
 _PADRES_DE_LA_CASA = ("HouseMamboAsset", "HouseDecorationMamboAsset")
 _CLASE = re.compile(r"\bclass\s+(\w+)\s+extends\s+(\w+)")
@@ -90,8 +96,10 @@ def otros_usos(swf: str, fuentes: dict[str, str]) -> dict[str, dict[str, str]]:
     return usos
 
 
-def tipos_de_items(fuentes: dict[str, str]) -> dict[str, dict]:
-    """Item → {"tipo"} (y "partes" si es una Prenda), de las clases que son Items. `fuentes`: clase → código AS3."""
+def tipos_de_items(swf: str, fuentes: dict[str, str]) -> dict[str, dict]:
+    """Item → {"tipo", "destino"} (y "partes" si es una Prenda; "mascota" si es para una mascota en
+    especial; "motivo" si no llega bien al juego), de las clases de `swf` que son Items.
+    `fuentes`: clase → código AS3."""
     tipos = {}
     for fuente in fuentes.values():
         clase = _CLASE.search(fuente)
@@ -99,11 +107,19 @@ def tipos_de_items(fuentes: dict[str, str]) -> dict[str, dict]:
             continue
         nombre, padre = clase.groups()
         tipo = TIPOS_DE_ITEM.get(padre)
+        if not tipo:
+            continue
+        tipos[nombre] = {"tipo": tipo}
         if tipo == PRENDA:
             item = leer_item_base(fuente)
-            tipos[nombre] = {"tipo": tipo, "partes": sorted(item.partes) if item else []}
-        elif tipo:
-            tipos[nombre] = {"tipo": tipo}
+            tipos[nombre]["partes"] = sorted(item.partes) if item else []
+        elif tipo in (ROPA_MASCOTA, COMIDA_MASCOTA) and (para := _PARA_MASCOTA.search(fuente)):
+            tipos[nombre]["mascota"] = para.group(1) or para.group(2)
+        tipos[nombre] |= destino_de_item(f"{swf}.{nombre}", fuente)
+        if tipos[nombre]["destino"] == MASCOTA:  # el juego la crea como mascota, herede de lo que herede
+            tipos[nombre]["tipo"] = MASCOTA
+        elif tipo == MASCOTA:  # de la clase de las mascotas, pero no da una (`pet.house`): es de la casa
+            tipos[nombre]["tipo"] = CASA
     return tipos
 
 
