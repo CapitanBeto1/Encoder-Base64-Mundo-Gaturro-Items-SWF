@@ -309,6 +309,17 @@ function crearDesplegable({ campo, lista, consultar, fila, elegir, vacio, sinEle
   return { cerrar };
 }
 
+// `lista` ordenada por `clave` (un arreglo que se compara elemento por elemento), sin cambiar el orden
+// de los que empatan.
+function ordenarPor(lista, clave) {
+  const claves = new Map(lista.map((x) => [x, clave(x).map(Number)]));
+  return [...lista].sort((x, y) => {
+    const [a, b] = [claves.get(x), claves.get(y)];
+    for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return a[i] - b[i];
+    return 0;
+  });
+}
+
 const etiqueta = (contenido, className) => Object.assign(document.createElement("span"), { textContent: contenido, className });
 
 // Elegir un SWF del catálogo.
@@ -862,7 +873,11 @@ function mostrarInventario() {
     })
   );
 
-  const piezas = inventario.piezas.filter((p) => enCategoria(p, categoria) && p.clase.toLowerCase().includes(texto));
+  // Primero las que son solo de esta categoría, después las que suman una más, dos más… (como en «Agregar Items»).
+  const piezas = ordenarPor(
+    inventario.piezas.filter((p) => enCategoria(p, categoria) && p.clase.toLowerCase().includes(texto)),
+    (p) => [CATEGORIAS.filter((c) => c.partes.length && p.partes.some((x) => c.partes.includes(x))).length]
+  );
   const paginas = Math.max(1, Math.ceil(piezas.length / POR_PAGINA));
   inventario.pagina = Math.min(Math.max(inventario.pagina, 0), paginas - 1);
   const visibles = piezas.slice(inventario.pagina * POR_PAGINA, (inventario.pagina + 1) * POR_PAGINA);
@@ -1618,7 +1633,11 @@ const enCategoriaItems = (item, categoria) => categoria.id === "todos" || catego
 function itemsVisibles() {
   const categoria = CATEGORIAS_ITEMS.find((c) => c.id === buscador.categoria);
   const comienzos = $("filtro-items").value.split(",").map((t) => t.trim().toLowerCase()).filter(Boolean);
-  return buscador.items.filter((i) => enCategoriaItems(i, categoria) && (!comienzos.length || comienzos.some((t) => i.clase.toLowerCase().startsWith(t))));
+  const encontrados = buscador.items.filter((i) => enCategoriaItems(i, categoria) && (!comienzos.length || comienzos.some((t) => i.clase.toLowerCase().startsWith(t))));
+  // Primero los que son solo de esta categoría, después los que suman una más, dos más…; al final, los
+  // que no llegan bien al juego (en rojo). Dentro de cada grupo, el orden de siempre.
+  const orden = (i) => [Boolean(i.motivo), categoriasDeItem(i).filter((c) => c.id !== "disfraces").length];
+  return ordenarPor(encontrados, orden);
 }
 
 async function cargarItemsBuscados() {
