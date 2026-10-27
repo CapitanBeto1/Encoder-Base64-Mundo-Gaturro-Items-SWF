@@ -1660,14 +1660,16 @@ const DESTINOS = {
 
 const enCategoriaItems = (item, categoria) => categoria.id === "todos" || categoriasDeItem(item).includes(categoria);
 
-// Los que coinciden con la categoría y con el comienzo del nombre (varios, separados por coma).
+// Los que coinciden con la categoría y con el nombre (varios, separados por coma): que empiece así o,
+// si se eligió «Contiene», que lo tenga en cualquier lugar (pantalones con «ta»).
 function itemsVisibles() {
   const categoria = CATEGORIAS_ITEMS.find((c) => c.id === buscador.categoria);
   const comienzos = $("filtro-items").value.split(",").map((t) => t.trim().toLowerCase()).filter(Boolean);
   const destino = $("destino-items").value;
+  const contiene = $("modo-nombre-items").value === "contiene";
   let encontrados = buscador.items.filter(
     (i) => enCategoriaItems(i, categoria) && (!destino || i.destino === destino) &&
-      (!comienzos.length || comienzos.some((t) => i.clase.toLowerCase().startsWith(t)))
+      (!comienzos.length || comienzos.some((t) => (contiene ? i.clase.toLowerCase().includes(t) : i.clase.toLowerCase().startsWith(t))))
   );
   const orden = $("orden-items").value;
   if (orden !== "exclusivos") {
@@ -1771,7 +1773,9 @@ function mostrarBuscador() {
     ? "Agregá un SWF arriba (+ Agregar SWF) o tocá «Todos»."
     : !buscador.items.length || visibles.length
       ? ""
-      : $("filtro-items").value.trim() ? "Ningún Item empieza así." : "No hay Items de esta categoría en estas fuentes.";
+      : $("filtro-items").value.trim()
+        ? $("modo-nombre-items").value === "contiene" ? "Ningún Item tiene eso en el nombre." : "Ningún Item empieza así."
+        : "No hay Items de esta categoría en estas fuentes.";
   $("numero-pagina-items").textContent = visibles.length ? contarItems(visibles.length) : "";
   mostrarPaginas($("paginas-items"), visibles.length ? buscador.pagina : -1, paginas, irAPaginaDeItems);
   $("pagina-anterior-items").disabled = $("diez-atras-items").disabled = buscador.pagina === 0;
@@ -1832,7 +1836,7 @@ function irAPaginaDeItems(pagina) {
 }
 $("diez-atras-items").addEventListener("click", () => irAPaginaDeItems(Math.max(0, buscador.pagina - 10)));
 $("diez-adelante-items").addEventListener("click", () => irAPaginaDeItems(buscador.pagina + 10)); // se ajusta a la última
-for (const filtro of ["orden-items", "destino-items"]) {
+for (const filtro of ["orden-items", "destino-items", "modo-nombre-items"]) {
   $(filtro).addEventListener("change", () => irAPaginaDeItems(0));
 }
 $("pagina-anterior-items").addEventListener("click", () => {
