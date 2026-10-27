@@ -1578,20 +1578,25 @@ function guardarFuentesItems() {
   } catch {}
 }
 
-// La categoría de un Item (una sola).
-function categoriaDeItem(item) {
-  if (item.tipo !== "prenda") return CATEGORIAS_ITEMS.find((c) => (c.tipos ?? [c.id]).includes(item.tipo)) ?? CATEGORIAS_ITEMS.at(-1);
+// Las categorías de un Item, con la misma regla que las Piezas en Looks: una Prenda está en cada
+// categoría de las Partes que viste (una remera, en Torso y en Mangas; una capa con remera, en Torso
+// y en Espalda), y además en Disfraces si ocupa varias (sin contar las Mangas de una remera). Los
+// demás tipos, cada uno en la suya.
+function categoriasDeItem(item) {
+  if (item.tipo !== "prenda") return [CATEGORIAS_ITEMS.find((c) => (c.tipos ?? [c.id]).includes(item.tipo)) ?? CATEGORIAS_ITEMS.at(-1)];
   // Una Prenda rota (sin Piezas, o en una Parte que el Gaturro no tiene) va donde va su Pieza parecida.
   const partes = item.partes.some((p) => PARTES_CON_CATEGORIA.has(p)) ? item.partes : item.parecido ?? [];
-  let casilleros = CATEGORIAS.filter((c) => c.que && partes.some((p) => c.partes.includes(p)));
-  if (casilleros.length > 1) casilleros = casilleros.filter((c) => c.id !== "arm");
-  if (casilleros.length === 1) return casilleros[0];
-  return CATEGORIAS_ITEMS.find((c) => c.id === (casilleros.length ? "disfraces" : "otros"));
+  const casilleros = CATEGORIAS.filter((c) => c.que && partes.some((p) => c.partes.includes(p)));
+  if (!casilleros.length) return [CATEGORIAS_ITEMS.find((c) => c.id === "otros")];
+  const sinMangas = casilleros.length > 1 ? casilleros.filter((c) => c.id !== "arm") : casilleros;
+  return sinMangas.length > 1 ? [...casilleros, CATEGORIAS_ITEMS.find((c) => c.id === "disfraces")] : casilleros;
 }
 
-// Lo que se lee debajo de un Item: su categoría y, si es para una mascota en especial, cuál.
+// Lo que se lee debajo de un Item: sus casilleros (como en Looks) o su categoría y, si es para una
+// mascota en especial, cuál.
 function queEsItem(item) {
-  const que = item.tipo === "juguete_mascota" ? "Juguete de mascota" : categoriaDeItem(item).que;
+  if (item.tipo === "prenda") return categoriasDeItem(item).filter((c) => c.id !== "disfraces").map((c) => c.que).join(" · ");
+  const que = item.tipo === "juguete_mascota" ? "Juguete de mascota" : categoriasDeItem(item)[0].que;
   return item.mascota ? `${que.replace(/ de mascota$/, "")} · ${item.mascota}` : que;
 }
 
@@ -1607,7 +1612,7 @@ const DESTINOS = {
   descartado: { nombre: "No llega" },
 };
 
-const enCategoriaItems = (item, categoria) => categoria.id === "todos" || categoriaDeItem(item).id === categoria.id;
+const enCategoriaItems = (item, categoria) => categoria.id === "todos" || categoriasDeItem(item).includes(categoria);
 
 // Los que coinciden con la categoría y con el comienzo del nombre (varios, separados por coma).
 function itemsVisibles() {
