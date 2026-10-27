@@ -142,7 +142,7 @@ button {
   border: 3px solid var(--celeste-borde);
   border-radius: 12px;
   background: linear-gradient(var(--celeste), var(--celeste-oscuro));
-  box-shadow: inset 0 0 0 1px var(--celeste-contorno), 0 3px 0 var(--celeste-sombra);
+  box-shadow: 0 3px 0 var(--celeste-sombra);
   color: var(--texto);
   font: inherit;
   font-weight: 900;
@@ -168,7 +168,7 @@ button:hover:not(:disabled),
 button:focus-visible {
   background: linear-gradient(var(--amarillo), var(--amarillo-oscuro));
   border-color: var(--amarillo-borde);
-  box-shadow: inset 0 0 0 1px var(--amarillo-contorno), 0 3px 0 rgba(90, 70, 0, 0.35);
+  box-shadow: 0 3px 0 rgba(90, 70, 0, 0.35);
   outline: none;
 }
 
@@ -179,21 +179,21 @@ button:focus-visible::before {
 
 button:active:not(:disabled) {
   transform: translateY(2px);
-  box-shadow: inset 0 0 0 1px var(--celeste-contorno), 0 1px 0 var(--celeste-sombra);
+  box-shadow: 0 1px 0 var(--celeste-sombra);
 }
 
 /* Deshabilitado: el mismo botón en gris claro y opaco (con transparencia se vería sucio sobre el panel). */
 button:disabled {
   cursor: default;
   filter: grayscale(0.9) brightness(1.2) contrast(0.8);
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15);
+  box-shadow: none;
 }
 
 /* Botón principal: rojo, con letras blancas. */
 button.primario {
   border-color: #ff7a72;
   background: linear-gradient(var(--rojo-claro) 0%, var(--rojo) 55%, #c40101 100%);
-  box-shadow: inset 0 0 0 1px var(--rojo-oscuro), 0 3px 0 rgba(80, 0, 0, 0.4);
+  box-shadow: 0 3px 0 rgba(80, 0, 0, 0.4);
   color: var(--blanco);
   text-shadow: 0 2px 0 var(--rojo-oscuro);
 }
@@ -202,7 +202,7 @@ button.primario:hover:not(:disabled),
 button.primario:focus-visible {
   border-color: var(--amarillo-borde);
   background: linear-gradient(var(--amarillo), var(--amarillo-oscuro));
-  box-shadow: inset 0 0 0 1px var(--amarillo-contorno), 0 3px 0 rgba(90, 70, 0, 0.35);
+  box-shadow: 0 3px 0 rgba(90, 70, 0, 0.35);
   color: var(--texto);
   text-shadow: none;
 }
@@ -250,7 +250,7 @@ button.derecha { margin-left: auto; }
 .pestana[aria-selected="true"] {
   background: linear-gradient(var(--amarillo), var(--amarillo-oscuro));
   border-color: var(--amarillo-borde);
-  box-shadow: inset 0 0 0 1px var(--amarillo-contorno), 0 3px 0 rgba(90, 70, 0, 0.35);
+  box-shadow: 0 3px 0 rgba(90, 70, 0, 0.35);
 }
 
 .pestana[aria-selected="true"]::before {
@@ -292,7 +292,7 @@ button.chip-look {
 button.chip-look[aria-pressed="true"] {
   background: linear-gradient(var(--amarillo), var(--amarillo-oscuro));
   border-color: var(--amarillo-borde);
-  box-shadow: inset 0 0 0 1px var(--amarillo-contorno), 0 3px 0 rgba(90, 70, 0, 0.35);
+  box-shadow: 0 3px 0 rgba(90, 70, 0, 0.35);
 }
 
 .vacia-chica {
@@ -506,7 +506,7 @@ textarea {
   border-radius: 9px;
   cursor: pointer;
   background: linear-gradient(var(--celeste), var(--celeste-oscuro));
-  box-shadow: inset 0 0 0 1px var(--celeste-contorno);
+  box-shadow: none;
   font-weight: 900;
 }
 
@@ -515,7 +515,7 @@ textarea {
 .resultados-swf li:hover,
 .resultados-swf li.activo {
   background: linear-gradient(#fff3a6, #fde67a);
-  box-shadow: inset 0 0 0 1px var(--amarillo-contorno);
+  box-shadow: none;
 }
 
 .resultados-swf li.vacio {
@@ -551,13 +551,13 @@ textarea {
   border: 2px solid var(--celeste-borde);
   border-radius: 11px;
   background: linear-gradient(var(--celeste), var(--celeste-oscuro));
-  box-shadow: inset 0 0 0 1px var(--celeste-contorno), 0 2px 0 var(--celeste-sombra);
+  box-shadow: 0 2px 0 var(--celeste-sombra);
 }
 
 .lista li:hover {
   background: linear-gradient(var(--amarillo), var(--amarillo-oscuro));
   border-color: var(--amarillo-borde);
-  box-shadow: inset 0 0 0 1px var(--amarillo-contorno), 0 2px 0 rgba(90, 70, 0, 0.3);
+  box-shadow: 0 2px 0 rgba(90, 70, 0, 0.3);
 }
 
 .lista li .nombre {
@@ -586,7 +586,7 @@ textarea {
   padding: 3px 10px;
   border-radius: 9px;
   background: linear-gradient(var(--celeste), var(--celeste-oscuro));
-  box-shadow: inset 0 0 0 1px var(--celeste-contorno);
+  box-shadow: none;
   color: var(--texto);
   text-shadow: none;
 }
@@ -1544,4 +1544,47 @@ main.modo-agregar #encode { flex: none; height: 64px; min-height: 0; }
   line-height: 11px;
   letter-spacing: 0;
   text-transform: none;
+}
+
+/* Paginación: bajo cada flecha, un botón para saltar de a 10; abajo, los números de página (como en Google). */
+.flechas { flex: none; align-self: center; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.flecha-diez {
+  width: 34px;
+  padding: 3px 0;
+  font-size: 8px;
+  letter-spacing: 0;
+  line-height: 1.1;
+  color: #c4401a;
+  background: var(--amarillo);
+  border-color: var(--amarillo-contorno);
+  border-width: 2px;
+}
+.flecha-diez::before { display: none; }
+.paginas { flex: none; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 3px; }
+.paginas:empty { display: none; }
+.numero-de-pagina {
+  min-width: 24px;
+  padding: 2px 5px;
+  border-width: 2px;
+  border-radius: 7px;
+  font-size: 11px;
+  -webkit-text-stroke: 0;
+}
+.numero-de-pagina::before { display: none; }
+.numero-de-pagina[aria-current="page"] { background: var(--amarillo); border-color: var(--amarillo-contorno); }
+.total-paginas { margin-left: 4px; color: #fff; font-size: 11px; }
+
+/* Agregar Items: nombre, orden y destino en una fila. */
+.filtros-items { flex: none; display: flex; gap: 6px; align-items: center; }
+.filtros-items #filtro-items { flex: 1; min-width: 150px; font-size: 12px; padding: 4px 8px; }
+select.filtro-lista {
+  flex: none;
+  max-width: 130px;
+  padding: 3px 4px;
+  border: 2px solid var(--celeste-borde);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--texto);
+  font: inherit;
+  font-size: 11px;
 }

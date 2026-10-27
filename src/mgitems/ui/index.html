@@ -96,13 +96,34 @@
             <button id="abrir-archivo-items" class="enlace boton-todos" title="Un SWF de tu computadora">Archivo…</button>
           </div>
           <div id="categorias-items" class="categorias categorias-items" role="tablist" aria-label="Categorías de Items"></div>
-          <input id="filtro-items" type="text" spellcheck="false" autocomplete="off"
-                 placeholder="Comienzo del nombre, ej: remera, zapa" aria-label="Filtrar los Items por el comienzo del nombre">
-          <div class="estante">
-            <button id="pagina-anterior-items" class="flecha-grande" title="Página anterior" aria-label="Página anterior">◀</button>
-            <ul id="grilla-items" class="grilla" aria-label="Items para elegir"></ul>
-            <button id="pagina-siguiente-items" class="flecha-grande" title="Página siguiente" aria-label="Página siguiente">▶</button>
+          <div class="filtros-items">
+            <input id="filtro-items" type="text" spellcheck="false" autocomplete="off"
+                   placeholder="Comienzo del nombre, ej: remera, zapa" aria-label="Filtrar los Items por el comienzo del nombre">
+            <select id="orden-items" class="filtro-lista" aria-label="Orden de los Items">
+              <option value="exclusivos">Orden: exclusivos</option>
+              <option value="az">Orden: A-Z</option>
+              <option value="za">Orden: Z-A</option>
+            </select>
+            <select id="destino-items" class="filtro-lista" aria-label="Dónde llega al juego">
+              <option value="">Llega a: todo</option>
+              <option value="guardarropa">Llega a: guardarropa</option>
+              <option value="mochila">Llega a: mochila</option>
+              <option value="casa">Llega a: casa</option>
+              <option value="mascota">Llega a: mascota</option>
+            </select>
           </div>
+          <div class="estante">
+            <div class="flechas">
+              <button id="pagina-anterior-items" class="flecha-grande" title="Página anterior" aria-label="Página anterior">◀</button>
+              <button id="diez-atras-items" class="flecha-diez" title="10 páginas atrás" aria-label="10 páginas atrás">◀◀ 10</button>
+            </div>
+            <ul id="grilla-items" class="grilla" aria-label="Items para elegir"></ul>
+            <div class="flechas">
+              <button id="pagina-siguiente-items" class="flecha-grande" title="Página siguiente" aria-label="Página siguiente">▶</button>
+              <button id="diez-adelante-items" class="flecha-diez" title="10 páginas adelante" aria-label="10 páginas adelante">10 ▶▶</button>
+            </div>
+          </div>
+          <nav id="paginas-items" class="paginas" aria-label="Páginas"></nav>
           <div class="pie-grilla">
             <span id="ayuda-grilla-items" class="ayuda-grilla"></span>
             <span id="numero-pagina-items" class="numero-pagina"></span>
@@ -205,12 +226,18 @@
             <input id="filtro-piezas" type="text" spellcheck="false" autocomplete="off"
                    placeholder="Filtrar por nombre" aria-label="Filtrar las Piezas por nombre">
             <div class="estante">
-              <button id="pagina-anterior" class="flecha-grande" title="Página anterior" aria-label="Página anterior">◀</button>
+              <div class="flechas">
+                <button id="pagina-anterior" class="flecha-grande" title="Página anterior" aria-label="Página anterior">◀</button>
+                <button id="diez-atras" class="flecha-diez" title="10 páginas atrás" aria-label="10 páginas atrás">◀◀ 10</button>
+              </div>
               <ul id="grilla-piezas" class="grilla" aria-label="Piezas para elegir"></ul>
-              <button id="pagina-siguiente" class="flecha-grande" title="Página siguiente" aria-label="Página siguiente">▶</button>
+              <div class="flechas">
+                <button id="pagina-siguiente" class="flecha-grande" title="Página siguiente" aria-label="Página siguiente">▶</button>
+                <button id="diez-adelante" class="flecha-diez" title="10 páginas adelante" aria-label="10 páginas adelante">10 ▶▶</button>
+              </div>
             </div>
             <p id="ayuda-grilla" class="ayuda"></p>
-            <span id="numero-pagina" class="numero-pagina"></span>
+            <nav id="paginas" class="paginas" aria-label="Páginas"></nav>
           </div>
         </div>
 

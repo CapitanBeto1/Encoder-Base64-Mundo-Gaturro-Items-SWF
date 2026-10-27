@@ -315,6 +315,24 @@ function marcarPasaporte(boton) {
   boton.title += " · Requiere pasaporte: sin pasaporte, el juego no deja ponérselo.";
 }
 
+// Los números de página, como en Google: hasta 10 a la vista, y al avanzar se corren (en la 10 se ven
+// de la 5 a la 14). `pagina` empieza en 0; -1 si no hay nada que mostrar.
+function mostrarPaginas(nav, pagina, paginas, ir) {
+  if (pagina < 0 || paginas <= 1) return nav.replaceChildren();
+  const desde = Math.max(0, Math.min(pagina - 5, paginas - 10));
+  const hasta = Math.min(paginas, desde + 10);
+  const botones = [];
+  for (let n = desde; n < hasta; n++) {
+    const boton = Object.assign(document.createElement("button"), { className: "numero-de-pagina", textContent: String(n + 1) });
+    boton.setAttribute("aria-label", `Página ${n + 1}`);
+    if (n === pagina) boton.setAttribute("aria-current", "page");
+    boton.disabled = ocupado;
+    boton.addEventListener("click", () => ir(n));
+    botones.push(boton);
+  }
+  nav.replaceChildren(...botones, etiqueta(`de ${paginas}`, "total-paginas"));
+}
+
 // `lista` ordenada por `clave` (un arreglo que se compara elemento por elemento), sin cambiar el orden
 // de los que empatan.
 function ordenarPor(lista, clave) {
@@ -919,9 +937,9 @@ function mostrarInventario() {
         : !destino
           ? "Estas Piezas no tienen una Parte propia: tocá primero un casillero del Gaturro."
           : "";
-  $("numero-pagina").textContent = piezas.length ? `${inventario.pagina + 1} / ${paginas}` : "";
-  $("pagina-anterior").disabled = inventario.pagina === 0;
-  $("pagina-siguiente").disabled = inventario.pagina >= paginas - 1;
+  mostrarPaginas($("paginas"), piezas.length ? inventario.pagina : -1, paginas, irAPaginaDeLooks);
+  $("pagina-anterior").disabled = $("diez-atras").disabled = inventario.pagina === 0;
+  $("pagina-siguiente").disabled = $("diez-adelante").disabled = inventario.pagina >= paginas - 1;
   // Las imágenes de lo que se ve: se preparan por SWF a medida que hacen falta.
   cargarIconos(visibles.map((p) => p.ruta));
   for (const swf of new Set(visibles.map((p) => p.swf))) prepararIconosDe(swf);
@@ -941,6 +959,12 @@ $("filtro-piezas").addEventListener("input", () => {
   inventario.pagina = 0;
   mostrarInventario();
 });
+function irAPaginaDeLooks(pagina) {
+  inventario.pagina = pagina;
+  mostrarInventario();
+}
+$("diez-atras").addEventListener("click", () => irAPaginaDeLooks(Math.max(0, inventario.pagina - 10)));
+$("diez-adelante").addEventListener("click", () => irAPaginaDeLooks(inventario.pagina + 10)); // se ajusta a la última
 $("pagina-anterior").addEventListener("click", () => {
   inventario.pagina--;
   mostrarInventario();
@@ -1640,11 +1664,20 @@ const enCategoriaItems = (item, categoria) => categoria.id === "todos" || catego
 function itemsVisibles() {
   const categoria = CATEGORIAS_ITEMS.find((c) => c.id === buscador.categoria);
   const comienzos = $("filtro-items").value.split(",").map((t) => t.trim().toLowerCase()).filter(Boolean);
-  const encontrados = buscador.items.filter((i) => enCategoriaItems(i, categoria) && (!comienzos.length || comienzos.some((t) => i.clase.toLowerCase().startsWith(t))));
+  const destino = $("destino-items").value;
+  let encontrados = buscador.items.filter(
+    (i) => enCategoriaItems(i, categoria) && (!destino || i.destino === destino) &&
+      (!comienzos.length || comienzos.some((t) => i.clase.toLowerCase().startsWith(t)))
+  );
+  const orden = $("orden-items").value;
+  if (orden !== "exclusivos") {
+    const signo = orden === "za" ? -1 : 1;
+    encontrados = [...encontrados].sort((a, b) => signo * a.clase.localeCompare(b.clase, "es", { sensitivity: "base", numeric: true }));
+    return ordenarPor(encontrados, (i) => [Boolean(i.motivo)]); // los rojos, al final igual
+  }
   // Primero los que son solo de esta categoría, después los que suman una más, dos más…; al final, los
   // que no llegan bien al juego (en rojo). Dentro de cada grupo, el orden de siempre.
-  const orden = (i) => [Boolean(i.motivo), categoriasDeItem(i).filter((c) => c.id !== "disfraces").length];
-  return ordenarPor(encontrados, orden);
+  return ordenarPor(encontrados, (i) => [Boolean(i.motivo), categoriasDeItem(i).filter((c) => c.id !== "disfraces").length]);
 }
 
 async function cargarItemsBuscados() {
@@ -1739,9 +1772,10 @@ function mostrarBuscador() {
     : !buscador.items.length || visibles.length
       ? ""
       : $("filtro-items").value.trim() ? "Ningún Item empieza así." : "No hay Items de esta categoría en estas fuentes.";
-  $("numero-pagina-items").textContent = visibles.length ? `${contarItems(visibles.length)} · ${buscador.pagina + 1} / ${paginas}` : "";
-  $("pagina-anterior-items").disabled = buscador.pagina === 0;
-  $("pagina-siguiente-items").disabled = buscador.pagina >= paginas - 1;
+  $("numero-pagina-items").textContent = visibles.length ? contarItems(visibles.length) : "";
+  mostrarPaginas($("paginas-items"), visibles.length ? buscador.pagina : -1, paginas, irAPaginaDeItems);
+  $("pagina-anterior-items").disabled = $("diez-atras-items").disabled = buscador.pagina === 0;
+  $("pagina-siguiente-items").disabled = $("diez-adelante-items").disabled = buscador.pagina >= paginas - 1;
   $("agregar-todos").disabled = !conectado || ocupado || !visibles.length;
   cargarIconos(pagina.map((i) => i.ruta));
   for (const swf of new Set(pagina.map((i) => i.swf))) prepararIconosDe(swf);
@@ -1792,6 +1826,15 @@ $("filtro-items").addEventListener("input", () => {
   buscador.pagina = 0;
   mostrarBuscador();
 });
+function irAPaginaDeItems(pagina) {
+  buscador.pagina = pagina;
+  mostrarBuscador();
+}
+$("diez-atras-items").addEventListener("click", () => irAPaginaDeItems(Math.max(0, buscador.pagina - 10)));
+$("diez-adelante-items").addEventListener("click", () => irAPaginaDeItems(buscador.pagina + 10)); // se ajusta a la última
+for (const filtro of ["orden-items", "destino-items"]) {
+  $(filtro).addEventListener("change", () => irAPaginaDeItems(0));
+}
 $("pagina-anterior-items").addEventListener("click", () => {
   buscador.pagina--;
   mostrarBuscador();
