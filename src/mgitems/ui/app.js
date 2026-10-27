@@ -341,7 +341,12 @@ async function generar() {
   const resultado = await api().generar_encode(items);
   if (!resultado.ok) return avisarEncode(resultado.error, "error");
   mostrarEncode(resultado);
-  avisarEncode("Encode generado.", "exito");
+  if (!resultado.avisos.length) return avisarEncode("Encode generado.", "exito");
+  const nombre = (ruta) => ruta.slice(ruta.lastIndexOf(".") + 1);
+  avisarEncode(
+    "Encode generado, pero estos no van a quedar bien: " + resultado.avisos.map((a) => `${nombre(a.ruta)} (${a.motivo})`).join("; ") + ".",
+    "advertencia"
+  );
 }
 
 async function copiar() {
@@ -1548,7 +1553,9 @@ const CATEGORIAS_ITEMS = [
   { id: "mochila", nombre: "Mochila", que: "Mochila", icono: "🧪" },
   { id: "transporte", nombre: "Transportes", que: "Transporte", icono: "🛹" },
   { id: "casa", nombre: "Decoración", que: "Decoración", icono: "🛋️" },
-  { id: "mascota", nombre: "Mascotas", que: "Mascota", icono: "🐾" },
+  { id: "mascota", nombre: "Mascotas", que: "Mascota", icono: "🐶" },
+  { id: "ropa_mascota", nombre: "Ropa de mascota", que: "Ropa de mascota", icono: "🎀" },
+  { id: "comida_mascota", nombre: "Comida y juguetes de mascota", que: "Comida de mascota", icono: "🦴", tipos: ["comida_mascota", "juguete_mascota"] },
   { id: "otros", nombre: "Otros", que: "Otro", icono: "✨" },
 ];
 
@@ -1573,12 +1580,32 @@ function guardarFuentesItems() {
 
 // La categoría de un Item (una sola).
 function categoriaDeItem(item) {
-  if (item.tipo !== "prenda") return CATEGORIAS_ITEMS.find((c) => c.id === item.tipo) ?? CATEGORIAS_ITEMS.at(-1);
-  let casilleros = CATEGORIAS.filter((c) => c.que && item.partes.some((p) => c.partes.includes(p)));
+  if (item.tipo !== "prenda") return CATEGORIAS_ITEMS.find((c) => (c.tipos ?? [c.id]).includes(item.tipo)) ?? CATEGORIAS_ITEMS.at(-1);
+  // Una Prenda rota (sin Piezas, o en una Parte que el Gaturro no tiene) va donde va su Pieza parecida.
+  const partes = item.partes.some((p) => PARTES_CON_CATEGORIA.has(p)) ? item.partes : item.parecido ?? [];
+  let casilleros = CATEGORIAS.filter((c) => c.que && partes.some((p) => c.partes.includes(p)));
   if (casilleros.length > 1) casilleros = casilleros.filter((c) => c.id !== "arm");
   if (casilleros.length === 1) return casilleros[0];
   return CATEGORIAS_ITEMS.find((c) => c.id === (casilleros.length ? "disfraces" : "otros"));
 }
+
+// Lo que se lee debajo de un Item: su categoría y, si es para una mascota en especial, cuál.
+function queEsItem(item) {
+  const que = item.tipo === "juguete_mascota" ? "Juguete de mascota" : categoriaDeItem(item).que;
+  return item.mascota ? `${que.replace(/ de mascota$/, "")} · ${item.mascota}` : que;
+}
+
+// Dónde llega cada Item al juego (lo calcula el núcleo con las reglas del cliente del juego).
+const DESTINOS = {
+  guardarropa: { nombre: "Guardarropa" },
+  mochila: { nombre: "Mochila" },
+  casa: { nombre: "Casa" },
+  mascota: { nombre: "Mascota nueva" },
+  pantalla_mascota: { nombre: "Solo en la mascota" },
+  sesion: { nombre: "Se borra al salir" },
+  oculto: { nombre: "No se ve" },
+  descartado: { nombre: "No llega" },
+};
 
 const enCategoriaItems = (item, categoria) => categoria.id === "todos" || categoriaDeItem(item).id === categoria.id;
 
@@ -1650,18 +1677,26 @@ function mostrarBuscador() {
   const pagina = visibles.slice(buscador.pagina * POR_PAGINA, (buscador.pagina + 1) * POR_PAGINA);
   $("grilla-items").replaceChildren(
     ...pagina.map((item) => {
-      const que = categoriaDeItem(item).que;
-      const boton = Object.assign(document.createElement("button"), { className: "pieza-grilla item-grilla", title: `${item.clase} · ${item.swf} · ${que}` });
+      const que = queEsItem(item);
+      const destino = DESTINOS[item.destino] ?? DESTINOS.casa;
+      const boton = Object.assign(document.createElement("button"), {
+        className: "pieza-grilla item-grilla",
+        title: `${item.clase} · ${item.swf} · ${que}\nLlega a: ${destino.nombre}` + (item.motivo ? ` (${item.motivo})` : ""),
+      });
       boton.setAttribute("aria-label", `${item.clase} de ${item.swf}`);
       boton.setAttribute("aria-pressed", String(items.some((i) => i.ruta === item.ruta)));
+      boton.classList.toggle("no-llega-bien", Boolean(item.motivo));
       boton.disabled = ocupado;
       boton.addEventListener("click", () => {
-        if (items.some((i) => i.ruta === item.ruta)) quitarItem(item.ruta);
-        else agregarItems([item.ruta]);
+        if (items.some((i) => i.ruta === item.ruta)) return quitarItem(item.ruta);
+        agregarItems([item.ruta]);
+        if (item.motivo) avisarLista(`${item.clase}: ${destino.nombre.toLowerCase()}, ${item.motivo}.`, "advertencia");
       });
       const tipo = etiqueta(que, "tipo-pieza");
-      tipo.dataset.uso = item.tipo === "prenda" ? "ropa" : item.tipo === "otro" ? "objeto" : item.tipo;
-      boton.append(elementoIcono(item.ruta), etiqueta(item.clase, "nombre-item"), tipo);
+      tipo.dataset.uso = item.tipo === "prenda" ? "ropa" : item.tipo === "otro" ? "objeto" : item.tipo.endsWith("mascota") ? "mascota" : item.tipo;
+      const llega = etiqueta(destino.nombre, "destino-item");
+      llega.dataset.bien = String(!item.motivo);
+      boton.append(elementoIcono(item.ruta), etiqueta(item.clase, "nombre-item"), tipo, llega);
       const li = document.createElement("li");
       li.append(boton);
       return li;
@@ -1680,10 +1715,17 @@ function mostrarBuscador() {
   for (const swf of new Set(pagina.map((i) => i.swf))) prepararIconosDe(swf);
 }
 
+// Saltea los que el juego descarta (no llegarían a ningún lado).
 function agregarTodos() {
   const visibles = itemsVisibles();
-  const agregados = agregarItems(visibles.map((i) => i.ruta));
-  avisarLista(agregados === visibles.length ? `Se agregaron ${contarItems(agregados)}.` : `Se agregaron ${agregados} (los demás ya estaban).`, "exito");
+  const validos = visibles.filter((i) => i.destino !== "descartado");
+  const agregados = agregarItems(validos.map((i) => i.ruta));
+  const salteados = visibles.length - validos.length;
+  avisarLista(
+    `Se agregaron ${contarItems(agregados)}` + (agregados < validos.length ? " (los demás ya estaban)" : "") +
+      (salteados ? `; se saltearon ${salteados} que el juego descarta.` : "."),
+    salteados ? "advertencia" : "exito"
+  );
 }
 
 async function abrirArchivoItems() {
