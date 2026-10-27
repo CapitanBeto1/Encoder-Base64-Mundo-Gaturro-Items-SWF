@@ -66,7 +66,7 @@ def test_del_indice_sin_descargar_ni_analizar(tmp_path, fuente, ffdec):
 
     assert resultado["ok"], resultado
     assert por_ruta(resultado)["costumes.coronaRey_on"] == {
-        "ruta": "costumes.coronaRey_on", "clase": "coronaRey_on", "swf": "costumes", "partes": ["hats"], "uso": None}
+        "ruta": "costumes.coronaRey_on", "clase": "coronaRey_on", "swf": "costumes", "partes": ["hats"], "uso": None, "pasaporte": False}
     assert por_ruta(resultado)["costumes.raro_on"]["partes"] == []  # "Otros"
     assert fuente.descargas == [] and ffdec.analisis == 0
 
@@ -157,7 +157,7 @@ def test_una_copia_de_la_misma_version_usa_el_indice(tmp_path, fuente, ffdec):
 
     resultado = nucleo.piezas_de_swfs(["clothes1"])
 
-    assert resultado["piezas"] == [{"ruta": "clothes1.remera5_on", "clase": "remera5_on", "swf": "clothes1", "partes": ["leg"], "uso": None}]
+    assert resultado["piezas"] == [{"ruta": "clothes1.remera5_on", "clase": "remera5_on", "swf": "clothes1", "partes": ["leg"], "uso": None, "pasaporte": False}]
     assert ffdec.analisis == 0
 
 
@@ -233,9 +233,9 @@ def test_los_items_vienen_del_indice(tmp_path, fuente, ffdec):
 
     assert resultado["items"] == [
         {"ruta": "costumes.coronaRey", "clase": "coronaRey", "swf": "costumes", "tipo": "prenda", "partes": ["hats"], "mascota": None,
-         "destino": "guardarropa", "motivo": None, "parecido": []},
+         "destino": "guardarropa", "motivo": None, "parecido": [], "pasaporte": False},
         {"ruta": "costumes.trono", "clase": "trono", "swf": "costumes", "tipo": "casa", "partes": [], "mascota": None,
-         "destino": "casa", "motivo": None, "parecido": []},
+         "destino": "casa", "motivo": None, "parecido": [], "pasaporte": False},
     ]
     assert fuente.descargas == [] and ffdec.analisis == 0
 
@@ -297,3 +297,19 @@ def test_las_prendas_rotas_avisan_por_que(tmp_path, ffdec):
 
     assert items["collar1"]["destino"] == "mochila" and "no se puede poner" in items["collar1"]["motivo"]
     assert items["gorroRaro"]["destino"] == "guardarropa" and "«hat»" in items["gorroRaro"]["motivo"]
+
+
+def test_lo_que_requiere_pasaporte(tmp_path, ffdec):
+    # `PassportControl.VIP_PACKS`: sin pasaporte no se lo puede poner (el disfraz usa una Pieza «invisible_»).
+    ffdec.codigo |= {
+        "disfrazAlien": codigo_prenda("disfrazAlien", {"cloth": "invisible_alien_on", "hats": "gorroAlien_on"}),
+        "remera5": codigo_prenda("remera5", {"cloth": "remera5_on"}),
+    }
+    fuente = FuenteFalsa({"varios": crear_swf(["disfrazAlien", "remera5", "invisible_alien_on", "gorroAlien_on", "remera5_on"])})
+    nucleo = nucleo_con(tmp_path, fuente, ffdec, {})
+
+    items = {i["clase"]: i["pasaporte"] for i in nucleo.items_de_swfs(["varios"])["items"]}
+    piezas = {p["clase"]: p["pasaporte"] for p in nucleo.piezas_de_swfs(["varios"])["piezas"]}
+
+    assert items == {"disfrazAlien": True, "remera5": False}
+    assert piezas == {"gorroAlien_on": False, "invisible_alien_on": True, "remera5_on": False}

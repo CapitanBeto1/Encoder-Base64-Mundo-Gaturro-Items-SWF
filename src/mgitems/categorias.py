@@ -20,14 +20,14 @@ import re
 from collections import defaultdict
 from pathlib import Path
 
-from mgitems.destinos import destino_de_item
+from mgitems.destinos import destino_de_item, requiere_pasaporte
 from mgitems.prendas import MOCHILA, PARTES_DEL_CUERPO, PRENDA, ItemBase, leer_item_base
 
 ARCHIVO_INDICE = Path(__file__).parent / "datos" / "indice_piezas.json"
 # Lo que un Item de mochila agrega y viste al Gaturro (el resto de `adds`, como `action`, no viste).
 PARTES_QUE_VISTEN = set(PARTES_DEL_CUERPO) | {"clothFront", "armFore", "armBack", "gripBack", "glove", "gloveFore", "gloveBack"}
 # Sube cuando cambia cómo se clasifica, para no usar lo analizado antes en la computadora del jugador.
-FORMATO = 10
+FORMATO = 11
 
 # Para qué usa el juego una Pieza que no viste al Gaturro; también, tipos de Items.
 TRANSPORTE, ACCION, CASA, MASCOTA = "transporte", "accion", "casa", "mascota"
@@ -98,7 +98,8 @@ def otros_usos(swf: str, fuentes: dict[str, str]) -> dict[str, dict[str, str]]:
 
 def tipos_de_items(swf: str, fuentes: dict[str, str]) -> dict[str, dict]:
     """Item → {"tipo", "destino"} (y "partes" si es una Prenda; "mascota" si es para una mascota en
-    especial; "motivo" si no llega bien al juego), de las clases de `swf` que son Items.
+    especial; "motivo" si no llega bien al juego; "pasaporte" si solo se la puede poner quien tiene
+    pasaporte), de las clases de `swf` que son Items.
     `fuentes`: clase → código AS3."""
     tipos = {}
     for fuente in fuentes.values():
@@ -116,6 +117,8 @@ def tipos_de_items(swf: str, fuentes: dict[str, str]) -> dict[str, dict]:
         elif tipo in (ROPA_MASCOTA, COMIDA_MASCOTA) and (para := _PARA_MASCOTA.search(fuente)):
             tipos[nombre]["mascota"] = para.group(1) or para.group(2)
         tipos[nombre] |= destino_de_item(f"{swf}.{nombre}", fuente)
+        if requiere_pasaporte(f"{swf}.{nombre}", fuente):
+            tipos[nombre]["pasaporte"] = True
         if tipos[nombre]["destino"] == MASCOTA:  # el juego la crea como mascota, herede de lo que herede
             tipos[nombre]["tipo"] = MASCOTA
         elif tipo == MASCOTA:  # de la clase de las mascotas, pero no da una (`pet.house`): es de la casa

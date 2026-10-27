@@ -309,6 +309,12 @@ function crearDesplegable({ campo, lista, consultar, fila, elegir, vacio, sinEle
   return { cerrar };
 }
 
+// Sin pasaporte, el juego no deja ponerse esto («ESTE OBJETO REQUIERE PASAPORTE») ni lo dibuja.
+function marcarPasaporte(boton) {
+  boton.append(etiqueta("Pasaporte", "marca-pasaporte"));
+  boton.title += " · Requiere pasaporte: sin pasaporte, el juego no deja ponérselo.";
+}
+
 // `lista` ordenada por `clave` (un arreglo que se compara elemento por elemento), sin cambiar el orden
 // de los que empatan.
 function ordenarPor(lista, clave) {
@@ -898,6 +904,7 @@ function mostrarInventario() {
       tipo.dataset.uso = que.uso;
       boton.title += ` · ${que.texto}`;
       boton.append(elementoIcono(pieza.ruta), tipo);
+      if (pieza.pasaporte) marcarPasaporte(boton);
       const li = document.createElement("li");
       li.append(boton);
       return li;
@@ -1721,6 +1728,7 @@ function mostrarBuscador() {
       const llega = etiqueta(destino.nombre, "destino-item");
       llega.dataset.bien = String(!item.motivo);
       boton.append(elementoIcono(item.ruta), etiqueta(item.clase, "nombre-item"), tipo, llega);
+      if (item.pasaporte) marcarPasaporte(boton);
       const li = document.createElement("li");
       li.append(boton);
       return li;
