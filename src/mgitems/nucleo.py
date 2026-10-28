@@ -16,6 +16,7 @@ from mgitems.categorias import (
     CacheCategorias, IndicePiezas, categorias, donde_se_ven, otros_usos, tipos_de_items, usos_de_piezas,
 )
 from mgitems.destinos import DESCARTADO, descarte_por_nombre, es_de_pasaporte
+from mgitems.acciones import ANIMACIONES, animaciones, motivo_pieza_sin_accion, motivo_sin_accion, valor_de_accion
 from mgitems.se_ve import TRANSPORTE, motivo_sin_efecto
 from mgitems.entorno import Entorno, Sistema
 from mgitems.entrega import PUERTO_FIDDLER_POR_DEFECTO, QUE_HACER_EN_EL_JUEGO, URL_LOLA, Entrega, PasoFallido, Procesos, SwfTrucado
@@ -39,7 +40,7 @@ from mgitems.items import (
 )
 from mgitems.looks import AlmacenLooks, Look, LookInvalido, archivo_de_look, look_de_archivo
 from mgitems.prendas import (
-    EFECTO, MOCHILA, PARTES_DEL_CUERPO, PREFIJO_EFECTO, PRENDA, CacheItemsBase, ItemBase, ItemsBaseFFDec, TruqueoFallido,
+    ACCION, EFECTO, MOCHILA, PARTES_DEL_CUERPO, PREFIJO_EFECTO, PRENDA, CacheItemsBase, ItemBase, ItemsBaseFFDec, TruqueoFallido,
     leer_item_base, reescribir_partes,
 )
 from mgitems.script import EncodeInvalido, codificar, decodificar, generar_script, leer_script
@@ -180,6 +181,7 @@ class Nucleo:
             otros = obtenido["otros_usos"]
             return [{"ruta": f"{swf}.{clase}", "clase": clase, "swf": swf, "partes": partes,
                      "uso": None if partes else otros.get(clase), "pasaporte": es_de_pasaporte(f"{swf}.{clase}"),
+                     "sin_accion": motivo_pieza_sin_accion(f"{swf}.{clase}", obtenido["se_ve"].get(clase, {})),
                      **obtenido["se_ve"].get(clase, {})}
                     for clase, partes in obtenido["piezas"].items()]
 
@@ -306,7 +308,11 @@ class Nucleo:
             if error:
                 return {"ok": False, "error": error}
             valores[parte] = PREFIJO_EFECTO + valor if parte == EFECTO else valor
+        return self._trucar_item(swf, data, item, valores)
 
+    def _trucar_item(self, swf: str, data: bytes, item: ItemBase, valores: dict[str, str]) -> dict:
+        """Truca `item` del SWF `swf` con `valores` (Parte → cómo se escribe) y arma el Encode que lo agrega."""
+        base = item.clase
         try:
             fuente = reescribir_partes(item, valores)
             trucado = self._prendas_ffdec.trucar(data, base, fuente, dict(valores))
@@ -328,6 +334,76 @@ class Nucleo:
             "script": script,
             "encode": encode,
         }
+
+    # --- Acciones ---
+
+    def animaciones(self) -> dict:
+        """Las animaciones que puede hacer un Item de mochila, en el orden en que se ofrecen (ver `acciones`):
+        `id`, `nombre` en castellano, `grupo` ("accion", "no_se_dibuja" u "otras") y si la vista previa
+        la puede dibujar (`se_dibuja`)."""
+        return {"ok": True, "animaciones": animaciones()}
+
+    def aplicar_accion(self, accion: dict) -> dict:
+        """Truca el Item de mochila `accion["base"]` para que, al usarlo, el Gaturro haga la animación
+        `accion["animacion"]` mostrando `accion["pieza"]` (opcional; cualquier Pieza, también un vehículo) y,
+        si se elige, ponga `accion["efecto"]` sobre la cabeza. Con usos ilimitados. Devuelve el Encode que lo
+        agrega, y en `avisos` lo que el juego haría distinto de lo elegido."""
+        if not isinstance(accion, dict):
+            return {"ok": False, "error": "La acción no tiene la forma esperada."}
+        animacion, base = accion.get("animacion"), accion.get("base")
+        pieza, efecto = accion.get("pieza") or None, accion.get("efecto") or None
+        if animacion not in ANIMACIONES:
+            return {"ok": False, "error": "Elegí una animación."}
+        if not isinstance(base, str) or not es_ruta_valida(base):
+            return {"ok": False, "error": "Elegí el Item de mochila donde se guarda la acción."}
+        if any(p is not None and not (isinstance(p, str) and es_ruta_valida(p)) for p in (pieza, efecto)):
+            return {"ok": False, "error": "La Pieza no tiene la forma esperada."}
+
+        swf, _, clase = base.rpartition(".")
+        obtenido = {"ok": True, "data": self._data_swf} if swf == self._swf_abierto else self._datos_de_otro_swf(swf)
+        if not obtenido["ok"]:
+            return {"ok": False, "error": f"No se pudo usar el Item de mochila: {obtenido['error']}"}
+        data = obtenido["data"]
+        try:
+            item = self._prendas_de(swf, data).get(clase)
+        except FFDecNoDisponible as e:
+            return {"ok": False, "error": f"{e}: no se pueden leer los Items de mochila."}
+        except (OSError, subprocess.SubprocessError) as e:
+            return {"ok": False, "error": f"No se pudieron leer los Items de mochila: {e}"}
+        if item is None:
+            return {"ok": False, "error": f"{clase} no es un Item de mochila de {swf}."}
+        if item.tipo != MOCHILA:
+            return {"ok": False, "error": "Una Prenda no hace acciones: elegí un Item de mochila."}
+
+        piezas_propias = set(piezas_del_swf([c for _, c in leer_simbolos(data)]))
+        valores, avisos = {}, []
+        objeto = None
+        if pieza:
+            objeto, error = self._valor_de_pieza(swf, piezas_propias, pieza, con_swf=True)
+            if error:
+                return {"ok": False, "error": error}
+        valores[ACCION] = valor_de_accion(animacion, objeto)
+        if motivo := motivo_sin_accion(valores[ACCION]):
+            return {"ok": False, "error": f"El juego no haría esta acción: {motivo}."}
+        if objeto and (motivo := self._motivo_pieza_sin_accion(objeto)):
+            avisos.append({"ruta": objeto, "motivo": motivo})
+        if efecto:
+            valor, error = self._valor_de_pieza(swf, piezas_propias, efecto, con_swf=True)
+            if error:
+                return {"ok": False, "error": error}
+            valores[EFECTO] = PREFIJO_EFECTO + valor
+            if motivo := self._motivo_no_se_ve(valor, EFECTO):
+                avisos.append({"ruta": valor, "motivo": motivo})
+
+        resultado = self._trucar_item(swf, data, item, valores)
+        if resultado["ok"]:
+            resultado["avisos"] = avisos
+        return resultado
+
+    def _motivo_pieza_sin_accion(self, ruta: str) -> str | None:
+        swf, _, clase = ruta.rpartition(".")
+        obtenido = self._categorias_de(swf)
+        return motivo_pieza_sin_accion(ruta, obtenido.get("se_ve", {}).get(clase, {}) if obtenido["ok"] else {})
 
     def _valor_de_pieza(self, swf: str, piezas_propias: set[str], pieza: str, con_swf: bool = False) -> tuple[str | None, str | None]:
         """(cómo se escribe la Pieza en el Item base de `swf`, error).

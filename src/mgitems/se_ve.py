@@ -26,6 +26,7 @@ from mgitems.destinos import PROHIBIDOS_PARA_USUARIOS
 TRANSPORTE = "transport"
 TAMANO_MAXIMO = 300  # `Gaturro.add`: más grande que esto, no se dibuja
 TAMANO_MAXIMO_EFECTO = 150  # `GaturroEffectsManager.onHeadFetch`: de esto para arriba, no se dibuja
+TAMANO_MAXIMO_ACCION = 150  # `whenAssetForPlaceholderIsLoaded`: más grande que esto, una acción no la muestra
 # `troublesomeItems` (cfgs/gameplay.json): si la ruta de la Pieza contiene la clave, solo va en esa Parte ("": en ninguna).
 SOLO_EN = {
     "gatupacks/mar19.autoCarroza2_on": "transport", "gatupacks/mar19.autoCarroza1_on": "transport",
@@ -47,24 +48,34 @@ SOLO_EN = {
 
 def donde_se_ve(ruta: str, limites: tuple | None = None, es_vehiculo: bool = False) -> dict:
     """{} si la Pieza se ve en cualquier Parte; {"solo_en": Parte} si solo en una; {"no_se_ve": motivo}
-    si el Gaturro no la dibuja en ninguna. `limites`: su rectángulo (x0, y0, x1, y1), si se sabe."""
-    if "petClothes" in ruta:
-        return {"no_se_ve": "es ropa de mascota: el Gaturro no la dibuja"}
-    baja = ruta.lower()
-    if any(a.lower() in baja and b.lower() in baja for a, b in PROHIBIDOS_PARA_USUARIOS):
-        return {"no_se_ve": "el juego la prohíbe para los usuarios"}
+    si el Gaturro no la dibuja en ninguna. `limites`: su rectángulo (x0, y0, x1, y1), si se sabe.
+
+    Además, lo que el efecto de cabeza y las acciones miran del tamaño: "grande" (150 o más: el efecto no
+    la dibuja) y "accion" ("grande", más de 150, o "vacia": una acción no la muestra); y "lista" si está
+    en la lista del juego de Piezas con Parte fija (que el efecto respeta)."""
+    extra = {}
     if limites:
         ancho, alto = limites[2] - limites[0], limites[3] - limites[1]
+        if max(ancho, alto) >= TAMANO_MAXIMO_EFECTO:
+            extra["grande"] = True
+        if max(ancho, alto) > TAMANO_MAXIMO_ACCION:
+            extra["accion"] = "grande"
+        elif not ancho and not alto:
+            extra["accion"] = "vacia"
+    if "petClothes" in ruta:
+        return {"no_se_ve": "es ropa de mascota: el Gaturro no la dibuja"} | extra
+    baja = ruta.lower()
+    if any(a.lower() in baja and b.lower() in baja for a, b in PROHIBIDOS_PARA_USUARIOS):
+        return {"no_se_ve": "el juego la prohíbe para los usuarios"} | extra
+    if limites:
         if ancho > TAMANO_MAXIMO or alto > TAMANO_MAXIMO or not ancho or not alto:
-            return {"no_se_ve": f"mide {round(ancho)}×{round(alto)}: el Gaturro no dibuja lo que pasa de {TAMANO_MAXIMO}×{TAMANO_MAXIMO}"}
-    # Lo grande para el efecto de cabeza (que no la dibuja) y lo de la lista del juego (que el efecto respeta).
-    extra = {"grande": True} if limites and max(limites[2] - limites[0], limites[3] - limites[1]) >= TAMANO_MAXIMO_EFECTO else {}
+            return {"no_se_ve": f"mide {round(ancho)}×{round(alto)}: el Gaturro no dibuja lo que pasa de {TAMANO_MAXIMO}×{TAMANO_MAXIMO}"} | extra
     if parte := next((p for clave, p in SOLO_EN.items() if clave in ruta), None):
         if parte == TRANSPORTE and not es_vehiculo:  # en transport, sin `type` el juego la saca (`hasTransport`)
-            return {"no_se_ve": "va en Transporte, pero no es un vehículo: el juego la saca"}
+            return {"no_se_ve": "va en Transporte, pero no es un vehículo: el juego la saca"} | extra
         return {"solo_en": parte, "lista": True} | extra
     if clave_vacia := next((clave for clave, p in SOLO_EN.items() if clave in ruta and not p), None):
-        return {"no_se_ve": f"el juego la saca del Gaturro («{clave_vacia}»): solo sirve como animación de una acción"}
+        return {"no_se_ve": f"el juego la saca del Gaturro («{clave_vacia}»): solo sirve como animación de una acción"} | extra
     if es_vehiculo:
         return {"solo_en": TRANSPORTE} | extra
     return extra

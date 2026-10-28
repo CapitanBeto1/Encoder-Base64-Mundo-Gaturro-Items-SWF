@@ -36,6 +36,12 @@ Transporte y efectos que duran (probado en el juego):
 - Looks tiene el casillero «Cabeza (efecto)»: con un Item de mochila de base queda un Item de usos ilimitados que lo pone al usarlo, de nuevo cada vez que se entra.
 - El comando de NPC `user.attr <clave> <valor>` cambia cualquier atributo del avatar, pero lo que no respalda un Item se pierde igual.
 
+Acciones de mochila (probado en el juego con `showObject`, `showObjectUp` y `flag`):
+- Un Item de mochila guarda la acción en `adds.action = "<animación>"` o `"<animación>.<swf>.<Pieza>"`. Al usarlo, `BagGuiModal` copia `adds` al Gaturro (antes rechaza lo de `isProhibitedInAction`: «Esta acción no está disponible»). `GaturroAnimationController.doRunAction` lo lleva al cuadro de la animación y carga la Pieza en `objects_ph` sin mirar si es un vehículo. La Pieza queda en su último cuadro hasta la próxima acción.
+- No la hace si el texto dice `run`, `zombieStand` o `zombieWalk` en cualquier lugar (`isAllowedAnimation`), si la animación tiene reglas en `validItems.action` (teléfono solo con `phones.`/`transmisor`; fútbol no con `magia.poder` ni `gatoons.`) o si el Gaturro camina. La Pieza no se ve si mide más de 150×150 o si es vacía.
+- Las 106 animaciones son los cuadros con nombre del `assets.GaturroMC` del cliente de hoy. El de `superHeroesTrajes`, que se puede leer sin el cliente, tiene 84 de ellas, iguales cuadro por cuadro.
+- `mgitems.acciones` copia esas reglas; la pestaña Acciones solo acepta bases de mochila.
+
 `mgitems.destinos` copia esas reglas. El índice guarda, para cada Item, su destino y, si no llega bien, el motivo. «Agregar Items» lo muestra debajo de cada Item (en rojo si no llega bien). «Agregar todos» saltea los descartados. Generar el Encode avisa cuáles no van a quedar bien.
 
 ## Considered Options

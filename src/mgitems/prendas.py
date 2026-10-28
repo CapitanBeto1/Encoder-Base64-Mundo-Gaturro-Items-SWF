@@ -46,6 +46,8 @@ PARTES_DEL_CUERPO = {
 # El efecto de cabeza se escribe «head.<swf>.<Pieza>» (`GaturroEffectsManager.applyHead`).
 EFECTO = "effect"
 PREFIJO_EFECTO = "head."
+# La acción de un Item de mochila: «<animación>» o «<animación>.<swf>.<Pieza>» (ver `acciones`).
+ACCION = "action"
 
 PRENDA = "prenda"
 MOCHILA = "mochila"
@@ -105,8 +107,15 @@ def reescribir_partes(item: ItemBase, partes: dict[str, str]) -> str:
     for parte, pieza in partes.items():
         if parte == EFECTO:
             pieza = pieza.removeprefix(PREFIJO_EFECTO) if pieza.startswith(PREFIJO_EFECTO) and "." in pieza[len(PREFIJO_EFECTO):] else ""
+        elif parte == ACCION:
+            animacion, _, objeto = pieza.partition(".")
+            pieza = (objeto if "." in objeto else "") if objeto else animacion
+            if not _IDENTIFICADOR.match(animacion):
+                pieza = ""
         if not _IDENTIFICADOR.match(parte) or not _PIEZA.match(pieza):
             raise ValueError(f"Parte del cuerpo o Pieza inválida: {parte} → {pieza}")
+    if item.tipo == PRENDA and ACCION in partes:
+        raise ValueError("Una Prenda no hace acciones: solo un Item de mochila")
     if item.tipo == PRENDA:
         return _reescribir_clothes(item.fuente, partes)
     return _reescribir_adds(item, partes)

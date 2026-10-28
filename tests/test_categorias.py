@@ -66,7 +66,7 @@ def test_del_indice_sin_descargar_ni_analizar(tmp_path, fuente, ffdec):
 
     assert resultado["ok"], resultado
     assert por_ruta(resultado)["costumes.coronaRey_on"] == {
-        "ruta": "costumes.coronaRey_on", "clase": "coronaRey_on", "swf": "costumes", "partes": ["hats"], "uso": None, "pasaporte": False}
+        "ruta": "costumes.coronaRey_on", "clase": "coronaRey_on", "swf": "costumes", "partes": ["hats"], "uso": None, "pasaporte": False, "sin_accion": None}
     assert por_ruta(resultado)["costumes.raro_on"]["partes"] == []  # "Otros"
     assert fuente.descargas == [] and ffdec.analisis == 0
 
@@ -157,7 +157,7 @@ def test_una_copia_de_la_misma_version_usa_el_indice(tmp_path, fuente, ffdec):
 
     resultado = nucleo.piezas_de_swfs(["clothes1"])
 
-    assert resultado["piezas"] == [{"ruta": "clothes1.remera5_on", "clase": "remera5_on", "swf": "clothes1", "partes": ["leg"], "uso": None, "pasaporte": False}]
+    assert resultado["piezas"] == [{"ruta": "clothes1.remera5_on", "clase": "remera5_on", "swf": "clothes1", "partes": ["leg"], "uso": None, "pasaporte": False, "sin_accion": None}]
     assert ffdec.analisis == 0
 
 
