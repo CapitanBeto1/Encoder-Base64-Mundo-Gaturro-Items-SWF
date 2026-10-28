@@ -108,3 +108,12 @@ def test_el_indice_anota_el_tamano_que_mira_una_accion():
     assert "accion" not in donde_se_ve("casa.mesa_on", (0, 0, 150, 150))  # 150 justo, sí
     assert donde_se_ve("casa.nada_on", (0, 0, 0, 0))["accion"] == "vacia"
     assert donde_se_ve("petClothes.collar_on", (0, 0, 400, 10))["accion"] == "grande"  # aunque el Gaturro no la dibuje
+
+
+def test_la_vista_previa_no_inventa_una_animacion_que_no_puede_leer(nucleo):
+    resultado = nucleo.animacion_de_accion({"animacion": "fortnite1"})
+
+    assert resultado["ok"]
+    assert resultado["imagenes"] == []
+    assert "no se puede mostrar" in resultado["aviso"]
+    assert not nucleo.animacion_de_accion({"animacion": "volar"})["ok"]
