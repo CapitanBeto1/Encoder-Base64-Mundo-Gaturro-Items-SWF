@@ -30,6 +30,12 @@ Puesta en el Gaturro, una Pieza no siempre se ve (`Gaturro.setAsset`/`add`; `mgi
 
 Looks tiene un casillero y una categoría Transporte, marca en rojo y al final lo que no se vería donde va, y la vista previa no dibuja lo que el juego no dibujaría. Un vehículo es una Pieza con `type` (propio, o heredado de `TransportOnMamboAsset`, que lo trae vacío). Con un transporte el juego pone al Gaturro en el cuadro `transportStand_<type>` (`transportStand` si está vacío) y al vehículo en `off`. La vista previa hace lo mismo con el Gaturro animado de `superHeroesTrajes` (sin cifrar, mismos cuadros que el del juego): congela los dos en ese cuadro (`swf.congelado_en`), para que cada clip de adentro quede en su cuadro 1 como con `gotoAndStop`. Si esa pose no está en ese Gaturro (`walk`, `nube`, más nuevas) o el vehículo tiene una parte `foreground`, no lo dibuja y avisa.
 
+Transporte y efectos que duran (probado en el juego):
+- Al entrar a una sala, el juego saca el transporte si en el guardarropa no hay un Item que se llame como la Pieza sin el final (`barbie.vacio_on` → `barbie.vacio`), salvo unos «mágicos» (`gatoonsClothes.`, `invisibles/`, `virtualGoods3.`…): `GaturroUserAvatarView.checkIfOwnsTransport`. Por eso un transporte puesto por una Prenda (aun la original `barbie.rollers`) o por `user.attr` se cae al cambiar de sala.
+- El efecto de cabeza (`effect = "head.<swf>.<Pieza>"`, `GaturroEffectsManager.applyHead`) pone cualquier Pieza sobre la cabeza, donde va el sombrero, sin mirar si es un vehículo. No pone lo de `troublesomeItems` con otra Parte que `hats` ni lo de 150 o más. El servidor no lo guarda entre sesiones.
+- Looks tiene el casillero «Cabeza (efecto)»: con un Item de mochila de base queda un Item de usos ilimitados que lo pone al usarlo, de nuevo cada vez que se entra.
+- El comando de NPC `user.attr <clave> <valor>` cambia cualquier atributo del avatar, pero lo que no respalda un Item se pierde igual.
+
 `mgitems.destinos` copia esas reglas. El índice guarda, para cada Item, su destino y, si no llega bien, el motivo. «Agregar Items» lo muestra debajo de cada Item (en rojo si no llega bien). «Agregar todos» saltea los descartados. Generar el Encode avisa cuáles no van a quedar bien.
 
 ## Considered Options

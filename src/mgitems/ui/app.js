@@ -760,7 +760,7 @@ function mostrarLook() {
 
 // --- Casilleros: una Parte del cuerpo cada uno, a los costados del Gaturro ---
 
-const CASILLEROS_CABEZA = ["hats", "hairs", "mouths", "accesories", "accesories2", "neck"];
+const CASILLEROS_CABEZA = ["hats", "hairs", "mouths", "accesories", "accesories2", "neck", "effect"];
 const CASILLEROS_CUERPO = ["cloth", "arm", "clothBack", "grip", "gripFore", "leg", "foot", "transport"];
 let casilleroMarcado = null; // si hay uno, toda Pieza que se toque va a esa Parte
 
@@ -866,6 +866,13 @@ const enCategoria = (pieza, categoria) =>
 function motivoNoSeVe(pieza, parte) {
   if (pieza.no_se_ve) return pieza.no_se_ve;
   if (!parte) return null;
+  // El efecto de cabeza: cualquier Pieza (también un vehículo), salvo las de la lista del juego con otra
+  // Parte que el sombrero y las de 150 o más.
+  if (parte === "effect") {
+    if (pieza.lista && pieza.solo_en !== "hats") return "el juego no la deja en la cabeza";
+    if (pieza.grande) return "el efecto de cabeza no dibuja lo de 150×150 o más";
+    return null;
+  }
   if (pieza.solo_en && pieza.solo_en !== parte) return `solo se ve en ${nombreDeParte(pieza.solo_en)}`;
   if (parte === "transport" && pieza.solo_en !== "transport") return "en Transporte solo se ven los vehículos";
   return null;

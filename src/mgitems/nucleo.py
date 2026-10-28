@@ -16,7 +16,7 @@ from mgitems.categorias import (
     CacheCategorias, IndicePiezas, categorias, donde_se_ven, otros_usos, tipos_de_items, usos_de_piezas,
 )
 from mgitems.destinos import DESCARTADO, descarte_por_nombre, es_de_pasaporte
-from mgitems.se_ve import TRANSPORTE
+from mgitems.se_ve import TRANSPORTE, motivo_sin_efecto
 from mgitems.entorno import Entorno, Sistema
 from mgitems.entrega import PUERTO_FIDDLER_POR_DEFECTO, QUE_HACER_EN_EL_JUEGO, URL_LOLA, Entrega, PasoFallido, Procesos, SwfTrucado
 from mgitems.ffdec import FFDecNoDisponible
@@ -39,7 +39,8 @@ from mgitems.items import (
 )
 from mgitems.looks import AlmacenLooks, Look, LookInvalido, archivo_de_look, look_de_archivo
 from mgitems.prendas import (
-    MOCHILA, PARTES_DEL_CUERPO, PRENDA, CacheItemsBase, ItemBase, ItemsBaseFFDec, TruqueoFallido, leer_item_base, reescribir_partes,
+    EFECTO, MOCHILA, PARTES_DEL_CUERPO, PREFIJO_EFECTO, PRENDA, CacheItemsBase, ItemBase, ItemsBaseFFDec, TruqueoFallido,
+    leer_item_base, reescribir_partes,
 )
 from mgitems.script import EncodeInvalido, codificar, decodificar, generar_script, leer_script
 from mgitems.swf import SwfInvalido, congelado_en, leer_simbolos, limites_de_simbolos, rotulos
@@ -127,7 +128,8 @@ class Nucleo:
             "swf": self._swf_abierto,
             "prendas": [
                 {"ruta": f"{self._swf_abierto}.{p.clase}", "clase": p.clase, "tipo": p.tipo,
-                 "partes": {parte: v for parte, v in p.partes.items() if p.tipo == PRENDA or parte in PARTES_DEL_CUERPO}}
+                 "partes": {parte: v for parte, v in p.partes.items()
+                            if p.tipo == PRENDA or (parte in PARTES_DEL_CUERPO and (parte != EFECTO or v.startswith(PREFIJO_EFECTO)))}}
                 for p in sorted(prendas.values(), key=lambda p: orden_natural(p.clase))
             ],
             "partes_del_cuerpo": partes,
@@ -299,10 +301,11 @@ class Nucleo:
         piezas_propias = set(piezas_del_swf([clase for _, clase in leer_simbolos(data)]))
         valores = {}
         for parte, pieza in partes.items():
-            valor, error = self._valor_de_pieza(swf, piezas_propias, pieza, con_swf=item.tipo == MOCHILA)
+            # El efecto de cabeza lleva siempre el SWF de la Pieza: el juego la busca tal cual.
+            valor, error = self._valor_de_pieza(swf, piezas_propias, pieza, con_swf=item.tipo == MOCHILA or parte == EFECTO)
             if error:
                 return {"ok": False, "error": error}
-            valores[parte] = valor
+            valores[parte] = PREFIJO_EFECTO + valor if parte == EFECTO else valor
 
         try:
             fuente = reescribir_partes(item, valores)
@@ -755,7 +758,7 @@ class Nucleo:
                     "error": "No se encontró el Gaturro original del juego, así que no se muestra ninguno."}
 
         partes = {p: r for p, r in partes.items() if p != TRANSPORTE and r not in {n["ruta"] for n in no_se_ven if n["parte"] == p}}
-        con_lugar = {p for p in partes if tiene_lugar(cuerpo, p)}
+        con_lugar = {p for p in partes if tiene_lugar(cuerpo, p) or (p == EFECTO and tiene_lugar(cuerpo, "hats"))}
         elegidas = {p: r for p, r in partes.items() if p in con_lugar and isinstance(r, str) and es_ruta_valida(r)}
         sin_lugar = [r for p, r in partes.items() if p not in con_lugar]
         sin_imagen = [r for p, r in partes.items() if p in con_lugar and r not in elegidas.values()]
@@ -825,6 +828,8 @@ class Nucleo:
         swf, _, clase = ruta.rpartition(".")
         obtenido = self._categorias_de(swf)
         donde = obtenido.get("se_ve", {}).get(clase, {}) if obtenido["ok"] else {}
+        if parte == EFECTO:
+            return motivo_sin_efecto(donde)
         if "no_se_ve" in donde:
             return donde["no_se_ve"]
         if "solo_en" in donde and donde["solo_en"] != parte:
