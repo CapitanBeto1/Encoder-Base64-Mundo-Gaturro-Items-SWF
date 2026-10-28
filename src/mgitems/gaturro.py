@@ -39,6 +39,10 @@ SWF_POSES = "superHeroesTrajes"
 CUADRO_QUIETO_DEL_VEHICULO = "off"  # `Gaturro.transportActive`: parado, el vehículo va a su cuadro «off»
 
 
+# Donde el juego pone la Pieza de una acción (`GaturroAnimationController`): un clip vacío más.
+OBJETOS = "objects_ph"
+
+
 def pose_de_transporte(tipo: str) -> str:
     """El cuadro del Gaturro con un vehículo de ese tipo (`Gaturro.transportLabel`)."""
     return f"transportStand_{tipo}" if tipo else "transportStand"
@@ -232,9 +236,9 @@ def componer(cuerpo: str, piezas: dict[str, tuple[str, str]], colores: dict | No
 
     # Qué Pieza va en cada clip, en el orden del juego (la última gana).
     en_hueco: dict[str, str] = {}
-    for parte in PARTES:
+    for parte in [*PARTES, OBJETOS]:
         if parte in piezas:
-            for hueco in huecos_de(parte):
+            for hueco in [OBJETOS] if parte == OBJETOS else huecos_de(parte):
                 en_hueco[hueco] = parte
 
     svg, defs, preparadas = cuerpo, [], {}

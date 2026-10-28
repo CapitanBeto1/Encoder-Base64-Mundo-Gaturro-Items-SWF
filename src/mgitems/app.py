@@ -77,6 +77,9 @@ class Puente:
     def aplicar_accion(self, accion: dict) -> dict:
         return self._nucleo.aplicar_accion(accion)
 
+    def animacion_de_accion(self, accion: dict, colores: dict | None = None) -> dict:
+        return self._nucleo.animacion_de_accion(accion, colores)
+
     def exportar_look(self, look: dict) -> dict:
         nombre = _NO_VALE_EN_ARCHIVOS.sub("_", str(look.get("nombre") or "").strip()) or "Look"
         ruta = _dialogo(webview.FileDialog.SAVE, save_filename=f"{nombre}.mglook", file_types=_TIPOS_LOOK)
