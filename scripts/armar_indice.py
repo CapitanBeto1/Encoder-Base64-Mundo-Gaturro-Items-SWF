@@ -48,7 +48,9 @@ RAIZ = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(RAIZ / "src"))
 
 from mgitems.catalogo import cargar_catalogo  # noqa: E402
-from mgitems.categorias import ARCHIVO_INDICE, MASCOTA, categorias, otros_usos, tipos_de_items, usos_de_piezas  # noqa: E402
+from mgitems.categorias import (  # noqa: E402
+    ARCHIVO_INDICE, MASCOTA, categorias, donde_se_ven, otros_usos, tipos_de_items, usos_de_piezas,
+)
 from mgitems.fuente import FuenteCDN, SwfNoEncontrado  # noqa: E402
 from mgitems.iconos import version_de  # noqa: E402
 from mgitems.items import items_del_swf, piezas_del_swf  # noqa: E402
@@ -57,7 +59,7 @@ from mgitems.prendas import PRENDA, ItemsBaseFFDec, leer_item_base  # noqa: E402
 from mgitems.swf import SwfInvalido, leer_clases, limites_de_simbolos  # noqa: E402
 
 # Sube cuando cambia lo que se guarda de cada SWF en la carpeta de trabajo.
-FORMATO_TRABAJO = 12
+FORMATO_TRABAJO = 13
 # Seguridad mínima para ubicar una Pieza en el paso 4. Con 0.7, al probarlo con las Piezas que el
 # juego ya ubica, acertó el 98-99 %.
 SEGURIDAD_MINIMA = 0.7
@@ -95,7 +97,7 @@ def analizar(fuente: FuenteCDN, ffdec: ItemsBaseFFDec, trabajo: Path, swf: str) 
     try:
         clases = leer_clases(data)
         items = items_del_swf(clases)
-        fuentes = ffdec.fuentes(data, items)
+        fuentes = ffdec.fuentes(data, items + piezas_del_swf(clases))
         piezas = piezas_del_swf(clases)
         limites = limites_de_simbolos(data)
     except SwfInvalido as e:
@@ -109,6 +111,7 @@ def analizar(fuente: FuenteCDN, ffdec: ItemsBaseFFDec, trabajo: Path, swf: str) 
         "formato": FORMATO_TRABAJO, "version": version_de(data), "piezas": piezas, "usos": usos,
         "otros_usos": otros_usos(swf, fuentes), "limites": {p: limites[p] for p in piezas if p in limites},
         "items": {clase: tipo for clase, tipo in tipos_de_items(swf, fuentes).items() if clase in items},
+        "se_ve": donde_se_ven(swf, piezas, fuentes, limites),
     }
     guardado.write_text(json.dumps(datos, ensure_ascii=False), encoding="utf-8")
     return swf, datos, ""
@@ -306,6 +309,7 @@ def main() -> None:
             "piezas": {pieza: partes[(swf, pieza)] for pieza in datos["piezas"]},
             "otros_usos": {pieza: otros[(swf, pieza)] for pieza in datos["piezas"] if (swf, pieza) in otros},
             "items": datos["items"],
+            "se_ve": datos["se_ve"],
         }
         for swf, datos in sorted(analizados.items(), key=lambda s: s[0].lower())
     }}

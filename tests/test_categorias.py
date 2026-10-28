@@ -313,3 +313,24 @@ def test_lo_que_requiere_pasaporte(tmp_path, ffdec):
 
     assert items == {"disfrazAlien": True, "remera5": False}
     assert piezas == {"gorroAlien_on": False, "invisible_alien_on": True, "remera5_on": False}
+
+
+def test_donde_se_ve_cada_pieza_en_el_gaturro(tmp_path, ffdec):
+    # Como el cliente del juego: los vehículos (con `type`) solo en Transporte; los instrumentos de
+    # `troublesomeItems` en ninguna Parte; la ropa de mascota nunca.
+    ffdec.codigo |= {
+        "skate1_on": clase_con("skate1_on", "MovieClip", 'speed = 300; type = "rollers";'),
+        "guitarraRoja_on": clase_con("guitarraRoja_on", "MovieClip", ""),
+        "gorra1_on": clase_con("gorra1_on", "MovieClip", ""),
+    }
+    fuente = FuenteFalsa({
+        "varios": crear_swf(["skate1_on", "guitarraRoja_on", "gorra1_on"]),
+        "petClothes": crear_swf(["perro_gorro_on"]),
+    })
+
+    piezas = {p["ruta"]: p for p in nucleo_con(tmp_path, fuente, ffdec, {}).piezas_de_swfs(["varios", "petClothes"])["piezas"]}
+
+    assert piezas["varios.skate1_on"]["solo_en"] == "transport"
+    assert "acción" in piezas["varios.guitarraRoja_on"]["no_se_ve"]
+    assert "mascota" in piezas["petClothes.perro_gorro_on"]["no_se_ve"]
+    assert "solo_en" not in piezas["varios.gorra1_on"] and "no_se_ve" not in piezas["varios.gorra1_on"]

@@ -12,8 +12,11 @@ from pathlib import Path
 
 from mgitems.cache_swf import CacheSwf
 from mgitems.catalogo import buscar_en_catalogo, cargar_catalogo
-from mgitems.categorias import CacheCategorias, IndicePiezas, categorias, otros_usos, tipos_de_items, usos_de_piezas
+from mgitems.categorias import (
+    CacheCategorias, IndicePiezas, categorias, donde_se_ven, otros_usos, tipos_de_items, usos_de_piezas,
+)
 from mgitems.destinos import DESCARTADO, descarte_por_nombre, es_de_pasaporte
+from mgitems.se_ve import TRANSPORTE
 from mgitems.entorno import Entorno, Sistema
 from mgitems.entrega import PUERTO_FIDDLER_POR_DEFECTO, QUE_HACER_EN_EL_JUEGO, URL_LOLA, Entrega, PasoFallido, Procesos, SwfTrucado
 from mgitems.ffdec import FFDecNoDisponible
@@ -38,7 +41,7 @@ from mgitems.prendas import (
     MOCHILA, PARTES_DEL_CUERPO, PRENDA, CacheItemsBase, ItemBase, ItemsBaseFFDec, TruqueoFallido, leer_item_base, reescribir_partes,
 )
 from mgitems.script import EncodeInvalido, codificar, decodificar, generar_script, leer_script
-from mgitems.swf import SwfInvalido, leer_simbolos
+from mgitems.swf import SwfInvalido, leer_simbolos, limites_de_simbolos
 
 _NOMBRE_SWF = re.compile(r"^[A-Za-z0-9_\-]+(?:/[A-Za-z0-9_\-]+)*$")
 
@@ -173,7 +176,8 @@ class Nucleo:
         def piezas(swf, obtenido):
             otros = obtenido["otros_usos"]
             return [{"ruta": f"{swf}.{clase}", "clase": clase, "swf": swf, "partes": partes,
-                     "uso": None if partes else otros.get(clase), "pasaporte": es_de_pasaporte(f"{swf}.{clase}")}
+                     "uso": None if partes else otros.get(clase), "pasaporte": es_de_pasaporte(f"{swf}.{clase}"),
+                     **obtenido["se_ve"].get(clase, {})}
                     for clase, partes in obtenido["piezas"].items()]
 
         return self._de_varios_swf(swfs, "piezas", piezas)
@@ -225,7 +229,7 @@ class Nucleo:
             data = guardado[0] if guardado else None
         if del_indice and (data is None or version_de(data) == del_indice.get("version")):
             return {"ok": True, "piezas": del_indice["piezas"], "otros_usos": del_indice.get("otros_usos", {}),
-                    "items": del_indice.get("items", {})}
+                    "items": del_indice.get("items", {}), "se_ve": del_indice.get("se_ve", {})}
         if data is None:
             obtenido = self._datos_de_otro_swf(swf)
             if not obtenido["ok"]:
@@ -241,17 +245,18 @@ class Nucleo:
             clases = [clase for _, clase in leer_simbolos(data)]
             items = items_del_swf(clases)
             with self._candado_ffdec:
-                fuentes = self._prendas_ffdec.fuentes(data, items)
+                fuentes = self._prendas_ffdec.fuentes(data, items + piezas_del_swf(clases))
             items_base = {i.clase: i for i in map(leer_item_base, fuentes.values()) if i and i.clase in items}
             piezas = categorias(piezas_del_swf(clases), usos_de_piezas(swf, items_base).get(swf, {}))
             otros = {p: uso for p, uso in otros_usos(swf, fuentes).get(swf, {}).items() if p in piezas and not piezas[p]}
             tipos = {clase: tipo for clase, tipo in tipos_de_items(swf, fuentes).items() if clase in items}
-            cache.guardar(swf, version, piezas, otros, tipos)
+            se_ve = donde_se_ven(swf, list(piezas), fuentes, limites_de_simbolos(data))
+            cache.guardar(swf, version, piezas, otros, tipos, se_ve)
         except FFDecNoDisponible as e:
             return {"ok": False, "error": f"{e}: no se pueden clasificar los Items de {swf}."}
         except (OSError, SwfInvalido, subprocess.SubprocessError) as e:
             return {"ok": False, "error": f"No se pudieron clasificar los Items de {swf}: {e}"}
-        return {"ok": True, "piezas": piezas, "otros_usos": otros, "items": tipos}
+        return {"ok": True, "piezas": piezas, "otros_usos": otros, "items": tipos, "se_ve": se_ve}
 
     def _datos_de_otro_swf(self, swf: str) -> dict:
         """Un SWF del CDN que no es el abierto (se recuerda mientras dura el programa)."""
@@ -725,7 +730,9 @@ class Nucleo:
         `colores`: los del jugador (`color1` pelaje, `color2` panza, `color3` ojos, como "#RRGGBB");
         si faltan, los de fábrica del juego. El cuerpo y las Piezas de cada SWF se exportan una vez
         por versión (la primera vez tarda unos segundos). Las Piezas sin imagen se listan en
-        `sin_imagen`, y las de Partes donde este Gaturro no tiene lugar, en `sin_lugar`. Si el Gaturro
+        `sin_imagen`, y las de Partes donde este Gaturro no tiene lugar, en `sin_lugar`. Las que el juego
+        no dibujaría en esa Parte (ver `se_ve`) no se dibujan y van en `no_se_ven` ({ruta, parte, motivo}),
+        igual que el transporte, que la vista previa todavía no dibuja (`transporte`). Si el Gaturro
         conseguido es una versión anterior a la del juego, `aviso` lo dice.
         """
         if not isinstance(partes, dict) or not isinstance(colores, (dict, type(None))):
@@ -738,6 +745,10 @@ class Nucleo:
             return {"ok": False, "sin_gaturro": True,
                     "error": "No se encontró el Gaturro original del juego, así que no se muestra ninguno."}
 
+        no_se_ven = [{"ruta": r, "parte": p, "motivo": m} for p, r in partes.items()
+                     if isinstance(r, str) and es_ruta_valida(r) and (m := self._motivo_no_se_ve(r, p))]
+        transporte = partes.get(TRANSPORTE) if isinstance(partes.get(TRANSPORTE), str) else None
+        partes = {p: r for p, r in partes.items() if p != TRANSPORTE and r not in {n["ruta"] for n in no_se_ven if n["parte"] == p}}
         con_lugar = {p for p in partes if tiene_lugar(cuerpo, p)}
         elegidas = {p: r for p, r in partes.items() if p in con_lugar and isinstance(r, str) and es_ruta_valida(r)}
         sin_lugar = [r for p, r in partes.items() if p not in con_lugar]
@@ -757,8 +768,22 @@ class Nucleo:
             else:
                 piezas[parte] = (clase, svg)
         return {"ok": True, "svg": componer(cuerpo, piezas, colores), "sin_imagen": sin_imagen, "sin_lugar": sin_lugar,
+                "no_se_ven": no_se_ven, "transporte": None if any(n["parte"] == TRANSPORTE for n in no_se_ven) else transporte,
                 "aviso": AVISO_VERSION_ANTERIOR if es_version_anterior(cuerpo) else None,
                 "colores_de_fabrica": COLORES, "color_de_nariz": tiene_color_de_nariz(cuerpo)}
+
+    def _motivo_no_se_ve(self, ruta: str, parte: str) -> str | None:
+        """Por qué el juego no dibujaría esta Pieza en esta Parte del Gaturro, o None (ver `se_ve`)."""
+        swf, _, clase = ruta.rpartition(".")
+        obtenido = self._categorias_de(swf)
+        donde = obtenido.get("se_ve", {}).get(clase, {}) if obtenido["ok"] else {}
+        if "no_se_ve" in donde:
+            return donde["no_se_ve"]
+        if "solo_en" in donde and donde["solo_en"] != parte:
+            return f"solo se ve en {PARTES_DEL_CUERPO.get(donde['solo_en'], donde['solo_en'])}"
+        if parte == TRANSPORTE and donde.get("solo_en") != TRANSPORTE:
+            return "en Transporte solo se ven los vehículos"
+        return None
 
     def _cuerpo_gaturro(self) -> str | None:
         """El SVG de `assets.GaturroMC` del primer SWF del juego que lo traiga, con los huecos del torso
