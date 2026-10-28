@@ -22,7 +22,8 @@ from mgitems.entrega import PUERTO_FIDDLER_POR_DEFECTO, QUE_HACER_EN_EL_JUEGO, U
 from mgitems.ffdec import FFDecNoDisponible
 from mgitems.fuente import URL_ASSETS, FuenteCDN, SinConexion, SwfNoEncontrado, Version
 from mgitems.gaturro import (
-    AVISO_VERSION_ANTERIOR, CLASE_CUERPO, CLASE_PLANTILLA, COLORES, SWF_CUERPO, SWF_PLANTILLA, ImagenesPiezas, componer,
+    AVISO_VERSION_ANTERIOR, CLASE_CUERPO, CLASE_PLANTILLA, COLORES, CUADRO_QUIETO_DEL_VEHICULO, SWF_CUERPO, SWF_PLANTILLA,
+    SWF_POSES, ImagenesPiezas, componer, pose_de_transporte,
     accesorio_2_como_accesorio, completar_con_plantilla, es_version_anterior, nariz_debajo_del_pelo, sin_sombra, tiene_color_de_nariz,
     tiene_lugar,
 )
@@ -41,7 +42,7 @@ from mgitems.prendas import (
     MOCHILA, PARTES_DEL_CUERPO, PRENDA, CacheItemsBase, ItemBase, ItemsBaseFFDec, TruqueoFallido, leer_item_base, reescribir_partes,
 )
 from mgitems.script import EncodeInvalido, codificar, decodificar, generar_script, leer_script
-from mgitems.swf import SwfInvalido, leer_simbolos, limites_de_simbolos
+from mgitems.swf import SwfInvalido, congelado_en, leer_simbolos, limites_de_simbolos, rotulos
 
 _NOMBRE_SWF = re.compile(r"^[A-Za-z0-9_\-]+(?:/[A-Za-z0-9_\-]+)*$")
 
@@ -737,17 +738,22 @@ class Nucleo:
         """
         if not isinstance(partes, dict) or not isinstance(colores, (dict, type(None))):
             return {"ok": False, "error": "Las Partes del cuerpo no tienen la forma esperada."}
+        no_se_ven = [{"ruta": r, "parte": p, "motivo": m} for p, r in partes.items()
+                     if isinstance(r, str) and es_ruta_valida(r) and (m := self._motivo_no_se_ve(r, p))]
+        transporte = partes.get(TRANSPORTE) if isinstance(partes.get(TRANSPORTE), str) and es_ruta_valida(partes[TRANSPORTE]) else None
+        if any(n["parte"] == TRANSPORTE for n in no_se_ven):
+            transporte = None
         try:
-            cuerpo = self._cuerpo_gaturro()
+            vehiculo, cuerpo, sin_pose = None, None, None
+            if transporte:
+                vehiculo, cuerpo, sin_pose = self._gaturro_en_vehiculo(transporte)
+            cuerpo = cuerpo or self._cuerpo_gaturro()
         except FFDecNoDisponible as e:
             return {"ok": False, "sin_exportador": True, "error": f"{e}: no se puede dibujar al Gaturro."}
         if cuerpo is None:
             return {"ok": False, "sin_gaturro": True,
                     "error": "No se encontró el Gaturro original del juego, así que no se muestra ninguno."}
 
-        no_se_ven = [{"ruta": r, "parte": p, "motivo": m} for p, r in partes.items()
-                     if isinstance(r, str) and es_ruta_valida(r) and (m := self._motivo_no_se_ve(r, p))]
-        transporte = partes.get(TRANSPORTE) if isinstance(partes.get(TRANSPORTE), str) else None
         partes = {p: r for p, r in partes.items() if p != TRANSPORTE and r not in {n["ruta"] for n in no_se_ven if n["parte"] == p}}
         con_lugar = {p for p in partes if tiene_lugar(cuerpo, p)}
         elegidas = {p: r for p, r in partes.items() if p in con_lugar and isinstance(r, str) and es_ruta_valida(r)}
@@ -767,10 +773,52 @@ class Nucleo:
                 sin_imagen.append(ruta)
             else:
                 piezas[parte] = (clase, svg)
+        if vehiculo:
+            piezas[TRANSPORTE] = vehiculo
         return {"ok": True, "svg": componer(cuerpo, piezas, colores), "sin_imagen": sin_imagen, "sin_lugar": sin_lugar,
-                "no_se_ven": no_se_ven, "transporte": None if any(n["parte"] == TRANSPORTE for n in no_se_ven) else transporte,
+                "no_se_ven": no_se_ven, "transporte": sin_pose,
                 "aviso": AVISO_VERSION_ANTERIOR if es_version_anterior(cuerpo) else None,
                 "colores_de_fabrica": COLORES, "color_de_nariz": tiene_color_de_nariz(cuerpo)}
+
+    def _gaturro_en_vehiculo(self, ruta: str) -> tuple[tuple[str, str] | None, str | None, dict | None]:
+        """(vehículo (clase, SVG), cuerpo en su pose, None) para dibujar el Gaturro subido al vehículo `ruta`,
+        o (None, None, {"ruta", "motivo"}) si no se puede dibujar igual que en el juego.
+
+        Como `Gaturro.state`/`transportActive`: el Gaturro va al cuadro `transportStand_<tipo>` y el vehículo
+        a su cuadro «off». Los dos se congelan en ese cuadro (`swf.congelado_en`)."""
+        swf, _, clase = ruta.rpartition(".")
+        obtenido = self._categorias_de(swf)
+        tipo = (obtenido.get("se_ve", {}).get(clase, {}) if obtenido["ok"] else {}).get("vehiculo")
+        if tipo is None:
+            return None, None, {"ruta": ruta, "motivo": "no se sabe qué vehículo es"}
+        del_cuerpo = self._datos_de_otro_swf(SWF_POSES)
+        del_vehiculo = {"ok": True, "data": self._data_swf} if swf == self._swf_abierto else self._datos_de_otro_swf(swf)
+        if not del_cuerpo["ok"] or not del_vehiculo["ok"]:
+            return None, None, {"ruta": ruta, "motivo": "no se pudo descargar el Gaturro o el vehículo"}
+        pose = pose_de_transporte(tipo)
+        try:
+            if pose not in rotulos(del_cuerpo["data"], CLASE_CUERPO):
+                return None, None, {"ruta": ruta, "motivo": f"la pose «{pose}» no está en el Gaturro que se puede leer"}
+            cuerpo = self._svg_congelado("gaturro-poses", SWF_POSES, del_cuerpo["data"], CLASE_CUERPO, pose)
+            quieto = CUADRO_QUIETO_DEL_VEHICULO if CUADRO_QUIETO_DEL_VEHICULO in rotulos(del_vehiculo["data"], clase) else None
+            svg = self._svg_congelado("vehiculos", f"{swf}/{clase}", del_vehiculo["data"], clase, quieto)
+        except (OSError, SwfInvalido, subprocess.SubprocessError):
+            return None, None, {"ruta": ruta, "motivo": "no se pudo dibujar la pose"}
+        if not cuerpo or not svg:
+            return None, None, {"ruta": ruta, "motivo": "no se pudo dibujar la pose"}
+        if 'id="foreground"' in svg:  # `transportForeground` la pondría delante del Gaturro: no se arma a ojo
+            return None, None, {"ruta": ruta, "motivo": "este vehículo tiene una parte que va delante del Gaturro"}
+        cuerpo = sin_sombra(accesorio_2_como_accesorio(nariz_debajo_del_pelo(cuerpo)))
+        return (clase, svg), cuerpo, None
+
+    def _svg_congelado(self, carpeta: str, clave: str, data: bytes, clase: str, rotulo: str | None) -> str | None:
+        """El SVG de `clase` en el cuadro `rotulo` (None: el primero), exportado una vez por versión."""
+        datos = congelado_en(data, clase, rotulo) if rotulo else data
+        imagenes = ImagenesPiezas(self._entorno.carpeta_cache() / carpeta, self._exportador)
+        ids = {i: c for i, c in leer_simbolos(datos) if c == clase}
+        with self._candado_iconos:
+            imagenes.preparar(f"{clave}/{rotulo or 'cuadro1'}", datos, ids)
+        return imagenes.svg(f"{clave}/{rotulo or 'cuadro1'}", clase)
 
     def _motivo_no_se_ve(self, ruta: str, parte: str) -> str | None:
         """Por qué el juego no dibujaría esta Pieza en esta Parte del Gaturro, o None (ver `se_ve`)."""

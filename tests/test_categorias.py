@@ -334,3 +334,13 @@ def test_donde_se_ve_cada_pieza_en_el_gaturro(tmp_path, ffdec):
     assert "acción" in piezas["varios.guitarraRoja_on"]["no_se_ve"]
     assert "mascota" in piezas["petClothes.perro_gorro_on"]["no_se_ve"]
     assert "solo_en" not in piezas["varios.gorra1_on"] and "no_se_ve" not in piezas["varios.gorra1_on"]
+
+
+def test_un_vehiculo_puede_heredar_su_tipo(tmp_path, ffdec):
+    # `TransportOnMamboAsset` declara `type` (vacío): para el juego, sus Piezas son vehículos.
+    ffdec.codigo["skate2_on"] = clase_con("skate2_on", "TransportOnMamboAsset", "speed = 200;")
+    fuente = FuenteFalsa({"varios": crear_swf(["skate2_on"])})
+
+    [skate] = nucleo_con(tmp_path, fuente, ffdec, {}).piezas_de_swfs(["varios"])["piezas"]
+
+    assert skate["solo_en"] == "transport"
