@@ -21,14 +21,14 @@ from collections import defaultdict
 from pathlib import Path
 
 from mgitems.destinos import destino_de_item, requiere_pasaporte
-from mgitems.se_ve import donde_se_ve
+from mgitems.se_ve import TRANSPORTE as TRANSPORTE_PARTE, donde_se_ve
 from mgitems.prendas import MOCHILA, PARTES_DEL_CUERPO, PRENDA, ItemBase, leer_item_base
 
 ARCHIVO_INDICE = Path(__file__).parent / "datos" / "indice_piezas.json"
 # Lo que un Item de mochila agrega y viste al Gaturro (el resto de `adds`, como `action`, no viste).
 PARTES_QUE_VISTEN = set(PARTES_DEL_CUERPO) | {"clothFront", "armFore", "armBack", "gripBack", "glove", "gloveFore", "gloveBack"}
 # Sube cuando cambia cómo se clasifica, para no usar lo analizado antes en la computadora del jugador.
-FORMATO = 12
+FORMATO = 13
 
 # Para qué usa el juego una Pieza que no viste al Gaturro; también, tipos de Items.
 TRANSPORTE, ACCION, CASA, MASCOTA = "transporte", "accion", "casa", "mascota"
@@ -53,7 +53,10 @@ _PARA_MASCOTA = re.compile(r'"petType"\s*:\s*"(\w+)"|\bforPetType\s*=\s*"(\w+)"'
 _PADRES_DE_LA_CASA = ("HouseMamboAsset", "HouseDecorationMamboAsset")
 _CLASE = re.compile(r"\bclass\s+(\w+)\s+extends\s+(\w+)")
 _VEHICULO = re.compile(r'\bvehicle\s*=\s*"([^"]+)"')
-_VEHICULO_TIPO = re.compile(r'(?:\bpublic var type\b|(?<![\w.])type\s*=\s*")')
+# Un vehículo para el juego: tiene la propiedad `type` (la declara o hereda de `TransportOnMamboAsset`,
+# que la trae vacía: entonces el juego usa la pose de transporte común).
+_VEHICULO_TIPO = re.compile(r'(?:\bpublic var type\b|(?<![\w.])type\s*=\s*"|\bextends\s+TransportOnMamboAsset\b)')
+_TIPO_DE_VEHICULO = re.compile(r'(?<![\w.])type\s*=\s*"(\w*)"')
 _PIEZA_EN_MAPA = re.compile(r'"\w+"\s*:\s*"([^"]+_on)"')
 
 
@@ -130,11 +133,16 @@ def tipos_de_items(swf: str, fuentes: dict[str, str]) -> dict[str, dict]:
 
 def donde_se_ven(swf: str, piezas: list[str], fuentes: dict[str, str], limites: dict[str, tuple]) -> dict[str, dict]:
     """Pieza → {"solo_en"} o {"no_se_ve"}, de las Piezas de `swf` que no se ven en cualquier Parte
-    (ver `se_ve`). `fuentes`: clase → código AS3 (dice cuáles son vehículos); `limites`: su rectángulo."""
+    (ver `se_ve`); los vehículos, además, con su tipo ("vehiculo": "moto", "bike"…, "" el común), que
+    elige la pose del Gaturro. `fuentes`: clase → código AS3; `limites`: su rectángulo."""
     resultado = {}
     for pieza in piezas:
-        es_vehiculo = bool(_VEHICULO_TIPO.search(fuentes.get(pieza, "")))
+        fuente = fuentes.get(pieza, "")
+        es_vehiculo = bool(_VEHICULO_TIPO.search(fuente))
         if donde := donde_se_ve(f"{swf}.{pieza}", limites.get(pieza), es_vehiculo):
+            if es_vehiculo and donde.get("solo_en") == TRANSPORTE_PARTE:
+                tipo = _TIPO_DE_VEHICULO.search(fuente)
+                donde["vehiculo"] = tipo.group(1).lower() if tipo else ""
             resultado[pieza] = donde
     return resultado
 

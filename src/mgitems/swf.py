@@ -236,3 +236,81 @@ def _entradas_symbol_class(cuerpo: bytes) -> list[tuple[int, str]]:
         entradas.append((id_simbolo, cuerpo[pos:fin].decode("utf-8")))
         pos = fin + 1
     return entradas
+
+
+TAG_FRAME_LABEL = 43
+TAG_DO_ACTION = 12
+
+
+def rotulos(data: bytes, clase: str) -> dict[str, int]:
+    """Rótulo → número de cuadro (desde 1) de la línea de tiempo del símbolo de `clase`."""
+    id_simbolo = dict((n, i) for i, n in leer_simbolos(data)).get(clase)
+    swf = _descomprimir(data)
+    for codigo, cuerpo in _tags(swf):
+        if codigo == TAG_DEFINE_SPRITE and struct.unpack_from("<H", cuerpo)[0] == id_simbolo:
+            resultado, cuadro = {}, 1
+            for codigo_interno, interno, _ in _tags_crudos(cuerpo, 4):
+                if codigo_interno == TAG_FRAME_LABEL:
+                    resultado.setdefault(interno.split(b"\0")[0].decode("utf-8", "replace"), cuadro)
+                elif codigo_interno == TAG_SHOW_FRAME:
+                    cuadro += 1
+            return resultado
+    return {}
+
+
+def congelado_en(data: bytes, clase: str, rotulo: str) -> bytes:
+    """El SWF con el símbolo de `clase` reducido a un solo cuadro: lo que muestra en el cuadro de `rotulo`.
+
+    Junta en un cuadro todo lo que la línea de tiempo coloca hasta ahí (sin los ShowFrame del medio), así
+    queda lo mismo que en ese cuadro y cada clip de adentro empieza en su cuadro 1, como cuando el juego
+    hace `gotoAndStop(rotulo)`. Exportar el cuadro directamente adelantaría también los clips de adentro.
+    """
+    id_simbolo = dict((n, i) for i, n in leer_simbolos(data)).get(clase)
+    swf = _descomprimir(data)
+    bits = swf[8] >> 3
+    inicio = 8 + (5 + bits * 4 + 7) // 8 + 4
+    partes, encontrado = [swf[:inicio]], False
+    for codigo, cuerpo, crudo in _tags_crudos(swf, inicio):
+        if codigo == TAG_DEFINE_SPRITE and struct.unpack_from("<H", cuerpo)[0] == id_simbolo:
+            controles, en_el_rotulo = [], False
+            for codigo_interno, interno, crudo_interno in _tags_crudos(cuerpo, 4):
+                if codigo_interno == TAG_FRAME_LABEL and interno.split(b"\0")[0].decode("utf-8", "replace") == rotulo:
+                    en_el_rotulo = True
+                elif codigo_interno == TAG_SHOW_FRAME:
+                    if en_el_rotulo:
+                        break
+                elif codigo_interno not in (TAG_FIN, TAG_FRAME_LABEL, TAG_DO_ACTION):
+                    controles.append(crudo_interno)
+            if not en_el_rotulo:
+                raise SwfInvalido(f"{clase} no tiene el cuadro «{rotulo}»")
+            encontrado = True
+            nuevo = cuerpo[:2] + struct.pack("<H", 1) + b"".join(controles) + _tag(TAG_SHOW_FRAME) + _tag(TAG_FIN)
+            crudo = _tag(TAG_DEFINE_SPRITE, nuevo)
+        partes.append(crudo)
+    if not encontrado:
+        raise SwfInvalido(f"El SWF no tiene {clase}")
+    resultado = bytearray(b"".join(partes))
+    resultado[0:3] = b"FWS"
+    struct.pack_into("<I", resultado, 4, len(resultado))
+    return bytes(resultado)
+
+
+def _tags_crudos(datos: bytes, pos: int):
+    """(código, cuerpo, tag entero con su cabecera) de cada tag desde `pos`: los de un SWF (después del
+    encabezado) o los de un DefineSprite (después de su id y su cantidad de cuadros, `pos` 4)."""
+    while pos < len(datos):
+        inicio = pos
+        cabecera = struct.unpack_from("<H", datos, pos)[0]
+        pos += 2
+        codigo, largo = cabecera >> 6, cabecera & 0x3F
+        if largo == 0x3F:
+            largo = struct.unpack_from("<I", datos, pos)[0]
+            pos += 4
+        yield codigo, datos[pos:pos + largo], datos[inicio:pos + largo]
+        pos += largo
+        if codigo == TAG_FIN:
+            return
+
+
+def _tag(codigo: int, cuerpo: bytes = b"") -> bytes:
+    return struct.pack("<HI", (codigo << 6) | 0x3F, len(cuerpo)) + cuerpo

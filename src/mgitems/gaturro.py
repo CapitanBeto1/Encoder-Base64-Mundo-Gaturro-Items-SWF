@@ -32,7 +32,16 @@ SWF_PLANTILLA, CLASE_PLANTILLA = "fashion2025", "maniqui_so"
 # al mismo clip, queda la última (por ejemplo, `gripFore` gana sobre `grip` en el clip `gripFore`).
 # `accesories2` existe en el juego actual (se ve), aunque no en la versión del cliente que se leyó.
 PARTES = ["hats", "hairs", "mouths", "neck", "accesories", "accesories2", "cloth", "clothFront", "clothBack", "leg",
-          "foot", "arm", "armFore", "armBack", "glove", "gloveFore", "gloveBack", "grip", "gripFore", "gripBack"]
+          "foot", "arm", "armFore", "armBack", "glove", "gloveFore", "gloveBack", "grip", "gripFore", "gripBack", "transport"]
+# El Gaturro con las poses de transporte (`transportStand_<tipo del vehículo>`): el de `superHeroesTrajes`
+# es el animado, con las mismas poses en los mismos cuadros que el del juego (el de `fashion_nuevo` es quieto).
+SWF_POSES = "superHeroesTrajes"
+CUADRO_QUIETO_DEL_VEHICULO = "off"  # `Gaturro.transportActive`: parado, el vehículo va a su cuadro «off»
+
+
+def pose_de_transporte(tipo: str) -> str:
+    """El cuadro del Gaturro con un vehículo de ese tipo (`Gaturro.transportLabel`)."""
+    return f"transportStand_{tipo}" if tipo else "transportStand"
 
 # La versión actual no está publicada sin cifrar.
 AVISO_VERSION_ANTERIOR = "Gaturro de una versión anterior del juego: la nariz no cambia de color."

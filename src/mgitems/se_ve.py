@@ -52,6 +52,8 @@ def donde_se_ve(ruta: str, limites: tuple | None = None, es_vehiculo: bool = Fal
         if ancho > TAMANO_MAXIMO or alto > TAMANO_MAXIMO or not ancho or not alto:
             return {"no_se_ve": f"mide {round(ancho)}×{round(alto)}: el Gaturro no dibuja lo que pasa de {TAMANO_MAXIMO}×{TAMANO_MAXIMO}"}
     if parte := next((p for clave, p in SOLO_EN.items() if clave in ruta), None):
+        if parte == TRANSPORTE and not es_vehiculo:  # en transport, sin `type` el juego la saca (`hasTransport`)
+            return {"no_se_ve": "va en Transporte, pero no es un vehículo: el juego la saca"}
         return {"solo_en": parte}
     if clave_vacia := next((clave for clave, p in SOLO_EN.items() if clave in ruta and not p), None):
         return {"no_se_ve": f"el juego la saca del Gaturro («{clave_vacia}»): solo sirve como animación de una acción"}
