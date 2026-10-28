@@ -761,7 +761,7 @@ function mostrarLook() {
 // --- Casilleros: una Parte del cuerpo cada uno, a los costados del Gaturro ---
 
 const CASILLEROS_CABEZA = ["hats", "hairs", "mouths", "accesories", "accesories2", "neck"];
-const CASILLEROS_CUERPO = ["cloth", "arm", "clothBack", "grip", "gripFore", "leg", "foot"];
+const CASILLEROS_CUERPO = ["cloth", "arm", "clothBack", "grip", "gripFore", "leg", "foot", "transport"];
 let casilleroMarcado = null; // si hay uno, toda Pieza que se toque va a esa Parte
 
 function casillero(id) {
@@ -818,6 +818,7 @@ const CATEGORIAS = [
   { id: "grip", nombre: "Mano", que: "Mano", icono: "✋", partes: ["grip", "gripFore", "gripBack", "glove", "gloveFore", "gloveBack"] },
   { id: "leg", nombre: "Piernas", que: "Piernas", icono: "👖", partes: ["leg"] },
   { id: "foot", nombre: "Pies", que: "Pies", icono: "👟", partes: ["foot"] },
+  { id: "transport", nombre: "Transportes", que: "Transporte", icono: "🛹", partes: ["transport"] },
   { id: "otros", nombre: "Otros", icono: "✨", partes: [] },
 ];
 // Para qué usa el juego una Pieza que no viste al Gaturro (sin uso conocido: "Objeto").
@@ -853,8 +854,22 @@ function queEs(pieza) {
   return { texto: USOS[pieza.uso] ?? "Objeto", uso: pieza.uso ?? "objeto" };
 }
 
+// Los vehículos (los que el juego solo muestra en Transporte) van en Transportes aunque ningún Item los use ahí.
+const partesDePieza = (pieza) => (pieza.solo_en === "transport" ? [...pieza.partes, "transport"] : pieza.partes);
 const enCategoria = (pieza, categoria) =>
-  categoria.id === "otros" ? !pieza.partes.some((p) => PARTES_CON_CATEGORIA.has(p)) : pieza.partes.some((p) => categoria.partes.includes(p));
+  categoria.id === "otros"
+    ? !partesDePieza(pieza).some((p) => PARTES_CON_CATEGORIA.has(p))
+    : partesDePieza(pieza).some((p) => categoria.partes.includes(p));
+
+// Por qué el juego no mostraría esta Pieza en la Parte `parte` del Gaturro (null si la mostraría), con
+// las reglas del cliente que trae el núcleo: `no_se_ve` (en ninguna) y `solo_en` (solo en esa Parte).
+function motivoNoSeVe(pieza, parte) {
+  if (pieza.no_se_ve) return pieza.no_se_ve;
+  if (!parte) return null;
+  if (pieza.solo_en && pieza.solo_en !== parte) return `solo se ve en ${nombreDeParte(pieza.solo_en)}`;
+  if (parte === "transport" && pieza.solo_en !== "transport") return "en Transporte solo se ven los vehículos";
+  return null;
+}
 
 async function cargarInventario() {
   const pedido = fuentes.todos ? null : fuentes.swfs;
@@ -918,13 +933,15 @@ function mostrarInventario() {
   const coincide = buscarPorNombre(texto, $("modo-nombre-piezas").value);
   const encontradas = inventario.piezas.filter((p) => enCategoria(p, categoria) && coincide(p.clase) && (!uso || queEs(p).uso === uso));
   // Recomendado: primero las que son solo de esta categoría, después las que suman una más, dos más… (como en «Agregar Items»).
+  const destino = casilleroMarcado ?? (categoria.id === "otros" ? null : categoria.id);
+  // Lo que el juego no mostraría donde va (en rojo), siempre al final, como en «Agregar Items».
+  const rojo = (p) => Boolean(motivoNoSeVe(p, destino));
   const piezas = $("orden-piezas").value === "recomendado"
-    ? ordenarPor(encontradas, (p) => [CATEGORIAS.filter((c) => c.partes.length && p.partes.some((x) => c.partes.includes(x))).length])
-    : ordenarPorNombre(encontradas, $("orden-piezas").value);
+    ? ordenarPor(encontradas, (p) => [rojo(p), CATEGORIAS.filter((c) => c.partes.length && partesDePieza(p).some((x) => c.partes.includes(x))).length])
+    : ordenarPor(ordenarPorNombre(encontradas, $("orden-piezas").value), (p) => [rojo(p)]);
   const paginas = Math.max(1, Math.ceil(piezas.length / POR_PAGINA));
   inventario.pagina = Math.min(Math.max(inventario.pagina, 0), paginas - 1);
   const visibles = piezas.slice(inventario.pagina * POR_PAGINA, (inventario.pagina + 1) * POR_PAGINA);
-  const destino = casilleroMarcado ?? (categoria.id === "otros" ? null : categoria.id);
 
   $("grilla-piezas").replaceChildren(
     ...visibles.map((pieza) => {
@@ -935,13 +952,24 @@ function mostrarInventario() {
       boton.setAttribute("aria-pressed", String(Boolean(puesta)));
       boton.classList.toggle("en-uso", enUso && !puesta);
       boton.disabled = ocupado;
-      boton.addEventListener("click", () => ponerPieza(pieza, destino));
+      const motivo = motivoNoSeVe(pieza, destino);
+      boton.classList.toggle("no-llega-bien", Boolean(motivo));
+      boton.addEventListener("click", () => {
+        ponerPieza(pieza, destino);
+        if (motivo && destino && lookActual.partes[destino] === pieza.ruta) avisarLista(`${pieza.clase}: no se ve en el juego, ${motivo}.`, "advertencia");
+      });
       const que = queEs(pieza);
       const tipo = etiqueta(que.texto, "tipo-pieza");
       tipo.dataset.uso = que.uso;
       boton.title += ` · ${que.texto}`;
       boton.classList.add("item-grilla");
       boton.append(elementoIcono(pieza.ruta), etiqueta(pieza.clase, "nombre-item"), tipo);
+      if (motivo) {
+        const noSeVe = etiqueta("No se ve", "destino-item");
+        noSeVe.dataset.bien = "false";
+        boton.append(noSeVe);
+        boton.title += ` · No se ve en el juego: ${motivo}`;
+      }
       if (pieza.pasaporte) marcarPasaporte(boton);
       const li = document.createElement("li");
       li.append(boton);
@@ -1099,6 +1127,8 @@ async function dibujarGaturro() {
   const avisos = resultado.aviso ? [resultado.aviso] : [];
   if (resultado.sin_lugar.length) avisos.push(`No se dibuja: ${clases(resultado.sin_lugar)}.`);
   if (resultado.sin_imagen.length) avisos.push(`Sin imagen: ${clases(resultado.sin_imagen)}.`);
+  for (const n of resultado.no_se_ven) avisos.push(`No se ve en el juego: ${claseDeRuta(n.ruta)} (${n.motivo}).`);
+  if (resultado.transporte) avisos.push(`El transporte (${claseDeRuta(resultado.transporte)}) se ve en el juego, pero la vista previa todavía no lo dibuja.`);
   $("estado-gaturro").replaceChildren(...avisos.map((a) => etiqueta(a, "aviso-gaturro")));
 }
 
@@ -1648,7 +1678,7 @@ $("abrir").addEventListener("click", abrirArchivo);
 // que ocupan varios, en Disfraces. Los demás tipos, cada uno en la suya.
 const CATEGORIAS_ITEMS = [
   { id: "todos", nombre: "Todos", icono: "🔎" },
-  ...CATEGORIAS.filter((c) => c.que),
+  ...CATEGORIAS.filter((c) => c.que && c.id !== "transport"),
   { id: "disfraces", nombre: "Disfraces", que: "Disfraz", icono: "🦸" },
   { id: "mochila", nombre: "Mochila", que: "Mochila", icono: "🧪" },
   { id: "transporte", nombre: "Transportes", que: "Transporte", icono: "🛹" },
@@ -1686,7 +1716,8 @@ function categoriasDeItem(item) {
   if (item.tipo !== "prenda") return [CATEGORIAS_ITEMS.find((c) => (c.tipos ?? [c.id]).includes(item.tipo)) ?? CATEGORIAS_ITEMS.at(-1)];
   // Una Prenda rota (sin Piezas, o en una Parte que el Gaturro no tiene) va donde va su Pieza parecida.
   const partes = item.partes.some((p) => PARTES_CON_CATEGORIA.has(p)) ? item.partes : item.parecido ?? [];
-  const casilleros = CATEGORIAS.filter((c) => c.que && partes.some((p) => c.partes.includes(p)));
+  const casilleros = CATEGORIAS.filter((c) => c.que && partes.some((p) => c.partes.includes(p)))
+    .map((c) => (c.id === "transport" ? CATEGORIAS_ITEMS.find((i) => i.id === "transporte") : c));
   if (!casilleros.length) return [CATEGORIAS_ITEMS.find((c) => c.id === "otros")];
   const sinMangas = casilleros.length > 1 ? casilleros.filter((c) => c.id !== "arm") : casilleros;
   return sinMangas.length > 1 ? [...casilleros, CATEGORIAS_ITEMS.find((c) => c.id === "disfraces")] : casilleros;

@@ -21,13 +21,14 @@ from collections import defaultdict
 from pathlib import Path
 
 from mgitems.destinos import destino_de_item, requiere_pasaporte
+from mgitems.se_ve import donde_se_ve
 from mgitems.prendas import MOCHILA, PARTES_DEL_CUERPO, PRENDA, ItemBase, leer_item_base
 
 ARCHIVO_INDICE = Path(__file__).parent / "datos" / "indice_piezas.json"
 # Lo que un Item de mochila agrega y viste al Gaturro (el resto de `adds`, como `action`, no viste).
 PARTES_QUE_VISTEN = set(PARTES_DEL_CUERPO) | {"clothFront", "armFore", "armBack", "gripBack", "glove", "gloveFore", "gloveBack"}
 # Sube cuando cambia cómo se clasifica, para no usar lo analizado antes en la computadora del jugador.
-FORMATO = 11
+FORMATO = 12
 
 # Para qué usa el juego una Pieza que no viste al Gaturro; también, tipos de Items.
 TRANSPORTE, ACCION, CASA, MASCOTA = "transporte", "accion", "casa", "mascota"
@@ -52,6 +53,7 @@ _PARA_MASCOTA = re.compile(r'"petType"\s*:\s*"(\w+)"|\bforPetType\s*=\s*"(\w+)"'
 _PADRES_DE_LA_CASA = ("HouseMamboAsset", "HouseDecorationMamboAsset")
 _CLASE = re.compile(r"\bclass\s+(\w+)\s+extends\s+(\w+)")
 _VEHICULO = re.compile(r'\bvehicle\s*=\s*"([^"]+)"')
+_VEHICULO_TIPO = re.compile(r'(?:\bpublic var type\b|(?<![\w.])type\s*=\s*")')
 _PIEZA_EN_MAPA = re.compile(r'"\w+"\s*:\s*"([^"]+_on)"')
 
 
@@ -126,6 +128,17 @@ def tipos_de_items(swf: str, fuentes: dict[str, str]) -> dict[str, dict]:
     return tipos
 
 
+def donde_se_ven(swf: str, piezas: list[str], fuentes: dict[str, str], limites: dict[str, tuple]) -> dict[str, dict]:
+    """Pieza → {"solo_en"} o {"no_se_ve"}, de las Piezas de `swf` que no se ven en cualquier Parte
+    (ver `se_ve`). `fuentes`: clase → código AS3 (dice cuáles son vehículos); `limites`: su rectángulo."""
+    resultado = {}
+    for pieza in piezas:
+        es_vehiculo = bool(_VEHICULO_TIPO.search(fuentes.get(pieza, "")))
+        if donde := donde_se_ve(f"{swf}.{pieza}", limites.get(pieza), es_vehiculo):
+            resultado[pieza] = donde
+    return resultado
+
+
 def categorias(piezas: list[str], usos: dict[str, set[str]]) -> dict[str, list[str]]:
     """Cada Pieza del SWF con sus Partes (ordenadas); [] si ningún Item la viste."""
     return {pieza: sorted(usos.get(pieza, ())) for pieza in piezas}
@@ -166,10 +179,12 @@ class CacheCategorias:
             return None
         if datos.get("version") != version or datos.get("formato") != FORMATO:
             return None
-        return {"piezas": datos.get("piezas", {}), "otros_usos": datos.get("otros_usos", {}), "items": datos.get("items", {})}
+        return {"piezas": datos.get("piezas", {}), "otros_usos": datos.get("otros_usos", {}), "items": datos.get("items", {}),
+                "se_ve": datos.get("se_ve", {})}
 
-    def guardar(self, swf: str, version: str, piezas: dict[str, list[str]], otros: dict[str, str], items: dict[str, dict]) -> None:
+    def guardar(self, swf: str, version: str, piezas: dict[str, list[str]], otros: dict[str, str], items: dict[str, dict],
+                se_ve: dict[str, dict]) -> None:
         archivo = self._archivo(swf)
         archivo.parent.mkdir(parents=True, exist_ok=True)
-        datos = {"formato": FORMATO, "version": version, "piezas": piezas, "otros_usos": otros, "items": items}
+        datos = {"formato": FORMATO, "version": version, "piezas": piezas, "otros_usos": otros, "items": items, "se_ve": se_ve}
         archivo.write_text(json.dumps(datos, ensure_ascii=False), encoding="utf-8")

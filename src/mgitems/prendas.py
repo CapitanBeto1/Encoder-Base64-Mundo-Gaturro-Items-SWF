@@ -40,6 +40,7 @@ PARTES_DEL_CUERPO = {
     "gripFore": "Mano de adelante",
     "leg": "Piernas",
     "foot": "Pies",
+    "transport": "Transporte",  # solo vehículos (ver `se_ve`)
 }
 
 PRENDA = "prenda"

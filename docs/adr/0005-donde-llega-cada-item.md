@@ -23,6 +23,13 @@ Después, la mochila no muestra la ropa de mascota (`attr_pet_*`): solo aparece 
 
 Pasaporte (`PassportControl.VIP_PACKS`): las Piezas o Items con `invisibles/`, `invisible_`, `mime.disfrazMimo`, `jeanMimo_on`, `gorroMimo_on`, `gatupacks/hw18.hide_hw18_on` o `easter2021.disfrazBunny` solo se los puede poner quien tiene pasaporte: sin pasaporte, el guardarropa dice «ESTE OBJETO REQUIERE PASAPORTE» y el Gaturro no los dibuja. Se marcan con «Pasaporte» en «Agregar Items» y en Looks.
 
+Puesta en el Gaturro, una Pieza no siempre se ve (`Gaturro.setAsset`/`add`; `mgitems.se_ve`):
+- nunca se ven la ropa de mascota (`petClothes`), las de más de 300×300 (paredes, pisos) y las prohibidas para usuarios;
+- `troublesomeItems` (`cfgs/gameplay.json`) fija la única Parte donde van algunas, y el juego las saca de cualquier otra; con Parte vacía (instrumentos, objetos de acción) no van en ninguna;
+- los vehículos (Piezas con `type`) solo van en la Parte `transport`, y ahí no va nada más.
+
+Looks tiene un casillero y una categoría Transporte, marca en rojo y al final lo que no se vería donde va, y la vista previa no dibuja lo que el juego no dibujaría. Con un transporte el juego pone al Gaturro en el cuadro `transportStand_<type>` (que `superHeroesTrajes` trae sin cifrar) y al vehículo en `off`; la vista previa todavía no dibuja esa pose.
+
 `mgitems.destinos` copia esas reglas. El índice guarda, para cada Item, su destino y, si no llega bien, el motivo. «Agregar Items» lo muestra debajo de cada Item (en rojo si no llega bien). «Agregar todos» saltea los descartados. Generar el Encode avisa cuáles no van a quedar bien.
 
 ## Considered Options
