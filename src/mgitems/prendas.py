@@ -41,7 +41,11 @@ PARTES_DEL_CUERPO = {
     "leg": "Piernas",
     "foot": "Pies",
     "transport": "Transporte",  # solo vehículos (ver `se_ve`)
+    "effect": "Cabeza (efecto)",  # una Pieza más sobre la cabeza, hasta salir del juego (ver `se_ve`)
 }
+# El efecto de cabeza se escribe «head.<swf>.<Pieza>» (`GaturroEffectsManager.applyHead`).
+EFECTO = "effect"
+PREFIJO_EFECTO = "head."
 
 PRENDA = "prenda"
 MOCHILA = "mochila"
@@ -99,6 +103,8 @@ def leer_item_base(fuente: str) -> ItemBase | None:
 def reescribir_partes(item: ItemBase, partes: dict[str, str]) -> str:
     """El código AS3 del Item base mostrando `partes` (Parte del cuerpo → Pieza)."""
     for parte, pieza in partes.items():
+        if parte == EFECTO:
+            pieza = pieza.removeprefix(PREFIJO_EFECTO) if pieza.startswith(PREFIJO_EFECTO) and "." in pieza[len(PREFIJO_EFECTO):] else ""
         if not _IDENTIFICADOR.match(parte) or not _PIEZA.match(pieza):
             raise ValueError(f"Parte del cuerpo o Pieza inválida: {parte} → {pieza}")
     if item.tipo == PRENDA:

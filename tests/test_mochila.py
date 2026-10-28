@@ -151,6 +151,20 @@ def test_un_look_en_un_item_de_mochila_de_otro_swf(sistema, fuente, ffdec):
     assert any(r["Match"].endswith(f"bruja.swf?{len(BRUJA)}") for r in reglas(sistema))
 
 
+def test_un_look_con_una_pieza_en_la_cabeza_como_efecto(sistema, fuente, ffdec):
+    # El efecto de cabeza («head.<swf>.<Pieza>», GaturroEffectsManager.applyHead): al usar el Item de
+    # mochila, el juego pone la Pieza sobre la cabeza, aunque sea un vehículo.
+    nucleo = Nucleo(sistema, ProcesosFalso(), fuente=fuente, catalogo=[], prendas_ffdec=ffdec)
+    look = {"nombre": "Corona arriba", "base": "bruja.pocima1", "partes": {"effect": "costumes.coronaRey_on"}}
+
+    resultado = nucleo.aplicar_look(look)
+
+    assert resultado["ok"], resultado
+    item = leer_item_base(ffdec.trucos[0][1])
+    assert item.partes == {"effect": "head.costumes.coronaRey_on"}
+    assert item.usos == USOS_ILIMITADOS  # se usa de nuevo cada vez que se entra al juego
+
+
 def test_la_base_propuesta_de_un_look_es_una_prenda(sistema, fuente, ffdec):
     nucleo = Nucleo(sistema, ProcesosFalso(), fuente=fuente, catalogo=[], prendas_ffdec=ffdec)
     nucleo.abrir_swf_del_cdn("bruja")

@@ -211,6 +211,20 @@ def _esconder_hermanos(svg: str, hueco: str) -> str:
     return re.sub(r'<g id="sprite\d+">.*?</g>', esconder, svg, flags=re.S)
 
 
+EFECTO_DE_CABEZA = "effect"
+
+
+def _lugar_del_sombrero(cuerpo: str) -> tuple[str, str, str] | None:
+    """(sprite de la cabeza, x, y) del clip vacío `hats`: donde el efecto de cabeza pone su Pieza."""
+    for sprite in re.finditer(r'<g id="(sprite\d+)">(.*?)</g>', cuerpo, re.S):
+        if clip := _hueco("hats").search(sprite.group(2)):
+            transformacion = _TRANSFORMACION.search(clip.group(0))
+            numeros = re.findall(r"-?[\d.]+", transformacion.group(1)) if transformacion else []
+            x, y = (numeros[4], numeros[5]) if len(numeros) == 6 else ("0", "0")
+            return sprite.group(1), x, y
+    return None
+
+
 def componer(cuerpo: str, piezas: dict[str, tuple[str, str]], colores: dict | None = None) -> str:
     """El SVG del Gaturro con `piezas` (Parte del cuerpo → (clase, SVG exportado por FFDec)) puestas."""
     elegidos = {k: c for k, c in (colores or {}).items() if k in COLORES and isinstance(c, str) and _COLOR.match(c)}
@@ -224,6 +238,7 @@ def componer(cuerpo: str, piezas: dict[str, tuple[str, str]], colores: dict | No
                 en_hueco[hueco] = parte
 
     svg, defs, preparadas = cuerpo, [], {}
+    lugar_del_efecto = _lugar_del_sombrero(cuerpo) if EFECTO_DE_CABEZA in piezas else None
     for hueco, parte in en_hueco.items():
         clase, svg_pieza = piezas[parte]
         if parte not in preparadas:
@@ -241,6 +256,14 @@ def componer(cuerpo: str, piezas: dict[str, tuple[str, str]], colores: dict | No
             atributo = f' transform="{transformacion.group(1)}"' if transformacion else ""
             return f'<g data-parte="{parte}"{atributo}>{contenido}</g>'
         svg = _hueco(hueco).sub(poner, svg)
+
+    # El efecto de cabeza: el juego la agrega al final de la cabeza en el lugar del sombrero, solo corrida
+    # (`onHeadFetch`: x e y del clip `hats`), así que queda encima de todo lo de la cabeza.
+    if lugar_del_efecto and (efecto := _pieza(piezas[EFECTO_DE_CABEZA][1], "pe_")):
+        sprite, x, y = lugar_del_efecto
+        defs.append(efecto[1])
+        capa = f'<g data-parte="{EFECTO_DE_CABEZA}" transform="translate({x}, {y})">{efecto[0]}</g>'
+        svg = re.sub(rf'(<g id="{sprite}">.*?)(</g>)', lambda m: m.group(1) + capa + m.group(2), svg, count=1, flags=re.S)
 
     # Los clips de color, pintados enteros del color del jugador.
     filtros = "".join(

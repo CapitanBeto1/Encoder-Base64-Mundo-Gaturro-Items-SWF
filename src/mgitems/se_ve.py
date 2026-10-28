@@ -14,12 +14,18 @@ pero no dibuja algunas y saca otras:
   ahí, una Pieza sin `type` se saca (`hasTransport`).
 
 Las de pasaporte se ven solo con pasaporte (`destinos.es_de_pasaporte`).
+
+Aparte de las Partes, el efecto de cabeza (`effect = "head.<swf>.<Pieza>"`, `GaturroEffectsManager.applyHead`)
+pone una Pieza más sobre la cabeza, donde va el sombrero, sin mirar si es un vehículo. No pone las que no se
+ven nunca, las de `troublesomeItems` con otra Parte que `hats` ni las de 150 o más de ancho o de alto. Dura
+hasta salir del juego: el servidor no guarda los efectos.
 """
 
 from mgitems.destinos import PROHIBIDOS_PARA_USUARIOS
 
 TRANSPORTE = "transport"
 TAMANO_MAXIMO = 300  # `Gaturro.add`: más grande que esto, no se dibuja
+TAMANO_MAXIMO_EFECTO = 150  # `GaturroEffectsManager.onHeadFetch`: de esto para arriba, no se dibuja
 # `troublesomeItems` (cfgs/gameplay.json): si la ruta de la Pieza contiene la clave, solo va en esa Parte ("": en ninguna).
 SOLO_EN = {
     "gatupacks/mar19.autoCarroza2_on": "transport", "gatupacks/mar19.autoCarroza1_on": "transport",
@@ -51,15 +57,28 @@ def donde_se_ve(ruta: str, limites: tuple | None = None, es_vehiculo: bool = Fal
         ancho, alto = limites[2] - limites[0], limites[3] - limites[1]
         if ancho > TAMANO_MAXIMO or alto > TAMANO_MAXIMO or not ancho or not alto:
             return {"no_se_ve": f"mide {round(ancho)}×{round(alto)}: el Gaturro no dibuja lo que pasa de {TAMANO_MAXIMO}×{TAMANO_MAXIMO}"}
+    # Lo grande para el efecto de cabeza (que no la dibuja) y lo de la lista del juego (que el efecto respeta).
+    extra = {"grande": True} if limites and max(limites[2] - limites[0], limites[3] - limites[1]) >= TAMANO_MAXIMO_EFECTO else {}
     if parte := next((p for clave, p in SOLO_EN.items() if clave in ruta), None):
         if parte == TRANSPORTE and not es_vehiculo:  # en transport, sin `type` el juego la saca (`hasTransport`)
             return {"no_se_ve": "va en Transporte, pero no es un vehículo: el juego la saca"}
-        return {"solo_en": parte}
+        return {"solo_en": parte, "lista": True} | extra
     if clave_vacia := next((clave for clave, p in SOLO_EN.items() if clave in ruta and not p), None):
         return {"no_se_ve": f"el juego la saca del Gaturro («{clave_vacia}»): solo sirve como animación de una acción"}
     if es_vehiculo:
-        return {"solo_en": TRANSPORTE}
-    return {}
+        return {"solo_en": TRANSPORTE} | extra
+    return extra
+
+
+def motivo_sin_efecto(donde: dict) -> str | None:
+    """Por qué el efecto de cabeza no pondría esta Pieza (`donde`: lo de `donde_se_ve`), o None."""
+    if "no_se_ve" in donde:
+        return donde["no_se_ve"]
+    if donde.get("lista") and donde.get("solo_en") != "hats":
+        return "el juego no la deja en la cabeza (está en su lista de Piezas con Parte fija)"
+    if donde.get("grande"):
+        return f"el efecto de cabeza no dibuja lo de {TAMANO_MAXIMO_EFECTO}×{TAMANO_MAXIMO_EFECTO} o más"
+    return None
 
 
 def se_ve_en(ruta: str, parte: str, limites: tuple | None = None, es_vehiculo: bool = False) -> str | None:
