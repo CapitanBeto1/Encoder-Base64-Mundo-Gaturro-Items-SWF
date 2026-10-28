@@ -1576,7 +1576,7 @@ main.modo-agregar #encode { flex: none; height: 64px; min-height: 0; }
 
 /* Agregar Items: nombre, orden y destino en una fila. */
 .filtros-items { flex: none; display: flex; gap: 6px; align-items: center; }
-.filtros-items #filtro-items { flex: 1; min-width: 110px; font-size: 12px; padding: 4px 8px; }
+.filtros-items #filtro-items, .filtros-items #filtro-piezas { flex: 1; min-width: 110px; font-size: 12px; padding: 4px 8px; }
 select.filtro-lista {
   flex: none;
   max-width: 112px;

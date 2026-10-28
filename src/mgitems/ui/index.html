@@ -221,14 +221,34 @@
                 <ul id="resultados-fuente" class="resultados-swf" role="listbox" hidden></ul>
               </div>
               <button id="todas-las-fuentes" class="enlace" aria-pressed="false" title="Las Piezas de todos los SWF del juego">Todos</button>
+              <button id="abrir-archivo-looks" class="enlace boton-todos" title="Un SWF de tu computadora">Archivo…</button>
             </div>
             <div id="categorias" class="categorias" role="tablist" aria-label="Categorías de Piezas"></div>
             <div id="poniendo-en" class="poniendo-en" hidden>
               <span id="texto-poniendo-en"></span>
               <button id="dejar-de-poner" class="quitar" title="Volver a poner cada Pieza en su Parte">✕</button>
             </div>
-            <input id="filtro-piezas" type="text" spellcheck="false" autocomplete="off"
-                   placeholder="Filtrar por nombre" aria-label="Filtrar las Piezas por nombre">
+            <div class="filtros-items">
+              <input id="filtro-piezas" type="text" spellcheck="false" autocomplete="off"
+                     placeholder="Nombre, ej: gorro, vincha" aria-label="Filtrar las Piezas por el nombre">
+              <select id="modo-nombre-piezas" class="filtro-lista" aria-label="Cómo busca el nombre">
+                <option value="empieza">Empieza con</option>
+                <option value="contiene">Contiene</option>
+              </select>
+              <select id="orden-piezas" class="filtro-lista" aria-label="Orden de las Piezas">
+                <option value="recomendado">Orden: recomendado</option>
+                <option value="az">Orden: A-Z</option>
+                <option value="za">Orden: Z-A</option>
+              </select>
+              <select id="uso-piezas" class="filtro-lista" aria-label="Para qué usa el juego las Piezas de Otros" hidden>
+                <option value="">Tipo: todo</option>
+                <option value="transporte">Tipo: transporte</option>
+                <option value="accion">Tipo: acción</option>
+                <option value="casa">Tipo: decoración</option>
+                <option value="mascota">Tipo: mascota</option>
+                <option value="objeto">Tipo: objeto</option>
+              </select>
+            </div>
             <div class="estante">
               <div class="flechas">
                 <button id="pagina-anterior" class="flecha-grande" title="Página anterior" aria-label="Página anterior">◀</button>
