@@ -265,6 +265,24 @@ button.derecha { margin-left: auto; }
   gap: 10px;
 }
 
+/* Looks y Acciones comparten la pantalla: cada una esconde lo de la otra. */
+main:not(.modo-acciones) .solo-acciones,
+main.modo-acciones .solo-looks,
+.dialogo-base.solo-mochila .tipos-base {
+  display: none;
+}
+
+.fila-animacion {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.fila-animacion select {
+  max-width: 320px;
+}
+
 .vista[hidden] { display: none; }
 
 /* Trucar no tiene una lista que se achique: si no entra, la vista entera se desplaza. */

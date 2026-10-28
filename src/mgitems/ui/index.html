@@ -63,6 +63,7 @@
     <button id="pestana-agregar" class="pestana" role="tab" aria-selected="true" aria-controls="vista-agregar">Agregar Items</button>
     <button id="pestana-trucar" class="pestana" role="tab" aria-selected="false" aria-controls="vista-trucar">Trucar Prenda</button>
     <button id="pestana-looks" class="pestana" role="tab" aria-selected="false" aria-controls="vista-looks">Looks</button>
+    <button id="pestana-acciones" class="pestana" role="tab" aria-selected="false" aria-controls="vista-looks">Acciones</button>
   </nav>
 
   <main class="paneles modo-agregar">
@@ -172,10 +173,10 @@
 
       <div id="vista-looks" class="vista" role="tabpanel" hidden>
         <div class="encabezado-looks">
-          <button id="abrir-mis-looks" class="boton-mis-looks" title="Ver, abrir, importar y exportar tus Looks guardados">
+          <button id="abrir-mis-looks" class="boton-mis-looks solo-looks" title="Ver, abrir, importar y exportar tus Looks guardados">
             <span aria-hidden="true">👕</span> Mis Looks <span id="cantidad-looks" class="cantidad-looks"></span>
           </button>
-          <span id="look-abierto" class="ayuda look-abierto"></span>
+          <span id="look-abierto" class="ayuda look-abierto solo-looks"></span>
         </div>
 
         <div class="inventario">
@@ -188,6 +189,10 @@
               <span id="base-look" class="base-look"></span>
               <button id="cambiar-base" class="enlace">Cambiar…</button>
             </div>
+            <label class="fila-animacion solo-acciones">
+              <span class="ayuda">Animación:</span>
+              <select id="animacion-accion" class="filtro-lista" aria-label="La animación que hace el Gaturro al usar el Item"></select>
+            </label>
             <div class="escena">
               <ul id="casilleros-cabeza" class="casilleros" aria-label="Partes de la cabeza"></ul>
               <figure id="gaturro" class="gaturro">
@@ -203,9 +208,9 @@
             </div>
             <div class="botones-tarjeta">
               <button id="colores-look" class="boton-cuadrado boton-colores" title="Colores del Gaturro" aria-label="Colores del Gaturro">⚙</button>
-              <button id="borrar-look" class="boton-cuadrado" title="Borrar el Look" aria-label="Borrar el Look">🗑</button>
-              <button id="descartar-look" class="boton-cuadrado boton-descartar" title="Descartar los cambios" aria-label="Descartar los cambios">✗</button>
-              <button id="guardar-look" class="boton-cuadrado boton-guardar" title="Guardar el Look" aria-label="Guardar el Look">✓</button>
+              <button id="borrar-look" class="boton-cuadrado solo-looks" title="Borrar el Look" aria-label="Borrar el Look">🗑</button>
+              <button id="descartar-look" class="boton-cuadrado boton-descartar solo-looks" title="Descartar los cambios" aria-label="Descartar los cambios">✗</button>
+              <button id="guardar-look" class="boton-cuadrado boton-guardar solo-looks" title="Guardar el Look" aria-label="Guardar el Look">✓</button>
             </div>
           </div>
 
@@ -344,8 +349,8 @@
 
   <dialog id="dialogo-base" class="dialogo-base">
     <div class="panel">
-      <h2>¿Dónde se guarda el Look?</h2>
-      <p class="ayuda">El Item base es lo que vas a recibir: una Prenda (guardarropa) o un Item de mochila. Puede ser de cualquier SWF.</p>
+      <h2 id="titulo-base">¿Dónde se guarda el Look?</h2>
+      <p id="ayuda-base" class="ayuda">El Item base es lo que vas a recibir: una Prenda (guardarropa) o un Item de mochila. Puede ser de cualquier SWF.</p>
       <div class="fila fila-swf-base">
         <span class="etiqueta-campo">SWF:</span>
         <div class="selector-swf">
