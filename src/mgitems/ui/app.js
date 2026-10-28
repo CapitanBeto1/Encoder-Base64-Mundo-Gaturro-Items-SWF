@@ -484,6 +484,7 @@ const filaConImagen = (o) => [elementoIcono(o.ruta), etiqueta(o.clase, "nombre")
 // Un Item base: dónde queda en el juego.
 const filaDeBase = (o) => [
   ...filaConImagen(o),
+  ...(basesDeTodos ? [etiqueta(swfDeRuta(o.ruta), "ayuda swf-base")] : []),
   etiqueta(o.tipo === "mochila" ? "🎒 mochila" : "👕 guardarropa", `ayuda tipo-${o.tipo === "mochila" ? "mochila" : "prenda"}`),
 ];
 
@@ -1216,6 +1217,7 @@ $("cerrar-colores").addEventListener("click", () => $("dialogo-colores").close()
 // --- Dónde se guarda el Look (Item base): cualquier Prenda o Item de mochila de cualquier SWF ---
 
 let basesDelSwf = []; // [{ruta, clase, tipo}]
+let basesDeTodos = false; // true: los de todos los SWF del juego (del índice)
 
 // Qué Items se muestran: "ambos", "mochila" o "prenda" (guardarropa). Uno solo a la vez.
 let tipoBase = "ambos";
@@ -1248,12 +1250,33 @@ function mostrarBases() {
     })
   );
   cargarIconos(visibles.map((b) => b.ruta));
+  if (basesDeTodos) for (const swf of new Set(visibles.map((b) => swfDeRuta(b.ruta)))) prepararIconosDe(swf);
+}
+
+// Los Items base de todos los SWF: las Prendas y los Items de mochila del índice (sin los que el juego
+// descarta), sin analizar nada con FFDec.
+async function usarBasesDeTodos() {
+  const pedido = ++pedidoBases;
+  basesDeTodos = true;
+  $("bases-de-todos").setAttribute("aria-pressed", "true");
+  $("swf-base").value = "";
+  basesDelSwf = [];
+  mostrarBases();
+  avisar($("mensaje-base"), "Leyendo los Items base de todos los SWF…");
+  const resultado = await api().items_de_swfs(null);
+  if (pedido !== pedidoBases) return;
+  if (!resultado.ok) return avisar($("mensaje-base"), resultado.error, "error");
+  basesDelSwf = resultado.items.filter((i) => (i.tipo === "prenda" || i.tipo === "mochila") && i.destino !== "descartado");
+  avisar($("mensaje-base"), "Escribí un nombre para encontrar el Item base (se muestran los primeros 200).");
+  mostrarBases();
 }
 
 // Si se elige otro SWF antes de que llegue la respuesta, la vieja se descarta.
 let pedidoBases = 0;
 async function usarBasesDe(swf) {
   const pedido = ++pedidoBases;
+  basesDeTodos = false;
+  $("bases-de-todos").setAttribute("aria-pressed", "false");
   $("swf-base").value = swf;
   basesDelSwf = [];
   mostrarBases();
@@ -1283,6 +1306,7 @@ crearDesplegable({
   vacio: "No hay SWF con ese nombre.",
 });
 $("filtro-base").addEventListener("input", mostrarBases);
+$("bases-de-todos").addEventListener("click", usarBasesDeTodos);
 for (const id of BOTONES_TIPO) {
   $(id).addEventListener("click", () => {
     tipoBase = $(id).dataset.tipo;
