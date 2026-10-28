@@ -130,7 +130,7 @@ function actualizarControles() {
   $("guardar-look").disabled = $("descartar-look").disabled = $("nuevo-look").disabled = $("importar-look").disabled = !listo;
   $("abrir-mis-looks").disabled = !listo;
   $("borrar-look").disabled = !listo || !lookActual.id;
-  $("nombre-look").disabled = $("cambiar-base").disabled = $("agregar-fuente").disabled = $("todas-las-fuentes").disabled = !listo;
+  $("nombre-look").disabled = $("cambiar-base").disabled = $("agregar-fuente").disabled = $("todas-las-fuentes").disabled = $("abrir-archivo-looks").disabled = !listo;
   mostrarBarraLook();
   $("buscar-base").disabled = $("buscar-pieza").disabled = $("buscar-parte").disabled = !listo || !prendas.length;
   $("buscar-swf-pieza").disabled = !listo || !prendas.length;
@@ -331,6 +331,20 @@ function mostrarPaginas(nav, pagina, paginas, ir) {
     botones.push(boton);
   }
   nav.replaceChildren(...botones, etiqueta(`de ${paginas}`, "total-paginas"));
+}
+
+// Si un nombre coincide con lo buscado: varios separados por coma; «empieza» (que empiece así) o
+// «contiene» (que lo tenga en cualquier lugar: «ta» encuentra pantalones). Sin mayúsculas.
+function buscarPorNombre(texto, modo) {
+  const buscados = texto.split(",").map((t) => t.trim().toLowerCase()).filter(Boolean);
+  if (!buscados.length) return () => true;
+  return (nombre) => buscados.some((t) => (modo === "contiene" ? nombre.toLowerCase().includes(t) : nombre.toLowerCase().startsWith(t)));
+}
+
+// Por nombre, «az» o «za» (los números en orden: remera2 antes que remera10).
+function ordenarPorNombre(lista, orden) {
+  const signo = orden === "za" ? -1 : 1;
+  return [...lista].sort((a, b) => signo * a.clase.localeCompare(b.clase, "es", { sensitivity: "base", numeric: true }));
 }
 
 // `lista` ordenada por `clave` (un arreglo que se compara elemento por elemento), sin cambiar el orden
@@ -879,7 +893,7 @@ function mostrarFuentes() {
 
 function mostrarInventario() {
   mostrarFuentes();
-  const texto = $("filtro-piezas").value.trim().toLowerCase();
+  const texto = $("filtro-piezas").value.trim();
   const categoria = CATEGORIAS.find((c) => c.id === inventario.categoria);
   $("categorias").replaceChildren(
     ...CATEGORIAS.map((c) => {
@@ -897,11 +911,15 @@ function mostrarInventario() {
     })
   );
 
-  // Primero las que son solo de esta categoría, después las que suman una más, dos más… (como en «Agregar Items»).
-  const piezas = ordenarPor(
-    inventario.piezas.filter((p) => enCategoria(p, categoria) && p.clase.toLowerCase().includes(texto)),
-    (p) => [CATEGORIAS.filter((c) => c.partes.length && p.partes.some((x) => c.partes.includes(x))).length]
-  );
+  // El tipo (transporte, acción…) solo filtra en «Otros», donde están las Piezas que no visten.
+  $("uso-piezas").hidden = categoria.id !== "otros";
+  const uso = categoria.id === "otros" ? $("uso-piezas").value : "";
+  const coincide = buscarPorNombre(texto, $("modo-nombre-piezas").value);
+  const encontradas = inventario.piezas.filter((p) => enCategoria(p, categoria) && coincide(p.clase) && (!uso || queEs(p).uso === uso));
+  // Recomendado: primero las que son solo de esta categoría, después las que suman una más, dos más… (como en «Agregar Items»).
+  const piezas = $("orden-piezas").value === "recomendado"
+    ? ordenarPor(encontradas, (p) => [CATEGORIAS.filter((c) => c.partes.length && p.partes.some((x) => c.partes.includes(x))).length])
+    : ordenarPorNombre(encontradas, $("orden-piezas").value);
   const paginas = Math.max(1, Math.ceil(piezas.length / POR_PAGINA));
   inventario.pagina = Math.min(Math.max(inventario.pagina, 0), paginas - 1);
   const visibles = piezas.slice(inventario.pagina * POR_PAGINA, (inventario.pagina + 1) * POR_PAGINA);
@@ -921,7 +939,8 @@ function mostrarInventario() {
       const tipo = etiqueta(que.texto, "tipo-pieza");
       tipo.dataset.uso = que.uso;
       boton.title += ` · ${que.texto}`;
-      boton.append(elementoIcono(pieza.ruta), tipo);
+      boton.classList.add("item-grilla");
+      boton.append(elementoIcono(pieza.ruta), etiqueta(pieza.clase, "nombre-item"), tipo);
       if (pieza.pasaporte) marcarPasaporte(boton);
       const li = document.createElement("li");
       li.append(boton);
@@ -933,7 +952,7 @@ function mostrarInventario() {
     : !inventario.piezas.length
       ? ""
       : !piezas.length
-        ? texto ? "Ninguna Pieza se llama así." : "No hay Piezas de esta categoría en estas fuentes."
+        ? texto ? "Ninguna Pieza se llama así." : uso ? "No hay Piezas de ese tipo en estas fuentes." : "No hay Piezas de esta categoría en estas fuentes."
         : !destino
           ? "Estas Piezas no tienen una Parte propia: tocá primero un casillero del Gaturro."
           : "";
@@ -963,6 +982,17 @@ function irAPaginaDeLooks(pagina) {
   inventario.pagina = pagina;
   mostrarInventario();
 }
+for (const filtro of ["modo-nombre-piezas", "orden-piezas", "uso-piezas"]) {
+  $(filtro).addEventListener("change", () => irAPaginaDeLooks(0));
+}
+$("abrir-archivo-looks").addEventListener("click", async () => {
+  const resultado = await mientras("Abriendo SWF…", () => api().abrir_swf());
+  mostrarSwfAbierto(resultado);
+  if (!resultado.ok) return;
+  fuentes = { todos: false, swfs: [...fuentes.swfs.filter((s) => s !== resultado.swf), resultado.swf] };
+  guardarFuentes();
+  cargarInventario();
+});
 $("diez-atras").addEventListener("click", () => irAPaginaDeLooks(Math.max(0, inventario.pagina - 10)));
 $("diez-adelante").addEventListener("click", () => irAPaginaDeLooks(inventario.pagina + 10)); // se ajusta a la última
 $("pagina-anterior").addEventListener("click", () => {
@@ -1664,19 +1694,12 @@ const enCategoriaItems = (item, categoria) => categoria.id === "todos" || catego
 // si se eligió «Contiene», que lo tenga en cualquier lugar (pantalones con «ta»).
 function itemsVisibles() {
   const categoria = CATEGORIAS_ITEMS.find((c) => c.id === buscador.categoria);
-  const comienzos = $("filtro-items").value.split(",").map((t) => t.trim().toLowerCase()).filter(Boolean);
   const destino = $("destino-items").value;
-  const contiene = $("modo-nombre-items").value === "contiene";
-  let encontrados = buscador.items.filter(
-    (i) => enCategoriaItems(i, categoria) && (!destino || i.destino === destino) &&
-      (!comienzos.length || comienzos.some((t) => (contiene ? i.clase.toLowerCase().includes(t) : i.clase.toLowerCase().startsWith(t))))
-  );
+
+  const coincide = buscarPorNombre($("filtro-items").value, $("modo-nombre-items").value);
+  const encontrados = buscador.items.filter((i) => enCategoriaItems(i, categoria) && (!destino || i.destino === destino) && coincide(i.clase));
   const orden = $("orden-items").value;
-  if (orden !== "exclusivos") {
-    const signo = orden === "za" ? -1 : 1;
-    encontrados = [...encontrados].sort((a, b) => signo * a.clase.localeCompare(b.clase, "es", { sensitivity: "base", numeric: true }));
-    return ordenarPor(encontrados, (i) => [Boolean(i.motivo)]); // los rojos, al final igual
-  }
+  if (orden !== "exclusivos") return ordenarPor(ordenarPorNombre(encontrados, orden), (i) => [Boolean(i.motivo)]); // los rojos, al final igual
   // Primero los que son solo de esta categoría, después los que suman una más, dos más…; al final, los
   // que no llegan bien al juego (en rojo). Dentro de cada grupo, el orden de siempre.
   return ordenarPor(encontrados, (i) => [Boolean(i.motivo), categoriasDeItem(i).filter((c) => c.id !== "disfraces").length]);
