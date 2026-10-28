@@ -1418,6 +1418,7 @@ dialog.dialogo-base { width: min(860px, 94vw); height: min(640px, 90vh); }
 .dialogo-base .panel > * { flex: none; }
 .fila-swf-base .etiqueta-campo { width: auto; font-weight: 900; }
 .fila-swf-base .selector-swf { flex: 1; }
+.lista-bases .swf-base { margin-left: auto; font-size: 11px; }
 /* El buscador: más bajo, redondeado y con lupa, para no confundirlo con el selector de SWF. */
 .filtro-base {
   align-self: flex-start;
