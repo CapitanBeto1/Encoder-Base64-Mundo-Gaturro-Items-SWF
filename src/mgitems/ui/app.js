@@ -430,6 +430,8 @@ function cambiarVista(nueva) {
     if (nueva === "acciones") [lookDeLooks, lookActual] = [lookActual, accionActual];
     else [accionActual, lookActual] = [lookActual, lookDeLooks];
     casilleroMarcado = null;
+    lookElegido = null;
+    looksGuardados = [];
   }
   detenerAnimacion();
   vista = nueva;
@@ -627,11 +629,28 @@ const swfDeRuta = (ruta) => ruta.slice(0, ruta.lastIndexOf("."));
 const claseDeRuta = (ruta) => ruta.slice(ruta.lastIndexOf(".") + 1);
 const nombreDeParte = (id) => (id === "action" ? "Pieza de la acción" : partesConocidas.find((p) => p.id === id)?.nombre ?? id);
 
+// Looks y Acciones comparten los guardados (botón, ventana, ✓ ✗ 🗑): cada pestaña con su lista y sus funciones.
+const GUARDADOS = {
+  looks: { lista: "looks", guardar: "guardar_look", duplicar: "duplicar_look", borrar: "borrar_look", exportar: "exportar_look",
+           importar: "importar_look", el: "el Look", lo: "lo", nuevo: "Look nuevo", mis: "Mis Looks", titulo: "GUARDA TU LOOK", sub: "GUARDA TUS LOOKS FAVORITOS" },
+  acciones: { lista: "acciones", guardar: "guardar_accion", duplicar: "duplicar_accion", borrar: "borrar_accion", exportar: "exportar_accion",
+              importar: "importar_accion", el: "la acción", lo: "la", nuevo: "Acción nueva", mis: "Mis acciones", titulo: "GUARDA TU ACCIÓN", sub: "GUARDA TUS ACCIONES FAVORITAS" },
+};
+const guardados = () => GUARDADOS[vista === "acciones" ? "acciones" : "looks"];
+const documentoNuevo = () => (vista === "acciones" ? nuevaAccion() : nuevoLook());
+const guardadoDe = (resultado) => resultado.look ?? resultado.accion;
+// Lo que se dibuja quieto (miniaturas, escenario): en una acción, solo lo de la cabeza.
+const partesQuietas = (documento) =>
+  vista === "acciones" ? (documento.partes.effect ? { effect: documento.partes.effect } : {}) : documento.partes;
+
 async function cargarLooks() {
   if (!partesConocidas.length) partesConocidas = (await api().partes_del_cuerpo()).partes_del_cuerpo;
-  const resultado = await api().looks();
+  const resultado = await api()[guardados().lista]();
   if (!resultado.ok) return avisarLista(resultado.error, "error");
-  looksGuardados = resultado.looks;
+  looksGuardados = resultado[guardados().lista];
+  $("texto-mis-looks").textContent = guardados().mis;
+  $("titulo-mis-looks").textContent = guardados().titulo;
+  $("sub-mis-looks").textContent = guardados().sub;
   mostrarListaLooks();
   mostrarLook();
   if (!inventario.cargado) await cargarInventario();
@@ -645,7 +664,7 @@ const MINIMO_CASILLEROS = 9; // la grilla se completa con casilleros vacíos, co
 
 function mostrarListaLooks() {
   $("cantidad-looks").textContent = looksGuardados.length ? `(${looksGuardados.length})` : "";
-  $("look-abierto").textContent = lookActual.id ? `Editando «${lookActual.nombre}»` : lookActual.nombre ? `«${lookActual.nombre}» (sin guardar)` : "Look nuevo (sin guardar)";
+  $("look-abierto").textContent = lookActual.id ? `Editando «${lookActual.nombre}»` : lookActual.nombre ? `«${lookActual.nombre}» (sin guardar)` : `${guardados().nuevo} (sin guardar)`;
   if ($("dialogo-mis-looks").open) mostrarGrillaLooks();
 }
 
@@ -660,7 +679,7 @@ function mostrarGrillaLooks() {
     boton.append(miniatura, etiqueta(look.nombre, "nombre-casillero-look"));
     boton.addEventListener("click", () => elegirLook(look.id));
     boton.addEventListener("dblclick", () => equiparLook(look.id));
-    pedirGaturro(miniatura, coloresDe(look), look.partes);
+    pedirGaturro(miniatura, coloresDe(look), partesQuietas(look));
     li.append(boton);
     return li;
   });
@@ -679,16 +698,16 @@ function mostrarLookElegido() {
   document.querySelectorAll("#grilla-looks .casillero-look:not(.nuevo)").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.id === lookElegido)));
   $("exportar-look").disabled = $("duplicar-look").disabled = $("eliminar-look-elegido").disabled = !look;
   if (mostrandoPuesto) {
-    $("nombre-look-elegido").textContent = `${lookActual.nombre || "Look nuevo"} (puesto)`;
+    $("nombre-look-elegido").textContent = `${lookActual.nombre || guardados().nuevo} (puesto)`;
     $("equipar-look").disabled = true; // ya está puesto
     $("gaturro-mis-looks").hidden = false;
-    pedirGaturro($("gaturro-mis-looks"), coloresDe(lookActual), lookActual.partes);
+    pedirGaturro($("gaturro-mis-looks"), coloresDe(lookActual), partesQuietas(lookActual));
     return;
   }
-  $("nombre-look-elegido").textContent = look ? look.nombre : "Tocá un Look para verlo";
+  $("nombre-look-elegido").textContent = look ? look.nombre : `Tocá ${vista === "acciones" ? "una acción" : "un Look"} para verlo`;
   $("equipar-look").disabled = !look;
   $("gaturro-mis-looks").hidden = !look;
-  if (look) pedirGaturro($("gaturro-mis-looks"), coloresDe(look), look.partes);
+  if (look) pedirGaturro($("gaturro-mis-looks"), coloresDe(look), partesQuietas(look));
 }
 
 function elegirLook(id) {
@@ -703,7 +722,7 @@ function equiparLook(id) {
   $("dialogo-mis-looks").close();
   casilleroMarcado = null;
   abrirLook(look);
-  avisarLista(`Se abrió el Look «${look.nombre}».`, "exito");
+  avisarLista(`Se abrió ${guardados().el} «${look.nombre}».`, "exito");
 }
 
 // Al abrir se ve el Look puesto, como en el juego.
@@ -733,12 +752,12 @@ for (const barra of [$("zoom-gaturro"), $("zoom-escenario")]) {
 // Elimina el Look elegido; si es el que se está editando, el editor queda con un Look nuevo.
 $("eliminar-look-elegido").addEventListener("click", async () => {
   const look = looksGuardados.find((l) => l.id === lookElegido);
-  if (!look || !confirm(`¿Eliminar el Look «${look.nombre}»?`)) return;
-  const resultado = await api().borrar_look(look.id);
+  if (!look || !confirm(`¿Eliminar ${guardados().el} «${look.nombre}»?`)) return;
+  const resultado = await api()[guardados().borrar](look.id);
   if (!resultado.ok) return avisarLista(resultado.error, "error");
   const posicion = looksGuardados.indexOf(look);
   if (lookActual.id === look.id) {
-    lookActual = nuevoLook();
+    lookActual = documentoNuevo();
     mostrarLook();
   }
   const quedan = looksGuardados.filter((l) => l.id !== look.id);
@@ -1390,29 +1409,29 @@ $("cerrar-base").addEventListener("click", () => $("dialogo-base").close());
 // --- Guardar, descartar, borrar, duplicar ---
 
 async function guardarLook() {
-  const resultado = await api().guardar_look(lookActual);
+  const resultado = await api()[guardados().guardar](lookActual);
   if (!resultado.ok) return avisarLista(resultado.error, "error");
-  lookActual = resultado.look;
-  avisarLista(`Se guardó el Look «${lookActual.nombre}».`, "exito");
+  lookActual = guardadoDe(resultado);
+  avisarLista(`Se guardó ${guardados().el} «${lookActual.nombre}».`, "exito");
   await cargarLooks();
 }
 
 // Duplica el Look elegido en "Mis Looks" y elige la copia.
 async function duplicarLook() {
-  const resultado = await api().duplicar_look(lookElegido);
+  const resultado = await api()[guardados().duplicar](lookElegido);
   if (!resultado.ok) return avisarLista(resultado.error, "error");
-  lookElegido = resultado.look.id;
+  lookElegido = guardadoDe(resultado).id;
   mostrandoPuesto = false;
-  avisarLista(`Se creó «${resultado.look.nombre}».`, "exito");
+  avisarLista(`Se creó «${guardadoDe(resultado).nombre}».`, "exito");
   await cargarLooks();
 }
 
 async function borrarLook() {
-  if (!confirm(`¿Borrar el Look «${lookActual.nombre}»?`)) return;
-  const resultado = await api().borrar_look(lookActual.id);
+  if (!confirm(`¿Borrar ${guardados().el} «${lookActual.nombre}»?`)) return;
+  const resultado = await api()[guardados().borrar](lookActual.id);
   if (!resultado.ok) return avisarLista(resultado.error, "error");
   avisarLista(`Se borró «${lookActual.nombre}».`, "exito");
-  lookActual = nuevoLook();
+  lookActual = documentoNuevo();
   await cargarLooks();
 }
 
@@ -1460,7 +1479,7 @@ $("nombre-look").addEventListener("input", () => {
 
 $("nuevo-look").addEventListener("click", () => {
   $("dialogo-mis-looks").close();
-  lookActual = nuevoLook();
+  lookActual = documentoNuevo();
   casilleroMarcado = null;
   mostrarListaLooks();
   mostrarLook();
@@ -1470,7 +1489,7 @@ $("guardar-look").addEventListener("click", guardarLook);
 // ✗: vuelve a como estaba guardado (o vacío si el Look es nuevo).
 $("descartar-look").addEventListener("click", () => {
   const guardado = looksGuardados.find((l) => l.id === lookActual.id);
-  lookActual = guardado ? structuredClone(guardado) : nuevoLook();
+  lookActual = guardado ? structuredClone(guardado) : documentoNuevo();
   mostrarListaLooks();
   mostrarLook();
   avisarLista(guardado ? `Se descartaron los cambios de «${guardado.nombre}».` : "", "exito");
@@ -1478,19 +1497,19 @@ $("descartar-look").addEventListener("click", () => {
 $("exportar-look").addEventListener("click", async () => {
   const look = looksGuardados.find((l) => l.id === lookElegido);
   if (!look) return;
-  const resultado = await api().exportar_look(look);
-  if (resultado.ok) avisarLista(`Look exportado en ${resultado.ruta}`, "exito");
+  const resultado = await api()[guardados().exportar](look);
+  if (resultado.ok) avisarLista(`Se exportó ${guardados().el} en ${resultado.ruta}`, "exito");
   else if (!resultado.cancelado) avisarLista(resultado.error, "error");
 });
 // El Look importado queda elegido en "Mis Looks" (EQUIPAR lo abre).
 $("importar-look").addEventListener("click", async () => {
-  const resultado = await api().importar_look();
+  const resultado = await api()[guardados().importar]();
   if (resultado.cancelado) return;
   if (!resultado.ok) return avisarLista(resultado.error, "error");
-  lookElegido = resultado.look.id;
+  lookElegido = guardadoDe(resultado).id;
   mostrandoPuesto = false;
   await cargarLooks();
-  avisarLista(`Se importó el Look «${resultado.look.nombre}». Tocá «Equipar» para abrirlo.`, "exito");
+  avisarLista(`Se importó ${guardados().el} «${guardadoDe(resultado).nombre}». Tocá «Equipar» para abrir${guardados().lo}.`, "exito");
 });
 $("duplicar-look").addEventListener("click", duplicarLook);
 $("borrar-look").addEventListener("click", borrarLook);
@@ -1525,8 +1544,7 @@ async function cargarAcciones() {
     );
   }
   $("animacion-accion").value = lookActual.animacion ?? "";
-  mostrarLook();
-  if (!inventario.cargado) await cargarInventario();
+  await cargarLooks(); // las acciones guardadas, el editor y el inventario
 }
 
 $("animacion-accion").addEventListener("change", () => {

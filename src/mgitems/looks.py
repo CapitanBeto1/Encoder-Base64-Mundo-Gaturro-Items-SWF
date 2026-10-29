@@ -2,6 +2,9 @@
 
 Cada Pieza se guarda con su SWF (`costumes.coronaRey_on`), así un Look puede mezclar
 Piezas de varios SWF. Se guardan en un archivo JSON de la carpeta del programa.
+
+Las acciones de la pestaña Acciones se guardan igual, en su propio archivo: un Item de mochila con su
+`animacion` y, como Partes, la Pieza de la acción (`action`) y la de la cabeza (`effect`).
 """
 
 import json
@@ -29,6 +32,7 @@ class Look:
     # Colores del Gaturro con los que se ve el Look en el programa (cara, cuerpo, ojos: "#RRGGBB");
     # los que falten, los de fábrica. Solo para la vista previa: no cambian lo que se entrega al juego.
     colores: dict[str, str] = field(default_factory=dict)
+    animacion: str | None = None  # solo las acciones: la animación del juego ("showObject", "dance"…)
 
     @classmethod
     def desde(cls, datos: dict) -> "Look":
@@ -51,39 +55,49 @@ class Look:
         if not isinstance(colores, dict) or any(c not in _CLAVES_COLOR or not isinstance(v, str) or not _COLOR.match(v)
                                                 for c, v in colores.items()):
             raise LookInvalido("Los colores del Look no tienen la forma esperada.")
-        return cls(nombre, base, {str(p): str(v) for p, v in partes.items()}, str(datos.get("id") or ""), dict(colores))
+        animacion = datos.get("animacion") or None
+        if animacion is not None and not _PARTE.match(str(animacion)):
+            raise LookInvalido(f"La animación no es válida: {animacion}")
+        return cls(nombre, base, {str(p): str(v) for p, v in partes.items()}, str(datos.get("id") or ""), dict(colores),
+                   animacion and str(animacion))
 
 
 FORMATO = "mgitems-look"
+FORMATO_ACCION = "mgitems-accion"
 VERSION_FORMATO = 1
 
 
-def archivo_de_look(look: Look) -> str:
-    """El contenido de un archivo de Look: el Look sin su id (es de cada jugador)."""
-    datos = {"formato": FORMATO, "version": VERSION_FORMATO, "nombre": look.nombre, "base": look.base, "partes": look.partes,
+def archivo_de_look(look: Look, formato: str = FORMATO) -> str:
+    """El contenido de un archivo de Look (o de acción): sin su id, que es de cada jugador."""
+    datos = {"formato": formato, "version": VERSION_FORMATO, "nombre": look.nombre, "base": look.base, "partes": look.partes,
              "colores": look.colores}
+    if look.animacion:
+        datos["animacion"] = look.animacion
     return json.dumps(datos, ensure_ascii=False, indent=1)
 
 
-def look_de_archivo(contenido: str) -> Look:
-    """El Look de un archivo de Look, validado (sin id: es nuevo para quien lo importa)."""
+def look_de_archivo(contenido: str, formato: str = FORMATO) -> Look:
+    """El Look (o la acción) de un archivo, validado (sin id: es nuevo para quien lo importa)."""
+    que = "Look" if formato == FORMATO else "acción"
     try:
         datos = json.loads(contenido)
     except ValueError:
         datos = None
-    if not isinstance(datos, dict) or datos.get("formato") != FORMATO:
-        raise LookInvalido("Este archivo no es un Look de MG Items.")
+    if not isinstance(datos, dict) or datos.get("formato") != formato:
+        raise LookInvalido(f"Este archivo no es {'un Look' if formato == FORMATO else 'una acción'} de MG Items.")
     if not isinstance(datos.get("version"), int) or datos["version"] > VERSION_FORMATO:
-        raise LookInvalido("Este Look es de una versión más nueva de MG Items: actualizá el programa.")
-    look = Look.desde({k: datos.get(k) for k in ("nombre", "base", "partes", "colores")})
-    if not look.partes:
+        raise LookInvalido(f"{'Este Look es' if formato == FORMATO else 'Esta acción es'} de una versión más nueva de MG Items: actualizá el programa.")
+    look = Look.desde({k: datos.get(k) for k in ("nombre", "base", "partes", "colores", "animacion")})
+    if formato == FORMATO and not look.partes:
         raise LookInvalido("El Look del archivo no tiene Piezas.")
+    if formato == FORMATO_ACCION and not look.animacion:
+        raise LookInvalido(f"La {que} del archivo no tiene animación.")
     return look
 
 
 class AlmacenLooks:
-    def __init__(self, archivo: Path):
-        self._archivo = archivo
+    def __init__(self, archivo: Path, clave: str = "looks"):
+        self._archivo, self._clave = archivo, clave
 
     def todos(self) -> list[Look]:
         try:
@@ -93,7 +107,7 @@ class AlmacenLooks:
         except (OSError, ValueError) as e:
             raise OSError(f"No se pudo leer {self._archivo.name}") from e
         looks = []
-        for d in datos.get("looks", []):
+        for d in datos.get(self._clave, []):
             try:
                 looks.append(Look.desde(d))
             except LookInvalido:
@@ -120,5 +134,5 @@ class AlmacenLooks:
     def _escribir(self, looks: list[Look]) -> None:
         self._archivo.parent.mkdir(parents=True, exist_ok=True)
         temporal = self._archivo.with_suffix(".tmp")
-        temporal.write_text(json.dumps({"looks": [asdict(l) for l in looks]}, ensure_ascii=False, indent=1), encoding="utf-8")
+        temporal.write_text(json.dumps({self._clave: [asdict(l) for l in looks]}, ensure_ascii=False, indent=1), encoding="utf-8")
         temporal.replace(self._archivo)  # sin dejar el archivo a medio escribir

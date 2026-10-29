@@ -25,5 +25,5 @@ Cada cuadro se dibuja «congelado»: un sprite de un solo cuadro, cuyos clips so
 
 ## Consecuencias
 
-- Las 22 animaciones que el Gaturro legible no tiene no se muestran: se avisa.
+- Las 21 animaciones que el Gaturro legible no tiene no se muestran: se avisa.
 - Si el juego cambia el código de sus cuadros con algo nuevo, esa animación deja de mostrarse (con aviso) hasta que el simulador lo entienda.

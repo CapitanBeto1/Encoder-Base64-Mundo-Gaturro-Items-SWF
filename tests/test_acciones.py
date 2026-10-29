@@ -117,3 +117,46 @@ def test_la_vista_previa_no_inventa_una_animacion_que_no_puede_leer(nucleo):
     assert resultado["imagenes"] == []
     assert "no se puede mostrar" in resultado["aviso"]
     assert not nucleo.animacion_de_accion({"animacion": "volar"})["ok"]
+
+
+# --- Mis acciones ---
+
+MOTO = {"nombre": "Moto en la mano", "base": "bruja.pocima1", "animacion": "showObject",
+        "partes": {"action": "appTecno.motoTecno_on", "effect": "costumes.coronaRey_on"}}
+
+
+def test_guardar_duplicar_y_borrar_acciones(nucleo):
+    guardada = nucleo.guardar_accion(MOTO)
+
+    assert guardada["ok"], guardada
+    accion = guardada["accion"]
+    assert accion["id"] and accion["animacion"] == "showObject"
+    copia = nucleo.duplicar_accion(accion["id"])["accion"]
+    assert copia["nombre"] == "Moto en la mano (copia)" and copia["animacion"] == "showObject"
+    assert [a["nombre"] for a in nucleo.acciones()["acciones"]] == ["Moto en la mano", "Moto en la mano (copia)"]
+    assert nucleo.looks()["looks"] == []  # aparte de los Looks
+    assert nucleo.borrar_accion(accion["id"])["ok"]
+    assert [a["nombre"] for a in nucleo.acciones()["acciones"]] == ["Moto en la mano (copia)"]
+
+
+@pytest.mark.parametrize("accion", [
+    MOTO | {"nombre": ""},
+    MOTO | {"animacion": "volar"},
+    MOTO | {"partes": {"hats": "costumes.coronaRey_on"}},  # una acción no viste
+])
+def test_una_accion_que_no_se_puede_guardar(nucleo, accion):
+    assert not nucleo.guardar_accion(accion)["ok"]
+    assert nucleo.acciones()["acciones"] == []
+
+
+def test_exportar_e_importar_una_accion(nucleo, tmp_path):
+    archivo = tmp_path / "moto.mgaccion"
+
+    assert nucleo.exportar_accion(MOTO, str(archivo))["ok"]
+    importada = nucleo.importar_accion_de_archivo(str(archivo))
+
+    assert importada["ok"], importada
+    assert {k: importada["accion"][k] for k in ("nombre", "base", "animacion", "partes")} == {k: MOTO[k] for k in ("nombre", "base", "animacion", "partes")}
+    assert not nucleo.importar_look_de_archivo(str(archivo))["ok"]  # no es un Look
+    otra = nucleo.importar_accion_de_archivo(str(archivo))
+    assert otra["accion"]["nombre"] == "Moto en la mano (2)"
