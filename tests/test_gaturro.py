@@ -35,7 +35,7 @@ CUERPO = '''<?xml version="1.0" encoding="UTF-8" standalone="no"?>
     </g>
     <g id="sprite3">
       <use ffdec:characterId="6" height="40.0" id="color1" transform="matrix(1.0, 0.0, 0.0, 1.0, -30.0, -20.0)" width="60.0" xlink:href="#shape0"/>
-      <use ffdec:characterId="7" height="8.0" id="colorEye" transform="matrix(1.0, 0.0, 0.0, 1.0, -4.0, -4.0)" width="8.0" xlink:href="#shape0"/>
+      <use ffdec:characterId="7" height="8.0" id="color3" transform="matrix(1.0, 0.0, 0.0, 1.0, -4.0, -4.0)" width="8.0" xlink:href="#shape0"/>
       <use ffdec:characterId="8" height="12.0" id="orejas" transform="matrix(1.0, 0.0, 0.0, 1.0, -20.0, -30.0)" width="40.0" xlink:href="#shape0"/>
       <use ffdec:characterId="2" height="0.0" id="hats" transform="matrix(1.0, 0.0, 0.0, 1.0, -2.25, -1.8)" width="0.0" xlink:href="#sprite0"/>
       <use ffdec:characterId="2" height="0.0" id="hairs" transform="matrix(1.0, 0.0, 0.0, 1.0, 0.0, -3.0)" width="0.0" xlink:href="#sprite0"/>
@@ -198,14 +198,14 @@ def test_los_colores_de_fabrica_del_juego(nucleo):
 
     assert por_id(svg, "color1")[0].attrib["filter"] == "url(#mg-color1)"
     assert por_id(svg, "color2")[0].attrib["filter"] == "url(#mg-color2)"
-    assert por_id(svg, "colorEye")[0].attrib["filter"] == "url(#mg-colorEye)"
-    assert colores(svg) == {"mg-color1": "#FFF200", "mg-color2": "#DDB42D", "mg-colorEye": "#FFFFFF"}
+    assert por_id(svg, "color3")[0].attrib["filter"] == "url(#mg-color3)"
+    assert colores(svg) == {"mg-color1": "#FFF200", "mg-color2": "#DDB42D", "mg-color3": "#FFFFFF", "mg-color4": "#FB8CBB"}
 
 
 def test_los_colores_del_jugador(nucleo):
     svg = nucleo.gaturro({}, {"color1": "#3366cc", "color3": "#000000", "color2": '"/><script>'})["svg"]
 
-    assert colores(svg) == {"mg-color1": "#3366cc", "mg-color2": "#DDB42D", "mg-colorEye": "#000000"}
+    assert colores(svg) == {"mg-color1": "#3366cc", "mg-color2": "#DDB42D", "mg-color3": "#000000", "mg-color4": "#FB8CBB"}
     assert "<script" not in svg
 
 
@@ -279,7 +279,7 @@ def test_el_gaturro_publicado_no_tiene_color_de_nariz(nucleo):
     resultado = nucleo.gaturro({})
 
     assert resultado["color_de_nariz"] is False
-    assert resultado["colores_de_fabrica"] == {"color1": "#FFF200", "color2": "#DDB42D", "color3": "#FFFFFF"}
+    assert resultado["colores_de_fabrica"] == {"color1": "#FFF200", "color2": "#DDB42D", "color3": "#FFFFFF", "color4": "#FB8CBB"}
 
 
 def test_un_gaturro_con_otra_zona_de_color_tiene_color_de_nariz(tmp_path, fuente):
@@ -374,11 +374,20 @@ CABEZA_PUBLICADA = '''    <g id="sprite3">
       <use ffdec:characterId="60" height="8.0" id="eye2" transform="matrix(1.0, 0.0, 0.0, 1.0, 17.0, -9.45)" width="8.0" xlink:href="#shape0"/>
       <use ffdec:characterId="2" height="0.0" id="hairs" transform="matrix(1.0, 0.0, 0.0, 1.0, -4.1, -7.2)" width="0.0" xlink:href="#sprite0"/>
       <use ffdec:characterId="2" height="0.0" id="accesories" transform="matrix(1.0, 0.0, 0.0, 1.0, -4.5, 14.65)" width="0.0" xlink:href="#sprite0"/>
-      <use ffdec:characterId="62" height="6.0" transform="matrix(1.0, 0.0, 0.0, 1.0, -2.95, 17.9)" width="9.0" xlink:href="#shape0"/>
+      <use ffdec:characterId="62" height="6.0" transform="matrix(1.0, 0.0, 0.0, 1.0, -2.95, 17.9)" width="9.0" xlink:href="#sprite9"/>
       <use ffdec:characterId="2" height="0.0" id="hats" transform="matrix(1.0, 0.0, 0.0, 1.0, -2.25, -1.8)" width="0.0" xlink:href="#sprite0"/>
     </g>
 '''
-CUERPO_CABEZA_PUBLICADA = re.sub(r'    <g id="sprite3">.*?</g>\n', lambda _: CABEZA_PUBLICADA, CUERPO, count=1, flags=re.S)
+# La nariz del publicado: un sprite con una forma rosa (el color de nariz de fábrica) y su borde de otro color.
+NARIZ_PUBLICADA = '''    <g id="sprite9">
+      <use ffdec:characterId="61" height="6.0" transform="matrix(1.0, 0.0, 0.0, 1.0, 0.0, 0.0)" width="9.0" xlink:href="#shape9"/>
+    </g>
+    <g id="shape9">
+      <path d="M0.0 0.0 L9.0 0.0 9.0 6.0 0.0 6.0 Z" fill="#fb8cbb"/>
+      <path d="M0.0 0.0 L9.0 0.0 9.0 6.0 0.0 6.0" fill="none" stroke="#67032e"/>
+    </g>
+'''
+CUERPO_CABEZA_PUBLICADA = re.sub(r'    <g id="sprite3">.*?</g>\n', lambda _: CABEZA_PUBLICADA + NARIZ_PUBLICADA, CUERPO, count=1, flags=re.S)
 
 
 class ExportadorCabezaPublicada(ExportadorConGaturro):
@@ -407,6 +416,19 @@ def test_la_nariz_va_debajo_del_pelo_como_en_la_cabeza_del_album_2018(tmp_path, 
     assert resultado["sin_lugar"] == []
     # Sigue siendo la versión anterior: el hueco lo agregó el programa.
     assert "versión anterior" in resultado["aviso"]
+
+
+def test_la_nariz_se_pinta_como_en_el_juego(tmp_path, fuente):
+    # En el juego, el color de nariz (color4) pinta el relleno; el borde queda.
+    nucleo = Nucleo(SistemaFalso(tmp_path), fuente=fuente, catalogo=[], exportador=ExportadorCabezaPublicada())
+
+    de_fabrica = nucleo.gaturro({})
+    verde = nucleo.gaturro({}, {"color4": "#00ff00"})["svg"]
+
+    assert de_fabrica["color_de_nariz"] is True
+    assert 'fill="#fb8cbb"' in de_fabrica["svg"].lower()
+    assert 'fill="#00ff00"' in verde and 'fill="#fb8cbb"' not in verde.lower()
+    assert 'stroke="#67032e"' in verde
 
 
 def test_sin_la_forma_conocida_la_cabeza_no_se_toca(nucleo):

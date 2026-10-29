@@ -8,8 +8,12 @@ Las reglas son las del cliente (`Gaturro.attempt`, `setColor`, `lookForHideParts
 
 - La Pieza de una Parte del cuerpo `P` va en cada clip vacío llamado `P`, `PFore` o `PBack`
   (salvo `clothBack` para el Torso), con la transformación del clip.
-- Los clips `color1`, `color2` y `colorEye` (del cuerpo y de las Piezas) se pintan enteros del color
-  del jugador (`ColorTransform.color`): el color reemplaza al dibujo y se conserva la transparencia.
+- Los clips `color1`, `color2`, `color3` y `color4` (del cuerpo y de las Piezas) se pintan enteros del color
+  del jugador (`GaturroColorManager`, `ColorTransform.color`): cara, cuerpo, ojos y nariz. El color reemplaza
+  al dibujo y se conserva la transparencia.
+- El Gaturro que se puede leer es de una versión anterior: no tiene iris (`color3`), así que el color de ojos
+  no se ve en él, y su nariz es un solo dibujo, sin clip `color4`. Su relleno es el rosa de fábrica del
+  color de nariz (#FB8CBB) y el borde, otro color: se pinta el relleno, que es lo que el juego pinta.
 - Una Pieza cuya clase contiene `hide_` o `invisible_` esconde los clips hermanos de su hueco que no
   son huecos de Partes del cuerpo.
 """
@@ -48,12 +52,16 @@ def pose_de_transporte(tipo: str) -> str:
     return f"transportStand_{tipo}" if tipo else "transportStand"
 
 # La versión actual no está publicada sin cifrar.
-AVISO_VERSION_ANTERIOR = "Gaturro de una versión anterior del juego: la nariz no cambia de color."
+AVISO_VERSION_ANTERIOR = ("Gaturro de una versión anterior del juego: no tiene iris, así que el color de ojos no se ve "
+                          "en él (en el juego pinta un aro alrededor de la pupila).")
+_MARCA_NARIZ = 'data-mgitems="nariz"'
+_RELLENO_DE_LA_NARIZ = "#FB8CBB"  # el color de nariz de fábrica del juego (COLOR4_DEFAULT)
 _MARCA_ACCESORIO_2 = 'data-mgitems="como-accesories"'
 
 # Colores de fábrica del juego (ColorPickerModal): pelaje, panza y ojos.
-COLORES = {"color1": "#FFF200", "color2": "#DDB42D", "color3": "#FFFFFF"}
-_CLIP_DE_COLOR = {"color1": "color1", "color2": "color2", "colorEye": "color3"}
+COLORES = {"color1": "#FFF200", "color2": "#DDB42D", "color3": "#FFFFFF", "color4": "#FB8CBB"}
+# El clip que pinta cada color (`DisplayUtil.getAllByName(Gaturro, "colorN")`, `GaturroColorManager`).
+_CLIP_DE_COLOR = {"color1": "color1", "color2": "color2", "color3": "color3", "color4": "color4"}
 
 _ANCLAJE_FFDEC = re.compile(r'<g transform="matrix\(1\.0, 0\.0, 0\.0, 1\.0, -?[\d.]+, -?[\d.]+\)">(?P<contenido>.*?)</g>\s*<defs>', re.S)
 _DEFS = re.compile(r"<defs>(?P<defs>.*)</defs>", re.S)
@@ -122,6 +130,8 @@ def tiene_color_de_nariz(cuerpo: str) -> bool:
     La versión publicada no la tiene; no se sabe cómo se llama en la actual, así que vale cualquier
     clip `color…` que no sea de los conocidos.
     """
+    if _MARCA_NARIZ in cuerpo:  # la nariz del publicado: se le pinta el relleno (`_pintar_nariz`)
+        return True
     return any(nombre not in _CLIP_DE_COLOR for nombre in re.findall(r'\bid="(color[A-Za-z0-9]*)"', cuerpo))
 
 
@@ -182,7 +192,7 @@ def nariz_debajo_del_pelo(cuerpo: str) -> str:
         nariz, boca = clips[i_acc + 1], clips[ids.index("mouths")]
         orden = [c for c in clips if c not in (nariz, boca)]
         despues_de_ojos = orden.index(clips[ids.index("eye2")]) + 1
-        orden[despues_de_ojos:despues_de_ojos] = [nariz, boca]
+        orden[despues_de_ojos:despues_de_ojos] = [nariz.replace("<use ", f"<use {_MARCA_NARIZ} ", 1), boca]
         nuevos = "\n      " + "\n      ".join(orden) + "\n    "
         return cuerpo.replace(cabeza.group(0), cabeza.group(0).replace(hijos, nuevos, 1), 1)
     return cuerpo
@@ -227,6 +237,25 @@ def _lugar_del_sombrero(cuerpo: str) -> tuple[str, str, str] | None:
             x, y = (numeros[4], numeros[5]) if len(numeros) == 6 else ("0", "0")
             return sprite.group(1), x, y
     return None
+
+
+def _pintar_nariz(svg: str, color: str) -> str:
+    """La nariz del Gaturro publicado (la que marca `nariz_debajo_del_pelo`) con su relleno del color de nariz."""
+    nariz = re.search(rf"<use [^>]*{_MARCA_NARIZ}[^>]*/>", svg)
+    referencia = re.search(r'xlink:href="#([^"]+)"', nariz.group(0)) if nariz else None
+    pendientes, vistos = [referencia.group(1)] if referencia else [], set()
+    while pendientes:  # su dibujo y lo que tiene adentro
+        id_ = pendientes.pop()
+        if id_ in vistos:
+            continue
+        vistos.add(id_)
+        definicion = re.search(rf'<g id="{re.escape(id_)}">.*?</g>', svg, re.S)
+        if not definicion:
+            continue
+        pendientes += re.findall(r'xlink:href="#([^"]+)"', definicion.group(0))
+        pintada = re.sub(f'fill="{_RELLENO_DE_LA_NARIZ}"', f'fill="{color}"', definicion.group(0), flags=re.I)
+        svg = svg.replace(definicion.group(0), pintada, 1)
+    return svg
 
 
 def componer(cuerpo: str, piezas: dict[str, tuple[str, str]], colores: dict | None = None) -> str:
@@ -274,8 +303,9 @@ def componer(cuerpo: str, piezas: dict[str, tuple[str, str]], colores: dict | No
         f'<filter id="mg-{clip}" color-interpolation-filters="sRGB"><feFlood flood-color="{colores[clave]}"/>'
         f'<feComposite in2="SourceGraphic" operator="in"/></filter>'
         for clip, clave in _CLIP_DE_COLOR.items())
-    svg = re.sub(r'<(use|g) ([^>]*\bid="(?:p\d+_)?(color1|color2|colorEye)")',
+    svg = re.sub(r'<(use|g) ([^>]*\bid="(?:p\d+_)?(color1|color2|color3|color4)")',
                  lambda m: f'<{m.group(1)} filter="url(#mg-{m.group(3)})" {m.group(2)}', svg)
+    svg = _pintar_nariz(svg, colores["color4"])
 
     # Lugar alrededor del cuerpo para lo que sobresale.
     tamano = _TAMANO.search(svg)
