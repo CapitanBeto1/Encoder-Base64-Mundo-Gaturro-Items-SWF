@@ -1207,6 +1207,7 @@ dialog.dialogo-colores { width: auto; max-width: 96vw; padding: 0; border: 0; ba
 .dialogo-colores .pastilla-colores:hover:not(:disabled), .dialogo-mis-looks .pastilla-colores:hover:not(:disabled) { background: #5b689a; }
 
 .dialogo-colores .panel-colores {
+  position: relative;
   flex: none;
   width: 560px;
   padding: 14px 18px 18px;
@@ -1286,7 +1287,8 @@ dialog.dialogo-colores { width: auto; max-width: 96vw; padding: 0; border: 0; ba
 dialog.dialogo-mis-looks { position: fixed; inset: 0; margin: auto; width: fit-content; height: fit-content; max-width: 98vw; max-height: 96vh; padding: 0; border: 0; background: transparent; overflow: visible; }
 .dialogo-mis-looks::backdrop { background: rgba(10, 14, 30, 0.6); }
 .panel-mis-looks {
-  width: min(1000px, 96vw);
+  position: relative;
+  width: min(1000px, calc(98vw - 150px)); /* con lugar para el pincel de la izquierda */
   padding: 14px 18px 18px;
   border-radius: 18px;
   background: #222a45;
@@ -1432,6 +1434,18 @@ dialog.dialogo-mis-looks { position: fixed; inset: 0; margin: auto; width: fit-c
 .dialogo-mis-looks .girar-look.con-dibujo { display: flex; align-items: center; justify-content: center; }
 .dialogo-mis-looks .girar-look.con-dibujo > img { flex: none; width: 18px; height: 18px; padding: 0; } /* sin el lugar del Gaturro del escenario */
 .escenario-look.con-dibujo { background-repeat: no-repeat; background-size: cover; background-position: center bottom; }
+
+/* Los adornos de las ventanas del juego, en su lugar respecto del panel (medidas del juego: el panel de
+   «Guarda tu Look» mide 560×360 y el de «Elige tus colores» 434×362, que acá es 560 de ancho: ×1,29). */
+.adorno { position: absolute; pointer-events: none; }
+.adorno[hidden] { display: none; }
+.adorno > img { display: block; width: 100%; height: auto; }
+.adorno-pinceles { z-index: -1; right: -31px; top: -21px; width: 65px; } /* detrás del panel */
+.adorno-pincel { z-index: 3; left: -65px; bottom: -20px; width: 105px; } /* delante */
+.adorno-muestras { z-index: -1; left: -106px; top: -52px; width: 155px; } /* detrás del panel */
+.adorno-pintor { z-index: 0; left: 356px; top: -4px; width: 139px; }
+/* Como en el juego, el rótulo va delante del pintor: las patas quedan apoyadas en su borde. */
+.dialogo-colores .rotulo-color { position: relative; z-index: 1; }
 
 /* Barritas de zoom del Gaturro. */
 .zoom-gaturro { flex: none; display: flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 12px; background: rgba(0, 0, 0, 0.22); color: #fff; font-size: 14px; line-height: 1; }

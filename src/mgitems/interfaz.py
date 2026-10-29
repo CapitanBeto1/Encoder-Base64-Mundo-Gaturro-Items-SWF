@@ -21,6 +21,12 @@ DIBUJOS = {
     "eliminar": ("AvatarSaverBanner", 27, None),
     # La paleta de «ELIGE TUS COLORES»: en el juego es un solo dibujo con el Gaturro pintor de la derecha.
     "paleta": ("ColorPickerBanner", 10, (0, 10, 31, 31)),
+    # Los adornos de las ventanas.
+    "pinceles": ("AvatarSaverBanner", 8, None),  # arriba a la derecha, detrás del panel
+    "pincel": ("AvatarSaverBanner", 59, None),  # abajo a la izquierda, delante
+    "pintor": ("ColorPickerBanner", 10, (260, 0, 108, 70)),  # el Gaturro pintor que se asoma en el título
+    # Las muestras de pintura y los pinceles que asoman a la izquierda: en el juego son parte del fondo.
+    "muestras": ("ColorPickerBanner", 1, (260, 0, 120, 402)),
 }
 
 _TAMANO = re.compile(r'height="[\d.]+px" width="[\d.]+px"')

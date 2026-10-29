@@ -2161,6 +2161,7 @@ async function ponerDibujosDelJuego() {
     if (elemento.dataset.dibujoComo === "fondo") elemento.style.backgroundImage = `url("${url}")`;
     else elemento.replaceChildren(Object.assign(document.createElement("img"), { src: url, alt: "" }));
     elemento.classList.add("con-dibujo");
+    elemento.hidden = false; // los adornos solo aparecen con su dibujo
   }
 }
 

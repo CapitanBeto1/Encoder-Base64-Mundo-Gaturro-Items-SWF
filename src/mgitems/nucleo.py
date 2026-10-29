@@ -516,8 +516,9 @@ class Nucleo:
             if not obtenido["ok"] or len(obtenido["data"]) != tamano:
                 continue
             carpeta = self._entorno.carpeta_cache() / "interfaz" / banner / str(tamano)
-            formas = {forma: nombre for nombre, (de, forma, _) in DIBUJOS.items() if de == banner}
-            faltan = {forma: nombre for forma, nombre in formas.items() if not (carpeta / f"{nombre}.svg").is_file()}
+            # Cada forma se exporta una vez (de una misma salen varios recortes).
+            formas = {forma: f"forma{forma}" for de, forma, _ in DIBUJOS.values() if de == banner}
+            faltan = {forma: archivo for forma, archivo in formas.items() if not (carpeta / f"{archivo}.svg").is_file()}
             if faltan:
                 try:
                     with tempfile.TemporaryDirectory(prefix="mgitems-", ignore_cleanup_errors=True) as temporal:
@@ -527,9 +528,11 @@ class Nucleo:
                             self._exportador.exportar_formas(archivo, faltan, carpeta)
                 except (FFDecNoDisponible, OSError, subprocess.SubprocessError):
                     continue
-            for nombre in formas.values():
+            for nombre, (de, forma, recorte) in DIBUJOS.items():
+                if de != banner:
+                    continue
                 try:
-                    dibujos[nombre] = recortar((carpeta / f"{nombre}.svg").read_text(encoding="utf-8"), DIBUJOS[nombre][2])
+                    dibujos[nombre] = recortar((carpeta / f"{formas[forma]}.svg").read_text(encoding="utf-8"), recorte)
                 except OSError:
                     pass
         return {"ok": True, "dibujos": dibujos}
