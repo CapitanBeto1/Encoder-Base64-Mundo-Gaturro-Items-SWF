@@ -28,7 +28,7 @@ from mgitems.fuente import URL_ASSETS, FuenteCDN, SinConexion, SwfNoEncontrado, 
 from mgitems.gaturro import (
     AVISO_VERSION_ANTERIOR, CLASE_CUERPO, CLASE_PLANTILLA, COLORES, CUADRO_QUIETO_DEL_VEHICULO, OBJETOS, SWF_CUERPO, SWF_PLANTILLA,
     SWF_POSES, ImagenesPiezas, componer, pose_de_transporte,
-    accesorio_2_como_accesorio, completar_con_plantilla, es_version_anterior, nariz_debajo_del_pelo, sin_sombra, tiene_color_de_nariz,
+    completar_con_plantilla, es_version_anterior, preparar_cuerpo, tiene_color_de_nariz,
     tiene_lugar,
 )
 from mgitems.iconos import ExportadorFFDec, IconosItems, version_de
@@ -463,7 +463,7 @@ class Nucleo:
                     piezas[EFECTO] = (efecto[1], svgs[cuadro.efecto])
                 if cuadro.objeto and svgs.get(cuadro.objeto):
                     piezas[OBJETOS] = (objeto[1], espejar(svgs[cuadro.objeto]) if reproducida.espejo else svgs[cuadro.objeto])
-                cuerpo = sin_sombra(accesorio_2_como_accesorio(nariz_debajo_del_pelo(cuerpo)))
+                cuerpo = preparar_cuerpo(cuerpo)
                 indices[clave] = len(imagenes)
                 imagenes.append(componer(cuerpo, piezas, colores))
             secuencia.append(indices[clave])
@@ -1096,7 +1096,7 @@ class Nucleo:
             return None, None, {"ruta": ruta, "motivo": "no se pudo dibujar la pose"}
         if 'id="foreground"' in svg:  # `transportForeground` la pondría delante del Gaturro: no se arma a ojo
             return None, None, {"ruta": ruta, "motivo": "este vehículo tiene una parte que va delante del Gaturro"}
-        cuerpo = sin_sombra(accesorio_2_como_accesorio(nariz_debajo_del_pelo(cuerpo)))
+        cuerpo = preparar_cuerpo(cuerpo)
         return (clase, svg), cuerpo, None
 
     def _svg_congelado(self, carpeta: str, clave: str, data: bytes, clase: str, rotulo: str | None) -> str | None:
@@ -1138,7 +1138,7 @@ class Nucleo:
             plantilla = imagenes.svg(SWF_PLANTILLA, CLASE_PLANTILLA)
             if plantilla:
                 cuerpo = completar_con_plantilla(cuerpo, plantilla)
-        return sin_sombra(accesorio_2_como_accesorio(nariz_debajo_del_pelo(cuerpo)))
+        return preparar_cuerpo(cuerpo)
 
     def _preparar_svg(self, imagenes: ImagenesPiezas, swf: str, elegir) -> bool:
         """Exporta (una vez por versión) a SVG las clases de `swf` que `elegir(clases)` devuelve; False si no se pudo."""

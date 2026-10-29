@@ -11,9 +11,11 @@ Las reglas son las del cliente (`Gaturro.attempt`, `setColor`, `lookForHideParts
 - Los clips `color1`, `color2`, `color3` y `color4` (del cuerpo y de las Piezas) se pintan enteros del color
   del jugador (`GaturroColorManager`, `ColorTransform.color`): cara, cuerpo, ojos y nariz. El color reemplaza
   al dibujo y se conserva la transparencia.
-- El Gaturro que se puede leer es de una versión anterior: no tiene iris (`color3`), así que el color de ojos
-  no se ve en él, y su nariz es un solo dibujo, sin clip `color4`. Su relleno es el rosa de fábrica del
-  color de nariz (#FB8CBB) y el borde, otro color: se pinta el relleno, que es lo que el juego pinta.
+- El Gaturro que se puede leer es de una versión anterior, sin iris ni clip `color4` en la nariz:
+  - el ojo es el mismo dibujo que el del juego (blanco, pupila, párpado, contorno y ceja en el mismo
+    lugar, al centésimo); le falta el iris, que se le agrega tal como lo tiene el juego (`con_iris`);
+  - su nariz es un solo dibujo cuyo relleno es el rosa de fábrica del color de nariz (#FB8CBB) y el borde,
+    otro color: se pinta el relleno, que es lo que el juego pinta (`color4`).
 - Una Pieza cuya clase contiene `hide_` o `invisible_` esconde los clips hermanos de su hueco que no
   son huecos de Partes del cuerpo.
 """
@@ -52,8 +54,8 @@ def pose_de_transporte(tipo: str) -> str:
     return f"transportStand_{tipo}" if tipo else "transportStand"
 
 # La versión actual no está publicada sin cifrar.
-AVISO_VERSION_ANTERIOR = ("Gaturro de una versión anterior del juego: no tiene iris, así que el color de ojos no se ve "
-                          "en él (en el juego pinta un aro alrededor de la pupila).")
+AVISO_VERSION_ANTERIOR = ("Gaturro de una versión anterior del juego: el iris y el lugar de «Accesorio 2» se agregan como "
+                          "están en el juego actual.")
 _MARCA_NARIZ = 'data-mgitems="nariz"'
 _RELLENO_DE_LA_NARIZ = "#FB8CBB"  # el color de nariz de fábrica del juego (COLOR4_DEFAULT)
 _MARCA_ACCESORIO_2 = 'data-mgitems="como-accesories"'
@@ -239,6 +241,45 @@ def _lugar_del_sombrero(cuerpo: str) -> tuple[str, str, str] | None:
     return None
 
 
+# El iris del Gaturro del juego actual (`avatar_fla.eye_asset_22` del cliente): el clip `color3`, en la capa de
+# arriba del blanco y debajo de la pupila, con la forma 86 adentro. No se mueve en ningún cuadro (al cerrar
+# el ojo lo tapa el párpado). Es su trazo y su lugar exactos; las dos matrices (la del clip en el ojo y la de
+# la forma en el clip) van juntas en una sola.
+_CLIP_IRIS = (1.5862884521484375, 10.3, 17.4)  # escala y lugar del clip `color3` en el ojo
+_FORMA_IRIS = (2.729736328125, 2.653839111328125, -0.75, -2.9)  # la forma dentro del clip
+_TRAZO_IRIS = "M1.9 2.7 L1.7 3.35 0.95 3.65 Q0.05 3.6 0.05 2.3 0.1 1.05 1.05 1.05 1.6 1.1 1.8 1.75 L1.9 2.7"
+_MARCA_IRIS = 'data-mgitems="iris"'
+_IRIS = (
+    f'<path id="color3" {_MARCA_IRIS} transform="matrix({_CLIP_IRIS[0] * _FORMA_IRIS[0]}, 0.0, 0.0, '
+    f'{_CLIP_IRIS[0] * _FORMA_IRIS[1]}, {_CLIP_IRIS[0] * _FORMA_IRIS[2] + _CLIP_IRIS[1]}, '
+    f'{_CLIP_IRIS[0] * _FORMA_IRIS[3] + _CLIP_IRIS[2]})" d="{_TRAZO_IRIS}" fill="#ffffff" fill-rule="evenodd"/>'
+)
+# El blanco del ojo publicado, como lo exporta FFDec: lo primero del ojo, sin moverlo, de 20.05 × 31.2.
+_BLANCO_DEL_OJO = re.compile(r'<use (?=[^>]*\bheight="31\.2")(?=[^>]*\bwidth="20\.05")'
+                             r'(?=[^>]*transform="matrix\(1\.0, 0\.0, 0\.0, 1\.0, 0\.0, 0\.0\)")[^>]*/>')
+
+
+def con_iris(cuerpo: str) -> str:
+    """El cuerpo publicado con el iris del juego en cada ojo, encima de su blanco. Un ojo que no empieza por
+    el blanco conocido (otra versión, o un cuadro sin él) queda igual."""
+    for ojo in ("eye1", "eye2"):
+        uso = re.search(rf'<use [^>]*\bid="{ojo}"[^>]*/>', cuerpo)
+        referencia = re.search(r'xlink:href="#([^"]+)"', uso.group(0)) if uso else None
+        definicion = re.search(rf'<g id="{re.escape(referencia.group(1))}">(.*?)</g>', cuerpo, re.S) if referencia else None
+        if not definicion or _MARCA_IRIS in definicion.group(1):
+            continue
+        primero = re.search(r"<use [^>]*/>", definicion.group(1))
+        if primero and _BLANCO_DEL_OJO.fullmatch(primero.group(0)):
+            con = definicion.group(0).replace(primero.group(0), primero.group(0) + _IRIS, 1)
+            cuerpo = cuerpo.replace(definicion.group(0), con, 1)
+    return cuerpo
+
+
+def preparar_cuerpo(cuerpo: str) -> str:
+    """El cuerpo publicado como el del juego actual: nariz debajo del Pelo, «Accesorio 2», sin sombra y con iris."""
+    return con_iris(sin_sombra(accesorio_2_como_accesorio(nariz_debajo_del_pelo(cuerpo))))
+
+
 def _pintar_nariz(svg: str, color: str) -> str:
     """La nariz del Gaturro publicado (la que marca `nariz_debajo_del_pelo`) con su relleno del color de nariz."""
     nariz = re.search(rf"<use [^>]*{_MARCA_NARIZ}[^>]*/>", svg)
@@ -303,7 +344,7 @@ def componer(cuerpo: str, piezas: dict[str, tuple[str, str]], colores: dict | No
         f'<filter id="mg-{clip}" color-interpolation-filters="sRGB"><feFlood flood-color="{colores[clave]}"/>'
         f'<feComposite in2="SourceGraphic" operator="in"/></filter>'
         for clip, clave in _CLIP_DE_COLOR.items())
-    svg = re.sub(r'<(use|g) ([^>]*\bid="(?:p\d+_)?(color1|color2|color3|color4)")',
+    svg = re.sub(r'<(use|g|path) ([^>]*\bid="(?:p\d+_)?(color1|color2|color3|color4)")',
                  lambda m: f'<{m.group(1)} filter="url(#mg-{m.group(3)})" {m.group(2)}', svg)
     svg = _pintar_nariz(svg, colores["color4"])
 
