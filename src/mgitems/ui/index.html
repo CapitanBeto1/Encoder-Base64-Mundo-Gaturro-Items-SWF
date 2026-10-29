@@ -173,10 +173,10 @@
 
       <div id="vista-looks" class="vista" role="tabpanel" hidden>
         <div class="encabezado-looks">
-          <button id="abrir-mis-looks" class="boton-mis-looks solo-looks" title="Ver, abrir, importar y exportar tus Looks guardados">
-            <span aria-hidden="true">👕</span> Mis Looks <span id="cantidad-looks" class="cantidad-looks"></span>
+          <button id="abrir-mis-looks" class="boton-mis-looks" title="Ver, abrir, importar y exportar tus Looks guardados">
+            <span aria-hidden="true">👕</span> <span id="texto-mis-looks">Mis Looks</span> <span id="cantidad-looks" class="cantidad-looks"></span>
           </button>
-          <span id="look-abierto" class="ayuda look-abierto solo-looks"></span>
+          <span id="look-abierto" class="ayuda look-abierto"></span>
         </div>
 
         <div class="inventario">
@@ -209,9 +209,9 @@
             </div>
             <div class="botones-tarjeta">
               <button id="colores-look" class="boton-cuadrado boton-colores" title="Colores del Gaturro" aria-label="Colores del Gaturro">⚙</button>
-              <button id="borrar-look" class="boton-cuadrado solo-looks" title="Borrar el Look" aria-label="Borrar el Look">🗑</button>
-              <button id="descartar-look" class="boton-cuadrado boton-descartar solo-looks" title="Descartar los cambios" aria-label="Descartar los cambios">✗</button>
-              <button id="guardar-look" class="boton-cuadrado boton-guardar solo-looks" title="Guardar el Look" aria-label="Guardar el Look">✓</button>
+              <button id="borrar-look" class="boton-cuadrado" title="Borrar el Look" aria-label="Borrar el Look">🗑</button>
+              <button id="descartar-look" class="boton-cuadrado boton-descartar" title="Descartar los cambios" aria-label="Descartar los cambios">✗</button>
+              <button id="guardar-look" class="boton-cuadrado boton-guardar" title="Guardar el Look" aria-label="Guardar el Look">✓</button>
             </div>
           </div>
 
@@ -315,7 +315,7 @@
     <div class="panel-mis-looks">
       <div class="titulo-mis-looks">
         <span class="martillo" aria-hidden="true">🔨</span>
-        <h2><span>GUARDA TU LOOK</span><span class="sub">GUARDA TUS LOOKS FAVORITOS</span></h2>
+        <h2><span id="titulo-mis-looks">GUARDA TU LOOK</span><span id="sub-mis-looks" class="sub">GUARDA TUS LOOKS FAVORITOS</span></h2>
         <span class="acciones-mis-looks">
           <button type="button" id="importar-look" class="pastilla-chica" title="Agregar el archivo de Look de otra persona">IMPORTAR</button>
           <button type="button" id="exportar-look" class="pastilla-chica" title="Guardar el Look elegido en un archivo para pasárselo a otra persona">EXPORTAR</button>

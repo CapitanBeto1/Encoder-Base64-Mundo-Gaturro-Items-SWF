@@ -40,7 +40,7 @@ from mgitems.items import (
     separar_prefijos,
     separar_rutas,
 )
-from mgitems.looks import AlmacenLooks, Look, LookInvalido, archivo_de_look, look_de_archivo
+from mgitems.looks import FORMATO_ACCION, AlmacenLooks, Look, LookInvalido, archivo_de_look, look_de_archivo
 from mgitems.prendas import (
     ACCION, EFECTO, MOCHILA, PARTES_DEL_CUERPO, PREFIJO_EFECTO, PRENDA, CacheItemsBase, ItemBase, ItemsBaseFFDec, TruqueoFallido,
     leer_item_base, reescribir_partes,
@@ -660,6 +660,77 @@ class Nucleo:
     def _almacen_looks(self) -> AlmacenLooks:
         return AlmacenLooks(self._entorno.carpeta_programa() / "looks.json")
 
+    # --- Mis acciones: se guardan como los Looks, en su propio archivo ---
+
+    def acciones(self) -> dict:
+        """Las acciones guardadas, por nombre."""
+        try:
+            guardadas = self._almacen_acciones().todos()
+        except OSError as e:
+            return {"ok": False, "error": f"No se pudieron leer las acciones: {e}"}
+        return {"ok": True, "acciones": [asdict(a) for a in sorted(guardadas, key=lambda a: orden_natural(a.nombre))]}
+
+    def guardar_accion(self, accion: dict) -> dict:
+        """Guarda una acción nueva (sin id) o los cambios de una guardada."""
+        try:
+            guardada = self._almacen_acciones().guardar(_accion_valida(accion))
+        except LookInvalido as e:
+            return {"ok": False, "error": str(e)}
+        except OSError as e:
+            return {"ok": False, "error": f"No se pudo guardar la acción: {e}"}
+        return {"ok": True, "accion": asdict(guardada)}
+
+    def duplicar_accion(self, id_accion: str) -> dict:
+        """Una copia de una acción guardada, con otro nombre."""
+        try:
+            almacen = self._almacen_acciones()
+            original = next((a for a in almacen.todos() if a.id == id_accion), None)
+            if original is None:
+                return {"ok": False, "error": "Esa acción ya no existe."}
+            nombre = _nombre_libre(f"{original.nombre} (copia)", {a.nombre for a in almacen.todos()}, "copia ")
+            copia = almacen.guardar(Look(nombre, original.base, dict(original.partes), colores=dict(original.colores),
+                                         animacion=original.animacion))
+        except OSError as e:
+            return {"ok": False, "error": f"No se pudo duplicar la acción: {e}"}
+        return {"ok": True, "accion": asdict(copia)}
+
+    def borrar_accion(self, id_accion: str) -> dict:
+        try:
+            borrada = self._almacen_acciones().borrar(id_accion)
+        except OSError as e:
+            return {"ok": False, "error": f"No se pudo borrar la acción: {e}"}
+        return {"ok": True} if borrada else {"ok": False, "error": "Esa acción ya no existe."}
+
+    def exportar_accion(self, accion: dict, ruta: str) -> dict:
+        """Guarda la acción en un archivo de acción para pasársela a otra persona."""
+        try:
+            Path(ruta).write_text(archivo_de_look(_accion_valida(accion), FORMATO_ACCION), encoding="utf-8")
+        except LookInvalido as e:
+            return {"ok": False, "error": str(e)}
+        except OSError as e:
+            return {"ok": False, "error": f"No se pudo guardar el archivo: {e.strerror or e}"}
+        return {"ok": True, "ruta": ruta}
+
+    def importar_accion_de_archivo(self, ruta: str) -> dict:
+        """Agrega a las acciones guardadas la de un archivo de acción (con otro nombre si ya hay una igual)."""
+        try:
+            contenido = Path(ruta).read_text(encoding="utf-8", errors="replace")
+        except OSError as e:
+            return {"ok": False, "error": f"No se pudo abrir el archivo: {e.strerror or e}"}
+        try:
+            accion = _accion_valida(asdict(look_de_archivo(contenido, FORMATO_ACCION)))
+            almacen = self._almacen_acciones()
+            accion.nombre = _nombre_libre(accion.nombre, {a.nombre for a in almacen.todos()})
+            guardada = almacen.guardar(accion)
+        except LookInvalido as e:
+            return {"ok": False, "error": str(e)}
+        except OSError as e:
+            return {"ok": False, "error": f"No se pudo guardar la acción: {e}"}
+        return {"ok": True, "accion": asdict(guardada)}
+
+    def _almacen_acciones(self) -> AlmacenLooks:
+        return AlmacenLooks(self._entorno.carpeta_programa() / "acciones.json", clave="acciones")
+
     def _swf_trucados(self, encode: str) -> tuple[list[SwfTrucado], dict | None]:
         """Los SWF trucados que necesita un Encode generado en esta sesión, con el tamaño actual del original."""
         trucados = []
@@ -1165,6 +1236,19 @@ def _cantidad(valor) -> int | None:
     if isinstance(valor, float) and valor.is_integer():
         valor = int(valor)
     return valor if isinstance(valor, int) and valor > 0 else None
+
+
+def _accion_valida(datos: dict) -> Look:
+    """Una acción de la pestaña Acciones, validada: con nombre, una animación del juego y, como Partes, solo la
+    Pieza de la acción y la de la cabeza."""
+    if not isinstance(datos, dict) or not str(datos.get("nombre") or "").strip():
+        raise LookInvalido("Poné un nombre a la acción.")
+    accion = Look.desde(datos)
+    if accion.animacion not in ANIMACIONES:
+        raise LookInvalido("Elegí una animación.")
+    if set(accion.partes) - {ACCION, EFECTO}:
+        raise LookInvalido("Una acción solo lleva la Pieza de la acción y la de la cabeza.")
+    return accion
 
 
 def _nombre_libre(nombre: str, usados: set[str], sufijo: str = "") -> str:

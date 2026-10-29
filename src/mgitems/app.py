@@ -10,6 +10,7 @@ from mgitems.nucleo import Nucleo
 TITULO = "MG Items"
 UI = Path(__file__).parent / "ui" / "index.html"
 _TIPOS_LOOK = ("Look de MG Items (*.mglook)", "Todos los archivos (*.*)")
+_TIPOS_ACCION = ("Acción de MG Items (*.mgaccion)", "Todos los archivos (*.*)")
 _NO_VALE_EN_ARCHIVOS = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
 
 
@@ -79,6 +80,31 @@ class Puente:
 
     def animacion_de_accion(self, accion: dict, colores: dict | None = None) -> dict:
         return self._nucleo.animacion_de_accion(accion, colores)
+
+    def acciones(self) -> dict:
+        return self._nucleo.acciones()
+
+    def guardar_accion(self, accion: dict) -> dict:
+        return self._nucleo.guardar_accion(accion)
+
+    def duplicar_accion(self, id_accion: str) -> dict:
+        return self._nucleo.duplicar_accion(id_accion)
+
+    def borrar_accion(self, id_accion: str) -> dict:
+        return self._nucleo.borrar_accion(id_accion)
+
+    def exportar_accion(self, accion: dict) -> dict:
+        nombre = _NO_VALE_EN_ARCHIVOS.sub("_", str(accion.get("nombre") or "").strip()) or "Accion"
+        ruta = _dialogo(webview.FileDialog.SAVE, save_filename=f"{nombre}.mgaccion", file_types=_TIPOS_ACCION)
+        if not ruta:
+            return {"ok": False, "cancelado": True}
+        return self._nucleo.exportar_accion(accion, ruta)
+
+    def importar_accion(self) -> dict:
+        ruta = _dialogo(webview.FileDialog.OPEN, file_types=_TIPOS_ACCION)
+        if not ruta:
+            return {"ok": False, "cancelado": True}
+        return self._nucleo.importar_accion_de_archivo(ruta)
 
     def exportar_look(self, look: dict) -> dict:
         nombre = _NO_VALE_EN_ARCHIVOS.sub("_", str(look.get("nombre") or "").strip()) or "Look"
