@@ -16,7 +16,7 @@ from pathlib import Path
 _RUTA = re.compile(r"^[A-Za-z0-9_\-]+(?:/[A-Za-z0-9_\-]+)*\.[A-Za-z_][A-Za-z0-9_]*$")
 _PARTE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 _COLOR = re.compile(r"^#[0-9a-fA-F]{6}$")
-_CLAVES_COLOR = {"color1", "color2", "color3"}
+_CLAVES_COLOR = {"color1", "color2", "color3", "color4"}
 
 
 class LookInvalido(ValueError):

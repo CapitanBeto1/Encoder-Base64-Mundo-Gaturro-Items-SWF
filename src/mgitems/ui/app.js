@@ -1105,11 +1105,11 @@ crearDesplegable({
 
 // --- El Gaturro original del juego con las Piezas del Look ---
 
-// Colores del Gaturro (como en el juego: cara, cuerpo, ojos). Cada Look tiene los suyos; los que no
+// Colores del Gaturro (como en el juego: cara, cuerpo, ojos, nariz). Cada Look tiene los suyos; los que no
 // tiene, los de fábrica del juego.
-let coloresDeFabrica = { color1: "#FFF200", color2: "#DDB42D", color3: "#FFFFFF" };
+let coloresDeFabrica = { color1: "#FFF200", color2: "#DDB42D", color3: "#FFFFFF", color4: "#FB8CBB" };
 let tieneColorDeNariz = false;
-const CLAVES_COLOR = ["color1", "color2", "color3"];
+const CLAVES_COLOR = ["color1", "color2", "color3", "color4"];
 const coloresDe = (look) => ({ ...coloresDeFabrica, ...(look?.colores ?? {}) });
 
 // Si se piden varios seguidos, se muestra solo el último (cada imagen lleva su propio contador).
@@ -1273,7 +1273,11 @@ function mostrarSelectoresColor() {
     const habilitado = clave !== "color4" || tieneColorDeNariz;
     const contenedor = document.querySelector(`.selector-color[data-color="${clave}"]`);
     contenedor.classList.toggle("deshabilitado", !habilitado);
-    contenedor.title = habilitado ? "" : "Este Gaturro (una versión anterior del juego) no tiene color de nariz.";
+    contenedor.title = !habilitado
+      ? "Este Gaturro (una versión anterior del juego) no tiene color de nariz."
+      : clave === "color3"
+        ? "Este Gaturro (una versión anterior del juego) no tiene iris: el color de ojos se ve en las Piezas que lo usan."
+        : "";
     selector.mostrar(coloresEnEdicion[clave] ?? "#F49AC1");
   }
 }
