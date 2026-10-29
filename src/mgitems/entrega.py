@@ -36,10 +36,12 @@ class Procesos:
     _SIN_VENTANA = getattr(subprocess, "CREATE_NO_WINDOW", 0)
 
     def corriendo(self, ejecutable: Path) -> bool:
+        # tasklist escribe en la codificación de la consola (por ejemplo «INFORMACIÓN» en cp850), que no es
+        # UTF-8: se lee sin depender de ella (el nombre del programa es ASCII).
         salida = subprocess.run(
             ["tasklist", "/FI", f"IMAGENAME eq {ejecutable.name}", "/FO", "CSV", "/NH"],
-            capture_output=True, text=True, creationflags=self._SIN_VENTANA,
-        ).stdout
+            capture_output=True, creationflags=self._SIN_VENTANA,
+        ).stdout.decode("ascii", "replace")
         return f'"{ejecutable.name.lower()}"' in salida.lower()
 
     def cerrar(self, ejecutable: Path, espera: float) -> bool:
