@@ -46,6 +46,7 @@ def test_los_dibujos_se_bajan_del_juego_una_vez(tmp_path, exportador):
     assert resultado["ok"]
     assert set(resultado["dibujos"]) == set(DIBUJOS)
     assert 'viewBox="0 10 31 31"' in resultado["dibujos"]["paleta"]  # solo la paleta, sin el Gaturro pintor
+    assert 'viewBox="260 0 108 70"' in resultado["dibujos"]["pintor"]  # del mismo dibujo, el pintor
     assert len(exportador.formas) == len(BANNERS)
     nucleo.dibujos_de_la_interfaz()
     assert len(exportador.formas) == len(BANNERS)  # la segunda vez, de lo guardado
@@ -57,7 +58,8 @@ def test_con_otra_version_del_banner_no_se_usan_sus_dibujos(tmp_path, exportador
 
     dibujos = nucleo.dibujos_de_la_interfaz()["dibujos"]
 
-    assert set(dibujos) == {"paleta"}  # los del banner cambiado podrían ser otros dibujos: quedan los del programa
+    # Los del banner cambiado podrían ser otros dibujos: quedan los del programa.
+    assert set(dibujos) == {n for n, (banner, _, _) in DIBUJOS.items() if banner == "ColorPickerBanner"}
 
 
 def test_sin_conexion_quedan_los_del_programa(tmp_path, exportador):
