@@ -1273,11 +1273,7 @@ function mostrarSelectoresColor() {
     const habilitado = clave !== "color4" || tieneColorDeNariz;
     const contenedor = document.querySelector(`.selector-color[data-color="${clave}"]`);
     contenedor.classList.toggle("deshabilitado", !habilitado);
-    contenedor.title = !habilitado
-      ? "Este Gaturro (una versión anterior del juego) no tiene color de nariz."
-      : clave === "color3"
-        ? "Este Gaturro (una versión anterior del juego) no tiene iris: el color de ojos se ve en las Piezas que lo usan."
-        : "";
+    contenedor.title = habilitado ? "" : "Este Gaturro (una versión anterior del juego) no tiene color de nariz.";
     selector.mostrar(coloresEnEdicion[clave] ?? "#F49AC1");
   }
 }

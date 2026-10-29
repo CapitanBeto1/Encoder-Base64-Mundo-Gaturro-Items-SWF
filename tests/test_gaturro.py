@@ -455,3 +455,33 @@ def test_el_gaturro_va_sin_la_sombra_que_trae_el_cuerpo(tmp_path, fuente):
 
     assert 'ffdec:characterId="145"' not in svg
     assert por_id(svg, "transport") and por_id(svg, "belly")
+
+
+# --- El iris: el del juego actual, que el ojo publicado no tiene ---
+
+OJO_PUBLICADO = '''    <g id="sprite7">
+      <use ffdec:characterId="39" height="31.2" transform="matrix(1.0, 0.0, 0.0, 1.0, 0.0, 0.0)" width="20.05" xlink:href="#shape0"/>
+      <use ffdec:characterId="40" height="5.15" transform="matrix(1.0, 0.0, 0.0, 1.3204, 0.0, -8.6)" width="4.1" xlink:href="#shape0"/>
+    </g>
+'''
+CUERPO_CON_OJO = CUERPO.replace(
+    '<use ffdec:characterId="2" height="0.0" id="hats"',
+    '<use ffdec:characterId="56" height="40.0" id="eye1" transform="matrix(1.0, 0.0, 0.0, 1.0, -20.0, -10.0)" width="23.5" xlink:href="#sprite7"/>\n'
+    '      <use ffdec:characterId="2" height="0.0" id="hats"').replace("    <g id=\"shape0\">", OJO_PUBLICADO + "    <g id=\"shape0\">")
+
+
+def test_el_ojo_publicado_lleva_el_iris_del_juego_pintado_del_color_de_ojos(tmp_path, fuente):
+    class ConOjo(ExportadorConGaturro):
+        def exportar(self, swf, simbolos, destino, formato="png"):
+            super().exportar(swf, simbolos, destino, formato)
+            if formato == "svg" and "assets.GaturroMC" in simbolos.values():
+                (destino / "assets.GaturroMC.svg").write_text(CUERPO_CON_OJO, encoding="utf-8")
+
+    nucleo = Nucleo(SistemaFalso(tmp_path), fuente=fuente, catalogo=[], exportador=ConOjo())
+    svg = nucleo.gaturro({}, {"color3": "#ff0000"})["svg"]
+
+    ojo = next(g for g in raiz(svg).iter(f"{SVG}g") if g.attrib.get("id") == "sprite7")
+    hijos = list(ojo)
+    assert len(hijos) == 3 and hijos[1].attrib["id"] == "color3"  # encima del blanco, debajo de la pupila
+    assert hijos[1].attrib["filter"] == "url(#mg-color3)"
+    assert colores(svg)["mg-color3"] == "#ff0000"
