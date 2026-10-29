@@ -84,6 +84,9 @@ class Puente:
     def acciones(self) -> dict:
         return self._nucleo.acciones()
 
+    def dibujos_de_la_interfaz(self) -> dict:
+        return self._nucleo.dibujos_de_la_interfaz()
+
     def guardar_accion(self, accion: dict) -> dict:
         return self._nucleo.guardar_accion(accion)
 

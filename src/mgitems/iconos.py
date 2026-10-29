@@ -52,6 +52,19 @@ class ExportadorFFDec:
                     shutil.move(imagen, destino / f"{simbolos[int(partes[1])]}.{formato}")
 
 
+    def exportar_formas(self, swf: Path, formas: dict[int, str], destino: Path) -> None:
+        """Escribe `destino/<nombre>.svg` para cada forma (DefineShape, id → nombre) del SWF."""
+        if not formas:
+            return
+        with tempfile.TemporaryDirectory(prefix="mgitems-", ignore_cleanup_errors=True) as temporal:
+            self._ffdec.ejecutar("-selectid", ",".join(str(i) for i in formas), "-format", "shape:svg",
+                                 "-export", "shape", temporal, str(swf))
+            destino.mkdir(parents=True, exist_ok=True)
+            for imagen in Path(temporal).rglob("*.svg"):
+                if imagen.stem.isdigit() and int(imagen.stem) in formas:
+                    shutil.move(imagen, destino / f"{formas[int(imagen.stem)]}.svg")
+
+
 class IconosItems:
     FORMATO = "png"
 

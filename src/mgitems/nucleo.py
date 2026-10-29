@@ -17,6 +17,7 @@ from mgitems.categorias import (
     CacheCategorias, IndicePiezas, categorias, donde_se_ven, otros_usos, tipos_de_items, usos_de_piezas,
 )
 from mgitems.destinos import DESCARTADO, descarte_por_nombre, es_de_pasaporte
+from mgitems.interfaz import BANNERS, CARPETA_BANNERS, DIBUJOS, recortar
 from mgitems.acciones import ANIMACIONES, NO_SE_DIBUJAN, animaciones, motivo_pieza_sin_accion, motivo_sin_accion, valor_de_accion
 from mgitems.animacion import CUADROS_POR_SEGUNDO, Linea, NoSeReproduce, alinear, espejar, simular_accion
 from mgitems.se_ve import TRANSPORTE, motivo_sin_efecto
@@ -504,6 +505,35 @@ class Nucleo:
                 pass
         return resultado
 
+    # --- Dibujos del juego para la interfaz ---
+
+    def dibujos_de_la_interfaz(self) -> dict:
+        """Los dibujos del juego que usan las ventanas que imitan las suyas (ver `interfaz`): `{"ok", "dibujos":
+        {nombre: SVG}}`. Falta el que no se pudo conseguir (sin conexión, sin FFDec, otra versión del banner)."""
+        dibujos = {}
+        for banner, tamano in BANNERS.items():
+            obtenido = self._obtener_del_cdn(banner, CARPETA_BANNERS)
+            if not obtenido["ok"] or len(obtenido["data"]) != tamano:
+                continue
+            carpeta = self._entorno.carpeta_cache() / "interfaz" / banner / str(tamano)
+            formas = {forma: nombre for nombre, (de, forma, _) in DIBUJOS.items() if de == banner}
+            faltan = {forma: nombre for forma, nombre in formas.items() if not (carpeta / f"{nombre}.svg").is_file()}
+            if faltan:
+                try:
+                    with tempfile.TemporaryDirectory(prefix="mgitems-", ignore_cleanup_errors=True) as temporal:
+                        archivo = Path(temporal) / f"{banner}.swf"
+                        archivo.write_bytes(obtenido["data"])
+                        with self._candado_ffdec:
+                            self._exportador.exportar_formas(archivo, faltan, carpeta)
+                except (FFDecNoDisponible, OSError, subprocess.SubprocessError):
+                    continue
+            for nombre in formas.values():
+                try:
+                    dibujos[nombre] = recortar((carpeta / f"{nombre}.svg").read_text(encoding="utf-8"), DIBUJOS[nombre][2])
+                except OSError:
+                    pass
+        return {"ok": True, "dibujos": dibujos}
+
     def _motivo_pieza_sin_accion(self, ruta: str) -> str | None:
         swf, _, clase = ruta.rpartition(".")
         obtenido = self._categorias_de(swf)
@@ -867,18 +897,19 @@ class Nucleo:
             return obtenido
         return self._cargar_swf(nombre, obtenido["data"], f"{nombre}.swf", obtenido["extra"])
 
-    def _obtener_del_cdn(self, nombre: str) -> dict:
-        """`{"ok", "data", "extra"}` de un SWF del CDN, usando la copia guardada si no cambió. No lo abre."""
+    def _obtener_del_cdn(self, nombre: str, carpeta: str = "assets") -> dict:
+        """`{"ok", "data", "extra"}` de un SWF del CDN (de su carpeta `carpeta`), usando la copia guardada si no
+        cambió. No lo abre."""
         if not _NOMBRE_SWF.match(nombre):
             return {"ok": False, "error": f"Nombre de SWF inválido: {nombre}"}
         try:
-            cache = CacheSwf(self._entorno.carpeta_cache() / "swf")
+            cache = CacheSwf(self._entorno.carpeta_cache() / ("swf" if carpeta == "assets" else carpeta))
         except OSError as e:
             return {"ok": False, "error": str(e)}
         guardado = cache.leer(nombre)
 
         try:
-            version = self._fuente.version(nombre)
+            version = self._fuente.version(nombre, carpeta)
         except SwfNoEncontrado:
             return {"ok": False, "error": f"El SWF {nombre} no existe en el servidor del juego."}
         except SinConexion:
@@ -897,7 +928,7 @@ class Nucleo:
             return {"ok": True, "data": guardado[0], "extra": {"tamano": version.tamano, "origen": "copia"}}
 
         try:
-            data = self._fuente.descargar(nombre)
+            data = self._fuente.descargar(nombre, carpeta)
         except SwfNoEncontrado:
             return {"ok": False, "error": f"El SWF {nombre} no existe en el servidor del juego."}
         except SinConexion:
