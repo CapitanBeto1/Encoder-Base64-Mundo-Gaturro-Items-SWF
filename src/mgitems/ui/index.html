@@ -314,20 +314,20 @@
   <dialog id="dialogo-mis-looks" class="dialogo-mis-looks">
     <div class="panel-mis-looks">
       <div class="titulo-mis-looks">
-        <span class="martillo" aria-hidden="true">🔨</span>
+        <span class="martillo" aria-hidden="true" data-dibujo="martillo">🔨</span>
         <h2><span id="titulo-mis-looks">GUARDA TU LOOK</span><span id="sub-mis-looks" class="sub">GUARDA TUS LOOKS FAVORITOS</span></h2>
         <span class="acciones-mis-looks">
           <button type="button" id="importar-look" class="pastilla-chica" title="Agregar el archivo de Look de otra persona">IMPORTAR</button>
           <button type="button" id="exportar-look" class="pastilla-chica" title="Guardar el Look elegido en un archivo para pasárselo a otra persona">EXPORTAR</button>
           <button type="button" id="duplicar-look" class="pastilla-chica" title="Hacer una copia del Look elegido">DUPLICAR</button>
         </span>
-        <button type="button" id="cerrar-mis-looks" class="cerrar-redondo cerrar-amarillo" title="Cerrar" aria-label="Cerrar">✕</button>
+        <button type="button" id="cerrar-mis-looks" class="cerrar-redondo cerrar-amarillo" title="Cerrar" aria-label="Cerrar" data-dibujo="cerrar_amarillo">✕</button>
       </div>
       <div class="cuerpo-mis-looks">
         <div class="columna-escenario">
-          <div class="escenario-look">
-            <button type="button" id="reiniciar-look" class="girar-look" title="Volver al Look que tenés puesto" aria-label="Volver al Look que tenés puesto">↻</button>
-            <button type="button" id="eliminar-look-elegido" class="girar-look eliminar-look" title="Eliminar el Look elegido" aria-label="Eliminar el Look elegido">🗑</button>
+          <div class="escenario-look" data-dibujo="escenario" data-dibujo-como="fondo">
+            <button type="button" id="reiniciar-look" class="girar-look" title="Volver al Look que tenés puesto" aria-label="Volver al Look que tenés puesto" data-dibujo="reiniciar">↻</button>
+            <button type="button" id="eliminar-look-elegido" class="girar-look eliminar-look" title="Eliminar el Look elegido" aria-label="Eliminar el Look elegido" data-dibujo="eliminar">🗑</button>
             <img id="gaturro-mis-looks" data-zoom="1" alt="El Look elegido">
             <label class="zoom-gaturro zoom-escenario" title="Acercar o alejar el Gaturro">
               <span aria-hidden="true">−</span>
@@ -404,7 +404,7 @@
       </div>
       <div class="panel-colores">
         <div class="titulo-colores">
-          <span class="paleta" aria-hidden="true">🎨</span>
+          <span class="paleta" aria-hidden="true" data-dibujo="paleta">🎨</span>
           <h2><span>ELIGE</span><span class="rojo">TUS COLORES</span></h2>
           <button type="button" id="cerrar-colores" class="cerrar-redondo" title="Cerrar sin guardar" aria-label="Cerrar sin guardar">✕</button>
         </div>

@@ -6,7 +6,8 @@ import urllib.parse
 import urllib.request
 from dataclasses import dataclass
 
-URL_ASSETS = "https://cdn-ar.mundogaturro.com/juego/assets/"
+URL_JUEGO = "https://cdn-ar.mundogaturro.com/juego/"
+URL_ASSETS = URL_JUEGO + "assets/"
 
 
 class SwfNoEncontrado(Exception):
@@ -31,19 +32,20 @@ class FuenteCDN:
     def __init__(self):
         self._tls: ssl.SSLContext | None = None
 
-    def url(self, nombre: str) -> str:
-        return URL_ASSETS + urllib.parse.quote(nombre) + ".swf"
+    def url(self, nombre: str, carpeta: str = "assets") -> str:
+        """`carpeta`: la del juego donde está el SWF (`assets`, la de los Items; `banners`, la de sus ventanas)."""
+        return URL_JUEGO + carpeta + "/" + urllib.parse.quote(nombre) + ".swf"
 
-    def version(self, nombre: str) -> Version:
-        with self._pedir(nombre, "HEAD") as respuesta:
+    def version(self, nombre: str, carpeta: str = "assets") -> Version:
+        with self._pedir(nombre, "HEAD", carpeta) as respuesta:
             return Version(int(respuesta.headers.get("Content-Length") or 0), respuesta.headers.get("ETag"))
 
-    def descargar(self, nombre: str) -> bytes:
-        with self._pedir(nombre, "GET") as respuesta:
+    def descargar(self, nombre: str, carpeta: str = "assets") -> bytes:
+        with self._pedir(nombre, "GET", carpeta) as respuesta:
             return respuesta.read()
 
-    def _pedir(self, nombre: str, metodo: str):
-        pedido = urllib.request.Request(self.url(nombre), method=metodo, headers={"User-Agent": "MGItems"})
+    def _pedir(self, nombre: str, metodo: str, carpeta: str):
+        pedido = urllib.request.Request(self.url(nombre, carpeta), method=metodo, headers={"User-Agent": "MGItems"})
         if self._tls is None:
             self._tls = ssl.create_default_context()  # verifica certificados
         try:

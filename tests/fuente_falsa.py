@@ -15,11 +15,14 @@ class FuenteFalsa(FuenteCDN):
         self.swfs[nombre] = data
         self.etags[nombre] = etag
 
-    def version(self, nombre):
+    # Los de otra carpeta del juego (por ejemplo, los banners) se publican como "<carpeta>/<nombre>".
+    def version(self, nombre, carpeta="assets"):
+        nombre = nombre if carpeta == "assets" else f"{carpeta}/{nombre}"
         self._chequear(nombre)
         return Version(len(self.swfs[nombre]), self.etags[nombre])
 
-    def descargar(self, nombre):
+    def descargar(self, nombre, carpeta="assets"):
+        nombre = nombre if carpeta == "assets" else f"{carpeta}/{nombre}"
         self._chequear(nombre)
         self.descargas.append(nombre)
         return self.swfs[nombre]

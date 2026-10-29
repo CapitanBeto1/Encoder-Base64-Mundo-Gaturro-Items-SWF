@@ -2150,10 +2150,25 @@ $("importar-archivo").addEventListener("click", importarDeArchivo);
 $("cancelar-importar").addEventListener("click", () => $("dialogo-importar").close());
 $("texto-importar").addEventListener("input", () => avisar($("mensaje-importar"), ""));
 
+// Los dibujos del juego para las ventanas que imitan las suyas: si no llegan, quedan los del programa.
+async function ponerDibujosDelJuego() {
+  const resultado = await api().dibujos_de_la_interfaz();
+  if (!resultado.ok) return;
+  for (const elemento of document.querySelectorAll("[data-dibujo]")) {
+    const svg = resultado.dibujos[elemento.dataset.dibujo];
+    if (!svg) continue;
+    const url = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+    if (elemento.dataset.dibujoComo === "fondo") elemento.style.backgroundImage = `url("${url}")`;
+    else elemento.replaceChildren(Object.assign(document.createElement("img"), { src: url, alt: "" }));
+    elemento.classList.add("con-dibujo");
+  }
+}
+
 window.addEventListener("pywebviewready", async () => {
   conectado = true;
   actualizarControles();
   mostrarEntorno(await api().estado_entorno());
   cargarParaLaVista();
+  ponerDibujosDelJuego();
 });
 mostrarLista();
