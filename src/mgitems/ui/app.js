@@ -101,15 +101,14 @@ function mostrarEncode(resultado) {
     const n = Object.keys(resultado.prenda.partes).length;
     $("resumen").textContent = `Look «${resultado.look.nombre}»: ${resultado.prenda.ruta} con ${n === 1 ? "1 Pieza" : `${n} Piezas`}.` + (resultado.prenda.tipo === "mochila" ? " Está en la mochila: usalo para vestirte." : "");
   } else if (resultado?.prenda) {
-    const [[parteElegida, piezaElegida]] = Object.entries(resultado.prenda.partes);
-    const nombreParte = partesDelCuerpo.find((p) => p.id === parteElegida)?.nombre ?? parteElegida;
-    $("resumen").textContent = `Prenda trucada: ${resultado.prenda.ruta} muestra ${piezaElegida} en ${nombreParte}.` + (resultado.prenda.tipo === "mochila" ? " Está en la mochila: usalo para vestirte." : "");
+    const n = Object.keys(resultado.prenda.partes).length;
+    $("resumen").textContent = `Prenda trucada: ${resultado.prenda.ruta} con ${n === 1 ? "1 Pieza" : `${n} Piezas`}.` + (resultado.prenda.tipo === "mochila" ? " Está en la mochila: usalo para vestirte." : "");
   } else if (resultado) {
     $("resumen").textContent = `Encode con ${contarItems(resultado.items.length)}.`;
   } else {
     $("resumen").textContent =
       vista === "trucar"
-        ? base && pieza && parte ? "Tocá «Trucar Prenda» para generar el Encode." : "Elegí el Item base, la Pieza y la Parte del cuerpo."
+        ? lookActual.base ? "Tocá «Trucar Prenda» para generar el Encode." : "Elegí la Prenda o el Item que querés trucar."
         : vista === "acciones"
           ? lookActual.animacion ? "Tocá «Aplicar acción» para generar el Encode." : "Elegí la animación."
           : vista === "looks"
@@ -129,16 +128,14 @@ function actualizarControles() {
   $("quitar-todos").disabled = !listo || items.length === 0;
   $("importar").disabled = !listo;
   $("abrir-entorno").disabled = !conectado;
-  const puedeGenerar = { agregar: items.length > 0, trucar: base && pieza && parte, looks: Object.keys(lookActual.partes).length > 0 }[vista];
+  const puedeGenerar = vista === "agregar" ? items.length > 0 : Object.keys(lookActual.partes).length > 0;
   $("generar").disabled = !listo || !puedeGenerar;
   $("guardar-look").disabled = $("descartar-look").disabled = $("nuevo-look").disabled = $("importar-look").disabled = !listo;
   $("abrir-mis-looks").disabled = !listo;
   $("borrar-look").disabled = !listo || !lookActual.id;
   $("nombre-look").disabled = $("cambiar-base").disabled = $("agregar-fuente").disabled = $("todas-las-fuentes").disabled = $("abrir-archivo-looks").disabled = !listo;
   mostrarBarraLook();
-  $("buscar-base").disabled = $("buscar-pieza").disabled = $("buscar-parte").disabled = !listo || !prendas.length;
-  $("buscar-swf-pieza").disabled = !listo || !prendas.length;
-  $("pestana-agregar").disabled = $("pestana-trucar").disabled = $("pestana-looks").disabled = !conectado || ocupado;
+  $("pestana-agregar").disabled = $("pestana-trucar").disabled = $("pestana-looks").disabled = $("pestana-acciones").disabled = !conectado || ocupado;
   $("copiar").disabled = $("guardar").disabled = $("entregar").disabled = !listo || !$("encode").value;
 }
 
@@ -200,14 +197,13 @@ function mostrarSwfAbierto(resultado) {
   $("nombre-swf").textContent = `${resultado.swf}.swf · ${contarItems(resultado.cantidad_items)}`;
   if (resultado.aviso) avisarLista(resultado.aviso, "advertencia");
   else avisarLista(`SWF abierto: ${resultado.swf}.`, "exito");
-  olvidarPrendas();
   prepararIconos(resultado.swf);
   cargarParaLaVista();
 }
 
 // Lo que necesita la pestaña elegida, en orden (las cargas no se pisan entre sí).
 async function cargarParaLaVista() {
-  if (vista === "trucar" && swfAbierto && !prendas.length) await cargarPrendas();
+  if (vista === "trucar") await cargarTrucar();
   if (vista === "looks") await cargarLooks();
   if (vista === "acciones") await cargarAcciones();
   if (vista === "agregar" && !buscador.cargado) await cargarItemsBuscados();
@@ -390,7 +386,7 @@ async function agregarAMano(evento) {
 }
 
 async function generar() {
-  if (vista === "trucar") return trucar();
+  if (vista === "trucar") return trucarPrenda();
   if (vista === "looks") return aplicarLook();
   if (vista === "acciones") return aplicarAccion();
   const resultado = await api().generar_encode(items);
@@ -424,23 +420,31 @@ async function guardar() {
 
 let vista = "agregar";
 
+// Looks, Acciones y Trucar Prenda usan la misma pantalla (el Gaturro, los casilleros y el inventario), cada una
+// con su documento: lo que se está editando en una queda guardado mientras se está en otra.
+const PESTANAS_DEL_EDITOR = ["looks", "acciones", "trucar"];
+const documentos = {};
+let pestanaDelDocumento = "looks"; // de qué pestaña es `lookActual`
+
 function cambiarVista(nueva) {
-  // Acciones usa la pantalla de Looks: el Gaturro, los casilleros y el inventario son los mismos, con la acción.
-  if ((vista === "acciones") !== (nueva === "acciones")) {
-    if (nueva === "acciones") [lookDeLooks, lookActual] = [lookActual, accionActual];
-    else [accionActual, lookActual] = [lookActual, lookDeLooks];
+  if (PESTANAS_DEL_EDITOR.includes(nueva) && nueva !== pestanaDelDocumento) {
+    documentos[pestanaDelDocumento] = lookActual;
+    lookActual = documentos[nueva] ?? documentoNuevo(nueva);
+    pestanaDelDocumento = nueva;
     casilleroMarcado = null;
     lookElegido = null;
     looksGuardados = [];
   }
   detenerAnimacion();
   vista = nueva;
-  const pantalla = vista === "acciones" ? "looks" : vista;
-  for (const nombre of ["agregar", "trucar", "looks"]) $(`vista-${nombre}`).hidden = nombre !== pantalla;
+  const pantalla = PESTANAS_DEL_EDITOR.includes(vista) ? "looks" : vista;
+  for (const nombre of ["agregar", "looks"]) $(`vista-${nombre}`).hidden = nombre !== pantalla;
   for (const nombre of ["agregar", "trucar", "looks", "acciones"]) $(`pestana-${nombre}`).setAttribute("aria-selected", String(nombre === vista));
   document.querySelector("main").classList.toggle("modo-looks", pantalla === "looks");
   document.querySelector("main").classList.toggle("modo-acciones", vista === "acciones");
-  $("aplicar-look").textContent = vista === "acciones" ? "Aplicar acción" : "Aplicar Look";
+  document.querySelector("main").classList.toggle("modo-trucar", vista === "trucar");
+  $("aplicar-look").textContent = { acciones: "Aplicar acción", trucar: "Trucar Prenda" }[vista] ?? "Aplicar Look";
+  $("texto-se-guarda").textContent = vista === "trucar" ? "Se trucará:" : "Se guarda en:";
   $("nombre-look").placeholder = vista === "acciones" ? "NOMBRE DE LA ACCIÓN" : "NOMBRE DEL LOOK";
   document.querySelector("main").classList.toggle("modo-agregar", vista === "agregar");
   $("items-a-recibir").hidden = vista !== "agregar";
@@ -450,52 +454,7 @@ function cambiarVista(nueva) {
   cargarParaLaVista();
 }
 
-// --- Trucar Prenda: un Item base que muestra una Pieza (cualquiera) en una Parte del cuerpo (cualquiera) ---
-
-let prendas = []; // [{ruta, clase, partes}] del SWF abierto
-let piezasDelSwf = []; // [{ruta, clase}]
-let partesDelCuerpo = []; // [{id, nombre}]
-let base = null;
-let pieza = null; // {ruta, clase}: la ruta lleva el SWF de la Pieza, que puede ser otro
-let parte = null;
-let swfAbiertoNombre = null; // el SWF del Item base
-let swfDePiezas = null; // de qué SWF se eligen las Piezas
-
-function olvidarPrendas() {
-  prendas = [];
-  piezasDelSwf = [];
-  base = pieza = parte = null;
-  swfDePiezas = null;
-  for (const id of ["buscar-base", "buscar-pieza", "buscar-parte", "buscar-swf-pieza"]) $(id).value = "";
-  mostrarTruco();
-}
-
-async function cargarPrendas() {
-  olvidarPrendas();
-  const resultado = await mientras("Leyendo las Prendas e Items de mochila del SWF… (la primera vez tarda unos segundos)", () => api().prendas());
-  if (!resultado.ok) return avisarLista(resultado.error, "error");
-  const resultadoPiezas = await api().piezas();
-  prendas = resultado.prendas;
-  partesDelCuerpo = resultado.partes_del_cuerpo;
-  swfAbiertoNombre = swfDePiezas = resultado.swf;
-  piezasDelSwf = resultadoPiezas.ok ? resultadoPiezas.piezas : [];
-  actualizarControles();
-  if (!prendas.length) return avisarLista("Este SWF no tiene Prendas ni Items de mochila.", "advertencia");
-  const deMochila = prendas.filter((p) => p.tipo === "mochila").length;
-  const cuantos = (n, uno, varios) => (n === 1 ? `1 ${uno}` : `${n} ${varios}`);
-  avisarLista(`${cuantos(prendas.length - deMochila, "Prenda", "Prendas")}, ${cuantos(deMochila, "Item de mochila", "Items de mochila")} y ${cuantos(piezasDelSwf.length, "Pieza", "Piezas")}. Elegí el Item base.`, "exito");
-  $("buscar-base").focus();
-}
-
-// Las opciones cuyo nombre contiene el texto; las que empiezan con él, primero.
-// Pide las imágenes que falten (pueden no estar listas cuando se cargó el SWF).
-function filtrarPorNombre(lista, texto, nombreDe = (o) => o.clase) {
-  const t = texto.trim().toLowerCase();
-  const coinciden = lista.filter((o) => nombreDe(o).toLowerCase().includes(t));
-  const ordenadas = coinciden.sort((a, b) => !nombreDe(a).toLowerCase().startsWith(t) - !nombreDe(b).toLowerCase().startsWith(t)).slice(0, 80);
-  cargarIconos(ordenadas.filter((o) => o.ruta).map((o) => o.ruta));
-  return ordenadas;
-}
+// --- La ventana del Item base: cómo se ve cada uno ---
 
 const filaConImagen = (o) => [elementoIcono(o.ruta), etiqueta(o.clase, "nombre")];
 // Un Item base: dónde queda en el juego.
@@ -504,102 +463,6 @@ const filaDeBase = (o) => [
   ...(basesDeTodos ? [etiqueta(swfDeRuta(o.ruta), "ayuda swf-base")] : []),
   etiqueta(o.tipo === "mochila" ? "🎒 mochila" : "👕 guardarropa", `ayuda tipo-${o.tipo === "mochila" ? "mochila" : "prenda"}`),
 ];
-
-function mostrarTruco() {
-  const caja = $("resumen-truco");
-  if (!base && !pieza && !parte) {
-    caja.replaceChildren(prendas.length ? "Elegí el Item base, la Pieza y la Parte del cuerpo." : "Abrí un SWF y elegí el Item base, la Pieza y la Parte del cuerpo.");
-  } else {
-    const hueco = (texto) => etiqueta(texto, "hueco");
-    caja.replaceChildren(
-      ...(base ? [elementoIcono(base.ruta), etiqueta(base.clase, "nombre")] : [hueco("Item base")]),
-      etiqueta("→ muestra", "conector"),
-      ...(pieza ? [elementoIcono(pieza.ruta), etiqueta(pieza.ruta.startsWith(swfAbiertoNombre + ".") ? pieza.clase : pieza.ruta, "nombre")] : [hueco("Pieza")]),
-      etiqueta("en", "conector"),
-      parte ? etiqueta(parte.nombre, "parte") : hueco("Parte del cuerpo")
-    );
-  }
-  mostrarEncode(null);
-}
-
-async function trucar() {
-  const resultado = await mientras("Trucando la Prenda… (tarda unos segundos)", () => api().trucar_prenda(base.clase, parte.id, pieza.ruta));
-  if (!resultado.ok) return avisarLista(resultado.error, "error");
-  avisarLista("");
-  mostrarEncode(resultado);
-  avisarEncode("Prenda trucada. Tocá «Agregar al juego» para recibirla.", "exito");
-}
-
-crearDesplegable({
-  campo: $("buscar-base"),
-  lista: $("resultados-base"),
-  consultar: async (t) => filtrarPorNombre(prendas, t),
-  fila: filaDeBase,
-  elegir: (p) => {
-    base = p;
-    $("buscar-base").value = p.clase;
-    mostrarTruco();
-    if (!pieza) $("buscar-pieza").focus();
-  },
-  vacio: "Ninguna Prenda ni Item de mochila se llama así.",
-});
-
-crearDesplegable({
-  campo: $("buscar-pieza"),
-  lista: $("resultados-pieza"),
-  consultar: async (t) => filtrarPorNombre(piezasDelSwf, t),
-  fila: filaConImagen,
-  elegir: (p) => {
-    pieza = p;
-    $("buscar-pieza").value = p.clase;
-    mostrarTruco();
-    if (!parte) $("buscar-parte").focus();
-  },
-  vacio: "Ninguna Pieza se llama así.",
-});
-
-crearDesplegable({
-  campo: $("buscar-parte"),
-  lista: $("resultados-parte"),
-  consultar: async (t) => filtrarPorNombre(partesDelCuerpo, t, (p) => `${p.nombre} ${p.id}`),
-  fila: (p) => [etiqueta(p.nombre, "nombre"), etiqueta(p.id, "ayuda")],
-  elegir: (p) => {
-    parte = p;
-    $("buscar-parte").value = p.nombre;
-    mostrarTruco();
-  },
-  vacio: "No hay una Parte del cuerpo con ese nombre.",
-});
-
-// Las Piezas pueden salir de otro SWF del juego (se escriben "<swf>.<clase>" y el juego las busca ahí).
-async function usarPiezasDe(swf) {
-  $("buscar-swf-pieza").value = swf === swfAbiertoNombre ? "" : swf;
-  if (swf === swfDePiezas) return;
-  const resultado = await mientras(`Leyendo las Piezas de ${swf}…`, () => api().piezas(swf));
-  if (!resultado.ok) return avisarLista(resultado.error, "error");
-  swfDePiezas = swf;
-  piezasDelSwf = resultado.piezas;
-  pieza = null;
-  $("buscar-pieza").value = "";
-  mostrarTruco();
-  avisarLista(`${piezasDelSwf.length} Piezas de ${swf}.`, "exito");
-  $("buscar-pieza").focus();
-  // Sus imágenes, en segundo plano.
-  const iconos = await api().preparar_iconos(swf);
-  if (iconos.ok) {
-    for (const ruta of [...imagenes.keys()]) if (ruta.startsWith(swf + ".")) imagenes.delete(ruta);
-    cargarIconos([...document.querySelectorAll(".icono[data-ruta]")].map((c) => c.dataset.ruta));
-  }
-}
-
-crearDesplegable({
-  campo: $("buscar-swf-pieza"),
-  lista: $("resultados-swf-pieza"),
-  consultar: async (t) => (await api().buscar_en_catalogo(t)).swfs.slice(0, 80),
-  fila: ({ swf, items }) => [etiqueta(swf, "nombre"), etiqueta(swf === swfAbiertoNombre ? "el mismo" : contarItems(items), "ayuda")],
-  elegir: ({ swf }) => usarPiezasDe(swf),
-  vacio: "No hay SWF con ese nombre.",
-});
 
 $("pestana-agregar").addEventListener("click", () => cambiarVista("agregar"));
 $("pestana-trucar").addEventListener("click", () => cambiarVista("trucar"));
@@ -627,7 +490,12 @@ async function prepararIconosDe(swf) {
 
 const swfDeRuta = (ruta) => ruta.slice(0, ruta.lastIndexOf("."));
 const claseDeRuta = (ruta) => ruta.slice(ruta.lastIndexOf(".") + 1);
-const nombreDeParte = (id) => (id === "action" ? "Pieza de la acción" : partesConocidas.find((p) => p.id === id)?.nombre ?? id);
+// Las Partes que usan algunas Prendas y no tienen casillero en Looks (en Trucar Prenda van como casilleros extra).
+const NOMBRES_DE_OTRAS_PARTES = {
+  action: "Pieza de la acción", clothFront: "Torso de adelante", armFore: "Brazo de adelante", armBack: "Brazo de atrás",
+  glove: "Guante", gloveFore: "Guante de adelante", gloveBack: "Guante de atrás", gripBack: "Mano de atrás",
+};
+const nombreDeParte = (id) => NOMBRES_DE_OTRAS_PARTES[id] ?? partesConocidas.find((p) => p.id === id)?.nombre ?? id;
 
 // Looks y Acciones comparten los guardados (botón, ventana, ✓ ✗ 🗑): cada pestaña con su lista y sus funciones.
 const GUARDADOS = {
@@ -637,7 +505,7 @@ const GUARDADOS = {
               importar: "importar_accion", el: "la acción", lo: "la", nuevo: "Acción nueva", mis: "Mis acciones", titulo: "GUARDA TU ACCIÓN", sub: "GUARDA TUS ACCIONES FAVORITAS" },
 };
 const guardados = () => GUARDADOS[vista === "acciones" ? "acciones" : "looks"];
-const documentoNuevo = () => (vista === "acciones" ? nuevaAccion() : nuevoLook());
+const documentoNuevo = (pestana = vista) => ({ acciones: nuevaAccion, trucar: nuevaPrendaATrucar }[pestana] ?? nuevoLook)();
 const guardadoDe = (resultado) => resultado.look ?? resultado.accion;
 // Lo que se dibuja quieto (miniaturas, escenario): en una acción, solo lo de la cabeza.
 const partesQuietas = (documento) =>
@@ -785,7 +653,7 @@ function mostrarLook() {
   $("base-look").replaceChildren(
     ...(base
       ? [elementoIcono(base), etiqueta(`${claseDeRuta(base)} (${swfDeRuta(base)})`, "nombre")]
-      : [etiqueta(vista === "acciones" ? "elegí un Item de mochila" : "se elige al aplicar", "ayuda")])
+      : [etiqueta({ acciones: "elegí un Item de mochila", trucar: "elegí una Prenda o un Item" }[vista] ?? "se elige al aplicar", "ayuda")])
   );
   if (vista === "acciones") $("animacion-accion").value = lookActual.animacion ?? "";
   mostrarCasilleros();
@@ -814,6 +682,20 @@ function casillero(id) {
     mostrarLook();
   });
   li.append(boton);
+  const original = vista === "trucar" ? lookActual.original?.[id] : undefined;
+  if (vista === "trucar" && original !== ruta) {
+    boton.classList.add("cambiado");
+    boton.title += original ? ` (la original: ${claseDeRuta(original)})` : " (la original no tiene nada acá)";
+    const volver = Object.assign(document.createElement("button"), {
+      className: "volver-casillero", textContent: "↺", title: `Volver ${nombreDeParte(id)} a como estaba en la Prenda original`,
+    });
+    volver.addEventListener("click", () => {
+      if (original) lookActual.partes[id] = original;
+      else delete lookActual.partes[id];
+      mostrarLook();
+    });
+    li.append(volver);
+  }
   if (ruta) {
     const quitar = Object.assign(document.createElement("button"), { className: "quitar sacar-pieza", textContent: "✕", title: `Sacar la Pieza de ${nombreDeParte(id)}` });
     quitar.addEventListener("click", () => {
@@ -831,8 +713,9 @@ function mostrarCasilleros() {
     $("casilleros-cuerpo").replaceChildren(casillero("action"));
   } else {
     const ubicadas = new Set([...CASILLEROS_CABEZA, ...CASILLEROS_CUERPO]);
-    // Partes del Look que no tienen casillero (de un Look importado, por ejemplo): van con el cuerpo.
-    const extra = Object.keys(lookActual.partes).filter((p) => !ubicadas.has(p));
+    // Partes que no tienen casillero (de un Look importado, o las que usa la Prenda que se truca): van con el cuerpo.
+    const usadas = new Set([...Object.keys(lookActual.partes), ...Object.keys(lookActual.original ?? {})]);
+    const extra = [...usadas].filter((p) => !ubicadas.has(p));
     $("casilleros-cabeza").replaceChildren(...CASILLEROS_CABEZA.map(casillero));
     $("casilleros-cuerpo").replaceChildren(...[...CASILLEROS_CUERPO, ...extra].map(casillero));
   }
@@ -1326,8 +1209,9 @@ function mostrarBases() {
       boton.setAttribute("aria-pressed", String(lookActual.base === b.ruta));
       boton.append(...filaDeBase(b));
       boton.addEventListener("click", () => {
-        lookActual.base = b.ruta;
         $("dialogo-base").close();
+        if (vista === "trucar") return abrirPrendaATrucar(b.ruta);
+        lookActual.base = b.ruta;
         mostrarLook();
       });
       li.append(boton);
@@ -1378,10 +1262,12 @@ async function usarBasesDe(swf) {
 $("cambiar-base").addEventListener("click", () => {
   const enAcciones = vista === "acciones";
   $("dialogo-base").classList.toggle("solo-mochila", enAcciones);
-  $("titulo-base").textContent = enAcciones ? "¿Dónde se guarda la acción?" : "¿Dónde se guarda el Look?";
+  $("titulo-base").textContent = { acciones: "¿Dónde se guarda la acción?", trucar: "¿Qué Prenda querés trucar?" }[vista] ?? "¿Dónde se guarda el Look?";
   $("ayuda-base").textContent = enAcciones
     ? "Un Item de mochila de cualquier SWF: es lo que vas a recibir, y hace la acción cada vez que lo usás. Una Prenda no hace acciones."
-    : "El Item base es lo que vas a recibir: una Prenda (guardarropa) o un Item de mochila. Puede ser de cualquier SWF.";
+    : vista === "trucar"
+      ? "Una Prenda (guardarropa) o un Item de mochila de cualquier SWF: el Gaturro aparece con ella puesta y la cambiás como quieras."
+      : "El Item base es lo que vas a recibir: una Prenda (guardarropa) o un Item de mochila. Puede ser de cualquier SWF.";
   $("dialogo-base").showModal();
   $("filtro-base").value = "";
   const swf = lookActual.base ? swfDeRuta(lookActual.base) : fuentes.swfs[0];
@@ -1438,7 +1324,9 @@ async function borrarLook() {
 // --- Aplicar y agregar al juego (barra de abajo) ---
 
 function mostrarBarraLook() {
-  const n = vista === "acciones" ? Number(Boolean(lookActual.animacion && lookActual.base)) : Object.keys(lookActual.partes).length;
+  const n = vista === "acciones" ? Number(Boolean(lookActual.animacion && lookActual.base))
+    : vista === "trucar" ? (lookActual.base ? Object.keys(lookActual.partes).length : 0)
+    : Object.keys(lookActual.partes).length;
   const listo = conectado && !ocupado;
   $("aplicar-look").disabled = !listo || !n;
   $("entregar-look").disabled = $("ver-encode").disabled = !listo || !$("encode").value;
@@ -1446,6 +1334,8 @@ function mostrarBarraLook() {
     ? $("resumen").textContent
     : vista === "acciones"
       ? n ? "Tocá «Aplicar acción» para generar el Encode." : "Elegí la animación y el Item de mochila donde se guarda."
+      : vista === "trucar"
+      ? n ? "Tocá «Trucar Prenda» para generar el Encode." : lookActual.base ? "Poné al menos una Pieza." : "Elegí la Prenda o el Item que querés trucar."
       : n ? "Tocá «Aplicar Look» para generar el Encode." : "Elegí las Piezas del Look.";
 }
 
@@ -1460,7 +1350,53 @@ async function aplicarLook() {
   mostrarBarraLook();
 }
 
-$("aplicar-look").addEventListener("click", () => (vista === "acciones" ? aplicarAccion() : aplicarLook()));
+$("aplicar-look").addEventListener("click", () => ({ acciones: aplicarAccion, trucar: trucarPrenda }[vista] ?? aplicarLook)());
+
+// --- Trucar Prenda: una Prenda o un Item que ya existe, con sus Piezas cambiadas ---
+
+function nuevaPrendaATrucar() {
+  return { id: "", nombre: "", base: null, partes: {}, original: {}, colores: {} };
+}
+
+async function cargarTrucar() {
+  if (!partesConocidas.length) partesConocidas = (await api().partes_del_cuerpo()).partes_del_cuerpo;
+  mostrarLook();
+  if (!inventario.cargado) await cargarInventario();
+}
+
+// El Gaturro con la Prenda puesta: cada Pieza en su casillero, como estaba (lo original, para marcar los cambios).
+async function abrirPrendaATrucar(ruta) {
+  const resultado = await mientras("Leyendo la Prenda… (la primera vez tarda unos segundos)", () => api().prenda_para_trucar(ruta));
+  if (!resultado.ok) return avisarLista(resultado.error, "error");
+  lookActual.base = ruta;
+  lookActual.partes = { ...resultado.prenda.partes };
+  lookActual.original = { ...resultado.prenda.partes };
+  casilleroMarcado = null;
+  for (const swf of new Set([swfDeRuta(ruta), ...Object.values(lookActual.partes).map(swfDeRuta)])) prepararIconosDe(swf);
+  mostrarLook();
+  const n = Object.keys(lookActual.partes).length;
+  avisarLista(
+    resultado.prenda.tipo === "mochila"
+      ? `${claseDeRuta(ruta)} es un Item de mochila: al trucarlo te viste con estas Piezas (sin su animación ni su efecto).`
+      : `${claseDeRuta(ruta)} tiene ${n === 1 ? "1 Pieza" : `${n} Piezas`}: cambialas, sacalas o agregá otras.`,
+    "exito"
+  );
+}
+
+async function trucarPrenda() {
+  const resultado = await mientras("Trucando la Prenda… (tarda unos segundos)", () => api().trucar(lookActual.base, lookActual.partes));
+  if (!resultado.ok) return avisarLista(resultado.error, "error");
+  mostrarEncode(resultado);
+  avisarLista("Prenda trucada: tocá «Agregar al juego» para recibirla.", "exito");
+  mostrarBarraLook();
+}
+
+$("volver-original").addEventListener("click", () => {
+  lookActual.partes = { ...(lookActual.original ?? {}) };
+  casilleroMarcado = null;
+  mostrarLook();
+  avisarLista(lookActual.base ? "Volvió a la Prenda original." : "", "exito");
+});
 $("entregar-look").addEventListener("click", entregar);
 $("ver-encode").addEventListener("click", () => {
   $("resumen-ver-encode").textContent = $("resumen").textContent;
@@ -1517,8 +1453,6 @@ $("pestana-looks").addEventListener("click", () => cambiarVista("looks"));
 
 // --- Acciones: un Item de mochila que, al usarlo, hace una animación del juego mostrando una Pieza ---
 
-let lookDeLooks = null; // el Look abierto mientras se está en Acciones
-let accionActual = nuevaAccion();
 let animacionesDelJuego = []; // [{id, nombre, grupo, se_dibuja}], en el orden en que se ofrecen
 const GRUPOS_ANIMACION = {
   accion: "Acciones",

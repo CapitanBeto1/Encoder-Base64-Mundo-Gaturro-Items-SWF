@@ -265,8 +265,10 @@ button.derecha { margin-left: auto; }
   gap: 10px;
 }
 
-/* Looks y Acciones comparten la pantalla: cada una esconde lo de la otra. */
+/* Looks, Acciones y Trucar Prenda comparten la pantalla: cada una esconde lo de las otras. */
 main:not(.modo-acciones) .solo-acciones,
+main:not(.modo-trucar) .solo-trucar,
+main.modo-trucar .guardables,
 main.modo-acciones .solo-looks,
 .dialogo-base.solo-mochila .tipos-base {
   display: none;
@@ -285,8 +287,7 @@ main.modo-acciones .solo-looks,
 
 .vista[hidden] { display: none; }
 
-/* Trucar no tiene una lista que se achique: si no entra, la vista entera se desplaza. */
-#vista-trucar,
+/* Si no entra, la vista entera se desplaza. */
 #vista-looks {
   overflow-y: auto;
   padding-right: 4px;
@@ -585,48 +586,6 @@ textarea {
   white-space: nowrap;
   font-weight: 900;
 }
-
-/* Resumen del truco: Prenda base → muestra Pieza en Parte del cuerpo. */
-.resumen-truco {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  margin-top: 6px;
-  padding: 12px;
-  border-radius: 12px;
-  background: var(--panel-hundido);
-  color: var(--blanco);
-  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.6);
-}
-
-.resumen-truco .nombre {
-  padding: 3px 10px;
-  border-radius: 9px;
-  background: linear-gradient(var(--celeste), var(--celeste-oscuro));
-  box-shadow: none;
-  color: var(--texto);
-  text-shadow: none;
-}
-
-.resumen-truco .parte,
-.resultados-swf .parte {
-  padding: 3px 10px;
-  border-radius: 9px;
-  background: var(--rotulo);
-  color: var(--blanco);
-  text-transform: uppercase;
-  text-shadow: none;
-}
-
-.resumen-truco .hueco {
-  padding: 3px 10px;
-  border: 2px dashed rgba(255, 255, 255, 0.7);
-  border-radius: 9px;
-  font-size: 13px;
-}
-
-.resumen-truco .conector { font-size: 13px; }
 
 input.cantidad {
   flex: none;
@@ -1052,6 +1011,9 @@ main.modo-looks .buscador-swf { display: none; }
 .casillero .nombre-casillero { max-width: 100%; overflow: hidden; text-overflow: ellipsis; font-size: 7px; line-height: 1.1; text-transform: uppercase; color: var(--texto); white-space: nowrap; }
 .casillero[aria-pressed="true"] { background: #6fc054; border-color: #2f6421; box-shadow: 0 0 0 3px #fff; }
 .casilleros .sacar-pieza { position: absolute; top: -4px; right: -4px; width: 18px; height: 18px; font-size: 10px; padding: 0; }
+/* Trucar Prenda: lo cambiado respecto de la Prenda original, con su botón para volver a como era. */
+.casillero.cambiado { outline: 3px solid #ff9f1a; outline-offset: -2px; }
+.casilleros .volver-casillero { position: absolute; top: -4px; left: -4px; width: 18px; height: 18px; font-size: 11px; padding: 0; background: #ff9f1a; color: #fff; }
 
 .botones-tarjeta { flex: none; display: flex; justify-content: center; gap: 8px; }
 .boton-cuadrado {

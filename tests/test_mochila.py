@@ -228,3 +228,35 @@ def test_items_base_de_cualquier_swf_sin_abrirlo(sistema, fuente, ffdec):
     assert [(i["clase"], i["tipo"]) for i in resultado["items"]] == [("jugo1", "mochila"), ("pocima1", "mochila")]
     assert resultado["items"][0]["ruta"] == "bruja.jugo1"
     assert nucleo.items_base("noExiste")["ok"] is False
+
+
+# --- Trucar Prenda: editar una Prenda o un Item que ya existe ---
+
+def test_una_prenda_para_editar_trae_sus_piezas_con_su_swf(nucleo):
+    resultado = nucleo.prenda_para_trucar("clothes1.remera5")
+
+    assert resultado["ok"], resultado
+    assert resultado["prenda"] == {"ruta": "clothes1.remera5", "tipo": "prenda",
+                                   "partes": {"cloth": "clothes1.remera5_on", "arm": "clothes1.remera5_brazo_on"}}
+
+
+def test_de_un_item_de_mochila_solo_lo_que_viste(nucleo):
+    # La pócima hace una animación y un efecto: al trucarla se sacan (no son Piezas que vistan).
+    assert nucleo.prenda_para_trucar("bruja.pocima1")["prenda"]["partes"] == {}
+
+
+def test_trucar_cambiando_una_pieza_y_conservando_las_demas(nucleo, ffdec):
+    partes = nucleo.prenda_para_trucar("clothes1.remera5")["prenda"]["partes"] | {"hats": "costumes.coronaRey_on"}
+
+    resultado = nucleo.trucar("clothes1.remera5", partes)
+
+    assert resultado["ok"], resultado
+    assert leer_item_base(ffdec.trucos[0][1]).partes == {
+        "cloth": "remera5_on", "arm": "remera5_brazo_on", "hats": "costumes.coronaRey_on"}  # las del mismo SWF, sin él
+
+
+@pytest.mark.parametrize("base, partes", [("nada", {}), ("clothes1.noExiste", {"cloth": "clothes1.remera5_on"}),
+                                          ("clothes1.remera5", {"cloth": "costumes.noExiste_on"}), ("clothes1.remera5", [])])
+def test_trucar_lo_que_no_se_puede(nucleo, ffdec, base, partes):
+    assert not nucleo.trucar(base, partes)["ok"]
+    assert ffdec.trucos == []
