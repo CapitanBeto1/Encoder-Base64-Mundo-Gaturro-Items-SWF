@@ -72,11 +72,8 @@ class Puente:
     def aplicar_look(self, look: dict) -> dict:
         return self._nucleo.aplicar_look(look)
 
-    def prenda_para_trucar(self, base: str) -> dict:
-        return self._nucleo.prenda_para_trucar(base)
-
-    def trucar(self, base: str, partes: dict) -> dict:
-        return self._nucleo.trucar(base, partes)
+    def trucar_varias(self, trucadas: list) -> dict:
+        return self._nucleo.trucar_varias(trucadas)
 
     def animaciones(self) -> dict:
         return self._nucleo.animaciones()
