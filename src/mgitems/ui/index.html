@@ -61,7 +61,7 @@
 
   <nav class="pestanas" role="tablist">
     <button id="pestana-agregar" class="pestana" role="tab" aria-selected="true" aria-controls="vista-agregar">Agregar Items</button>
-    <button id="pestana-trucar" class="pestana" role="tab" aria-selected="false" aria-controls="vista-trucar">Trucar Prenda</button>
+    <button id="pestana-trucar" class="pestana" role="tab" aria-selected="false" aria-controls="vista-looks">Trucar Prenda</button>
     <button id="pestana-looks" class="pestana" role="tab" aria-selected="false" aria-controls="vista-looks">Looks</button>
     <button id="pestana-acciones" class="pestana" role="tab" aria-selected="false" aria-controls="vista-looks">Acciones</button>
   </nav>
@@ -137,55 +137,22 @@
         </div>
       </div>
 
-      <div id="vista-trucar" class="vista" role="tabpanel" hidden>
-        <h2>1. Item base</h2>
-        <div class="selector-swf">
-          <input id="buscar-base" type="text" spellcheck="false" autocomplete="off" disabled
-                 placeholder="Lo que vas a recibir: una Prenda o un Item de mochila"
-                 role="combobox" aria-expanded="false" aria-controls="resultados-base" aria-autocomplete="list">
-          <ul id="resultados-base" class="resultados-swf con-iconos" role="listbox" hidden></ul>
-        </div>
-        <h2>2. Pieza (vestimenta)</h2>
-        <div class="fila">
-          <span class="ayuda">De:</span>
-          <div class="selector-swf">
-            <input id="buscar-swf-pieza" type="text" spellcheck="false" autocomplete="off" disabled
-                   placeholder="El mismo SWF (o elegí otro del juego)"
-                   role="combobox" aria-expanded="false" aria-controls="resultados-swf-pieza" aria-autocomplete="list">
-            <ul id="resultados-swf-pieza" class="resultados-swf" role="listbox" hidden></ul>
-          </div>
-        </div>
-        <div class="selector-swf">
-          <input id="buscar-pieza" type="text" spellcheck="false" autocomplete="off" disabled
-                 placeholder="Cualquier Pieza del SWF, ej: mascara, anteojo"
-                 role="combobox" aria-expanded="false" aria-controls="resultados-pieza" aria-autocomplete="list">
-          <ul id="resultados-pieza" class="resultados-swf con-iconos" role="listbox" hidden></ul>
-        </div>
-        <h2>3. Parte del cuerpo</h2>
-        <div class="selector-swf">
-          <input id="buscar-parte" type="text" spellcheck="false" autocomplete="off" disabled
-                 placeholder="Dónde se ve la Pieza, ej: mano, pies, sombrero"
-                 role="combobox" aria-expanded="false" aria-controls="resultados-parte" aria-autocomplete="list">
-          <ul id="resultados-parte" class="resultados-swf" role="listbox" hidden></ul>
-        </div>
-        <div id="resumen-truco" class="resumen-truco">Abrí un SWF y elegí el Item base, la Pieza y la Parte del cuerpo.</div>
-      </div>
-
       <div id="vista-looks" class="vista" role="tabpanel" hidden>
         <div class="encabezado-looks">
-          <button id="abrir-mis-looks" class="boton-mis-looks" title="Ver, abrir, importar y exportar tus Looks guardados">
+          <button id="abrir-mis-looks" class="boton-mis-looks guardables" title="Ver, abrir, importar y exportar tus Looks guardados">
             <span aria-hidden="true">👕</span> <span id="texto-mis-looks">Mis Looks</span> <span id="cantidad-looks" class="cantidad-looks"></span>
           </button>
-          <span id="look-abierto" class="ayuda look-abierto"></span>
+          <span id="look-abierto" class="ayuda look-abierto guardables"></span>
         </div>
 
         <div class="inventario">
           <!-- Mitad izquierda: el Gaturro, protagonista. -->
           <div class="tarjeta-gaturro">
-            <input id="nombre-look" class="nombre-tarjeta" type="text" spellcheck="false" autocomplete="off"
+            <div class="nombre-tarjeta solo-trucar">TRUCAR PRENDA</div>
+            <input id="nombre-look" class="nombre-tarjeta guardables" type="text" spellcheck="false" autocomplete="off"
                    placeholder="NOMBRE DEL LOOK" aria-label="Nombre del Look">
             <div class="se-guarda-en">
-              <span class="ayuda">Se guarda en:</span>
+              <span id="texto-se-guarda" class="ayuda">Se guarda en:</span>
               <span id="base-look" class="base-look"></span>
               <button id="cambiar-base" class="enlace">Cambiar…</button>
             </div>
@@ -209,9 +176,10 @@
             </div>
             <div class="botones-tarjeta">
               <button id="colores-look" class="boton-cuadrado boton-colores" title="Colores del Gaturro" aria-label="Colores del Gaturro">⚙</button>
-              <button id="borrar-look" class="boton-cuadrado" title="Borrar el Look" aria-label="Borrar el Look">🗑</button>
-              <button id="descartar-look" class="boton-cuadrado boton-descartar" title="Descartar los cambios" aria-label="Descartar los cambios">✗</button>
-              <button id="guardar-look" class="boton-cuadrado boton-guardar" title="Guardar el Look" aria-label="Guardar el Look">✓</button>
+              <button id="volver-original" class="boton-cuadrado solo-trucar" title="Volver a la Prenda original" aria-label="Volver a la Prenda original">↺</button>
+              <button id="borrar-look" class="boton-cuadrado guardables" title="Borrar el Look" aria-label="Borrar el Look">🗑</button>
+              <button id="descartar-look" class="boton-cuadrado boton-descartar guardables" title="Descartar los cambios" aria-label="Descartar los cambios">✗</button>
+              <button id="guardar-look" class="boton-cuadrado boton-guardar guardables" title="Guardar el Look" aria-label="Guardar el Look">✓</button>
             </div>
           </div>
 

@@ -4,13 +4,16 @@ Programa para Windows que agrega Items de **Mundo Gaturro** a tu inventario, sol
 
 Buscás los Items en los SWF del juego (el programa los descarga solo), armás una lista, y con **Agregar al juego** el programa prepara todo: Fiddler, el caché del juego y la regla para el NPC Lola. Después entrás al juego, hacés clic en Lola y recibís los Items.
 
-> **Estado:** en desarrollo. Ya funciona agregar Items (Fase 1). Vienen trucar Prendas y armar Looks (ver la [spec](../../issues/1)).
+> **Estado:** en desarrollo. Funcionan agregar Items, trucar Prendas, armar Looks y las acciones (ver la [spec](../../issues/1)).
 
 ## Qué hace
 
 - **Catálogo de SWF del juego** con buscador: 445 SWF con Items, descargados del servidor del juego cuando hacen falta y guardados para la próxima vez.
 - **Buscar Items** por el comienzo del nombre, con sugerencias e imágenes mientras escribís (por ejemplo `remera`, `zapa, campera`).
 - **Lista de Items** con imagen y cantidad de cada uno; se pueden quitar o agregar a mano (`clothes1.remera5`).
+- **Trucar Prenda**: elegís una Prenda o un Item de mochila y el Gaturro aparece con ella puesta; le cambiás, sacás o agregás Piezas de cualquier SWF.
+- **Looks**: armás un Gaturro con Piezas de cualquier SWF y lo recibís en una sola Prenda o Item; se guardan y se pasan en archivos.
+- **Acciones**: un Item de mochila que, al usarlo, hace una animación del juego mostrando cualquier Pieza; la vista previa la reproduce como el juego.
 - **Encode**: generarlo, copiarlo, guardarlo como `.txt` o importar uno existente (pegado o desde archivo).
 - **Agregar al juego**: cierra el juego y Fiddler, pone la regla de Lola en el AutoResponder de Fiddler (respetando tus reglas), borra el caché del juego y vuelve a abrir todo.
 - **Configuración**: revisa que estén Mundo Gaturro Desktop y Fiddler, y explica paso a paso qué falta.
