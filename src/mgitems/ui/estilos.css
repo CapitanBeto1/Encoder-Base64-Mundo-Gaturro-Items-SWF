@@ -1011,9 +1011,15 @@ main.modo-looks .buscador-swf { display: none; }
 .casillero .nombre-casillero { max-width: 100%; overflow: hidden; text-overflow: ellipsis; font-size: 7px; line-height: 1.1; text-transform: uppercase; color: var(--texto); white-space: nowrap; }
 .casillero[aria-pressed="true"] { background: #6fc054; border-color: #2f6421; box-shadow: 0 0 0 3px #fff; }
 .casilleros .sacar-pieza { position: absolute; top: -4px; right: -4px; width: 18px; height: 18px; font-size: 10px; padding: 0; }
-/* Trucar Prenda: lo cambiado respecto de la Prenda original, con su botón para volver a como era. */
-.casillero.cambiado { outline: 3px solid #ff9f1a; outline-offset: -2px; }
-.casilleros .volver-casillero { position: absolute; top: -4px; left: -4px; width: 18px; height: 18px; font-size: 11px; padding: 0; background: #ff9f1a; color: #fff; }
+/* Trucar Prenda: una Pieza en una Parte por Prenda trucada (sin casilleros), y la lista de las que se reciben juntas. */
+main.modo-trucar .casilleros { display: none; }
+.armado-trucar { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; }
+.pieza-trucar { display: inline-flex; align-items: center; gap: 6px; min-height: 28px; padding: 2px 10px; border-radius: 10px; background: rgba(0, 0, 0, 0.18); color: #fff; font-size: 13px; }
+.pieza-trucar .icono { width: 26px; height: 26px; }
+.lista-trucadas { flex: none; display: flex; align-items: center; gap: 8px; min-height: 40px; }
+#lista-trucadas { display: flex; gap: 6px; flex: 1; min-width: 0; overflow-x: auto; margin: 0; padding: 2px; list-style: none; }
+#lista-trucadas li { flex: none; display: flex; align-items: center; gap: 6px; padding: 3px 6px 3px 8px; border-radius: 10px; background: var(--celeste); color: var(--texto); font-size: 12px; white-space: nowrap; }
+#lista-trucadas .icono { width: 26px; height: 26px; }
 
 .botones-tarjeta { flex: none; display: flex; justify-content: center; gap: 8px; }
 .boton-cuadrado {

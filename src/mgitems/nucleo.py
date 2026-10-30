@@ -14,7 +14,7 @@ from pathlib import Path
 from mgitems.cache_swf import CacheSwf
 from mgitems.catalogo import buscar_en_catalogo, cargar_catalogo
 from mgitems.categorias import (
-    PARTES_QUE_VISTEN, CacheCategorias, IndicePiezas, categorias, donde_se_ven, otros_usos, tipos_de_items, usos_de_piezas,
+    CacheCategorias, IndicePiezas, categorias, donde_se_ven, otros_usos, tipos_de_items, usos_de_piezas,
 )
 from mgitems.destinos import DESCARTADO, descarte_por_nombre, es_de_pasaporte
 from mgitems.interfaz import BANNERS, CARPETA_BANNERS, DIBUJOS, recortar
@@ -172,44 +172,56 @@ class Nucleo:
             for i in sorted(items.values(), key=lambda i: orden_natural(i.clase))
         ]}
 
-    def prenda_para_trucar(self, base: str) -> dict:
-        """La Prenda o el Item de mochila `base` ("swf.clase") con lo que viste, para editarlo en Trucar Prenda:
-        `{"ok", "prenda": {"ruta", "tipo", "partes": {Parte del cuerpo: ruta de la Pieza}}}`. Las Piezas sin SWF
-        son del de la base. De un Item de mochila, solo lo que viste: su animación y su efecto se sacan al trucarlo."""
-        if not isinstance(base, str) or not es_ruta_valida(base):
-            return {"ok": False, "error": "Elegí una Prenda o un Item de mochila."}
-        swf, _, clase = base.rpartition(".")
-        obtenido = {"ok": True, "data": self._data_swf} if swf == self._swf_abierto else self._datos_de_otro_swf(swf)
-        if not obtenido["ok"]:
-            return obtenido
-        try:
-            item = self._prendas_de(swf, obtenido["data"]).get(clase)
-        except FFDecNoDisponible as e:
-            return {"ok": False, "error": f"{e}: no se pueden leer las Prendas."}
-        except (OSError, subprocess.SubprocessError) as e:
-            return {"ok": False, "error": f"No se pudieron leer las Prendas: {e}"}
-        if item is None:
-            return {"ok": False, "error": f"{clase} no es una Prenda ni un Item de mochila de {swf}."}
-        partes = {}
-        for parte, pieza in item.partes.items():
-            ruta = pieza if "." in pieza else f"{swf}.{pieza}"
-            if (item.tipo == PRENDA or parte in PARTES_QUE_VISTEN) and es_ruta_valida(ruta):
-                partes[parte] = ruta
-        return {"ok": True, "prenda": {"ruta": base, "tipo": item.tipo, "partes": partes}}
+    def trucar_varias(self, trucadas: list) -> dict:
+        """Varias Prendas trucadas en un solo Encode: cada una (`{"base", "parte", "pieza"}`) es un Item base
+        ("swf.clase", de cualquier SWF) que muestra solo `pieza` (de cualquier SWF) en `parte`. Cada Item base va
+        una sola vez (si no, sería el mismo Item con dos cosas). Las de un mismo SWF van en el mismo SWF trucado."""
+        if not isinstance(trucadas, list) or not trucadas:
+            return {"ok": False, "error": "Agregá al menos una Prenda trucada a la lista."}
+        vistas = set()
+        for t in trucadas:
+            if not isinstance(t, dict) or not all(isinstance(t.get(k), str) for k in ("base", "parte", "pieza")) \
+                    or not es_ruta_valida(t["base"]) or not es_ruta_valida(t["pieza"]):
+                return {"ok": False, "error": "Las Prendas trucadas no tienen la forma esperada."}
+            if t["base"] in vistas:
+                return {"ok": False, "error": f"{t['base']} está dos veces: cada Prenda trucada necesita otro Item base."}
+            vistas.add(t["base"])
 
-    def trucar(self, base: str, partes: dict) -> dict:
-        """Truca la Prenda o el Item de mochila `base` ("swf.clase", de cualquier SWF) para que muestre `partes`
-        (Parte del cuerpo → Pieza de cualquier SWF) y genera el Encode que la agrega (ver `_trucar`)."""
-        if not isinstance(base, str) or not es_ruta_valida(base):
-            return {"ok": False, "error": "Elegí la Prenda o el Item de mochila que se truca."}
-        if not isinstance(partes, dict) or not all(isinstance(p, str) and isinstance(r, str) and es_ruta_valida(r)
-                                                   for p, r in partes.items()):
-            return {"ok": False, "error": "Las Piezas no tienen la forma esperada."}
-        swf, _, clase = base.rpartition(".")
-        obtenido = {"ok": True, "data": self._data_swf} if swf == self._swf_abierto else self._datos_de_otro_swf(swf)
-        if not obtenido["ok"]:
-            return {"ok": False, "error": f"No se pudo usar la Prenda: {obtenido['error']}"}
-        return self._trucar(swf, obtenido["data"], clase, dict(partes))
+        trucados, resumen = {}, []
+        for t in trucadas:
+            swf, _, clase = t["base"].rpartition(".")
+            obtenido = {"ok": True, "data": self._data_swf} if swf == self._swf_abierto else self._datos_de_otro_swf(swf)
+            if not obtenido["ok"]:
+                return {"ok": False, "error": f"No se pudo usar {t['base']}: {obtenido['error']}"}
+            data = obtenido["data"]
+            try:
+                item = self._prendas_de(swf, data).get(clase)
+            except FFDecNoDisponible as e:
+                return {"ok": False, "error": f"{e}: no se pueden leer las Prendas."}
+            except (OSError, subprocess.SubprocessError) as e:
+                return {"ok": False, "error": f"No se pudieron leer las Prendas: {e}"}
+            if item is None:
+                return {"ok": False, "error": f"{clase} no es una Prenda ni un Item de mochila de {swf}."}
+            valores, error = self._valores_de_piezas(swf, data, item, {t["parte"]: t["pieza"]})
+            if error:
+                return {"ok": False, "error": error}
+            try:
+                # Sobre lo ya trucado de ese SWF: así quedan todas las suyas.
+                trucados[swf] = self._trucado(trucados.get(swf, data), item, valores)
+            except TruqueoFallido as e:
+                return {"ok": False, "error": f"No se pudo trucar {t['base']}: {e}."}
+            except FFDecNoDisponible as e:
+                return {"ok": False, "error": f"{e}: no se puede trucar."}
+            except (OSError, subprocess.SubprocessError, ValueError) as e:
+                return {"ok": False, "error": f"No se pudo trucar {t['base']}: {e}"}
+            resumen.append({"ruta": t["base"], "tipo": item.tipo, "partes": dict(valores)})
+
+        rutas = [t["base"] for t in trucadas]
+        script = generar_script([(ruta, 1) for ruta in rutas])
+        encode = codificar(script)
+        self._trucos[encode] = trucados
+        return {"ok": True, "trucadas": resumen, "items": [{"ruta": r, "cantidad": 1} for r in rutas],
+                "script": script, "encode": encode}
 
     def piezas_de_swfs(self, swfs: list | None = None) -> dict:
         """Las Piezas de varios SWF (None: todos los del juego) con su SWF, las Partes del cuerpo donde
@@ -343,22 +355,32 @@ class Nucleo:
             return {"ok": False, "error": "Elegí al menos una Pieza."}
 
         item = prendas[base]
+        valores, error = self._valores_de_piezas(swf, data, item, partes)
+        if error:
+            return {"ok": False, "error": error}
+        return self._trucar_item(swf, data, item, valores)
+
+    def _valores_de_piezas(self, swf: str, data: bytes, item: ItemBase, partes: dict[str, str]) -> tuple[dict, str | None]:
+        """(Parte → cómo se escribe su Pieza en `item` del SWF `swf`, error)."""
         piezas_propias = set(piezas_del_swf([clase for _, clase in leer_simbolos(data)]))
         valores = {}
         for parte, pieza in partes.items():
             # El efecto de cabeza lleva siempre el SWF de la Pieza: el juego la busca tal cual.
             valor, error = self._valor_de_pieza(swf, piezas_propias, pieza, con_swf=item.tipo == MOCHILA or parte == EFECTO)
             if error:
-                return {"ok": False, "error": error}
+                return {}, error
             valores[parte] = PREFIJO_EFECTO + valor if parte == EFECTO else valor
-        return self._trucar_item(swf, data, item, valores)
+        return valores, None
+
+    def _trucado(self, data: bytes, item: ItemBase, valores: dict[str, str]) -> bytes:
+        """El SWF `data` con `item` mostrando `valores` (puede lanzar TruqueoFallido, FFDecNoDisponible, OSError…)."""
+        return self._prendas_ffdec.trucar(data, item.clase, reescribir_partes(item, valores), dict(valores))
 
     def _trucar_item(self, swf: str, data: bytes, item: ItemBase, valores: dict[str, str]) -> dict:
         """Truca `item` del SWF `swf` con `valores` (Parte → cómo se escribe) y arma el Encode que lo agrega."""
         base = item.clase
         try:
-            fuente = reescribir_partes(item, valores)
-            trucado = self._prendas_ffdec.trucar(data, base, fuente, dict(valores))
+            trucado = self._trucado(data, item, valores)
         except TruqueoFallido as e:
             return {"ok": False, "error": f"No se pudo trucar la Prenda: {e}."}
         except FFDecNoDisponible as e:

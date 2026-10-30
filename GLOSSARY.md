@@ -27,7 +27,7 @@ _Avoid_: slot, zona
 ## Truqueo
 
 **Prenda trucada**:
-Un Item base con sus Piezas cambiadas: en cualquier Parte del cuerpo, cualquier Pieza (de cualquier SWF), y lo que no se cambia queda como era; por ejemplo, una remera con una máscara en la mano. Si el Item base es una Prenda, se ve al ponérsela; si es un Item de mochila, al usarlo (sin su animación ni su efecto). Los demás jugadores la ven así y se puede intercambiar.
+Un Item base modificado para mostrar una sola Pieza (cualquiera, de cualquier SWF) en una sola Parte del cuerpo (cualquiera); por ejemplo, una máscara en la mano. Si el Item base es una Prenda, se ve al ponérsela; si es un Item de mochila, al usarlo. Los demás jugadores la ven así y se puede intercambiar. Varias se reciben juntas en un mismo Encode, cada una con otro Item base.
 _Avoid_: Item trucado, objeto trucado
 
 **Item base**:

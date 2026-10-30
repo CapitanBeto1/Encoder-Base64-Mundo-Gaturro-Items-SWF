@@ -230,33 +230,38 @@ def test_items_base_de_cualquier_swf_sin_abrirlo(sistema, fuente, ffdec):
     assert nucleo.items_base("noExiste")["ok"] is False
 
 
-# --- Trucar Prenda: editar una Prenda o un Item que ya existe ---
+# --- Trucar Prenda: varias Prendas trucadas en un solo Encode ---
 
-def test_una_prenda_para_editar_trae_sus_piezas_con_su_swf(nucleo):
-    resultado = nucleo.prenda_para_trucar("clothes1.remera5")
+def test_varias_prendas_trucadas_en_un_encode(nucleo, sistema, ffdec):
+    trucadas = [
+        {"base": "clothes1.remera5", "parte": "grip", "pieza": "costumes.coronaRey_on"},  # una corona en la mano
+        {"base": "clothes1.buzo1", "parte": "hats", "pieza": "clothes1.gorra1_on"},  # del mismo SWF
+        {"base": "bruja.pocima1", "parte": "foot", "pieza": "costumes.capaRey_on"},  # un Item de mochila
+    ]
 
-    assert resultado["ok"], resultado
-    assert resultado["prenda"] == {"ruta": "clothes1.remera5", "tipo": "prenda",
-                                   "partes": {"cloth": "clothes1.remera5_on", "arm": "clothes1.remera5_brazo_on"}}
-
-
-def test_de_un_item_de_mochila_solo_lo_que_viste(nucleo):
-    # La pócima hace una animación y un efecto: al trucarla se sacan (no son Piezas que vistan).
-    assert nucleo.prenda_para_trucar("bruja.pocima1")["prenda"]["partes"] == {}
-
-
-def test_trucar_cambiando_una_pieza_y_conservando_las_demas(nucleo, ffdec):
-    partes = nucleo.prenda_para_trucar("clothes1.remera5")["prenda"]["partes"] | {"hats": "costumes.coronaRey_on"}
-
-    resultado = nucleo.trucar("clothes1.remera5", partes)
+    resultado = nucleo.trucar_varias(trucadas)
 
     assert resultado["ok"], resultado
-    assert leer_item_base(ffdec.trucos[0][1]).partes == {
-        "cloth": "remera5_on", "arm": "remera5_brazo_on", "hats": "costumes.coronaRey_on"}  # las del mismo SWF, sin él
+    script = base64.b64decode(resultado["encode"]).decode()
+    assert all(f"inventory.add 1 {t['base']}\n" in script for t in trucadas)
+    # Las dos de clothes1 en el mismo SWF trucado: la segunda se truca sobre la primera.
+    assert [clase for clase, _ in ffdec.trucos] == ["remera5", "buzo1", "pocima1"]
+    assert leer_item_base(ffdec.trucos[1][1]).partes == {"hats": "gorra1_on"}
+    assert leer_item_base(ffdec.trucos[2][1]).partes == {"foot": "costumes.capaRey_on"}
+    assert nucleo.entregar_encode(resultado["encode"])["ok"]
+    assert {r["Match"].split("/")[-1].split(".swf")[0] for r in reglas(sistema) if ".swf" in r["Match"]} >= {"clothes1", "bruja"}
 
 
-@pytest.mark.parametrize("base, partes", [("nada", {}), ("clothes1.noExiste", {"cloth": "clothes1.remera5_on"}),
-                                          ("clothes1.remera5", {"cloth": "costumes.noExiste_on"}), ("clothes1.remera5", [])])
-def test_trucar_lo_que_no_se_puede(nucleo, ffdec, base, partes):
-    assert not nucleo.trucar(base, partes)["ok"]
-    assert ffdec.trucos == []
+@pytest.mark.parametrize("trucadas", [
+    [],
+    [{"base": "clothes1.remera5", "parte": "grip"}],  # sin Pieza
+    [{"base": "clothes1.noExiste", "parte": "grip", "pieza": "costumes.coronaRey_on"}],
+    [{"base": "clothes1.remera5", "parte": "grip", "pieza": "costumes.noExiste_on"}],
+    [{"base": "clothes1.remera5", "parte": "grip", "pieza": "costumes.coronaRey_on"},
+     {"base": "clothes1.remera5", "parte": "hats", "pieza": "clothes1.gorra1_on"}],  # el mismo Item base dos veces
+])
+def test_lo_que_no_se_puede_trucar_no_truca_nada(nucleo, ffdec, trucadas):
+    resultado = nucleo.trucar_varias(trucadas)
+
+    assert not resultado["ok"]
+    assert "dos veces" in resultado["error"] or len(trucadas) < 2
