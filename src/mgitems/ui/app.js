@@ -1229,7 +1229,7 @@ async function usarBasesDeTodos() {
   const resultado = await api().items_de_swfs(null);
   if (pedido !== pedidoBases) return;
   if (!resultado.ok) return avisar($("mensaje-base"), resultado.error, "error");
-  basesDelSwf = resultado.items.filter((i) => (i.tipo === "prenda" || i.tipo === "mochila") && i.destino !== "descartado");
+  basesDelSwf = resultado.items.filter((i) => (i.tipo === "prenda" || i.tipo === "mochila") && i.destino !== "descartado" && !i.no_sirve_de_base);
   avisar($("mensaje-base"), "Escribí un nombre para encontrar el Item base (se muestran los primeros 200).");
   mostrarBases();
 }
@@ -1248,7 +1248,7 @@ async function usarBasesDe(swf) {
   if (pedido !== pedidoBases) return;
   if (!resultado.ok) return avisar($("mensaje-base"), resultado.error, "error");
   basesDelSwf = resultado.items;
-  avisar($("mensaje-base"), basesDelSwf.length ? "" : "Este SWF no tiene Prendas ni Items de mochila.", "advertencia");
+  avisar($("mensaje-base"), resultado.aviso ?? (basesDelSwf.length ? "" : "Este SWF no tiene Prendas ni Items de mochila."), "advertencia");
   mostrarBases();
   prepararIconosDe(swf);
 }

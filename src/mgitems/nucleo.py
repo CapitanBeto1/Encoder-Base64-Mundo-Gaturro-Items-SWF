@@ -44,7 +44,7 @@ from mgitems.items import (
 from mgitems.looks import FORMATO_ACCION, AlmacenLooks, Look, LookInvalido, archivo_de_look, look_de_archivo
 from mgitems.prendas import (
     ACCION, EFECTO, MOCHILA, PARTES_DEL_CUERPO, PREFIJO_EFECTO, PRENDA, CacheItemsBase, ItemBase, ItemsBaseFFDec, TruqueoFallido,
-    leer_item_base, reescribir_partes,
+    leer_item_base, no_sirve_de_base, reescribir_partes,
 )
 from mgitems.script import EncodeInvalido, codificar, decodificar, generar_script, leer_script
 from mgitems.swf import SwfInvalido, congelado_en, leer_simbolos, limites_de_simbolos, rotulos
@@ -157,7 +157,8 @@ class Nucleo:
         return {"ok": True, "swf": swf, "piezas": [{"ruta": f"{swf}.{p}", "clase": p} for p in piezas]}
 
     def items_base(self, swf: str) -> dict:
-        """Los Items base (Prendas e Items de mochila) de cualquier SWF del juego: dónde se guarda un Look."""
+        """Los Items base (Prendas e Items de mochila) de cualquier SWF del juego: dónde se guarda un Look.
+        Sin los que no sirven (ver `no_sirve_de_base`); si se sacó alguno, `aviso` dice por qué."""
         obtenido = {"ok": True, "data": self._data_swf} if swf == self._swf_abierto else self._datos_de_otro_swf(swf)
         if not obtenido["ok"]:
             return obtenido
@@ -167,10 +168,12 @@ class Nucleo:
             return {"ok": False, "error": f"{e}: no se pueden leer los Items base."}
         except (OSError, subprocess.SubprocessError) as e:
             return {"ok": False, "error": f"No se pudieron leer los Items base: {e}"}
+        sirven = [i for i in items.values() if not no_sirve_de_base(f"{swf}.{i.clase}", i.tipo)]
+        motivos = {no_sirve_de_base(f"{swf}.{i.clase}", i.tipo) for i in items.values()} - {None}
         return {"ok": True, "swf": swf, "items": [
             {"ruta": f"{swf}.{i.clase}", "clase": i.clase, "tipo": i.tipo}
-            for i in sorted(items.values(), key=lambda i: orden_natural(i.clase))
-        ]}
+            for i in sorted(sirven, key=lambda i: orden_natural(i.clase))
+        ], "aviso": f"Sus Prendas no sirven de Item base: {next(iter(motivos))}." if motivos else None}
 
     def trucar_varias(self, trucadas: list) -> dict:
         """Varias Prendas trucadas en un solo Encode: cada una (`{"base", "parte", "pieza"}`) es un Item base
@@ -202,6 +205,8 @@ class Nucleo:
                 return {"ok": False, "error": f"No se pudieron leer las Prendas: {e}"}
             if item is None:
                 return {"ok": False, "error": f"{clase} no es una Prenda ni un Item de mochila de {swf}."}
+            if motivo := no_sirve_de_base(t["base"], item.tipo):
+                return {"ok": False, "error": f"{clase} no sirve de Item base: {motivo}."}
             valores, error = self._valores_de_piezas(swf, data, item, {t["parte"]: t["pieza"]})
             if error:
                 return {"ok": False, "error": error}
@@ -246,15 +251,16 @@ class Nucleo:
         """Los Items de varios SWF (None: todos los del juego) con su SWF, su tipo ("prenda", "mochila",
         "transporte", "casa", "mascota", "ropa_mascota", "comida_mascota", "juguete_mascota" u "otro"),
         las Partes del cuerpo que viste si es una Prenda, para qué mascota es (`mascota`, o None) y dónde
-        llega al juego (`destino`, ver `destinos`; `motivo` si no llega bien, o None) y si solo se la
-        puede poner quien tiene pasaporte (`pasaporte`).
+        llega al juego (`destino`, ver `destinos`; `motivo` si no llega bien, o None), si solo se la
+        puede poner quien tiene pasaporte (`pasaporte`) y, si no sirve de Item base, por qué (`no_sirve_de_base`).
 
         Como `piezas_de_swfs`: del índice que trae el programa, o analizados acá si no están o cambiaron.
         """
         def items(swf, obtenido):
             return [{"ruta": f"{swf}.{clase}", "clase": clase, "swf": swf, "tipo": item["tipo"], "partes": item.get("partes", []),
                      "mascota": item.get("mascota"), "destino": item.get("destino"), "motivo": item.get("motivo"),
-                     "parecido": item.get("parecido", []), "pasaporte": item.get("pasaporte", False)}
+                     "parecido": item.get("parecido", []), "pasaporte": item.get("pasaporte", False),
+                     "no_sirve_de_base": no_sirve_de_base(f"{swf}.{clase}", item["tipo"])}
                     for clase, item in sorted(obtenido["items"].items(), key=lambda i: orden_natural(i[0]))]
 
         return self._de_varios_swf(swfs, "items", items)
@@ -351,6 +357,8 @@ class Nucleo:
             return {"ok": False, "error": f"No se pudieron leer las Prendas: {e}"}
         if base not in prendas:
             return {"ok": False, "error": f"{base} no es una Prenda ni un Item de mochila de {swf}."}
+        if motivo := no_sirve_de_base(f"{swf}.{base}", prendas[base].tipo):
+            return {"ok": False, "error": f"{base} no sirve de Item base: {motivo}."}
         if not partes:
             return {"ok": False, "error": "Elegí al menos una Pieza."}
 
@@ -721,7 +729,7 @@ class Nucleo:
             prendas = self._prendas_de(swf, obtenido["data"])
         except (FFDecNoDisponible, OSError, subprocess.SubprocessError):
             return None
-        candidatas = [c for c, p in prendas.items() if p.tipo == PRENDA]
+        candidatas = [c for c, p in prendas.items() if p.tipo == PRENDA and not no_sirve_de_base(f"{swf}.{c}", p.tipo)]
         return f"{swf}.{min(candidatas, key=orden_natural)}" if candidatas else None
 
     def exportar_look(self, look: dict, ruta: str) -> dict:

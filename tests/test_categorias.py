@@ -233,9 +233,9 @@ def test_los_items_vienen_del_indice(tmp_path, fuente, ffdec):
 
     assert resultado["items"] == [
         {"ruta": "costumes.coronaRey", "clase": "coronaRey", "swf": "costumes", "tipo": "prenda", "partes": ["hats"], "mascota": None,
-         "destino": "guardarropa", "motivo": None, "parecido": [], "pasaporte": False},
+         "destino": "guardarropa", "motivo": None, "parecido": [], "pasaporte": False, "no_sirve_de_base": None},
         {"ruta": "costumes.trono", "clase": "trono", "swf": "costumes", "tipo": "casa", "partes": [], "mascota": None,
-         "destino": "casa", "motivo": None, "parecido": [], "pasaporte": False},
+         "destino": "casa", "motivo": None, "parecido": [], "pasaporte": False, "no_sirve_de_base": None},
     ]
     assert fuente.descargas == [] and ffdec.analisis == 0
 

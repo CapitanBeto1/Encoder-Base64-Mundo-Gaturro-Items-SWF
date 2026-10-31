@@ -55,15 +55,15 @@ def test_una_accion_sin_pieza_y_otra_con_una_pieza_del_mismo_swf(nucleo, ffdec):
 
 
 def test_una_accion_con_algo_en_la_cabeza(nucleo, ffdec):
-    resultado = nucleo.aplicar_accion({"animacion": "flag", "pieza": "clothes1.gorra1_on", "efecto": "costumes.coronaRey_on",
+    resultado = nucleo.aplicar_accion({"animacion": "flag", "pieza": "costumes2.gorra1_on", "efecto": "costumes.coronaRey_on",
                                        "base": "bruja.pocima1"})
 
     assert resultado["ok"], resultado
-    assert leer_item_base(ffdec.trucos[0][1]).partes == {"action": "flag.clothes1.gorra1_on", "effect": "head.costumes.coronaRey_on"}
+    assert leer_item_base(ffdec.trucos[0][1]).partes == {"action": "flag.costumes2.gorra1_on", "effect": "head.costumes.coronaRey_on"}
 
 
 def test_una_prenda_no_hace_acciones(nucleo, ffdec):
-    resultado = nucleo.aplicar_accion({"animacion": "showObject", "pieza": "costumes.coronaRey_on", "base": "clothes1.buzo1"})
+    resultado = nucleo.aplicar_accion({"animacion": "showObject", "pieza": "costumes.coronaRey_on", "base": "costumes2.buzo1"})
 
     assert not resultado["ok"]
     assert "Prenda" in resultado["error"]

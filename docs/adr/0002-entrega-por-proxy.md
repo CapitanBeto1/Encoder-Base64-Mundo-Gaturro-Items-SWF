@@ -10,4 +10,4 @@ El juego (Mundo Gaturro Desktop, Electron + Pepper Flash) carga `lola.npc` y los
 ## Consequences
 
 - El caché HTTP del juego guarda `lola.npc` con una URL fija, así que hay que borrarlo antes de cada entrega.
-- Una Prenda trucada queda guardada en el servidor al crearse: el proxy solo hace falta en ese momento, no mientras se juega.
+- Una Prenda trucada queda guardada en el servidor al crearse: el proxy solo hace falta en ese momento, no mientras se juega. Salvo las Prendas de `clothes1`, la ropa personalizable del juego (`customization.includeList` en `cfgs/gameplay.json`): de esas el servidor no guarda lo trucado y, al volver a entrar, vuelven a ser las originales, con Fiddler o sin él (probado en el juego, también con otras herramientas). Por eso no sirven de Item base.

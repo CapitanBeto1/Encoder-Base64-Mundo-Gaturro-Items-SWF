@@ -31,7 +31,7 @@ Un Item base modificado para mostrar una sola Pieza (cualquiera, de cualquier SW
 _Avoid_: Item trucado, objeto trucado
 
 **Item base**:
-El Item existente que se modifica para crear una Prenda trucada o materializar un Look; de él toma su nombre e ícono en el juego. Puede ser una Prenda (queda en el guardarropa) o un Item de mochila.
+El Item existente que se modifica para crear una Prenda trucada o materializar un Look; de él toma su nombre e ícono en el juego. Puede ser una Prenda (queda en el guardarropa) o un Item de mochila. No puede ser una Prenda de `clothes1`, la ropa personalizable del juego: el servidor no guarda lo trucado y, al volver a entrar, vuelve a ser la original.
 _Avoid_: Prenda base (ya no es siempre una Prenda)
 
 **Item de mochila**:
