@@ -11,7 +11,7 @@ Buscás los Items en los SWF del juego (el programa los descarga solo), armás u
 - **Catálogo de SWF del juego** con buscador: 445 SWF con Items, descargados del servidor del juego cuando hacen falta y guardados para la próxima vez.
 - **Buscar Items** por el comienzo del nombre, con sugerencias e imágenes mientras escribís (por ejemplo `remera`, `zapa, campera`).
 - **Lista de Items** con imagen y cantidad de cada uno; se pueden quitar o agregar a mano (`clothes1.remera5`).
-- **Trucar Prenda**: un Item que, en vez de lo suyo, muestra una sola Pieza de cualquier SWF (por ejemplo, un «Otro») en la Parte del cuerpo que elijas; armás una lista y las recibís todas en un solo Encode.
+- **Trucar Prenda**: un Item que, en vez de lo suyo, muestra una sola Pieza de cualquier SWF (por ejemplo, un «Otro») en la Parte del cuerpo que elijas; armás una lista y las recibís todas en un solo Encode. Siguen trucadas aunque después recibas otras cosas, hasta que quites las reglas desde Configuración.
 - **Looks**: armás un Gaturro con Piezas de cualquier SWF y lo recibís en una sola Prenda o Item; se guardan y se pasan en archivos.
 - **Acciones**: un Item de mochila que, al usarlo, hace una animación del juego mostrando cualquier Pieza; la vista previa la reproduce como el juego.
 - **Encode**: generarlo, copiarlo, guardarlo como `.txt` o importar uno existente (pegado o desde archivo).

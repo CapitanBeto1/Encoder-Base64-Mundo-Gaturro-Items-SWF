@@ -4,8 +4,12 @@ El AutoResponder de Fiddler responde el pedido de `lola.npc` con el Encode. Como
 Fiddler guarda sus reglas al cerrarse, primero se lo cierra, después se escriben
 las reglas y por último se lo vuelve a abrir. Las reglas del programa se reconocen
 porque apuntan a archivos dentro de su propia carpeta de entregas.
+
+Los SWF trucados entregados siguen respondiéndose en las entregas siguientes (ver
+`TrucadosActivos`): así, lo trucado antes sigue trucado al recibir otra cosa.
 """
 
+import json
 import shutil
 import subprocess
 import time
@@ -18,11 +22,13 @@ from mgitems.fuente import URL_ASSETS
 URL_LOLA = "https://cdn-ar.mundogaturro.com/juego/npc/lola.npc?cache=no%20cache"
 ARCHIVO_REGLAS = "AutoResponder.xml"
 ARCHIVO_RESPALDO = "AutoResponder.mgitems.bak"
+ARCHIVO_TRUCADOS = "trucados.json"
 PUERTO_FIDDLER_POR_DEFECTO = 8888
 
 QUE_HACER_EN_EL_JUEGO = (
     "Cuando cargue Mundo Gaturro, andá hasta Lola y hacé clic en ella para recibir los Items. "
-    "Mientras la regla esté activa, Lola entrega este Encode; podés quitarla desde Configuración."
+    "Mientras la regla esté activa, Lola entrega este Encode y las Prendas trucadas siguen trucadas; "
+    "podés quitar las reglas desde Configuración."
 )
 
 
@@ -169,6 +175,44 @@ class SwfTrucado:
     tamano_original: int  # el del SWF original en el CDN: el juego lo pide con ese número
 
 
+class TrucadosActivos:
+    """Los SWF trucados que Fiddler responde en lugar de los originales, guardados en la carpeta de entregas.
+
+    Siguen activos hasta que se quitan las reglas del programa. Uno cuyo original cambió en el
+    servidor ya no sirve: el juego lo pide con otro tamaño (ver `SwfTrucado`)."""
+
+    def __init__(self, carpeta_entregas: Path):
+        self._carpeta = carpeta_entregas
+
+    def archivo_de(self, nombre: str) -> Path:
+        return self._carpeta.joinpath("swf", *nombre.split("/")).with_suffix(".swf")
+
+    def todos(self) -> list[SwfTrucado]:
+        try:
+            tamanos = json.loads((self._carpeta / ARCHIVO_TRUCADOS).read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return []
+        activos = []
+        for nombre, tamano in tamanos.items() if isinstance(tamanos, dict) else ():
+            try:
+                activos.append(SwfTrucado(nombre, self.archivo_de(nombre).read_bytes(), int(tamano)))
+            except (OSError, ValueError, TypeError):
+                continue
+        return activos
+
+    def de(self, nombre: str, tamano_original: int) -> bytes | None:
+        """El SWF trucado activo de `nombre`, si es del original de ese tamaño."""
+        return next((t.data for t in self.todos() if t.nombre == nombre and t.tamano_original == tamano_original), None)
+
+    def recordar(self, trucados: list[SwfTrucado]) -> None:
+        archivo = self._carpeta / ARCHIVO_TRUCADOS
+        archivo.parent.mkdir(parents=True, exist_ok=True)
+        archivo.write_text(json.dumps({t.nombre: t.tamano_original for t in trucados}), encoding="utf-8")
+
+    def olvidar(self) -> None:
+        (self._carpeta / ARCHIVO_TRUCADOS).unlink(missing_ok=True)
+
+
 class PasoFallido(Exception):
     def __init__(self, detalle: str, que_hacer: str):
         super().__init__(detalle)
@@ -189,6 +233,7 @@ class Entrega:
         self.fiddler = fiddler
         self.reglas = carpeta_reglas / ARCHIVO_REGLAS
         self.carpeta_entregas = carpeta_entregas
+        self.trucados = TrucadosActivos(carpeta_entregas)
         self.puerto_fiddler = puerto_fiddler
         self.procesos = procesos
         self.pasos: list[Paso] = []
@@ -197,7 +242,8 @@ class Entrega:
         """Lanza PasoFallido en el primer paso que falla; `self.pasos` dice hasta dónde se llegó.
 
         Cada SWF trucado se responde en lugar del original: el juego lo pide con su
-        tamaño en bytes como parámetro (`<swf>.swf?<bytes>`).
+        tamaño en bytes como parámetro (`<swf>.swf?<bytes>`). Quedan activos para las
+        entregas siguientes (`swfs_trucados` son todos los que tienen que seguir).
         """
         self._paso("Cerrar Mundo Gaturro", self._cerrar_juego)
         self._paso("Cerrar Fiddler", self._cerrar_fiddler)
@@ -205,12 +251,12 @@ class Entrega:
         self._paso("Guardar el Encode", lambda: self._guardar_encode(destino, encode))
         reglas = [("EXACT:" + URL_LOLA, destino)]
         for trucado in swfs_trucados:
-            archivo = self.carpeta_entregas.joinpath("swf", *trucado.nombre.split("/")).with_suffix(".swf")
+            archivo = self.trucados.archivo_de(trucado.nombre)
             self._paso(f"Guardar el SWF trucado ({trucado.nombre})", lambda t=trucado, a=archivo: self._guardar_swf(a, t.data))
             reglas.append((f"EXACT:{URL_ASSETS}{trucado.nombre}.swf?{trucado.tamano_original}", archivo))
         self._paso("Respaldar las reglas de Fiddler", self._respaldar)
-        nombre_paso = "Escribir las reglas de Lola y del SWF trucado" if swfs_trucados else "Escribir la regla de Lola"
-        self._paso(nombre_paso, lambda: self._escribir(reglas))
+        nombre_paso = "Escribir las reglas de Lola y de los SWF trucados" if swfs_trucados else "Escribir la regla de Lola"
+        self._paso(nombre_paso, lambda: self._escribir(reglas, list(swfs_trucados)))
         self._paso("Borrar el caché del juego", self._vaciar_cache)
         self._paso("Abrir Fiddler", self._abrir_fiddler)
         self._paso("Abrir Mundo Gaturro", self._abrir_juego)
@@ -222,6 +268,7 @@ class Entrega:
         quitadas = []
         self._paso("Respaldar las reglas de Fiddler", self._respaldar)
         self._paso("Quitar las reglas de MG Items", lambda: quitadas.append(self._quitar()))
+        self._paso("Olvidar las Prendas trucadas", self._olvidar_trucados)
         if estaba_abierto:
             self._paso("Abrir Fiddler", self._abrir_fiddler)
         return quitadas[0]
@@ -269,9 +316,10 @@ class Entrega:
             raise PasoFallido(f"No se pudo copiar {self.reglas.name}: {e.strerror or e}.", "Probá de nuevo.") from e
         return f"Copia en {respaldo.name}." if respaldo else "Todavía no había reglas."
 
-    def _escribir(self, reglas: list[tuple[str, Path]]) -> None:
+    def _escribir(self, reglas: list[tuple[str, Path]], trucados: list[SwfTrucado]) -> None:
         try:
             poner_reglas(self.reglas, reglas, self.carpeta_entregas)
+            self.trucados.recordar(trucados)
         except ReglasIlegibles as e:
             raise PasoFallido(
                 f"{e}.",
@@ -288,6 +336,12 @@ class Entrega:
             raise PasoFallido(f"{e}.", "Abrí Fiddler y quitá la regla a mano desde la pestaña AutoResponder.") from e
         except OSError as e:
             raise PasoFallido(f"No se pudieron guardar las reglas: {e.strerror or e}.", "Probá de nuevo.") from e
+
+    def _olvidar_trucados(self) -> None:
+        try:
+            self.trucados.olvidar()
+        except OSError as e:
+            raise PasoFallido(f"No se pudo borrar {ARCHIVO_TRUCADOS}: {e.strerror or e}.", "Probá de nuevo.") from e
 
     def _vaciar_cache(self) -> None:
         try:
