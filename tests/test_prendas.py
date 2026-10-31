@@ -370,51 +370,8 @@ def test_un_encode_comun_no_entrega_swf(nucleo, sistema):
     assert [r["Match"] for r in reglas(sistema)] == ["EXACT:" + URL_LOLA]
 
 
-def test_lo_trucado_sigue_trucado_al_entregar_otro_encode(nucleo, sistema, swf):
+def test_una_entrega_nueva_reemplaza_las_reglas_del_truco_anterior(nucleo, sistema):
     nucleo.entregar_encode(nucleo.trucar_prenda("remera5", "hats", "gorra1_on")["encode"])
-
-    assert nucleo.entregar_encode(nucleo.generar_encode(["clothes1.buzo1"])["encode"])["ok"]
-
-    lola, swf_trucado = reglas(sistema)
-    assert swf_trucado["Match"] == f"EXACT:{URL_ASSETS}clothes1.swf?{len(swf)}"
-    assert Path(swf_trucado["Action"]).read_bytes() == swf + b'#trucado:{"hats": "gorra1_on"}'
-
-
-def test_un_truco_nuevo_en_el_mismo_swf_se_hace_sobre_lo_ya_trucado(nucleo, sistema, swf):
-    nucleo.entregar_encode(nucleo.trucar_prenda("remera5", "hats", "gorra1_on")["encode"])
-
-    nucleo.entregar_encode(nucleo.trucar_prenda("buzo1", "grip", "gorra1_on")["encode"])
-
-    lola, swf_trucado = reglas(sistema)
-    assert Path(swf_trucado["Action"]).read_bytes() == swf + b'#trucado:{"hats": "gorra1_on"}#trucado:{"grip": "gorra1_on"}'
-
-
-def test_los_trucos_de_otros_swf_siguen_junto_con_el_nuevo(nucleo, sistema, swf):
-    nucleo.entregar_encode(nucleo.trucar_prenda("remera5", "hats", "gorra1_on")["encode"])
-    nucleo.abrir_swf_del_cdn("antro2017/wears")
-
-    nucleo.entregar_encode(nucleo.trucar_prenda("buzo1", "hats", "gorra1_on")["encode"])
-
-    assert sorted(r["Match"].removeprefix(f"EXACT:{URL_ASSETS}") for r in reglas(sistema)[1:]) == [
-        f"antro2017/wears.swf?{len(swf)}", f"clothes1.swf?{len(swf)}",
-    ]
-
-
-def test_quitar_las_reglas_olvida_lo_trucado(nucleo, sistema, swf):
-    nucleo.entregar_encode(nucleo.trucar_prenda("remera5", "hats", "gorra1_on")["encode"])
-
-    assert nucleo.desactivar_reglas()["ok"]
-    nucleo.entregar_encode(nucleo.generar_encode(["clothes1.buzo1"])["encode"])
-    truco = nucleo.trucar_prenda("buzo1", "hats", "gorra1_on")
-
-    assert [r["Match"] for r in reglas(sistema)] == ["EXACT:" + URL_LOLA]
-    nucleo.entregar_encode(truco["encode"])
-    assert Path(reglas(sistema)[1]["Action"]).read_bytes() == swf + b'#trucado:{"hats": "gorra1_on"}'
-
-
-def test_un_truco_cuyo_original_cambio_en_el_servidor_deja_de_entregarse(nucleo, sistema, fuente, swf):
-    nucleo.entregar_encode(nucleo.trucar_prenda("remera5", "hats", "gorra1_on")["encode"])
-    fuente.publicar("clothes1", swf + b"nuevo", '"v2"')
 
     nucleo.entregar_encode(nucleo.generar_encode(["clothes1.buzo1"])["encode"])
 

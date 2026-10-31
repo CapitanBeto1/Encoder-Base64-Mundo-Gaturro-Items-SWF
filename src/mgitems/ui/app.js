@@ -1758,7 +1758,7 @@ async function desactivarReglas() {
     }
     avisar(
       $("mensaje-entorno"),
-      resultado.quitadas ? "Listo: se quitaron las reglas de MG Items (lo trucado vuelve a ser como en el juego). Tus reglas no se tocaron." : "No había reglas de MG Items en Fiddler.",
+      resultado.quitadas ? "Listo: se quitó la regla de MG Items. Tus reglas no se tocaron." : "No había reglas de MG Items en Fiddler.",
       "exito"
     );
   } finally {

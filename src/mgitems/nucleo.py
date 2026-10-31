@@ -22,7 +22,7 @@ from mgitems.acciones import ANIMACIONES, NO_SE_DIBUJAN, animaciones, motivo_pie
 from mgitems.animacion import CUADROS_POR_SEGUNDO, Linea, NoSeReproduce, alinear, espejar, simular_accion
 from mgitems.se_ve import TRANSPORTE, motivo_sin_efecto
 from mgitems.entorno import Entorno, Sistema
-from mgitems.entrega import PUERTO_FIDDLER_POR_DEFECTO, QUE_HACER_EN_EL_JUEGO, URL_LOLA, Entrega, PasoFallido, Procesos, SwfTrucado, TrucadosActivos
+from mgitems.entrega import PUERTO_FIDDLER_POR_DEFECTO, QUE_HACER_EN_EL_JUEGO, URL_LOLA, Entrega, PasoFallido, Procesos, SwfTrucado
 from mgitems.ffdec import FFDecNoDisponible
 from mgitems.fuente import URL_ASSETS, FuenteCDN, SinConexion, SwfNoEncontrado, Version
 from mgitems.gaturro import (
@@ -91,8 +91,6 @@ class Nucleo:
         """Entrega el Encode al juego: regla de Fiddler para Lola, caché borrado, Fiddler y juego reabiertos.
 
         Si el Encode es de una Prenda trucada generada en esta sesión, también se entrega su SWF trucado.
-        Los SWF trucados de entregas anteriores siguen (ver `TrucadosActivos`), salvo los que trae este Encode,
-        que ya los incluyen (cada truco se hace sobre el SWF trucado activo) o cuyo original cambió.
         """
         try:
             decodificar(encode)
@@ -104,8 +102,6 @@ class Nucleo:
         trucados, error = self._swf_trucados(encode)
         if error:
             return error
-        nuevos = {t.nombre for t in trucados}
-        trucados += [t for t in entrega.trucados.todos() if t.nombre not in nuevos and self._sigue_igual(t)]
         try:
             entrega.entregar(encode, trucados)
         except PasoFallido as e:
@@ -211,7 +207,7 @@ class Nucleo:
                 return {"ok": False, "error": error}
             try:
                 # Sobre lo ya trucado de ese SWF: así quedan todas las suyas.
-                trucados[swf] = self._trucado(trucados.get(swf) or self._base_para_trucar(swf, data), item, valores)
+                trucados[swf] = self._trucado(trucados.get(swf, data), item, valores)
             except TruqueoFallido as e:
                 return {"ok": False, "error": f"No se pudo trucar {t['base']}: {e}."}
             except FFDecNoDisponible as e:
@@ -380,28 +376,11 @@ class Nucleo:
         """El SWF `data` con `item` mostrando `valores` (puede lanzar TruqueoFallido, FFDecNoDisponible, OSError…)."""
         return self._prendas_ffdec.trucar(data, item.clase, reescribir_partes(item, valores), dict(valores))
 
-    def _base_para_trucar(self, swf: str, data: bytes) -> bytes:
-        """Sobre qué se truca un Item base de `swf` (`data`: el original): el SWF trucado activo, si hay,
-        para que lo trucado antes en ese SWF siga trucado; si no, el original."""
-        try:
-            return TrucadosActivos(self._entorno.carpeta_programa() / "entregas").de(swf, len(data)) or data
-        except OSError:
-            return data
-
-    def _sigue_igual(self, trucado: SwfTrucado) -> bool:
-        """Si el original de un SWF trucado activo sigue igual en el servidor (sin conexión, se supone que sí)."""
-        try:
-            return self._fuente.version(trucado.nombre).tamano == trucado.tamano_original
-        except SwfNoEncontrado:
-            return False
-        except OSError:
-            return True
-
     def _trucar_item(self, swf: str, data: bytes, item: ItemBase, valores: dict[str, str]) -> dict:
         """Truca `item` del SWF `swf` con `valores` (Parte → cómo se escribe) y arma el Encode que lo agrega."""
         base = item.clase
         try:
-            trucado = self._trucado(self._base_para_trucar(swf, data), item, valores)
+            trucado = self._trucado(data, item, valores)
         except TruqueoFallido as e:
             return {"ok": False, "error": f"No se pudo trucar la Prenda: {e}."}
         except FFDecNoDisponible as e:
