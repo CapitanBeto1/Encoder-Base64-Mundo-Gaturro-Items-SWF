@@ -15,15 +15,15 @@ from test_prendas import CLASES, COSTUMES, PrendasFalsas
 
 REY = {
     "nombre": "Rey",
-    "base": "clothes1.remera5",
-    "partes": {"hats": "costumes.coronaRey_on", "grip": "clothes1.gorra1_on"},
+    "base": "costumes2.remera5",
+    "partes": {"hats": "costumes.coronaRey_on", "grip": "costumes2.gorra1_on"},
 }
 CLOTHES1 = crear_swf(CLASES)
 
 
 @pytest.fixture
 def fuente():
-    return FuenteFalsa({"clothes1": CLOTHES1, "costumes": COSTUMES})
+    return FuenteFalsa({"costumes2": CLOTHES1, "costumes": COSTUMES})
 
 
 def nucleo_de(tmp_path, nombre, fuente, ffdec=None):
@@ -111,9 +111,9 @@ def test_aplicar_un_look_importado_descarga_los_swf_que_faltan(tmp_path, fuente)
     resultado = otro.aplicar_look(look)
 
     assert resultado["ok"], resultado
-    assert "inventory.add 1 clothes1.remera5\n" in base64.b64decode(resultado["encode"]).decode()
+    assert "inventory.add 1 costumes2.remera5\n" in base64.b64decode(resultado["encode"]).decode()
     assert leer_item_base(ffdec.trucos[0][1]).partes == {"hats": "costumes.coronaRey_on", "grip": "gorra1_on"}
-    assert set(fuente.descargas) == {"clothes1", "costumes"}
+    assert set(fuente.descargas) == {"costumes2", "costumes"}
 
 
 # --- Encode + SWF trucado, para Fiddler a mano ---
@@ -128,16 +128,16 @@ def test_exportar_el_look_aplicado_como_encode_y_swf_trucado(tmp_path, fuente):
 
     assert exportado["ok"], exportado
     assert (carpeta / "encode.txt").read_text(encoding="ascii") == resultado["encode"]
-    assert (carpeta / "clothes1.swf").read_bytes().startswith(CLOTHES1)
+    assert (carpeta / "costumes2.swf").read_bytes().startswith(CLOTHES1)
     leeme = (carpeta / "LEEME.txt").read_text(encoding="utf-8")
     assert f"EXACT:{URL_LOLA}" in leeme
-    assert f"EXACT:{URL_ASSETS}clothes1.swf?{len(CLOTHES1)}" in leeme
+    assert f"EXACT:{URL_ASSETS}costumes2.swf?{len(CLOTHES1)}" in leeme
 
 
 def test_un_encode_comun_no_tiene_swf_trucado(tmp_path, fuente):
     yo = nucleo_de(tmp_path, "yo", fuente)
 
-    assert not yo.tiene_swf_trucado(yo.generar_encode([{"ruta": "clothes1.remera5", "cantidad": 1}])["encode"])
+    assert not yo.tiene_swf_trucado(yo.generar_encode([{"ruta": "costumes2.remera5", "cantidad": 1}])["encode"])
 
 
 def test_exportar_un_encode_invalido(tmp_path, fuente):

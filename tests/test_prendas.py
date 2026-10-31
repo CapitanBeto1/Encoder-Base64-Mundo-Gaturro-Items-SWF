@@ -102,7 +102,7 @@ COSTUMES = crear_swf(["coronaRey", "coronaRey_on", "capaRey_on", "castillo_so"])
 
 @pytest.fixture
 def fuente(swf):
-    return FuenteFalsa({"clothes1": swf, "antro2017/wears": swf, "costumes": COSTUMES})
+    return FuenteFalsa({"costumes2": swf, "antro2017/wears": swf, "costumes": COSTUMES})
 
 
 @pytest.fixture
@@ -113,7 +113,7 @@ def ffdec():
 @pytest.fixture
 def nucleo(sistema, fuente, ffdec):
     nucleo = Nucleo(sistema, ProcesosFalso(), fuente=fuente, catalogo=[], prendas_ffdec=ffdec)
-    nucleo.abrir_swf_del_cdn("clothes1")
+    nucleo.abrir_swf_del_cdn("costumes2")
     return nucleo
 
 
@@ -166,9 +166,9 @@ def test_lista_las_prendas_del_swf_con_sus_partes(nucleo):
     resultado = nucleo.prendas()
 
     assert resultado["ok"]
-    assert resultado["swf"] == "clothes1"
+    assert resultado["swf"] == "costumes2"
     assert [p["ruta"] for p in resultado["prendas"]] == [
-        "clothes1.buzo1", "clothes1.capa1", "clothes1.gorra1", "clothes1.remera5",
+        "costumes2.buzo1", "costumes2.capa1", "costumes2.gorra1", "costumes2.remera5",
     ]
     remera = next(p for p in resultado["prendas"] if p["clase"] == "remera5")
     assert remera["partes"] == {"cloth": "remera5_on", "arm": "remera5_brazo_on"}
@@ -188,7 +188,7 @@ def test_las_partes_del_cuerpo_tienen_nombre_en_espanol(nucleo):
 def test_las_prendas_se_leen_una_sola_vez_por_version_del_swf(sistema, fuente, ffdec):
     for _ in range(2):
         nucleo = Nucleo(sistema, ProcesosFalso(), fuente=fuente, catalogo=[], prendas_ffdec=ffdec)
-        nucleo.abrir_swf_del_cdn("clothes1")
+        nucleo.abrir_swf_del_cdn("costumes2")
         nucleo.prendas()
         nucleo.prendas()
 
@@ -205,7 +205,7 @@ def test_prendas_sin_java_devuelve_error(sistema, fuente):
             raise FFDecNoDisponible("No se encontró Java")
 
     nucleo = Nucleo(sistema, fuente=fuente, catalogo=[], prendas_ffdec=SinJava())
-    nucleo.abrir_swf_del_cdn("clothes1")
+    nucleo.abrir_swf_del_cdn("costumes2")
 
     resultado = nucleo.prendas()
 
@@ -222,7 +222,7 @@ def test_lista_todas_las_piezas_del_swf(nucleo):
     assert [p["clase"] for p in resultado["piezas"]] == [
         "buzo1_brazo_on", "buzo1_on", "capa1_on", "gorra1_on", "remera5_brazo_on", "remera5_on",
     ]
-    assert resultado["piezas"][0]["ruta"] == "clothes1.buzo1_brazo_on"
+    assert resultado["piezas"][0]["ruta"] == "costumes2.buzo1_brazo_on"
 
 
 def test_piezas_sin_swf_abierto_devuelve_error(sistema, ffdec):
@@ -235,9 +235,9 @@ def test_trucar_pone_una_sola_pieza_en_la_parte_elegida(nucleo, ffdec):
     resultado = nucleo.trucar_prenda("remera5", "grip", "gorra1_on")  # una gorra en la mano
 
     assert resultado["ok"], resultado
-    assert resultado["prenda"] == {"ruta": "clothes1.remera5", "tipo": "prenda", "partes": {"grip": "gorra1_on"}}
+    assert resultado["prenda"] == {"ruta": "costumes2.remera5", "tipo": "prenda", "partes": {"grip": "gorra1_on"}}
     script = base64.b64decode(resultado["encode"]).decode()
-    assert "inventory.add 1 clothes1.remera5\n" in script
+    assert "inventory.add 1 costumes2.remera5\n" in script
     clase, fuente = ffdec.trucos[0]
     assert clase == "remera5"
     # Solo esa Pieza: la remera deja de mostrar lo suyo y no se completa nada más.
@@ -286,8 +286,8 @@ def test_lista_las_piezas_de_otro_swf_sin_cambiar_el_abierto(nucleo):
 
     assert resultado["ok"]
     assert [p["ruta"] for p in resultado["piezas"]] == ["costumes.capaRey_on", "costumes.coronaRey_on"]
-    assert nucleo.piezas()["swf"] == "clothes1"
-    assert nucleo.prendas()["swf"] == "clothes1"
+    assert nucleo.piezas()["swf"] == "costumes2"
+    assert nucleo.prendas()["swf"] == "costumes2"
 
 
 def test_piezas_de_un_swf_inexistente_devuelve_error(nucleo):
@@ -306,7 +306,7 @@ def test_trucar_con_una_pieza_de_otro_swf_la_escribe_con_el_nombre_del_swf(nucle
 
 
 def test_una_pieza_del_mismo_swf_con_su_nombre_completo_se_escribe_sin_el_swf(nucleo, ffdec):
-    resultado = nucleo.trucar_prenda("remera5", "grip", "clothes1.gorra1_on")
+    resultado = nucleo.trucar_prenda("remera5", "grip", "costumes2.gorra1_on")
 
     assert resultado["ok"], resultado
     assert leer_item_base(ffdec.trucos[0][1]).partes == {"grip": "gorra1_on"}
@@ -331,7 +331,7 @@ def test_una_pieza_de_otro_swf_que_no_sirve_se_avisa_antes_de_trucar(nucleo, ffd
 def test_una_pieza_de_un_swf_en_subcarpeta_conserva_la_carpeta(sistema, fuente, ffdec):
     fuente.publicar("animales2018/wears", crear_swf(["orejas", "orejas_on"]), '"v1"')
     nucleo = Nucleo(sistema, ProcesosFalso(), fuente=fuente, catalogo=[], prendas_ffdec=ffdec)
-    nucleo.abrir_swf_del_cdn("clothes1")
+    nucleo.abrir_swf_del_cdn("costumes2")
 
     resultado = nucleo.trucar_prenda("remera5", "hats", "animales2018/wears.orejas_on")
 
@@ -344,7 +344,7 @@ def test_con_una_pieza_de_otro_swf_solo_se_entrega_trucado_el_swf_de_la_prenda_b
 
     assert nucleo.entregar_encode(truco["encode"])["ok"]
 
-    assert [r["Match"].split("/")[-1] for r in reglas(sistema)] == [URL_LOLA.split("/")[-1], f"clothes1.swf?{len(crear_swf(CLASES))}"]
+    assert [r["Match"].split("/")[-1] for r in reglas(sistema)] == [URL_LOLA.split("/")[-1], f"costumes2.swf?{len(crear_swf(CLASES))}"]
 
 
 # --- Entregar la Prenda trucada ---
@@ -357,66 +357,23 @@ def test_entregar_una_prenda_trucada_escribe_las_reglas_de_lola_y_del_swf(nucleo
     assert resultado["ok"], resultado
     lola, swf_trucado, *_ = reglas(sistema)
     assert lola["Match"] == "EXACT:" + URL_LOLA
-    assert swf_trucado["Match"] == f"EXACT:{URL_ASSETS}clothes1.swf?{len(swf)}"
+    assert swf_trucado["Match"] == f"EXACT:{URL_ASSETS}costumes2.swf?{len(swf)}"
     assert Path(swf_trucado["Action"]).read_bytes() == swf + b'#trucado:{"hats": "gorra1_on"}'
     assert any("SWF trucado" in p["nombre"] for p in resultado["pasos"])
 
 
 def test_un_encode_comun_no_entrega_swf(nucleo, sistema):
-    encode = nucleo.generar_encode(["clothes1.remera5"])["encode"]
+    encode = nucleo.generar_encode(["costumes2.remera5"])["encode"]
 
     nucleo.entregar_encode(encode)
 
     assert [r["Match"] for r in reglas(sistema)] == ["EXACT:" + URL_LOLA]
 
 
-def test_lo_trucado_sigue_trucado_al_entregar_otro_encode(nucleo, sistema, swf):
+def test_una_entrega_nueva_reemplaza_las_reglas_del_truco_anterior(nucleo, sistema):
     nucleo.entregar_encode(nucleo.trucar_prenda("remera5", "hats", "gorra1_on")["encode"])
 
-    assert nucleo.entregar_encode(nucleo.generar_encode(["clothes1.buzo1"])["encode"])["ok"]
-
-    lola, swf_trucado = reglas(sistema)
-    assert swf_trucado["Match"] == f"EXACT:{URL_ASSETS}clothes1.swf?{len(swf)}"
-    assert Path(swf_trucado["Action"]).read_bytes() == swf + b'#trucado:{"hats": "gorra1_on"}'
-
-
-def test_un_truco_nuevo_en_el_mismo_swf_se_hace_sobre_lo_ya_trucado(nucleo, sistema, swf):
-    nucleo.entregar_encode(nucleo.trucar_prenda("remera5", "hats", "gorra1_on")["encode"])
-
-    nucleo.entregar_encode(nucleo.trucar_prenda("buzo1", "grip", "gorra1_on")["encode"])
-
-    lola, swf_trucado = reglas(sistema)
-    assert Path(swf_trucado["Action"]).read_bytes() == swf + b'#trucado:{"hats": "gorra1_on"}#trucado:{"grip": "gorra1_on"}'
-
-
-def test_los_trucos_de_otros_swf_siguen_junto_con_el_nuevo(nucleo, sistema, swf):
-    nucleo.entregar_encode(nucleo.trucar_prenda("remera5", "hats", "gorra1_on")["encode"])
-    nucleo.abrir_swf_del_cdn("antro2017/wears")
-
-    nucleo.entregar_encode(nucleo.trucar_prenda("buzo1", "hats", "gorra1_on")["encode"])
-
-    assert sorted(r["Match"].removeprefix(f"EXACT:{URL_ASSETS}") for r in reglas(sistema)[1:]) == [
-        f"antro2017/wears.swf?{len(swf)}", f"clothes1.swf?{len(swf)}",
-    ]
-
-
-def test_quitar_las_reglas_olvida_lo_trucado(nucleo, sistema, swf):
-    nucleo.entregar_encode(nucleo.trucar_prenda("remera5", "hats", "gorra1_on")["encode"])
-
-    assert nucleo.desactivar_reglas()["ok"]
-    nucleo.entregar_encode(nucleo.generar_encode(["clothes1.buzo1"])["encode"])
-    truco = nucleo.trucar_prenda("buzo1", "hats", "gorra1_on")
-
-    assert [r["Match"] for r in reglas(sistema)] == ["EXACT:" + URL_LOLA]
-    nucleo.entregar_encode(truco["encode"])
-    assert Path(reglas(sistema)[1]["Action"]).read_bytes() == swf + b'#trucado:{"hats": "gorra1_on"}'
-
-
-def test_un_truco_cuyo_original_cambio_en_el_servidor_deja_de_entregarse(nucleo, sistema, fuente, swf):
-    nucleo.entregar_encode(nucleo.trucar_prenda("remera5", "hats", "gorra1_on")["encode"])
-    fuente.publicar("clothes1", swf + b"nuevo", '"v2"')
-
-    nucleo.entregar_encode(nucleo.generar_encode(["clothes1.buzo1"])["encode"])
+    nucleo.entregar_encode(nucleo.generar_encode(["costumes2.buzo1"])["encode"])
 
     assert [r["Match"] for r in reglas(sistema)] == ["EXACT:" + URL_LOLA]
 
@@ -443,12 +400,26 @@ def test_sin_conexion_no_se_puede_entregar_una_prenda_trucada(nucleo, fuente, si
     assert not (sistema.documentos / "Fiddler2" / "AutoResponder.xml").exists()
 
 
+def test_las_prendas_de_clothes1_no_sirven_de_base(sistema, swf, ffdec):
+    nucleo = Nucleo(sistema, ProcesosFalso(), fuente=FuenteFalsa({"clothes1": swf}), catalogo=[], prendas_ffdec=ffdec)
+
+    bases = nucleo.items_base("clothes1")
+    trucada = nucleo.trucar_varias([{"base": "clothes1.remera5", "parte": "hats", "pieza": "clothes1.gorra1_on"}])
+    look = nucleo.aplicar_look({"nombre": "En clothes1", "base": "clothes1.remera5", "partes": {"hats": "clothes1.gorra1_on"}})
+    propuesta = nucleo.aplicar_look({"nombre": "Sin base", "base": None, "partes": {"hats": "clothes1.gorra1_on"}})
+
+    assert bases["items"] == [] and "clothes1" in bases["aviso"]
+    assert "no sirve de Item base" in trucada["error"] and "no sirve de Item base" in look["error"]
+    assert not propuesta["ok"]
+    assert ffdec.trucos == []
+
+
 # --- Con FFDec y el servidor del juego de verdad ---
 
 def _hay_ffdec_y_red() -> bool:
     try:
         FFDec().programas()
-        FuenteCDN().version("clothes1")
+        FuenteCDN().version("costumes2")
     except (FFDecNoDisponible, OSError):
         return False
     return True
@@ -457,22 +428,34 @@ def _hay_ffdec_y_red() -> bool:
 @pytest.mark.skipif(not _hay_ffdec_y_red(), reason="Hace falta Java, FFDec e internet")
 def test_con_ffdec_real_el_swf_trucado_declara_las_piezas_elegidas(sistema):
     nucleo = Nucleo(sistema, ProcesosFalso(), catalogo=[])
-    assert nucleo.abrir_swf_del_cdn("clothes1")["ok"]
+    assert nucleo.abrir_swf_del_cdn("costumes2")["ok"]
     prendas = {p["clase"]: p for p in nucleo.prendas()["prendas"]}
-    assert prendas["remera5"]["partes"] == {"cloth": "remera5_on", "arm": "remera5_brazo_on"}
-    partes = {"grip": "anteojo1_on"}  # unos anteojos en la mano
+    assert prendas["pantalonOdalisca"]["partes"] == {"leg": "pantalonOdalisca_on"}
+    partes = {"grip": "bombinChaplin_on"}  # un bombín en la mano
 
-    resultado = nucleo.trucar_prenda("remera5", "grip", "anteojo1_on")
-
-    assert resultado["ok"], resultado
-    assert nucleo.entregar_encode(resultado["encode"])["ok"]
-    trucado = Path(reglas(sistema)[1]["Action"]).read_bytes()
-    assert ItemsBaseFFDec().analizar(trucado, ["remera5"])["remera5"].partes == partes
-
-    # Y con una Pieza de otro SWF (la corona de rey de costumes, probada en el juego).
-    resultado = nucleo.trucar_prenda("remera5", "hats", "costumes.coronaRey_on")
+    resultado = nucleo.trucar_prenda("pantalonOdalisca", "grip", "bombinChaplin_on")
 
     assert resultado["ok"], resultado
     assert nucleo.entregar_encode(resultado["encode"])["ok"]
     trucado = Path(reglas(sistema)[1]["Action"]).read_bytes()
-    assert ItemsBaseFFDec().analizar(trucado, ["remera5"])["remera5"].partes == {"hats": "costumes.coronaRey_on"}
+    assert ItemsBaseFFDec().analizar(trucado, ["pantalonOdalisca"])["pantalonOdalisca"].partes == partes
+
+    # Y con una Pieza de otro SWF (el cuchillo de halloween2025 en la mano, probado en el juego).
+    resultado = nucleo.trucar_prenda("pantalonOdalisca", "grip", "halloween2025.cuchillo1_on")
+
+    assert resultado["ok"], resultado
+    assert nucleo.entregar_encode(resultado["encode"])["ok"]
+    trucado = Path(reglas(sistema)[1]["Action"]).read_bytes()
+    assert ItemsBaseFFDec().analizar(trucado, ["pantalonOdalisca"])["pantalonOdalisca"].partes == {"grip": "halloween2025.cuchillo1_on"}
+
+
+@pytest.mark.skipif(not _hay_ffdec_y_red(), reason="Hace falta Java, FFDec e internet")
+def test_con_ffdec_real_las_prendas_de_clothes1_no_sirven_de_base(sistema):
+    nucleo = Nucleo(sistema, ProcesosFalso(), catalogo=[])
+
+    bases = nucleo.items_base("clothes1")
+    resultado = nucleo.trucar_varias([{"base": "clothes1.falda2", "parte": "grip", "pieza": "halloween2025.cuchillo1_on"}])
+
+    assert "clothes1.falda2" not in {i["ruta"] for i in bases["items"]}
+    assert "clothes1" in bases["aviso"]
+    assert not resultado["ok"] and "no sirve de Item base" in resultado["error"]

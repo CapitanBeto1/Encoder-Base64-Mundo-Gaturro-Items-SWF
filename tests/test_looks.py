@@ -14,12 +14,12 @@ from test_prendas import CLASES, COSTUMES, PrendasFalsas
 
 REY = {
     "nombre": "Rey",
-    "base": "clothes1.remera5",
+    "base": "costumes2.remera5",
     "partes": {
         "hats": "costumes.coronaRey_on",
         "cloth": "costumes.capaRey_on",
-        "grip": "clothes1.gorra1_on",
-        "foot": "clothes1.remera5_brazo_on",
+        "grip": "costumes2.gorra1_on",
+        "foot": "costumes2.remera5_brazo_on",
     },
 }
 
@@ -35,7 +35,7 @@ def sistema(tmp_path):
 @pytest.fixture
 def fuente():
     swf = crear_swf(CLASES)
-    return FuenteFalsa({"clothes1": swf, "antro2017/wears": swf, "costumes": COSTUMES})
+    return FuenteFalsa({"costumes2": swf, "antro2017/wears": swf, "costumes": COSTUMES})
 
 
 @pytest.fixture
@@ -45,7 +45,7 @@ def ffdec():
 
 def nuevo_nucleo(sistema, fuente, ffdec):
     nucleo = Nucleo(sistema, ProcesosFalso(), fuente=fuente, catalogo=[], prendas_ffdec=ffdec)
-    nucleo.abrir_swf_del_cdn("clothes1")
+    nucleo.abrir_swf_del_cdn("costumes2")
     return nucleo
 
 
@@ -147,8 +147,8 @@ def test_aplicar_un_look_truca_la_prenda_base_con_todas_sus_piezas(nucleo, ffdec
         "grip": "gorra1_on",
         "foot": "remera5_brazo_on",
     }
-    assert "inventory.add 1 clothes1.remera5\n" in base64.b64decode(resultado["encode"]).decode()
-    assert resultado["look"] == {"nombre": "Rey", "base": "clothes1.remera5", "base_propuesta": False}
+    assert "inventory.add 1 costumes2.remera5\n" in base64.b64decode(resultado["encode"]).decode()
+    assert resultado["look"] == {"nombre": "Rey", "base": "costumes2.remera5", "base_propuesta": False}
 
 
 def test_aplicar_y_entregar_un_look_entrega_el_swf_de_la_prenda_base(nucleo, sistema):
@@ -158,7 +158,7 @@ def test_aplicar_y_entregar_un_look_entrega_el_swf_de_la_prenda_base(nucleo, sis
 
     archivo = sistema.documentos / "Fiddler2" / "AutoResponder.xml"
     reglas = [r.get("Match") for r in ET.parse(archivo).getroot().find("State").findall("ResponseRule")]
-    assert reglas[1] == f"EXACT:{URL_ASSETS}clothes1.swf?{len(crear_swf(CLASES))}"
+    assert reglas[1] == f"EXACT:{URL_ASSETS}costumes2.swf?{len(crear_swf(CLASES))}"
     assert len(reglas) == 2
 
 
@@ -170,15 +170,15 @@ def test_la_prenda_base_puede_ser_de_un_swf_que_no_es_el_abierto(nucleo, ffdec):
     assert resultado["ok"], resultado
     assert resultado["prenda"]["ruta"] == "antro2017/wears.buzo1"
     assert leer_item_base(ffdec.trucos[0][1]).partes == {"hats": "costumes.coronaRey_on", "grip": "gorra1_on"}
-    assert nucleo.piezas()["swf"] == "clothes1"  # el SWF abierto no cambia
+    assert nucleo.piezas()["swf"] == "costumes2"  # el SWF abierto no cambia
 
 
 def test_sin_prenda_base_se_propone_una_que_funcione(nucleo, ffdec):
-    resultado = nucleo.aplicar_look({"nombre": "Sin base", "base": None, "partes": {"hats": "clothes1.gorra1_on"}})
+    resultado = nucleo.aplicar_look({"nombre": "Sin base", "base": None, "partes": {"hats": "costumes2.gorra1_on"}})
 
     assert resultado["ok"], resultado
     assert resultado["look"]["base_propuesta"]
-    assert resultado["look"]["base"] == "clothes1.buzo1"  # la primera Prenda del SWF de la Pieza
+    assert resultado["look"]["base"] == "costumes2.buzo1"  # la primera Prenda del SWF de la Pieza
     assert ffdec.trucos[0][0] == "buzo1"
 
 
@@ -200,7 +200,7 @@ def test_un_look_que_no_se_puede_aplicar_se_avisa_antes_de_trucar(nucleo, ffdec,
 
 
 def test_aplicar_con_una_base_que_no_es_prenda_se_avisa(nucleo, ffdec):
-    resultado = nucleo.aplicar_look(dict(REY, base="clothes1.silla"))
+    resultado = nucleo.aplicar_look(dict(REY, base="costumes2.silla"))
 
     assert not resultado["ok"]
     assert "no es una Prenda" in resultado["error"]

@@ -53,6 +53,16 @@ PRENDA = "prenda"
 MOCHILA = "mochila"
 # Con 10000 usos o más, el juego no descuenta usos al usar un consumible (BagGuiModal).
 USOS_ILIMITADOS = 10000
+# `customization.includeList` (cfgs/gameplay.json): la ropa que se puede personalizar con el editor del juego.
+# El servidor no guarda lo trucado de sus Prendas: al volver a entrar al juego vuelven a ser las originales
+# (probado en el juego; las de otros SWF y los Items de mochila quedan trucados).
+PERSONALIZABLES = ("clothes1.",)
+NO_QUEDA_TRUCADA = "es ropa personalizable del juego (clothes1): al volver a entrar, el servidor la devuelve sin trucar"
+
+
+def no_sirve_de_base(ruta: str, tipo: str) -> str | None:
+    """Por qué el Item base `ruta` ("swf.clase") no sirve para trucar, o None si sirve."""
+    return NO_QUEDA_TRUCADA if tipo == PRENDA and ruta.startswith(PERSONALIZABLES) else None
 
 _CLASE = re.compile(r"\bclass\s+(\w+)\s+extends\s+(ClothMamboAsset|UsableMamboAsset|ConsumableMamboAsset)\b")
 _CLOTHES = re.compile(r"clothes\s*=\s*\{(?P<cuerpo>[^{}]*)\}\s*;")
