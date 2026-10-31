@@ -14,7 +14,8 @@ from pathlib import Path
 from mgitems.cache_swf import CacheSwf
 from mgitems.catalogo import buscar_en_catalogo, cargar_catalogo
 from mgitems.categorias import (
-    CacheCategorias, IndicePiezas, categorias, donde_se_ven, otros_usos, tipos_de_items, usos_de_piezas,
+    CASA, CacheCategorias, IndicePiezas, categorias, decoracion_en_acciones, donde_se_ven, otros_usos, tipos_de_items,
+    usos_de_piezas,
 )
 from mgitems.destinos import DESCARTADO, descarte_por_nombre, es_de_pasaporte
 from mgitems.interfaz import BANNERS, CARPETA_BANNERS, DIBUJOS, recortar
@@ -247,6 +248,19 @@ class Nucleo:
 
         return self._de_varios_swf(swfs, "piezas", piezas)
 
+    def decoracion_de_swfs(self, swfs: list | None = None) -> dict:
+        """Los objetos de la casa (muebles, decoración) de varios SWF (None: todos los del juego), con la
+        forma de las Piezas de `piezas_de_swfs` (`partes` vacías, `uso` "casa", `decoracion`): una acción
+        los puede mostrar como a una Pieza (probado en el juego). `sin_accion`: por qué no lo mostraría."""
+        def decoracion(swf, obtenido):
+            return [{"ruta": f"{swf}.{clase}", "clase": clase, "swf": swf, "partes": [], "uso": CASA, "decoracion": True,
+                     "pasaporte": item.get("pasaporte", False),
+                     "sin_accion": motivo_pieza_sin_accion(f"{swf}.{clase}", obtenido["se_ve"].get(clase, {}))}
+                    for clase, item in sorted(obtenido["items"].items(), key=lambda i: orden_natural(i[0]))
+                    if item["tipo"] == CASA and item.get("destino") != DESCARTADO]
+
+        return self._de_varios_swf(swfs, "decoracion", decoracion)
+
     def items_de_swfs(self, swfs: list | None = None) -> dict:
         """Los Items de varios SWF (None: todos los del juego) con su SWF, su tipo ("prenda", "mochila",
         "transporte", "casa", "mascota", "ropa_mascota", "comida_mascota", "juguete_mascota" u "otro"),
@@ -316,7 +330,8 @@ class Nucleo:
             piezas = categorias(piezas_del_swf(clases), usos_de_piezas(swf, items_base).get(swf, {}))
             otros = {p: uso for p, uso in otros_usos(swf, fuentes).get(swf, {}).items() if p in piezas and not piezas[p]}
             tipos = {clase: tipo for clase, tipo in tipos_de_items(swf, fuentes).items() if clase in items}
-            se_ve = donde_se_ven(swf, list(piezas), fuentes, limites_de_simbolos(data))
+            limites = limites_de_simbolos(data)
+            se_ve = donde_se_ven(swf, list(piezas), fuentes, limites) | decoracion_en_acciones(swf, tipos, limites)
             cache.guardar(swf, version, piezas, otros, tipos, se_ve)
         except FFDecNoDisponible as e:
             return {"ok": False, "error": f"{e}: no se pueden clasificar los Items de {swf}."}
@@ -418,7 +433,7 @@ class Nucleo:
 
     def aplicar_accion(self, accion: dict) -> dict:
         """Truca el Item de mochila `accion["base"]` para que, al usarlo, el Gaturro haga la animación
-        `accion["animacion"]` mostrando `accion["pieza"]` (opcional; cualquier Pieza, también un vehículo) y,
+        `accion["animacion"]` mostrando `accion["pieza"]` (opcional; cualquier Pieza, también un vehículo o un objeto de la casa) y,
         si se elige, ponga `accion["efecto"]` sobre la cabeza. Con usos ilimitados. Devuelve el Encode que lo
         agrega, y en `avisos` lo que el juego haría distinto de lo elegido."""
         if not isinstance(accion, dict):
@@ -452,7 +467,7 @@ class Nucleo:
         valores, avisos = {}, []
         objeto = None
         if pieza:
-            objeto, error = self._valor_de_pieza(swf, piezas_propias, pieza, con_swf=True)
+            objeto, error = (pieza, None) if self._es_decoracion(pieza) else self._valor_de_pieza(swf, piezas_propias, pieza, con_swf=True)
             if error:
                 return {"ok": False, "error": error}
         valores[ACCION] = valor_de_accion(animacion, objeto)
@@ -605,6 +620,12 @@ class Nucleo:
                 except OSError:
                     pass
         return {"ok": True, "dibujos": dibujos}
+
+    def _es_decoracion(self, ruta: str) -> bool:
+        """Si `ruta` ("swf.clase") es un objeto de la casa, que una acción puede mostrar como una Pieza."""
+        swf, _, clase = ruta.rpartition(".")
+        obtenido = self._categorias_de(swf) if swf else {"ok": False}
+        return obtenido["ok"] and obtenido["items"].get(clase, {}).get("tipo") == CASA
 
     def _motivo_pieza_sin_accion(self, ruta: str) -> str | None:
         swf, _, clase = ruta.rpartition(".")

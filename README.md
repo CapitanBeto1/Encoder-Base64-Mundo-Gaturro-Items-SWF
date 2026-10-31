@@ -13,7 +13,7 @@ Buscás los Items en los SWF del juego (el programa los descarga solo), armás u
 - **Lista de Items** con imagen y cantidad de cada uno; se pueden quitar o agregar a mano (`clothes1.remera5`).
 - **Trucar Prenda**: un Item que, en vez de lo suyo, muestra una sola Pieza de cualquier SWF (por ejemplo, un «Otro») en la Parte del cuerpo que elijas; armás una lista y las recibís todas en un solo Encode. Las Prendas de `clothes1` no sirven de base: el juego no guarda lo trucado y vuelven a ser las originales.
 - **Looks**: armás un Gaturro con Piezas de cualquier SWF y lo recibís en una sola Prenda o Item; se guardan y se pasan en archivos.
-- **Acciones**: un Item de mochila que, al usarlo, hace una animación del juego mostrando cualquier Pieza; la vista previa la reproduce como el juego.
+- **Acciones**: un Item de mochila que, al usarlo, hace una animación del juego mostrando cualquier Pieza o cualquier objeto de la casa (categoría Decoración); la vista previa la reproduce como el juego.
 - **Encode**: generarlo, copiarlo, guardarlo como `.txt` o importar uno existente (pegado o desde archivo).
 - **Agregar al juego**: cierra el juego y Fiddler, pone la regla de Lola en el AutoResponder de Fiddler (respetando tus reglas), borra el caché del juego y vuelve a abrir todo.
 - **Configuración**: revisa que estén Mundo Gaturro Desktop y Fiddler, y explica paso a paso qué falta.

@@ -41,6 +41,7 @@ Acciones de mochila (probado en el juego con `showObject`, `showObjectUp` y `fla
 - No la hace si el texto dice `run`, `zombieStand` o `zombieWalk` en cualquier lugar (`isAllowedAnimation`), si la animación tiene reglas en `validItems.action` (teléfono solo con `phones.`/`transmisor`; fútbol no con `magia.poder` ni `gatoons.`) o si el Gaturro camina. La Pieza no se ve si mide más de 150×150 o si es vacía.
 - Las 106 animaciones son los cuadros con nombre del `assets.GaturroMC` del cliente de hoy. El de `superHeroesTrajes`, que se puede leer sin el cliente, tiene 84 de ellas, iguales cuadro por cuadro.
 - `mgitems.acciones` copia esas reglas; la pestaña Acciones solo acepta bases de mochila.
+- La acción también muestra un objeto de la casa (`"<animación>.<swf>.<objeto>"`, sin `_on`): el juego lo carga igual que una Pieza (probado: fútbol con `greek.columna`). Rige el mismo límite de 150×150. La grilla de Acciones tiene la categoría Decoración (`Nucleo.decoracion_de_swfs`); el índice guarda el tamaño de los objetos de la casa que no entran.
 
 `mgitems.destinos` copia esas reglas. El índice guarda, para cada Item, su destino y, si no llega bien, el motivo. «Agregar Items» lo muestra debajo de cada Item (en rojo si no llega bien). «Agregar todos» saltea los descartados. Generar el Encode avisa cuáles no van a quedar bien.
 

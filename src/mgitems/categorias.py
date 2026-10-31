@@ -28,7 +28,7 @@ ARCHIVO_INDICE = Path(__file__).parent / "datos" / "indice_piezas.json"
 # Lo que un Item de mochila agrega y viste al Gaturro (el resto de `adds`, como `action`, no viste).
 PARTES_QUE_VISTEN = (set(PARTES_DEL_CUERPO) - {EFECTO}) | {"clothFront", "armFore", "armBack", "gripBack", "glove", "gloveFore", "gloveBack"}
 # Sube cuando cambia cómo se clasifica, para no usar lo analizado antes en la computadora del jugador.
-FORMATO = 15
+FORMATO = 16  # 16: el tamaño de los objetos de la casa, para las acciones
 
 # Para qué usa el juego una Pieza que no viste al Gaturro; también, tipos de Items.
 TRANSPORTE, ACCION, CASA, MASCOTA = "transporte", "accion", "casa", "mascota"
@@ -144,6 +144,17 @@ def donde_se_ven(swf: str, piezas: list[str], fuentes: dict[str, str], limites: 
                 tipo = _TIPO_DE_VEHICULO.search(fuente)
                 donde["vehiculo"] = tipo.group(1).lower() if tipo else ""
             resultado[pieza] = donde
+    return resultado
+
+
+def decoracion_en_acciones(swf: str, items: dict[str, dict], limites: dict[str, tuple]) -> dict[str, dict]:
+    """Objeto de la casa → {"accion": "grande" o "vacia"}, de los de `swf` que una acción no mostraría
+    (ver `se_ve.donde_se_ve`): una acción puede mostrar cualquier objeto de la casa, como una Pieza.
+    `items`: los Items del SWF (de `tipos_de_items`); `limites`: el rectángulo de cada símbolo."""
+    resultado = {}
+    for clase, item in items.items():
+        if item.get("tipo") == CASA and (accion := donde_se_ve(f"{swf}.{clase}", limites.get(clase)).get("accion")):
+            resultado[clase] = {"accion": accion}
     return resultado
 
 

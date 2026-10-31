@@ -735,7 +735,10 @@ const CATEGORIAS = [
   { id: "foot", nombre: "Pies", que: "Pies", icono: "👟", partes: ["foot"] },
   { id: "transport", nombre: "Transportes", que: "Transporte", icono: "🛹", partes: ["transport"] },
   { id: "otros", nombre: "Otros", icono: "✨", partes: [] },
+  // Los objetos de la casa: solo los muestra una acción (no visten al Gaturro).
+  { id: "decoracion", nombre: "Decoración", icono: "🛋️", partes: [], solo: "acciones" },
 ];
+const categoriasDeLaVista = () => CATEGORIAS.filter((c) => !c.solo || c.solo === vista);
 // Para qué usa el juego una Pieza que no viste al Gaturro (sin uso conocido: "Objeto").
 const USOS = { transporte: "Transporte", accion: "Acción", casa: "Decoración", mascota: "Mascota" };
 const POR_PAGINA = 15;
@@ -744,6 +747,7 @@ const PARTES_CON_CATEGORIA = new Set(CATEGORIAS.flatMap((c) => c.partes));
 const inventario = {
   cargado: false,
   piezas: [], // [{ruta, clase, swf, partes}] de las fuentes
+  decoracion: [], // los objetos de la casa de las fuentes, con la forma de las Piezas (solo para las acciones)
   categoria: "hats",
   pagina: 0,
 };
@@ -772,7 +776,9 @@ function queEs(pieza) {
 // Los vehículos (los que el juego solo muestra en Transporte) van en Transportes aunque ningún Item los use ahí.
 const partesDePieza = (pieza) => (pieza.solo_en === "transport" ? [...pieza.partes, "transport"] : pieza.partes);
 const enCategoria = (pieza, categoria) =>
-  categoria.id === "otros"
+  categoria.id === "decoracion" || pieza.decoracion
+    ? categoria.id === "decoracion" && Boolean(pieza.decoracion)
+    : categoria.id === "otros"
     ? !partesDePieza(pieza).some((p) => PARTES_CON_CATEGORIA.has(p))
     : partesDePieza(pieza).some((p) => categoria.partes.includes(p));
 
@@ -781,6 +787,7 @@ const enCategoria = (pieza, categoria) =>
 function motivoNoSeVe(pieza, parte) {
   // Lo que muestra una acción no pasa por las Partes del Gaturro: solo cuenta lo que dice el núcleo.
   if (parte === "action") return pieza.sin_accion ?? null;
+  if (pieza.decoracion) return "un objeto de la casa solo se ve en la acción";
   if (pieza.no_se_ve) return pieza.no_se_ve;
   if (!parte) return null;
   // El efecto de cabeza: cualquier Pieza (también un vehículo), salvo las de la lista del juego con otra
@@ -798,12 +805,15 @@ function motivoNoSeVe(pieza, parte) {
 async function cargarInventario() {
   const pedido = fuentes.todos ? null : fuentes.swfs;
   if (!fuentes.todos && !fuentes.swfs.length) {
-    inventario.piezas = [];
+    inventario.piezas = inventario.decoracion = [];
   } else {
     const espera = fuentes.todos ? "Leyendo las Piezas de todos los SWF…" : `Leyendo las Piezas de ${fuentes.swfs.join(", ")}…`;
     const resultado = await mientras(espera, () => api().piezas_de_swfs(pedido));
     if (!resultado.ok) return avisarLista(resultado.error, "error");
     inventario.piezas = resultado.piezas;
+    // Del mismo índice que las Piezas: ya está leído, no tarda.
+    const decoracion = await api().decoracion_de_swfs(pedido);
+    inventario.decoracion = decoracion.ok ? decoracion.decoracion : [];
     const errores = Object.entries(resultado.errores);
     avisarLista(errores.length ? `No se pudieron leer: ${errores.map(([s, e]) => `${s} (${e})`).join("; ")}` : "", "advertencia");
   }
@@ -834,10 +844,13 @@ function mostrarFuentes() {
 function mostrarInventario() {
   mostrarFuentes();
   const texto = $("filtro-piezas").value.trim();
-  const categoria = CATEGORIAS.find((c) => c.id === inventario.categoria);
+  const categorias = categoriasDeLaVista();
+  if (!categorias.some((c) => c.id === inventario.categoria)) inventario.categoria = categorias[0].id;
+  const categoria = categorias.find((c) => c.id === inventario.categoria);
+  const todas = vista === "acciones" ? [...inventario.piezas, ...inventario.decoracion] : inventario.piezas;
   $("categorias").replaceChildren(
-    ...CATEGORIAS.map((c) => {
-      const cantidad = inventario.piezas.filter((p) => enCategoria(p, c)).length;
+    ...categorias.map((c) => {
+      const cantidad = todas.filter((p) => enCategoria(p, c)).length;
       const pestana = Object.assign(document.createElement("button"), { className: "categoria", title: `${c.nombre} (${cantidad})` });
       pestana.setAttribute("role", "tab");
       pestana.setAttribute("aria-selected", String(c === categoria));
@@ -855,7 +868,7 @@ function mostrarInventario() {
   $("uso-piezas").hidden = categoria.id !== "otros";
   const uso = categoria.id === "otros" ? $("uso-piezas").value : "";
   const coincide = buscarPorNombre(texto, $("modo-nombre-piezas").value);
-  const encontradas = inventario.piezas.filter((p) => enCategoria(p, categoria) && coincide(p.clase) && (!uso || queEs(p).uso === uso));
+  const encontradas = todas.filter((p) => enCategoria(p, categoria) && coincide(p.clase) && (!uso || queEs(p).uso === uso));
   // Recomendado: primero las que son solo de esta categoría, después las que suman una más, dos más… (como en «Agregar Items»).
   const destino = vista === "acciones" ? casilleroMarcado ?? "action"
     : vista === "trucar" ? lookActual.parte
