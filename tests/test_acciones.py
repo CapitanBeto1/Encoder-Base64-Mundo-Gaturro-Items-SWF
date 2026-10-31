@@ -7,6 +7,7 @@ from mgitems.acciones import ANIMACIONES, motivo_pieza_sin_accion, motivo_sin_ac
 from mgitems.nucleo import Nucleo
 from mgitems.prendas import USOS_ILIMITADOS, leer_item_base
 from procesos_falso import ProcesosFalso
+from swf_de_ejemplo import crear_swf
 from test_mochila import BRUJA, fuente, ffdec, sistema  # noqa: F401 (fixtures)
 from test_prendas import reglas
 
@@ -160,3 +161,22 @@ def test_exportar_e_importar_una_accion(nucleo, tmp_path):
     assert not nucleo.importar_look_de_archivo(str(archivo))["ok"]  # no es un Look
     otra = nucleo.importar_accion_de_archivo(str(archivo))
     assert otra["accion"]["nombre"] == "Moto en la mano (2)"
+
+
+def test_una_accion_puede_mostrar_un_objeto_de_la_casa(nucleo, fuente, ffdec):
+    # Probado en el juego: fútbol con `greek.columna`. La silla de los SWF de ejemplo es un objeto de la casa.
+    fuente.publicar("mueblesDeEjemplo", crear_swf(["silla"]), '"v1"')
+    decoracion = nucleo.decoracion_de_swfs(["mueblesDeEjemplo"])["decoracion"]
+
+    resultado = nucleo.aplicar_accion({"animacion": "football", "pieza": "mueblesDeEjemplo.silla", "base": "bruja.pocima1"})
+
+    assert [(d["ruta"], d["partes"], d["uso"], d["decoracion"]) for d in decoracion] == [("mueblesDeEjemplo.silla", [], "casa", True)]
+    assert resultado["ok"], resultado
+    assert leer_item_base(ffdec.trucos[0][1]).partes == {"action": "football.mueblesDeEjemplo.silla"}
+
+
+def test_un_item_que_no_es_de_la_casa_ni_una_pieza_no_va_en_la_accion(nucleo, ffdec):
+    resultado = nucleo.aplicar_accion({"animacion": "football", "pieza": "costumes2.remera5", "base": "bruja.pocima1"})
+
+    assert not resultado["ok"] and "no es una Pieza" in resultado["error"]
+    assert ffdec.trucos == []

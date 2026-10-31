@@ -49,7 +49,7 @@ sys.path.insert(0, str(RAIZ / "src"))
 
 from mgitems.catalogo import cargar_catalogo  # noqa: E402
 from mgitems.categorias import (  # noqa: E402
-    ARCHIVO_INDICE, MASCOTA, categorias, donde_se_ven, otros_usos, tipos_de_items, usos_de_piezas,
+    ARCHIVO_INDICE, MASCOTA, categorias, decoracion_en_acciones, donde_se_ven, otros_usos, tipos_de_items, usos_de_piezas,
 )
 from mgitems.fuente import FuenteCDN, SwfNoEncontrado  # noqa: E402
 from mgitems.iconos import version_de  # noqa: E402
@@ -91,7 +91,7 @@ def analizar(fuente: FuenteCDN, ffdec: ItemsBaseFFDec, trabajo: Path, swf: str) 
     try:
         datos = json.loads(guardado.read_text(encoding="utf-8"))
         if datos["version"] == version_de(data) and datos.get("formato") == FORMATO_TRABAJO:
-            return swf, datos, ""
+            return swf, con_decoracion(swf, datos, data), ""
     except (OSError, ValueError, KeyError):
         pass
     try:
@@ -114,7 +114,17 @@ def analizar(fuente: FuenteCDN, ffdec: ItemsBaseFFDec, trabajo: Path, swf: str) 
         "se_ve": donde_se_ven(swf, piezas, fuentes, limites),
     }
     guardado.write_text(json.dumps(datos, ensure_ascii=False), encoding="utf-8")
-    return swf, datos, ""
+    return swf, con_decoracion(swf, datos, data), ""
+
+
+def con_decoracion(swf: str, datos: dict, data: bytes) -> dict:
+    """`datos` con el tamaño de los objetos de la casa que una acción no mostraría (en `se_ve`). Se lee
+    del SWF sin FFDec, así que no hace falta volver a analizar lo guardado."""
+    try:
+        limites = limites_de_simbolos(data)
+    except SwfInvalido:
+        return datos
+    return datos | {"se_ve": datos["se_ve"] | decoracion_en_acciones(swf, datos["items"], limites)}
 
 
 def palabras(pieza: str) -> str:
