@@ -11,6 +11,7 @@ TITULO = "MG Items"
 UI = Path(__file__).parent / "ui" / "index.html"
 _TIPOS_LOOK = ("Look de MG Items (*.mglook)", "Todos los archivos (*.*)")
 _TIPOS_ACCION = ("Acción de MG Items (*.mgaccion)", "Todos los archivos (*.*)")
+_TIPOS_TRUCADA = ("Prenda trucada de MG Items (*.mgtrucada)", "Todos los archivos (*.*)")
 _NO_VALE_EN_ARCHIVOS = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
 
 
@@ -114,6 +115,31 @@ class Puente:
         if not ruta:
             return {"ok": False, "cancelado": True}
         return self._nucleo.importar_accion_de_archivo(ruta)
+
+    def trucadas(self) -> dict:
+        return self._nucleo.trucadas()
+
+    def guardar_trucada(self, trucada: dict) -> dict:
+        return self._nucleo.guardar_trucada(trucada)
+
+    def duplicar_trucada(self, id_trucada: str) -> dict:
+        return self._nucleo.duplicar_trucada(id_trucada)
+
+    def borrar_trucada(self, id_trucada: str) -> dict:
+        return self._nucleo.borrar_trucada(id_trucada)
+
+    def exportar_trucada(self, trucada: dict) -> dict:
+        nombre = _NO_VALE_EN_ARCHIVOS.sub("_", str(trucada.get("nombre") or "").strip()) or "Prenda trucada"
+        ruta = _dialogo(webview.FileDialog.SAVE, save_filename=f"{nombre}.mgtrucada", file_types=_TIPOS_TRUCADA)
+        if not ruta:
+            return {"ok": False, "cancelado": True}
+        return self._nucleo.exportar_trucada(trucada, ruta)
+
+    def importar_trucada(self) -> dict:
+        ruta = _dialogo(webview.FileDialog.OPEN, file_types=_TIPOS_TRUCADA)
+        if not ruta:
+            return {"ok": False, "cancelado": True}
+        return self._nucleo.importar_trucada_de_archivo(ruta)
 
     def exportar_look(self, look: dict) -> dict:
         nombre = _NO_VALE_EN_ARCHIVOS.sub("_", str(look.get("nombre") or "").strip()) or "Look"

@@ -42,7 +42,7 @@ from mgitems.items import (
     separar_prefijos,
     separar_rutas,
 )
-from mgitems.looks import FORMATO_ACCION, AlmacenLooks, Look, LookInvalido, archivo_de_look, look_de_archivo
+from mgitems.looks import FORMATO_ACCION, FORMATO_TRUCADA, AlmacenLooks, Look, LookInvalido, archivo_de_look, look_de_archivo
 from mgitems.prendas import (
     ACCION, EFECTO, MOCHILA, PARTES_DEL_CUERPO, PREFIJO_EFECTO, PRENDA, CacheItemsBase, ItemBase, ItemsBaseFFDec, TruqueoFallido,
     leer_item_base, no_sirve_de_base, reescribir_partes,
@@ -854,6 +854,76 @@ class Nucleo:
     def _almacen_acciones(self) -> AlmacenLooks:
         return AlmacenLooks(self._entorno.carpeta_programa() / "acciones.json", clave="acciones")
 
+    # --- Mis Prendas trucadas: cada una (Item base, Parte y Pieza) se guarda como los Looks, en su propio archivo ---
+
+    def trucadas(self) -> dict:
+        """Las Prendas trucadas guardadas, por nombre."""
+        try:
+            guardadas = self._almacen_trucadas().todos()
+        except OSError as e:
+            return {"ok": False, "error": f"No se pudieron leer las Prendas trucadas: {e}"}
+        return {"ok": True, "trucadas": [asdict(t) for t in sorted(guardadas, key=lambda t: orden_natural(t.nombre))]}
+
+    def guardar_trucada(self, trucada: dict) -> dict:
+        """Guarda una Prenda trucada nueva (sin id) o los cambios de una guardada."""
+        try:
+            guardada = self._almacen_trucadas().guardar(_trucada_valida(trucada))
+        except LookInvalido as e:
+            return {"ok": False, "error": str(e)}
+        except OSError as e:
+            return {"ok": False, "error": f"No se pudo guardar la Prenda trucada: {e}"}
+        return {"ok": True, "trucada": asdict(guardada)}
+
+    def duplicar_trucada(self, id_trucada: str) -> dict:
+        """Una copia de una Prenda trucada guardada, con otro nombre."""
+        try:
+            almacen = self._almacen_trucadas()
+            original = next((t for t in almacen.todos() if t.id == id_trucada), None)
+            if original is None:
+                return {"ok": False, "error": "Esa Prenda trucada ya no existe."}
+            nombre = _nombre_libre(f"{original.nombre} (copia)", {t.nombre for t in almacen.todos()}, "copia ")
+            copia = almacen.guardar(Look(nombre, original.base, dict(original.partes), colores=dict(original.colores)))
+        except OSError as e:
+            return {"ok": False, "error": f"No se pudo duplicar la Prenda trucada: {e}"}
+        return {"ok": True, "trucada": asdict(copia)}
+
+    def borrar_trucada(self, id_trucada: str) -> dict:
+        try:
+            borrada = self._almacen_trucadas().borrar(id_trucada)
+        except OSError as e:
+            return {"ok": False, "error": f"No se pudo borrar la Prenda trucada: {e}"}
+        return {"ok": True} if borrada else {"ok": False, "error": "Esa Prenda trucada ya no existe."}
+
+    def exportar_trucada(self, trucada: dict, ruta: str) -> dict:
+        """Guarda la Prenda trucada en un archivo para pasársela a otra persona."""
+        try:
+            Path(ruta).write_text(archivo_de_look(_trucada_valida(trucada), FORMATO_TRUCADA), encoding="utf-8")
+        except LookInvalido as e:
+            return {"ok": False, "error": str(e)}
+        except OSError as e:
+            return {"ok": False, "error": f"No se pudo guardar el archivo: {e.strerror or e}"}
+        return {"ok": True, "ruta": ruta}
+
+    def importar_trucada_de_archivo(self, ruta: str) -> dict:
+        """Agrega a las guardadas la Prenda trucada de un archivo (con otro nombre si ya hay una igual)."""
+        try:
+            contenido = Path(ruta).read_text(encoding="utf-8", errors="replace")
+        except OSError as e:
+            return {"ok": False, "error": f"No se pudo abrir el archivo: {e.strerror or e}"}
+        try:
+            trucada = _trucada_valida(asdict(look_de_archivo(contenido, FORMATO_TRUCADA)))
+            almacen = self._almacen_trucadas()
+            trucada.nombre = _nombre_libre(trucada.nombre, {t.nombre for t in almacen.todos()})
+            guardada = almacen.guardar(trucada)
+        except LookInvalido as e:
+            return {"ok": False, "error": str(e)}
+        except OSError as e:
+            return {"ok": False, "error": f"No se pudo guardar la Prenda trucada: {e}"}
+        return {"ok": True, "trucada": asdict(guardada)}
+
+    def _almacen_trucadas(self) -> AlmacenLooks:
+        return AlmacenLooks(self._entorno.carpeta_programa() / "trucadas.json", clave="trucadas")
+
     def _swf_trucados(self, encode: str) -> tuple[list[SwfTrucado], dict | None]:
         """Los SWF trucados que necesita un Encode generado en esta sesión, con el tamaño actual del original."""
         trucados = []
@@ -1373,6 +1443,20 @@ def _accion_valida(datos: dict) -> Look:
     if set(accion.partes) - {ACCION, EFECTO}:
         raise LookInvalido("Una acción solo lleva la Pieza de la acción y la de la cabeza.")
     return accion
+
+
+def _trucada_valida(datos: dict) -> Look:
+    """Una Prenda trucada de la pestaña Trucar Prenda, validada: con nombre, Item base y una sola Pieza en una Parte."""
+    if not isinstance(datos, dict) or not str(datos.get("nombre") or "").strip():
+        raise LookInvalido("Poné un nombre a la Prenda trucada.")
+    trucada = Look.desde(datos)
+    if not trucada.base:
+        raise LookInvalido("Elegí el Item base de la Prenda trucada.")
+    if len(trucada.partes) != 1:
+        raise LookInvalido("Una Prenda trucada lleva una sola Pieza, en una Parte.")
+    if trucada.animacion:
+        raise LookInvalido("Una Prenda trucada no lleva animación.")
+    return trucada
 
 
 def _nombre_libre(nombre: str, usados: set[str], sufijo: str = "") -> str:

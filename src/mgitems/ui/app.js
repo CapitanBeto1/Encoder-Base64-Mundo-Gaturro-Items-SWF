@@ -448,7 +448,7 @@ function cambiarVista(nueva) {
   document.querySelector("main").classList.toggle("modo-trucar", vista === "trucar");
   $("aplicar-look").textContent = { acciones: "Aplicar acción", trucar: "Trucar todas" }[vista] ?? "Aplicar Look";
   $("texto-se-guarda").textContent = vista === "trucar" ? "Se trucará:" : "Se guarda en:";
-  $("nombre-look").placeholder = vista === "acciones" ? "NOMBRE DE LA ACCIÓN" : "NOMBRE DEL LOOK";
+  $("nombre-look").placeholder = { acciones: "NOMBRE DE LA ACCIÓN", trucar: "NOMBRE DE LA PRENDA TRUCADA" }[vista] ?? "NOMBRE DEL LOOK";
   document.querySelector("main").classList.toggle("modo-agregar", vista === "agregar");
   $("items-a-recibir").hidden = vista !== "agregar";
   $("generar").textContent = { agregar: "Generar Encode", trucar: "Trucar Prenda", looks: "Aplicar Look", acciones: "Aplicar acción" }[vista];
@@ -500,16 +500,24 @@ const NOMBRES_DE_OTRAS_PARTES = {
 };
 const nombreDeParte = (id) => NOMBRES_DE_OTRAS_PARTES[id] ?? partesConocidas.find((p) => p.id === id)?.nombre ?? id;
 
-// Looks y Acciones comparten los guardados (botón, ventana, ✓ ✗ 🗑): cada pestaña con su lista y sus funciones.
+// Looks, Acciones y Trucar Prenda comparten los guardados (botón, ventana, ✓ ✗ 🗑): cada pestaña con su lista y sus funciones.
 const GUARDADOS = {
   looks: { lista: "looks", guardar: "guardar_look", duplicar: "duplicar_look", borrar: "borrar_look", exportar: "exportar_look",
            importar: "importar_look", el: "el Look", lo: "lo", nuevo: "Look nuevo", mis: "Mis Looks", titulo: "GUARDA TU LOOK", sub: "GUARDA TUS LOOKS FAVORITOS" },
   acciones: { lista: "acciones", guardar: "guardar_accion", duplicar: "duplicar_accion", borrar: "borrar_accion", exportar: "exportar_accion",
               importar: "importar_accion", el: "la acción", lo: "la", nuevo: "Acción nueva", mis: "Mis acciones", titulo: "GUARDA TU ACCIÓN", sub: "GUARDA TUS ACCIONES FAVORITAS" },
+  trucar: { lista: "trucadas", guardar: "guardar_trucada", duplicar: "duplicar_trucada", borrar: "borrar_trucada", exportar: "exportar_trucada",
+            importar: "importar_trucada", el: "la Prenda trucada", lo: "la", nuevo: "Prenda trucada nueva", mis: "Mis Prendas trucadas",
+            titulo: "GUARDA TU PRENDA TRUCADA", sub: "GUARDA TUS PRENDAS TRUCADAS FAVORITAS" },
 };
-const guardados = () => GUARDADOS[vista === "acciones" ? "acciones" : "looks"];
+const guardados = () => GUARDADOS[vista in GUARDADOS ? vista : "looks"];
 const documentoNuevo = (pestana = vista) => ({ acciones: nuevaAccion, trucar: nuevaPrendaATrucar }[pestana] ?? nuevoLook)();
-const guardadoDe = (resultado) => resultado.look ?? resultado.accion;
+const guardadoDe = (resultado) => resultado.look ?? resultado.accion ?? resultado.trucada;
+// Lo que queda en el editor al abrir un guardado (o uno nuevo). En Trucar Prenda va al armado, con su Parte,
+// y la lista de las que se reciben juntas sigue como estaba.
+const enElEditor = (documento) => vista === "trucar"
+  ? { ...nuevaPrendaATrucar(), ...structuredClone(documento), parte: Object.keys(documento.partes)[0] ?? lookActual.parte, lista: lookActual.lista }
+  : structuredClone(documento);
 // Lo que se dibuja quieto (miniaturas, escenario): en una acción, solo lo de la cabeza.
 const partesQuietas = (documento) =>
   vista === "acciones" ? (documento.partes.effect ? { effect: documento.partes.effect } : {}) : documento.partes;
@@ -628,7 +636,7 @@ $("eliminar-look-elegido").addEventListener("click", async () => {
   if (!resultado.ok) return avisarLista(resultado.error, "error");
   const posicion = looksGuardados.indexOf(look);
   if (lookActual.id === look.id) {
-    lookActual = documentoNuevo();
+    lookActual = enElEditor(documentoNuevo());
     mostrarLook();
   }
   const quedan = looksGuardados.filter((l) => l.id !== look.id);
@@ -642,7 +650,7 @@ $("cancelar-mis-looks").addEventListener("click", () => $("dialogo-mis-looks").c
 $("cerrar-mis-looks").addEventListener("click", () => $("dialogo-mis-looks").close());
 
 function abrirLook(look) {
-  lookActual = structuredClone(look);
+  lookActual = enElEditor(look);
   mostrarListaLooks();
   mostrarLook();
   // Las imágenes de todas las Piezas del Look (pueden ser de varios SWF).
@@ -1304,7 +1312,7 @@ $("cerrar-base").addEventListener("click", () => $("dialogo-base").close());
 async function guardarLook() {
   const resultado = await api()[guardados().guardar](lookActual);
   if (!resultado.ok) return avisarLista(resultado.error, "error");
-  lookActual = guardadoDe(resultado);
+  lookActual = enElEditor(guardadoDe(resultado));
   avisarLista(`Se guardó ${guardados().el} «${lookActual.nombre}».`, "exito");
   await cargarLooks();
 }
@@ -1324,7 +1332,7 @@ async function borrarLook() {
   const resultado = await api()[guardados().borrar](lookActual.id);
   if (!resultado.ok) return avisarLista(resultado.error, "error");
   avisarLista(`Se borró «${lookActual.nombre}».`, "exito");
-  lookActual = documentoNuevo();
+  lookActual = enElEditor(documentoNuevo());
   await cargarLooks();
 }
 
@@ -1379,8 +1387,7 @@ async function cargarTrucar() {
     inventario.categoria = "otros"; // lo que se truca suele ser un «Otro»
     inventario.pagina = 0;
   }
-  mostrarLook();
-  if (!inventario.cargado) await cargarInventario();
+  await cargarLooks(); // las Prendas trucadas guardadas, el editor y el inventario
 }
 
 const piezaATrucar = () => Object.values(lookActual.partes)[0] ?? null;
@@ -1403,7 +1410,8 @@ function mostrarArmadoTrucar() {
         mostrarEncode(null);
         mostrarLook();
       });
-      li.append(elementoIcono(t.pieza), etiqueta(`${claseDeRuta(t.pieza)} en ${nombreDeParte(t.parte)} · ${claseDeRuta(t.base)}`, "nombre"), quitar);
+      const texto = `${claseDeRuta(t.pieza)} en ${nombreDeParte(t.parte)} · ${claseDeRuta(t.base)}`;
+      li.append(elementoIcono(t.pieza), etiqueta(t.nombre ? `${t.nombre}: ${texto}` : texto, "nombre"), quitar);
       return li;
     })
   );
@@ -1424,11 +1432,11 @@ $("agregar-trucada").addEventListener("click", () => {
   if (lookActual.lista.some((t) => t.base === lookActual.base)) {
     return avisarLista(`${claseDeRuta(lookActual.base)} ya está en la lista: cada Prenda trucada necesita otro Item base.`, "advertencia");
   }
-  lookActual.lista.push({ base: lookActual.base, parte: lookActual.parte, pieza });
+  lookActual.lista.push({ base: lookActual.base, parte: lookActual.parte, pieza, nombre: lookActual.nombre.trim() });
   avisarLista(`Se agregó ${claseDeRuta(pieza)} en ${nombreDeParte(lookActual.parte)} (${claseDeRuta(lookActual.base)}). Armá otra o tocá «Trucar todas».`, "exito");
-  lookActual.base = null;
-  lookActual.partes = {};
+  Object.assign(lookActual, { id: "", nombre: "", base: null, partes: {} });
   mostrarEncode(null);
+  mostrarListaLooks();
   mostrarLook();
 });
 
@@ -1452,13 +1460,13 @@ $("cerrar-ver-encode").addEventListener("click", () => $("dialogo-ver-encode").c
 
 $("nombre-look").addEventListener("input", () => {
   lookActual.nombre = $("nombre-look").value;
-  mostrarEncode(null);
+  if (vista !== "trucar") mostrarEncode(null); // en Trucar Prenda, el Encode es de la lista, no del armado
   mostrarBarraLook();
 });
 
 $("nuevo-look").addEventListener("click", () => {
   $("dialogo-mis-looks").close();
-  lookActual = documentoNuevo();
+  lookActual = enElEditor(documentoNuevo());
   casilleroMarcado = null;
   mostrarListaLooks();
   mostrarLook();
@@ -1468,7 +1476,7 @@ $("guardar-look").addEventListener("click", guardarLook);
 // ✗: vuelve a como estaba guardado (o vacío si el Look es nuevo).
 $("descartar-look").addEventListener("click", () => {
   const guardado = looksGuardados.find((l) => l.id === lookActual.id);
-  lookActual = guardado ? structuredClone(guardado) : documentoNuevo();
+  lookActual = enElEditor(guardado ?? documentoNuevo());
   mostrarListaLooks();
   mostrarLook();
   avisarLista(guardado ? `Se descartaron los cambios de «${guardado.nombre}».` : "", "exito");

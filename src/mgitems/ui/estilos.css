@@ -268,7 +268,6 @@ button.derecha { margin-left: auto; }
 /* Looks, Acciones y Trucar Prenda comparten la pantalla: cada una esconde lo de las otras. */
 main:not(.modo-acciones) .solo-acciones,
 main:not(.modo-trucar) .solo-trucar,
-main.modo-trucar .guardables,
 main.modo-acciones .solo-looks,
 .dialogo-base.solo-mochila .tipos-base {
   display: none;
