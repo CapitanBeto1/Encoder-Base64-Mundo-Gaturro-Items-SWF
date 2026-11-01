@@ -459,3 +459,61 @@ def test_con_ffdec_real_las_prendas_de_clothes1_no_sirven_de_base(sistema):
     assert "clothes1.falda2" not in {i["ruta"] for i in bases["items"]}
     assert "clothes1" in bases["aviso"]
     assert not resultado["ok"] and "no sirve de Item base" in resultado["error"]
+
+
+# --- Mis Prendas trucadas: cada una se guarda con su nombre, como los Looks ---
+
+CUCHILLO = {"nombre": "Corona en la mano", "base": "costumes2.remera5", "partes": {"grip": "costumes.coronaRey_on"}}
+
+
+def test_guardar_duplicar_y_borrar_prendas_trucadas(nucleo):
+    guardada = nucleo.guardar_trucada(CUCHILLO)
+
+    assert guardada["ok"], guardada
+    trucada = guardada["trucada"]
+    assert trucada["id"] and (trucada["base"], trucada["partes"]) == (CUCHILLO["base"], CUCHILLO["partes"])
+    copia = nucleo.duplicar_trucada(trucada["id"])["trucada"]
+    assert copia["nombre"] == "Corona en la mano (copia)" and copia["partes"] == CUCHILLO["partes"]
+    assert [t["nombre"] for t in nucleo.trucadas()["trucadas"]] == ["Corona en la mano", "Corona en la mano (copia)"]
+    assert nucleo.looks()["looks"] == [] and nucleo.acciones()["acciones"] == []  # aparte de los Looks y las acciones
+    assert nucleo.guardar_trucada(trucada | {"nombre": "Corona"})["trucada"]["id"] == trucada["id"]  # cambios de una guardada
+    assert nucleo.borrar_trucada(trucada["id"])["ok"]
+    assert [t["nombre"] for t in nucleo.trucadas()["trucadas"]] == ["Corona en la mano (copia)"]
+
+
+@pytest.mark.parametrize("trucada, error", [
+    (CUCHILLO | {"nombre": " "}, "nombre"),
+    (CUCHILLO | {"base": None}, "Item base"),
+    (CUCHILLO | {"partes": {}}, "una sola Pieza"),
+    (CUCHILLO | {"partes": {"grip": "costumes.coronaRey_on", "hats": "costumes.capaRey_on"}}, "una sola Pieza"),
+    (CUCHILLO | {"animacion": "dance"}, "animación"),
+])
+def test_una_prenda_trucada_que_no_se_puede_guardar(nucleo, trucada, error):
+    resultado = nucleo.guardar_trucada(trucada)
+
+    assert not resultado["ok"] and error in resultado["error"]
+    assert nucleo.trucadas()["trucadas"] == []
+
+
+def test_exportar_e_importar_una_prenda_trucada(nucleo, tmp_path):
+    archivo = tmp_path / "corona.mgtrucada"
+
+    assert nucleo.exportar_trucada(CUCHILLO, str(archivo))["ok"]
+    importada = nucleo.importar_trucada_de_archivo(str(archivo))
+
+    assert importada["ok"], importada
+    assert {k: importada["trucada"][k] for k in ("nombre", "base", "partes")} == CUCHILLO
+    assert not nucleo.importar_look_de_archivo(str(archivo))["ok"]  # no es un Look
+    look = tmp_path / "rey.mglook"
+    nucleo.exportar_look({"nombre": "Rey", "base": None, "partes": {"hats": "costumes.coronaRey_on"}}, str(look))
+    assert "no es una Prenda trucada" in nucleo.importar_trucada_de_archivo(str(look))["error"]
+    assert nucleo.importar_trucada_de_archivo(str(archivo))["trucada"]["nombre"] == "Corona en la mano (2)"
+
+
+def test_una_prenda_trucada_guardada_se_truca_como_las_demas(nucleo, ffdec):
+    trucada = nucleo.guardar_trucada(CUCHILLO)["trucada"]
+
+    resultado = nucleo.trucar_varias([{"base": trucada["base"], "parte": parte, "pieza": pieza} for parte, pieza in trucada["partes"].items()])
+
+    assert resultado["ok"], resultado
+    assert leer_item_base(ffdec.trucos[0][1]).partes == {"grip": "costumes.coronaRey_on"}

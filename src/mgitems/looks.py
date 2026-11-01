@@ -4,7 +4,8 @@ Cada Pieza se guarda con su SWF (`costumes.coronaRey_on`), así un Look puede me
 Piezas de varios SWF. Se guardan en un archivo JSON de la carpeta del programa.
 
 Las acciones de la pestaña Acciones se guardan igual, en su propio archivo: un Item de mochila con su
-`animacion` y, como Partes, la Pieza de la acción (`action`) y la de la cabeza (`effect`).
+`animacion` y, como Partes, la Pieza de la acción (`action`) y la de la cabeza (`effect`). Las Prendas
+trucadas de la pestaña Trucar Prenda, también: un Item base con una sola Parte y su Pieza.
 """
 
 import json
@@ -64,11 +65,15 @@ class Look:
 
 FORMATO = "mgitems-look"
 FORMATO_ACCION = "mgitems-accion"
+FORMATO_TRUCADA = "mgitems-trucada"
+# Cómo se nombra lo de cada formato en los mensajes: (uno, "este…", "es de…").
+_NOMBRES = {FORMATO: ("un Look", "Este Look es"), FORMATO_ACCION: ("una acción", "Esta acción es"),
+            FORMATO_TRUCADA: ("una Prenda trucada", "Esta Prenda trucada es")}
 VERSION_FORMATO = 1
 
 
 def archivo_de_look(look: Look, formato: str = FORMATO) -> str:
-    """El contenido de un archivo de Look (o de acción): sin su id, que es de cada jugador."""
+    """El contenido de un archivo de Look (o de acción, o de Prenda trucada): sin su id, que es de cada jugador."""
     datos = {"formato": formato, "version": VERSION_FORMATO, "nombre": look.nombre, "base": look.base, "partes": look.partes,
              "colores": look.colores}
     if look.animacion:
@@ -77,21 +82,21 @@ def archivo_de_look(look: Look, formato: str = FORMATO) -> str:
 
 
 def look_de_archivo(contenido: str, formato: str = FORMATO) -> Look:
-    """El Look (o la acción) de un archivo, validado (sin id: es nuevo para quien lo importa)."""
-    que = "Look" if formato == FORMATO else "acción"
+    """El Look (o la acción, o la Prenda trucada) de un archivo, validado (sin id: es nuevo para quien lo importa)."""
+    uno, este_es = _NOMBRES[formato]
     try:
         datos = json.loads(contenido)
     except ValueError:
         datos = None
     if not isinstance(datos, dict) or datos.get("formato") != formato:
-        raise LookInvalido(f"Este archivo no es {'un Look' if formato == FORMATO else 'una acción'} de MG Items.")
+        raise LookInvalido(f"Este archivo no es {uno} de MG Items.")
     if not isinstance(datos.get("version"), int) or datos["version"] > VERSION_FORMATO:
-        raise LookInvalido(f"{'Este Look es' if formato == FORMATO else 'Esta acción es'} de una versión más nueva de MG Items: actualizá el programa.")
+        raise LookInvalido(f"{este_es} de una versión más nueva de MG Items: actualizá el programa.")
     look = Look.desde({k: datos.get(k) for k in ("nombre", "base", "partes", "colores", "animacion")})
     if formato == FORMATO and not look.partes:
         raise LookInvalido("El Look del archivo no tiene Piezas.")
     if formato == FORMATO_ACCION and not look.animacion:
-        raise LookInvalido(f"La {que} del archivo no tiene animación.")
+        raise LookInvalido("La acción del archivo no tiene animación.")
     return look
 
 
