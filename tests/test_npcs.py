@@ -310,3 +310,11 @@ def test_antes_de_entregar_se_anotan_los_del_cache(nucleo, fuente, sistema):
     assert not (sistema.base / "Roaming" / "MundoGaturro" / "Cache" / "data_1").exists()
 
     assert [n["comportamiento"] for n in nucleo.buscar_comportamientos_en_el_juego()["nuevos"]] == ["entradaCasaRaton"]
+
+
+def test_si_no_se_puede_leer_el_cache_se_avisa(nucleo, sistema):
+    (sistema.base / "Roaming" / "MundoGaturro" / "Cache" / "data_1").mkdir(parents=True)  # no se puede leer
+
+    resultado = nucleo.buscar_comportamientos_en_el_juego()
+
+    assert not resultado["ok"] and "caché del juego" in resultado["error"]

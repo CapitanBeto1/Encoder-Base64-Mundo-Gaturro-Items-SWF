@@ -1543,7 +1543,8 @@ async function buscarEnElJuego() {
   buscandoEnElJuego = true;
   try {
     const resultado = await api().buscar_comportamientos_en_el_juego();
-    if (!resultado.ok || !resultado.nuevos.length) return;
+    if (!resultado.ok) return avisarLista(`No se pudieron buscar los NPC de las salas que recorriste: ${resultado.error}`, "advertencia");
+    if (!resultado.nuevos.length) return;
     for (const tipo of new Set(resultado.nuevos.map((n) => n.tipo))) await leerComportamientos(tipo);
     mostrarComportamientos();
     const nombres = resultado.nuevos.map((n) => `${ICONO_NPC[n.tipo]} ${n.comportamiento}`).join(", ");
