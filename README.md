@@ -8,7 +8,7 @@ Buscás los Items en los SWF del juego (el programa los descarga solo), armás u
 
 ## Qué hace
 
-- **Catálogo de SWF del juego** con buscador: 445 SWF con Items, descargados del servidor del juego cuando hacen falta y guardados para la próxima vez.
+- **Catálogo de SWF del juego** con buscador: 610 SWF con Items (todos los que lista el juego), descargados del servidor del juego cuando hacen falta y guardados para la próxima vez.
 - **Buscar Items** por el comienzo del nombre, con sugerencias e imágenes mientras escribís (por ejemplo `remera`, `zapa, campera`).
 - **Buscar por imagen**: ¿viste algo en una casa ajena o puesto en otro Gaturro y no sabés cómo se llama? Pegá una captura, marcá el objeto y el programa te muestra los 20 Items del juego que más se le parecen, con su SWF; tocás el que es y va a la lista. Si no aparece, se puede decir qué es (un pantalón, algo de la casa…), descartar los que no son («No es ninguno de estos») o guiarla con uno parecido («Se parece»). La primera vez baja sus datos (unos 107 MB).
 - **Lista de Items** con imagen y cantidad de cada uno; se pueden quitar o agregar a mano (`clothes1.remera5`).

@@ -2134,7 +2134,8 @@ const CATEGORIAS_ITEMS = [
   { id: "casa", nombre: "Decoración", que: "Decoración", icono: "🛋️" },
   { id: "mascota", nombre: "Mascotas", que: "Mascota", icono: "🐶" },
   { id: "ropa_mascota", nombre: "Ropa de mascota", que: "Ropa de mascota", icono: "🎀" },
-  { id: "comida_mascota", nombre: "Comida y juguetes de mascota", que: "Comida de mascota", icono: "🦴", tipos: ["comida_mascota", "juguete_mascota"] },
+  { id: "comida_mascota", nombre: "Comida, juguetes y cuidado de mascota", que: "Comida de mascota", icono: "🦴",
+    tipos: ["comida_mascota", "juguete_mascota", "cuidado_mascota"] },
   { id: "otros", nombre: "Otros", que: "Otro", icono: "✨" },
 ];
 
@@ -2176,7 +2177,7 @@ function categoriasDeItem(item) {
 // mascota en especial, cuál.
 function queEsItem(item) {
   if (item.tipo === "prenda") return categoriasDeItem(item).filter((c) => c.id !== "disfraces").map((c) => c.que).join(" · ");
-  const que = item.tipo === "juguete_mascota" ? "Juguete de mascota" : categoriasDeItem(item)[0].que;
+  const que = { juguete_mascota: "Juguete de mascota", cuidado_mascota: "Cuidado de mascota" }[item.tipo] ?? categoriasDeItem(item)[0].que;
   return item.mascota ? `${que.replace(/ de mascota$/, "")} · ${item.mascota}` : que;
 }
 

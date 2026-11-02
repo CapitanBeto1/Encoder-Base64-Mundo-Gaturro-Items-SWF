@@ -50,7 +50,7 @@ def main() -> None:
 
     nombres = {s["swf"] for s in cargar_catalogo()}
     for archivo in args.nombres:
-        nombres |= {l.strip() for l in archivo.read_text(encoding="utf-8").splitlines() if l.strip()}
+        nombres |= {l.strip() for l in archivo.read_text(encoding="utf-8").splitlines() if l.strip() and not l.startswith("#")}
 
     fuente = FuenteCDN()
     catalogo, descartados = [], []
