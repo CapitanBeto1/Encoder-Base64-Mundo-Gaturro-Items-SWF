@@ -19,7 +19,7 @@ from mgitems.categorias import (
     CASA, CacheCategorias, IndicePiezas, categorias, decoracion_en_acciones, donde_se_ven, otros_usos, tipos_de_items,
     usos_de_piezas,
 )
-from mgitems.destinos import DESCARTADO, descarte_por_nombre, es_de_pasaporte
+from mgitems.destinos import DESCARTADO, descarte_por_nombre, es_de_pasaporte, motivo_de
 from mgitems.interfaz import BANNERS, CARPETA_BANNERS, DIBUJOS, recortar
 from mgitems.acciones import ANIMACIONES, NO_SE_DIBUJAN, animaciones, motivo_pieza_sin_accion, motivo_sin_accion, valor_de_accion
 from mgitems.animacion import CUADROS_POR_SEGUNDO, Linea, NoSeReproduce, alinear, espejar, simular_accion
@@ -287,7 +287,7 @@ class Nucleo:
         """
         def items(swf, obtenido):
             return [{"ruta": f"{swf}.{clase}", "clase": clase, "swf": swf, "tipo": item["tipo"], "partes": item.get("partes", []),
-                     "mascota": item.get("mascota"), "destino": item.get("destino"), "motivo": item.get("motivo"),
+                     "mascota": item.get("mascota"), "destino": item.get("destino"), "motivo": motivo_de(item),
                      "parecido": item.get("parecido", []), "pasaporte": item.get("pasaporte", False),
                      "dibujo": item.get("dibujo", False), "no_sirve_de_base": no_sirve_de_base(f"{swf}.{clase}", item["tipo"])}
                     for clase, item in sorted(obtenido["items"].items(), key=lambda i: orden_natural(i[0]))]
@@ -1334,7 +1334,7 @@ class Nucleo:
         if item is None or item.get("destino") == DESCARTADO:
             return None
         return {"ruta": ruta, "clase": clase, "swf": swf, "tipo": item["tipo"], "partes": item.get("partes", []),
-                "mascota": item.get("mascota"), "destino": item.get("destino"), "motivo": item.get("motivo"),
+                "mascota": item.get("mascota"), "destino": item.get("destino"), "motivo": motivo_de(item),
                 "pasaporte": es_de_pasaporte(ruta), "parecido": round(parecido, 4), "por_pieza": por_pieza,
                 "cortado": self._cortado(item, por_pieza)}
 
