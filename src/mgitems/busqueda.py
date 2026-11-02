@@ -115,3 +115,63 @@ class Huellas:
         puntajes = (self.huellas @ consultas.T).max(axis=1)
         orden = np.argsort(-puntajes)
         return [(self.rutas[i], float(puntajes[i])) for i in orden]
+
+
+# Dónde se publican los datos (el release de datos del repositorio) y cómo se reconocen.
+URL_DATOS = "https://github.com/CapitanBeto1/Encoder-Base64-Mundo-Gaturro-Items-SWF/releases/download/datos-busqueda-v1/"
+ARCHIVOS = {  # archivo → (tamaño, sha256)
+    ARCHIVO_MODELO: (88890796, "02f827b5fa300a3013b9e077314098e5f02a2449afdf1900b3712fce22432e8a"),
+    ARCHIVO_HUELLAS: (17801926, "98c6cb8b62016f69438b8ba0f1a7e186e943d9e539b28aa3c17b822ba0e374e4"),
+}
+
+
+class DatosBusqueda:
+    """El modelo y las huellas en la carpeta del programa: se bajan del release de datos la primera vez."""
+
+    TAMANO = sum(t for t, _ in ARCHIVOS.values())
+
+    def __init__(self, carpeta: Path, archivos: dict[str, tuple[int, str]] = ARCHIVOS, url: str = URL_DATOS, abrir=None):
+        self._carpeta, self._archivos, self._url = carpeta, archivos, url
+        self._abrir = abrir or _abrir_url
+        self._cargados: tuple[Modelo, Huellas] | None = None
+
+    def listos(self) -> bool:
+        """Si están los dos archivos, completos (el hash se verifica al bajarlos)."""
+        return all((self._carpeta / n).is_file() and (self._carpeta / n).stat().st_size == t for n, (t, _) in self._archivos.items())
+
+    def bajar(self, progreso=lambda hechos, total: None) -> None:
+        """Baja lo que falta y verifica su hash. OSError si no se pudo; ValueError si llegó dañado."""
+        import hashlib
+
+        self._carpeta.mkdir(parents=True, exist_ok=True)
+        hechos = sum(t for n, (t, _) in self._archivos.items() if (self._carpeta / n).is_file() and (self._carpeta / n).stat().st_size == t)
+        for nombre, (tamano, sha) in self._archivos.items():
+            destino = self._carpeta / nombre
+            if destino.is_file() and destino.stat().st_size == tamano:
+                continue
+            parcial, suma = destino.with_suffix(destino.suffix + ".part"), hashlib.sha256()
+            with self._abrir(self._url + nombre) as respuesta, parcial.open("wb") as salida:
+                while bloque := respuesta.read(1 << 20):
+                    salida.write(bloque)
+                    suma.update(bloque)
+                    hechos += len(bloque)
+                    progreso(hechos, self.TAMANO)
+            if suma.hexdigest() != sha:
+                parcial.unlink(missing_ok=True)
+                raise ValueError(f"{nombre} llegó dañado")
+            parcial.replace(destino)
+        self._cargados = None
+
+    def cargar(self) -> tuple["Modelo", Huellas]:
+        """El modelo y las huellas (se leen una vez)."""
+        if self._cargados is None:
+            self._cargados = (Modelo(self._carpeta / ARCHIVO_MODELO), Huellas.leer(self._carpeta / ARCHIVO_HUELLAS))
+        return self._cargados
+
+
+def _abrir_url(url: str):
+    import ssl
+    import urllib.request
+
+    pedido = urllib.request.Request(url, headers={"User-Agent": "MGItems"})
+    return urllib.request.urlopen(pedido, timeout=60, context=ssl.create_default_context())

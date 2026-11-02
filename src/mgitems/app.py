@@ -117,6 +117,18 @@ class Puente:
             return {"ok": False, "cancelado": True}
         return self._nucleo.importar_accion_de_archivo(ruta)
 
+    def estado_busqueda(self) -> dict:
+        return self._nucleo.estado_busqueda()
+
+    def preparar_busqueda(self) -> dict:
+        return self._nucleo.preparar_busqueda()
+
+    def progreso_busqueda(self) -> dict:
+        return self._nucleo.progreso_busqueda()
+
+    def buscar_por_imagen(self, imagen: str, recorte: list | None = None) -> dict:
+        return self._nucleo.buscar_por_imagen(imagen, recorte)
+
     def comportamientos(self, tipo: str) -> dict:
         return self._nucleo.comportamientos(tipo)
 

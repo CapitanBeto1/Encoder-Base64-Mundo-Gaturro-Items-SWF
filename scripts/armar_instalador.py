@@ -42,6 +42,8 @@ def armar_programa() -> Path:
         "--noconfirm",
         "--clean",
         "--paths", str(RAIZ / "src"),
+        # La búsqueda por imagen lo importa recién al buscar: que no dependa de que PyInstaller lo encuentre.
+        "--hidden-import", "onnxruntime",
         "--distpath", str(DIST),
         "--workpath", str(BUILD),
         "--specpath", str(BUILD),
