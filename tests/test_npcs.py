@@ -257,3 +257,56 @@ def test_con_ffdec_real_una_prenda_y_un_objeto_de_la_casa_se_convierten_en_npc(s
     for clase, comportamiento in (("gorroVietnamita", "brujaMesa"), ("semaforo", "subteJapon")):
         codigo = next(c for data in swf_trucados.values() if (c := ItemsBaseFFDec().fuentes(data, [clase]).get(clase)))
         assert "extends MamboAsset" in codigo and comportamiento_en_codigo(codigo) == comportamiento
+
+
+# --- Encontrados en las salas que se recorrieron (el caché del juego) ---
+
+def cache_del_juego(sistema, *comportamientos):
+    """Como el caché HTTP del juego: las direcciones de los guiones en un archivo de bloques."""
+    cache = sistema.base / "Roaming" / "MundoGaturro" / "Cache"
+    cache.mkdir(parents=True, exist_ok=True)
+    claves = b"".join(b"\x00\x01_dk_https://cdn-ar.mundogaturro.com https://cdn-ar.mundogaturro.com/juego/npc/" + c.encode()
+                      + b".npc?cache=no%20cache\x00" for c in comportamientos)
+    (cache / "data_1").write_bytes(b"\xc3\xca\x04\xc1" + claves)
+    (cache / "f_000001").write_bytes(b"/juego/npc/enElContenido.npc")  # el contenido no se lee
+
+
+def test_encuentra_los_npc_de_las_salas_que_se_recorrieron(nucleo, fuente, sistema):
+    fuente.npcs["entradaCasaRaton"] = npc("x: DO\n\troom.change 51686469 5,5\n")
+    cache_del_juego(sistema, "entradaCasaRaton", "brujaMesa", "unBanner", "noExiste", "magia/portal")
+
+    resultado = nucleo.buscar_comportamientos_en_el_juego()
+
+    assert resultado["ok"], resultado
+    assert [(n["comportamiento"], n["tipo"], n["encontrado"]) for n in resultado["nuevos"]] == [("entradaCasaRaton", "portal", True)]
+    portales = {c["comportamiento"]: c for c in nucleo.comportamientos("portal")["comportamientos"]}
+    assert portales["entradaCasaRaton"]["encontrado"] and "encontrado" not in portales["subteJapon"]
+    assert nucleo.comportamiento("entradaCasaRaton")["comportamiento"]["descripcion"] == "Te lleva a la sala 51686469"
+    # Lo encontrado queda guardado: no se vuelve a bajar.
+    fuente.npcs.clear()
+    assert nucleo.buscar_comportamientos_en_el_juego()["nuevos"] == []
+    assert "entradaCasaRaton" in {c["comportamiento"] for c in nucleo.comportamientos("portal")["comportamientos"]}
+
+
+def test_sin_internet_lo_encontrado_queda_pendiente(nucleo, fuente, sistema):
+    fuente.npcs["entradaCasaRaton"] = npc("x: DO\n\troom.change 51686469 5,5\n")
+    cache_del_juego(sistema, "entradaCasaRaton")
+    fuente.sin_conexion = True
+
+    sin = nucleo.buscar_comportamientos_en_el_juego()
+    fuente.sin_conexion = False
+    con = nucleo.buscar_comportamientos_en_el_juego()
+
+    assert sin["ok"] and sin["nuevos"] == [] and sin["sin_conexion"]
+    assert [n["comportamiento"] for n in con["nuevos"]] == ["entradaCasaRaton"] and not con["sin_conexion"]
+
+
+def test_antes_de_entregar_se_anotan_los_del_cache(nucleo, fuente, sistema):
+    # La entrega borra el caché del juego: lo que había se anota antes y se baja la próxima vez.
+    fuente.npcs["entradaCasaRaton"] = npc("x: DO\n\troom.change 51686469 5,5\n")
+    cache_del_juego(sistema, "entradaCasaRaton")
+
+    assert nucleo.entregar_encode(nucleo.generar_encode(["costumes2.remera5"])["encode"])["ok"]
+    assert not (sistema.base / "Roaming" / "MundoGaturro" / "Cache" / "data_1").exists()
+
+    assert [n["comportamiento"] for n in nucleo.buscar_comportamientos_en_el_juego()["nuevos"]] == ["entradaCasaRaton"]

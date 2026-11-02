@@ -140,3 +140,44 @@ class Comportamientos:
 
     def leer(self, nombre: str) -> dict | None:
         return self._comportamientos.get(nombre)
+
+
+# Las direcciones de los guiones que bajó el juego quedan en su caché HTTP (Chromium): en los archivos de bloques
+# `data_*` están las claves (las direcciones); en los `f_*`, el contenido, que no hace falta leer.
+_NPC_EN_CACHE = re.compile(rb"/juego/npc/([A-Za-z0-9_\-]+(?:/[A-Za-z0-9_\-]+)*)\.npc")
+
+
+def comportamientos_en_cache(cache: Path) -> set[str]:
+    """Los comportamientos cuyo guion bajó el juego (al entrar a una sala baja el de cada NPC). Solo lee nombres."""
+    nombres: set[str] = set()
+    for archivo in sorted(cache.glob("data_*")):
+        try:
+            nombres |= {n.decode() for n in _NPC_EN_CACHE.findall(archivo.read_bytes())}
+        except OSError:
+            continue  # uno en uso o borrado: se sigue con los demás
+    return nombres
+
+
+class ComportamientosEncontrados:
+    """Los comportamientos encontrados en el caché del juego, en la carpeta del programa:
+    `{"comportamientos": {nombre: {"tipo", "catalogos", "salas", "juegos", "objetos"}}, "pendientes": [nombres]}`.
+    Se guardan también los que no son de ningún tipo (`tipo` None), para no volver a bajarlos. `pendientes`: los
+    anotados sin bajar (por ejemplo, justo antes de que una entrega borre el caché)."""
+
+    def __init__(self, archivo: Path):
+        self._archivo = archivo
+
+    def leer(self) -> dict:
+        try:
+            datos = json.loads(self._archivo.read_text(encoding="utf-8"))
+        except FileNotFoundError:
+            return {"comportamientos": {}, "pendientes": []}
+        except (OSError, ValueError) as e:
+            raise OSError(f"No se pudo leer {self._archivo.name}") from e
+        return {"comportamientos": dict(datos.get("comportamientos", {})), "pendientes": list(datos.get("pendientes", []))}
+
+    def guardar(self, datos: dict) -> None:
+        self._archivo.parent.mkdir(parents=True, exist_ok=True)
+        temporal = self._archivo.with_suffix(".tmp")
+        temporal.write_text(json.dumps(datos, ensure_ascii=False, indent=1, sort_keys=True), encoding="utf-8")
+        temporal.replace(self._archivo)

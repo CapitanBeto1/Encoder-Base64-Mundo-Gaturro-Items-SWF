@@ -4,6 +4,7 @@ Todas las operaciones devuelven diccionarios simples (serializables a JSON) con
 `ok` y, si algo falla, un `error` en español listo para mostrar al jugador.
 """
 
+import concurrent.futures
 import re
 import subprocess
 import threading
@@ -44,8 +45,8 @@ from mgitems.items import (
 )
 from mgitems.looks import FORMATO_ACCION, FORMATO_PORTAL, FORMATO_TIENDA, FORMATO_TRUCADA, AlmacenLooks, Look, LookInvalido, archivo_de_look, look_de_archivo
 from mgitems.npcs import (
-    PORTAL, TIENDA, TIPOS as TIPOS_NPC, Comportamientos, NoSePuedeConvertir, clase_npc, clasificar, comportamiento_en_codigo,
-    describir, es_comportamiento_valido, leer_npc,
+    PORTAL, TIENDA, TIPOS as TIPOS_NPC, Comportamientos, ComportamientosEncontrados, NoSePuedeConvertir, clase_npc, clasificar,
+    comportamiento_en_codigo, comportamientos_en_cache, describir, es_comportamiento_valido, leer_npc,
 )
 from mgitems.prendas import (
     ACCION, EFECTO, MOCHILA, PARTES_DEL_CUERPO, PREFIJO_EFECTO, PRENDA, CacheItemsBase, ItemBase, ItemsBaseFFDec, TruqueoFallido,
@@ -110,6 +111,7 @@ class Nucleo:
         trucados, error = self._swf_trucados(encode)
         if error:
             return error
+        self._anotar_comportamientos_del_cache()  # la entrega borra el caché: que no se pierdan
         try:
             entrega.entregar(encode, trucados)
         except PasoFallido as e:
@@ -934,18 +936,81 @@ class Nucleo:
     # --- Tiendas y portales: cualquier Item como NPC del juego ---
 
     def comportamientos(self, tipo: str) -> dict:
-        """Los comportamientos de NPC conocidos de un tipo ("tienda", "portal", "minijuego"), por nombre."""
+        """Los comportamientos de NPC conocidos de un tipo ("tienda", "portal", "minijuego"), por nombre: los que trae
+        el programa y los encontrados en el caché del juego (`encontrado`)."""
         if tipo not in TIPOS_NPC:
             return {"ok": False, "error": f"Tipo de NPC desconocido: {tipo}"}
-        filas = [self._fila_comportamiento(nombre, info) for nombre, info in self._comportamientos.todos().items()
-                 if info["tipo"] == tipo]
+        conocidos = self._comportamientos.todos()
+        filas = [self._fila_comportamiento(nombre, info) for nombre, info in conocidos.items() if info["tipo"] == tipo]
+        filas += [self._fila_comportamiento(nombre, info) | {"encontrado": True} for nombre, info in self._encontrados().items()
+                  if info["tipo"] == tipo and nombre not in conocidos]
         return {"ok": True, "comportamientos": sorted(filas, key=lambda f: orden_natural(f["comportamiento"]))}
+
+    def buscar_comportamientos_en_el_juego(self) -> dict:
+        """Busca en el caché del juego los comportamientos de los NPC de las salas por las que se pasó (y los anotados
+        antes de una entrega), baja los que no se conocen y los guarda. `nuevos`: las tiendas, portales y minijuegos
+        que no estaban."""
+        try:
+            almacen = self._almacen_encontrados()
+            datos = almacen.leer()
+        except OSError as e:
+            return {"ok": False, "error": str(e)}
+        conocidos = set(self._comportamientos.todos()) | set(datos["comportamientos"])
+        por_bajar = sorted((self._comportamientos_del_cache() | set(datos["pendientes"])) - conocidos, key=orden_natural)
+        por_bajar = [n for n in por_bajar if es_comportamiento_valido(n)]
+
+        def bajar(nombre):
+            try:
+                return nombre, clasificar(leer_npc(self._fuente.npc(nombre))) | {"objetos": []}
+            except SwfNoEncontrado:
+                return nombre, {"tipo": None, "catalogos": [], "salas": [], "juegos": [], "objetos": []}
+            except OSError:
+                return nombre, None  # sin conexión: queda pendiente
+
+        with concurrent.futures.ThreadPoolExecutor(8) as hilos:
+            bajados = dict(hilos.map(bajar, por_bajar))
+        nuevos = {n: info for n, info in bajados.items() if info is not None}
+        datos["comportamientos"] |= nuevos
+        datos["pendientes"] = sorted(n for n, info in bajados.items() if info is None)
+        try:
+            almacen.guardar(datos)
+        except OSError as e:
+            return {"ok": False, "error": f"No se pudieron guardar los encontrados: {e}"}
+        filas = [self._fila_comportamiento(n, info) | {"encontrado": True} for n, info in nuevos.items() if info["tipo"]]
+        return {"ok": True, "nuevos": sorted(filas, key=lambda f: orden_natural(f["comportamiento"])),
+                "sin_conexion": bool(datos["pendientes"])}
+
+    def _comportamientos_del_cache(self) -> set[str]:
+        perfil = self._entorno.ruta("perfil")
+        return comportamientos_en_cache(perfil / "Cache") if perfil else set()
+
+    def _anotar_comportamientos_del_cache(self) -> None:
+        """Anota, sin bajarlos, los comportamientos del caché que no se conocen (se bajan al buscar)."""
+        try:
+            almacen = self._almacen_encontrados()
+            datos = almacen.leer()
+            conocidos = set(self._comportamientos.todos()) | set(datos["comportamientos"])
+            nuevos = {n for n in self._comportamientos_del_cache() if es_comportamiento_valido(n)} - conocidos
+            if nuevos - set(datos["pendientes"]):
+                datos["pendientes"] = sorted(set(datos["pendientes"]) | nuevos, key=orden_natural)
+                almacen.guardar(datos)
+        except OSError:
+            pass  # no impide entregar
+
+    def _encontrados(self) -> dict[str, dict]:
+        try:
+            return self._almacen_encontrados().leer()["comportamientos"]
+        except OSError:
+            return {}
+
+    def _almacen_encontrados(self) -> ComportamientosEncontrados:
+        return ComportamientosEncontrados(self._entorno.carpeta_programa() / "comportamientos_encontrados.json")
 
     def comportamiento(self, nombre: str) -> dict:
         """Qué hace un comportamiento, también uno escrito a mano (se lee su guion del juego)."""
         if not es_comportamiento_valido(nombre):
             return {"ok": False, "error": f"«{nombre}» no es un nombre de comportamiento válido (letras, números, _ - y /)."}
-        info = self._comportamientos.leer(nombre) or self._comportamientos_a_mano.get(nombre)
+        info = self._comportamientos.leer(nombre) or self._encontrados().get(nombre) or self._comportamientos_a_mano.get(nombre)
         if info is None:
             try:
                 info = clasificar(leer_npc(self._fuente.npc(nombre))) | {"objetos": []}

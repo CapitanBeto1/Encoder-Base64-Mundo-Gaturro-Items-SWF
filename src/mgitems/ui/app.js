@@ -1520,15 +1520,37 @@ function nuevoNpc() {
 
 async function cargarNpcs() {
   const tipo = PESTANAS_NPC[vista];
-  if (!comportamientosConocidos[tipo]) {
-    const resultado = await api().comportamientos(tipo);
-    if (!resultado.ok) return avisarLista(resultado.error, "error");
-    comportamientosConocidos[tipo] = resultado.comportamientos;
-    for (const c of resultado.comportamientos) descripciones.set(c.comportamiento, c);
-  }
+  if (!comportamientosConocidos[tipo] && !(await leerComportamientos(tipo))) return;
   $("filtro-comportamientos").value = "";
   await cargarLooks(); // los guardados y el armado
   mostrarComportamientos();
+  buscarEnElJuego();
+}
+
+async function leerComportamientos(tipo) {
+  const resultado = await api().comportamientos(tipo);
+  if (!resultado.ok) return avisarLista(resultado.error, "error"), false;
+  comportamientosConocidos[tipo] = resultado.comportamientos;
+  for (const c of resultado.comportamientos) descripciones.set(c.comportamiento, c);
+  return true;
+}
+
+// Los NPC de las salas que recorriste: el juego deja sus guiones en su caché. Se busca cada vez que se abre la
+// pestaña, sin trabar nada; lo nuevo se suma a la grilla.
+let buscandoEnElJuego = false;
+async function buscarEnElJuego() {
+  if (buscandoEnElJuego) return;
+  buscandoEnElJuego = true;
+  try {
+    const resultado = await api().buscar_comportamientos_en_el_juego();
+    if (!resultado.ok || !resultado.nuevos.length) return;
+    for (const tipo of new Set(resultado.nuevos.map((n) => n.tipo))) await leerComportamientos(tipo);
+    mostrarComportamientos();
+    const nombres = resultado.nuevos.map((n) => `${ICONO_NPC[n.tipo]} ${n.comportamiento}`).join(", ");
+    avisarLista(`${resultado.nuevos.length === 1 ? "Se encontró 1 nuevo" : `Se encontraron ${resultado.nuevos.length} nuevos`} en las salas que recorriste: ${nombres}.`, "exito");
+  } finally {
+    buscandoEnElJuego = false;
+  }
 }
 
 function mostrarComportamientos() {
@@ -1540,12 +1562,16 @@ function mostrarComportamientos() {
   $("grilla-comportamientos").replaceChildren(
     ...filas.map((c) => {
       const li = document.createElement("li");
-      const boton = Object.assign(document.createElement("button"), { type: "button", className: "casillero-npc", title: `${c.comportamiento}: ${c.descripcion}` });
+      const boton = Object.assign(document.createElement("button"), {
+        type: "button", className: "casillero-npc",
+        title: `${c.comportamiento}: ${c.descripcion}` + (c.encontrado ? " (encontrado en las salas que recorriste)" : ""),
+      });
       boton.setAttribute("aria-pressed", String(lookActual.comportamiento === c.comportamiento));
       boton.append(
         c.objeto ? elementoIcono(c.objeto) : etiqueta(ICONO_NPC[c.tipo], "icono-npc"),
         etiqueta(c.comportamiento, "nombre"),
-        etiqueta(c.descripcion, "que-hace")
+        etiqueta(c.descripcion, "que-hace"),
+        ...(c.encontrado ? [etiqueta("📍 En tus salas", "encontrado-npc")] : [])
       );
       boton.addEventListener("click", () => elegirComportamiento(c.comportamiento));
       li.append(boton);
