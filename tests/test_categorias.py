@@ -357,3 +357,17 @@ def test_un_dibujo_de_flash_tambien_es_un_item_que_llega_a_la_casa(tmp_path, ffd
     assert set(items) == {"varios.combatGUI", "varios.banner2"}
     assert (items["varios.combatGUI"]["tipo"], items["varios.combatGUI"]["destino"]) == ("otro", "casa")
     assert items["varios.combatGUI"]["motivo"] is None and items["varios.combatGUI"]["dibujo"]  # probado: llegan bien
+
+
+def test_un_item_que_no_llega_bien_siempre_lleva_motivo(tmp_path, fuente, ffdec):
+    # Como acciones.action_amazed: el juego lo descarta. Aunque el índice no traiga el motivo, se muestra como que no
+    # llega (en rojo y al final), nunca como si llegara bien.
+    nucleo = nucleo_con(tmp_path, fuente, ffdec, {"acciones": {"version": "x", "piezas": {}, "items": {
+        "action_amazed": {"tipo": "otro", "destino": "descartado", "dibujo": True},
+        "escondido": {"tipo": "otro", "destino": "oculto"},
+        "silla": {"tipo": "casa", "destino": "casa"}}}})
+
+    items = {i["clase"]: i for i in nucleo.items_de_swfs(["acciones"])["items"]}
+
+    assert items["action_amazed"]["motivo"] and items["escondido"]["motivo"]
+    assert items["silla"]["motivo"] is None

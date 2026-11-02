@@ -115,6 +115,19 @@ def descarte_por_nombre(ruta: str) -> str | None:
     return None
 
 
+# Lo que se dice de un Item que no llega bien, si no trae su motivo (no debería pasar: es una red de seguridad,
+# para que nunca se muestre como si llegara bien).
+_MOTIVO_POR_DESTINO = {
+    DESCARTADO: "el juego no lo agrega", OCULTO: "llega, pero el juego no lo muestra en ningún lado",
+    SESION: "es de sesión: el juego no lo guarda y se borra al salir", PANTALLA_MASCOTA: "solo se ve al personalizar una mascota",
+}
+
+
+def motivo_de(item: dict) -> str | None:
+    """El motivo por el que un Item (del índice) no llega bien, o None si llega bien."""
+    return item.get("motivo") or _MOTIVO_POR_DESTINO.get(item.get("destino"))
+
+
 def destino_de_item(ruta: str, fuente: str) -> dict:
     """{"destino"} (y "motivo" si no llega bien) de un Item, con su código AS3."""
     if motivo := descarte_por_nombre(ruta):
