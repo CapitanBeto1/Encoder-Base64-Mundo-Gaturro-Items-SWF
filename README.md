@@ -77,9 +77,11 @@ El instalador incluye, sin modificarlos:
 - **[JPEXS Free Flash Decompiler (FFDec)](https://github.com/jindrapetrik/jpexs-decompiler)** 26.3.0, licencia GPL v3. Se usa como programa aparte para exportar las imágenes de los Items. Su código fuente está en su repositorio.
 - **[Eclipse Temurin](https://adoptium.net) JRE** 21, licencia GPL v2 con Classpath Exception. Lo necesita FFDec.
 - **[Fraunces](https://github.com/undercasetype/Fraunces)**, licencia SIL Open Font License 1.1: la letra de la interfaz (alternativa libre a Cooper Black, la del juego). Va con su licencia en `src/mgitems/ui/fuentes/`.
-- Bibliotecas de Python empaquetadas con PyInstaller, entre ellas [pywebview](https://github.com/r0x0r/pywebview) (BSD) y [pythonnet](https://github.com/pythonnet/pythonnet) (MIT).
+- Bibliotecas de Python empaquetadas con PyInstaller, entre ellas [pywebview](https://github.com/r0x0r/pywebview) (BSD), [pythonnet](https://github.com/pythonnet/pythonnet) (MIT), [ONNX Runtime](https://github.com/microsoft/onnxruntime) (MIT), [NumPy](https://numpy.org) (BSD) y [Pillow](https://python-pillow.org) (MIT-CMU).
 
 Los textos de esas licencias van dentro de la carpeta del programa instalado.
+
+La búsqueda por imagen baja, la primera vez que se usa, la parte de imágenes de **[OpenCLIP](https://github.com/mlfoundations/open_clip)** ViT-B/32 (pesos `laion2b_s34b_b79k` de [LAION](https://laion.ai)), licencia MIT, convertida a ONNX y comprimida por `scripts/armar_busqueda.py`. Se publica con su licencia en el release de datos del repositorio, junto con las huellas de las imágenes del juego (solo números, sin las imágenes).
 
 ## Licencia
 

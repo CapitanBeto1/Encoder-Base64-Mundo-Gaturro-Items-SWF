@@ -9,11 +9,12 @@ description = "Agregar Items, trucar Prendas y armar Looks en Mundo Gaturro, sol
 readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.12"
-dependencies = ["pywebview>=6.0"]
+dependencies = ["pywebview>=6.0", "onnxruntime>=1.20", "numpy>=2.0", "pillow>=11.0"]
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "pyinstaller>=6.10"]
 indice = ["scikit-learn>=1.5"]  # para scripts/armar_indice.py
+busqueda = ["torch>=2.5", "open-clip-torch>=3.0", "onnx>=1.17", "onnxscript"]  # para scripts/armar_busqueda.py (el modelo)
 
 [project.gui-scripts]
 mgitems = "mgitems.app:main"
