@@ -956,7 +956,11 @@ class Nucleo:
         except OSError as e:
             return {"ok": False, "error": str(e)}
         conocidos = set(self._comportamientos.todos()) | set(datos["comportamientos"])
-        por_bajar = sorted((self._comportamientos_del_cache() | set(datos["pendientes"])) - conocidos, key=orden_natural)
+        try:
+            del_cache = self._comportamientos_del_cache()
+        except OSError as e:
+            return {"ok": False, "error": f"{e}: {e.__cause__ or 'está en uso'}."}
+        por_bajar = sorted((del_cache | set(datos["pendientes"])) - conocidos, key=orden_natural)
         por_bajar = [n for n in por_bajar if es_comportamiento_valido(n)]
 
         def bajar(nombre):
