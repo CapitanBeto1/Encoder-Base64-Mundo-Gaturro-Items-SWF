@@ -128,7 +128,8 @@ class Modelo:
 
 class Huellas:
     """Las huellas de las imágenes de referencia (`scripts/armar_busqueda.py`): `rutas` ("swf.Clase", de Items
-    y de Piezas), `huellas` (una fila cada una) y `prendas_de_pieza` (Pieza → las Prendas que la usan)."""
+    y de Piezas; una Pieza puede estar dos veces: suelta y dibujada puesta en el Gaturro), `huellas` (una fila
+    cada una) y `prendas_de_pieza` (Pieza → las Prendas que la usan)."""
 
     def __init__(self, rutas: list[str], huellas: np.ndarray, prendas_de_pieza: dict[str, list[str]]):
         self.rutas, self.huellas, self.prendas_de_pieza = rutas, huellas, prendas_de_pieza
@@ -160,10 +161,10 @@ class Huellas:
 
 
 # Dónde se publican los datos (el release de datos del repositorio) y cómo se reconocen.
-URL_DATOS = "https://github.com/CapitanBeto1/Encoder-Base64-Mundo-Gaturro-Items-SWF/releases/download/datos-busqueda-v1/"
+URL_DATOS = "https://github.com/CapitanBeto1/Encoder-Base64-Mundo-Gaturro-Items-SWF/releases/download/datos-busqueda-v2/"
 ARCHIVOS = {  # archivo → (tamaño, sha256)
     ARCHIVO_MODELO: (88890796, "02f827b5fa300a3013b9e077314098e5f02a2449afdf1900b3712fce22432e8a"),
-    ARCHIVO_HUELLAS: (17801926, "98c6cb8b62016f69438b8ba0f1a7e186e943d9e539b28aa3c17b822ba0e374e4"),
+    ARCHIVO_HUELLAS: (28381004, "82a8cda85f9b4269fc035ed5c86e1eec863fd3d3906bcaa9e97a802585a1a5ed"),  # v2: 610 SWF y las Piezas puestas
 }
 
 

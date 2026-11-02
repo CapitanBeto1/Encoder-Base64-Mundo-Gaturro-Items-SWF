@@ -60,3 +60,4 @@ def test_las_huellas_se_guardan_y_ordenan_por_parecido(tmp_path):
     assert [r for r, _ in parecidos] == ["ropa.remera_on", "casa.silla", "ropa.remera"]
     assert parecidos[0][1] == pytest.approx(1)
     assert leidas.prendas_de_pieza == {"ropa.remera_on": ["ropa.remera"]}
+

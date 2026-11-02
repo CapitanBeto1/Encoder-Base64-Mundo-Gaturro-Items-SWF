@@ -471,7 +471,7 @@ function cambiarVista(nueva) {
                                tiendas: "Convertir todos", portales: "Convertir todos", minijuegos: "Convertir todos" }[vista];
   avisarLista("");
   mostrarEncode(null);
-  cargarParaLaVista();
+  return cargarParaLaVista();
 }
 
 // --- La ventana del Item base: cómo se ve cada uno ---
@@ -2566,7 +2566,7 @@ async function buscarCaptura() {
     avisar($("mensaje-imagen"), !resultado.resultados.length
       ? "No quedan más con eso: probá «Empezar de nuevo» u otra opción en «¿Qué es?»."
       : !busqueda.recorte
-        ? "Tocá el que es para sumarlo a «Items a recibir». Si no está, marcá solo el objeto con un rectángulo o elegí «¿Qué es?»."
+        ? "Tocá el que es para sumarlo a «Items a recibir». Si no está, marcá el objeto con un rectángulo (si es ropa puesta, con un poco del Gaturro alrededor) o elegí «¿Qué es?»."
         : "Tocá el que es para sumarlo. Si no está: «Se parece» en uno cercano, o «No es ninguno de estos».", "exito");
   } finally {
     busqueda.buscando = false;
@@ -2589,7 +2589,7 @@ function mostrarResultadosImagen(resultados) {
       llega.dataset.bien = String(!item.motivo);
       // Cortado: lo que se parece es una sola parte del Item (el pantalón de un traje, las mangas de una remera).
       const parte = item.cortado?.partes[0];
-      const cortado = item.cortado ? [etiqueta(`✂ Cortado: su ${nombreDeParte(parte).toLowerCase()}`, "cortado-resultado")] : [];
+      const cortado = item.cortado ? [etiqueta(`✂ Solo ${nombreDeParte(parte).toLowerCase()}`, "cortado-resultado")] : [];
       if (item.cortado) boton.title += `\nSe parece a una sola parte: ${claseDeRuta(item.cortado.pieza)} (${nombreDeParte(parte)})`;
       boton.append(elementoIcono(item.ruta), etiqueta(item.clase, "nombre-item"), etiqueta(item.swf, "swf-resultado"), llega,
         ...cortado, etiqueta(`${i + 1}`, "puesto-resultado"));
@@ -2639,9 +2639,9 @@ function mostrarResultadosImagen(resultados) {
   for (const swf of new Set(resultados.map((r) => r.swf))) prepararIconosDe(swf);
 }
 
-function trucarSoloEstaParte(pieza, parte) {
+async function trucarSoloEstaParte(pieza, parte) {
   $("dialogo-imagen").close();
-  cambiarVista("trucar");
+  await cambiarVista("trucar"); // que termine de cargar, así el aviso no se borra
   Object.assign(lookActual, { parte, partes: { [parte]: pieza } });
   mostrarLook();
   prepararIconosDe(swfDeRuta(pieza));

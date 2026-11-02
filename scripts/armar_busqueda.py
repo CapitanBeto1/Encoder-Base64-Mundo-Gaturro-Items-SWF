@@ -121,8 +121,9 @@ def huellas_de_archivos(clip: Modelo, archivos: list[tuple[Path, str]], guardado
 
 
 def dibujar_puestas(carpeta: Path, piezas: list[str]) -> list[tuple[Path, str]]:
-    """Dibuja el Gaturro con cada Pieza puesta, sola, y guarda la zona donde está (con un margen, sobre
-    transparente). Devuelve (archivo, Pieza) de las que se dibujaron. Las ya dibujadas no se vuelven a dibujar."""
+    """Dibuja el Gaturro con cada Pieza puesta, sola, y guarda la zona donde está, con un margen (así se ve un poco
+    del Gaturro alrededor, como en una captura) y sobre blanco. Devuelve (archivo, Pieza) de las que se dibujaron.
+    Las ya dibujadas no se vuelven a dibujar."""
     import io
 
     import resvg_py
@@ -164,8 +165,8 @@ def dibujar_puestas(carpeta: Path, piezas: list[str]) -> list[tuple[Path, str]]:
             else:
                 x0, y0, x1, y1 = caja
                 mx, my = (x1 - x0) * 0.35, (y1 - y0) * 0.35
-                imagen.crop((int(max(0, x0 - mx)), int(max(0, y0 - my)), int(min(imagen.width, x1 + mx)),
-                             int(min(imagen.height, y1 + my)))).save(archivo)
+                recorte = (int(max(0, x0 - mx)), int(max(0, y0 - my)), int(min(imagen.width, x1 + mx)), int(min(imagen.height, y1 + my)))
+                sobre_blanco(imagen).crop(recorte).save(archivo)
         if archivo.is_file():
             hechas.append((archivo, pieza))
         print(f"\r5. Piezas puestas: {n}/{len(piezas)}", end="", flush=True)
