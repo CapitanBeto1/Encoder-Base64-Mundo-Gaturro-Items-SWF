@@ -2419,6 +2419,7 @@ function olvidarGuia() {
 $("buscar-por-imagen").addEventListener("click", async () => {
   $("dialogo-imagen").showModal();
   $("zona-imagen").focus();
+  if (!partesConocidas.length) partesConocidas = (await api().partes_del_cuerpo()).partes_del_cuerpo; // para «Cortado: su …»
   const estado = await api().estado_busqueda();
   if (!estado.ok) return avisar($("mensaje-imagen"), estado.error, "error");
   busqueda.listos = estado.listos;
@@ -2585,8 +2586,12 @@ function mostrarResultadosImagen(resultados) {
       boton.setAttribute("aria-pressed", String(items.some((x) => x.ruta === item.ruta)));
       const llega = etiqueta(destino.nombre, "destino-item");
       llega.dataset.bien = String(!item.motivo);
+      // Cortado: lo que se parece es una sola parte del Item (el pantalón de un traje, las mangas de una remera).
+      const parte = item.cortado?.partes[0];
+      const cortado = item.cortado ? [etiqueta(`✂ Cortado: su ${nombreDeParte(parte).toLowerCase()}`, "cortado-resultado")] : [];
+      if (item.cortado) boton.title += `\nSe parece a una sola parte: ${claseDeRuta(item.cortado.pieza)} (${nombreDeParte(parte)})`;
       boton.append(elementoIcono(item.ruta), etiqueta(item.clase, "nombre-item"), etiqueta(item.swf, "swf-resultado"), llega,
-        etiqueta(`${i + 1}`, "puesto-resultado"));
+        ...cortado, etiqueta(`${i + 1}`, "puesto-resultado"));
       if (item.pasaporte) marcarPasaporte(boton);
       boton.addEventListener("click", () => {
         if (items.some((x) => x.ruta === item.ruta)) {
@@ -2614,11 +2619,32 @@ function mostrarResultadosImagen(resultados) {
       const li = document.createElement("li");
       li.style.position = "relative";
       li.append(boton, parecido);
+      if (item.cortado) {
+        // Recibir solo esa parte: Trucar Prenda con esa Pieza ya elegida (falta el Item base).
+        const trucar = Object.assign(document.createElement("button"), {
+          type: "button", className: "trucar-parte", textContent: "✂ Trucar solo esta parte",
+          title: `Abrir Trucar Prenda con ${claseDeRuta(item.cortado.pieza)} en ${nombreDeParte(parte)}`,
+        });
+        trucar.addEventListener("click", (evento) => {
+          evento.stopPropagation();
+          trucarSoloEstaParte(item.cortado.pieza, parte);
+        });
+        li.append(trucar);
+      }
       return li;
     })
   );
   cargarIconos(resultados.map((r) => r.ruta));
   for (const swf of new Set(resultados.map((r) => r.swf))) prepararIconosDe(swf);
+}
+
+function trucarSoloEstaParte(pieza, parte) {
+  $("dialogo-imagen").close();
+  cambiarVista("trucar");
+  Object.assign(lookActual, { parte, partes: { [parte]: pieza } });
+  mostrarLook();
+  prepararIconosDe(swfDeRuta(pieza));
+  avisarLista(`Se eligió ${claseDeRuta(pieza)} en ${nombreDeParte(parte)}: elegí el Item base con «Cambiar…» y tocá «Agregar a la lista».`, "exito");
 }
 
 // La primera vez: bajar el modelo y las huellas, mostrando cuánto va.

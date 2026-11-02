@@ -1699,3 +1699,7 @@ dialog.dialogo-imagen { width: min(1000px, 96vw); height: min(680px, 92vh); }
 .fila-que-es select { min-width: 200px; }
 .dialogo-imagen .acciones { flex-wrap: nowrap; gap: 6px; }
 .dialogo-imagen .acciones button { padding: 7px 11px; font-size: 12px; white-space: nowrap; }
+.cortado-resultado { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 5px; border-radius: 6px; background: #b3202a; color: #fff; font-size: 8px; text-transform: uppercase; }
+.resultado-imagen:has(.cortado-resultado) { grid-template-rows: minmax(0, 1fr) auto auto auto auto; padding-bottom: 22px; }
+.trucar-parte { position: absolute; left: 4px; right: 4px; bottom: 4px; padding: 1px 4px; border-radius: 8px; font-size: 9px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.resultados-imagen { grid-auto-rows: 150px; }

@@ -30,6 +30,10 @@ _Avoid_: slot, zona
 Un Item base modificado para mostrar una sola Pieza (cualquiera, de cualquier SWF) en una sola Parte del cuerpo (cualquiera); por ejemplo, una máscara en la mano. Si el Item base es una Prenda, se ve al ponérsela; si es un Item de mochila, al usarlo. Los demás jugadores la ven así y se puede intercambiar. Varias se reciben juntas en un mismo Encode, cada una con otro Item base.
 _Avoid_: Item trucado, objeto trucado
 
+**Prenda cortada**:
+Una sola parte de una Prenda que tiene varias, usada sola: el pantalón de un traje, la remera sin sus mangas. Así se dice en el juego. La búsqueda por imagen la reconoce porque compara también con cada Pieza dibujada puesta, y muestra la Prenda entera con la marca «Cortado».
+_Avoid_: parte suelta, pieza recortada
+
 **Item base**:
 El Item existente que se modifica para crear una Prenda trucada o materializar un Look; de él toma su nombre e ícono en el juego. Puede ser una Prenda (queda en el guardarropa) o un Item de mochila; para una acción, una tienda, un portal o un minijuego, cualquier Item, que se convierte en lo que hace falta (ADR 0007). No puede ser una Prenda de `clothes1`, la ropa personalizable del juego: el servidor no guarda lo trucado y, al volver a entrar, vuelve a ser la original.
 _Avoid_: Prenda base (ya no es siempre una Prenda)

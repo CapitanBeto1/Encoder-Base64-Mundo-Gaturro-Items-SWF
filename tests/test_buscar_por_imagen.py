@@ -32,10 +32,12 @@ class DatosFalsos:
     def __init__(self, listos=True):
         self._listos = listos
         self.huellas = Huellas(
-            ["muebles.silla", "ropa.remera_on", "muebles.rota", "ropa.suelta_on", "muebles.mesa", "ropa.pantalon", "ropa.disfraz"],
+            ["muebles.silla", "ropa.remera_on", "muebles.rota", "ropa.suelta_on", "muebles.mesa", "ropa.pantalon", "ropa.disfraz",
+             "ropa.disfrazPantalon_on"],
             np.stack([unitario(1, 0, 0), unitario(1, 0.04, 0), unitario(0, 1, 0), unitario(0, 0, 1), unitario(0.7, 0.7, 0),
-                      unitario(0.2, 0.2, 1), unitario(1, 0.1, 0.1)]),
-            {"ropa.remera_on": ["ropa.remera"]},
+                      unitario(0.2, 0.2, 1), unitario(1, 0.1, 0.1), unitario(0.1, 0.1, 1)]),
+            # El pantalón del disfraz, dibujado puesto: se parece al azul.
+            {"ropa.remera_on": ["ropa.remera"], "ropa.disfrazPantalon_on": ["ropa.disfraz"]},
         )
 
     def listos(self):
@@ -52,7 +54,7 @@ class DatosFalsos:
 INDICE = {"swfs": {
     "muebles": {"items": {"silla": {"tipo": "casa", "destino": "casa"}, "mesa": {"tipo": "casa", "destino": "casa"},
                           "rota": {"tipo": "casa", "destino": "descartado"}}},
-    "ropa": {"items": {"remera": {"tipo": "prenda", "partes": ["cloth", "arm"], "destino": "guardarropa"},
+    "ropa": {"piezas": {"remera_on": ["cloth"], "disfrazPantalon_on": ["leg"]}, "items": {"remera": {"tipo": "prenda", "partes": ["cloth", "arm"], "destino": "guardarropa"},
                        "pantalon": {"tipo": "prenda", "partes": ["leg"], "destino": "guardarropa"},
                        "disfraz": {"tipo": "prenda", "partes": ["cloth", "leg", "hats"], "destino": "guardarropa"}}},
 }}
@@ -110,8 +112,8 @@ def test_que_es_limita_la_busqueda_a_ese_tipo_de_item(sistema, tmp_path):
     de_la_casa = nucleo.buscar_por_imagen(captura((255, 0, 0)), que="casa")["resultados"]
     remeras = nucleo.buscar_por_imagen(captura((255, 0, 0)), que="cloth")["resultados"]
 
-    # Aunque lo más parecido sea la silla, si es un pantalón, solo pantalones.
-    assert [r["ruta"] for r in pantalones] == ["ropa.pantalon"]
+    # Aunque lo más parecido sea la silla, si es un pantalón, solo pantalones (y los trajes, por su pantalón).
+    assert [r["ruta"] for r in pantalones] == ["ropa.pantalon", "ropa.disfraz"]
     assert [r["ruta"] for r in de_la_casa] == ["muebles.silla", "muebles.mesa"]
     assert [r["ruta"] for r in remeras] == ["ropa.remera"]  # por lo que se ve puesto
     # Un disfraz también va en las piernas, pero no es un pantalón: tiene su propia opción.
@@ -192,3 +194,19 @@ def test_si_un_archivo_llega_danado_no_queda(tmp_path):
     with pytest.raises(ValueError):
         datos.bajar()
     assert not datos.listos() and not list(tmp_path.glob("*.part"))
+
+
+def test_una_prenda_cortada_lleva_al_traje_y_dice_que_parte(sistema, tmp_path):
+    # Como el pantalón de granjaCatalogo.remeraMaestro puesto solo (una sola Pieza de un traje).
+    nucleo = nucleo_con(sistema, tmp_path, DatosFalsos())
+
+    resultados = nucleo.buscar_por_imagen(captura((20, 20, 250)), que="leg")["resultados"]
+
+    traje = resultados[0]
+    assert traje["ruta"] == "ropa.disfraz"
+    assert traje["cortado"] == {"pieza": "ropa.disfrazPantalon_on", "partes": ["leg"]}
+    remera = next(r for r in nucleo.buscar_por_imagen(captura((255, 0, 0)))["resultados"] if r["ruta"] == "ropa.remera")
+    assert remera["por_pieza"] == "ropa.remera_on" and remera["cortado"] is not None  # sus mangas no están: cortada
+    pantalon = next(r for r in resultados if r["ruta"] == "ropa.pantalon")
+    assert pantalon["cortado"] is None  # se encontró por su ícono
+
