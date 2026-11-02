@@ -1690,5 +1690,12 @@ dialog.dialogo-imagen { width: min(1000px, 96vw); height: min(680px, 92vh); }
 .resultado-imagen .swf-resultado { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 9px; color: #5c4c00; }
 .resultado-imagen .destino-item { font-size: 9px; }
 .resultado-imagen[aria-pressed="true"] { background: #6fc054; border-color: #2f6421; box-shadow: inset 0 0 0 3px #2f6421; }
-.marca-resultado { position: absolute; top: 3px; left: 3px; padding: 1px 5px; border-radius: 8px; background: #2f6421; color: #fff; font-size: 8px; text-transform: uppercase; }
+.fila-que-es { flex: none; display: flex; align-items: center; gap: 8px; }
+.fila-que-es select { font-size: 12px; }
+.guia-imagen { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; color: var(--texto-suave); }
+.se-parece { position: absolute; top: 3px; left: 3px; padding: 1px 6px; border-radius: 8px; font-size: 9px; background: rgba(255, 255, 255, 0.85); border-color: var(--amarillo-contorno); }
+.se-parece[aria-pressed="true"] { background: #2a5d74; color: #fff; }
 .puesto-resultado { position: absolute; top: 3px; right: 4px; color: #5c4c00; font-size: 10px; }
+.fila-que-es select { min-width: 200px; }
+.dialogo-imagen .acciones { flex-wrap: nowrap; gap: 6px; }
+.dialogo-imagen .acciones button { padding: 7px 11px; font-size: 12px; white-space: nowrap; }

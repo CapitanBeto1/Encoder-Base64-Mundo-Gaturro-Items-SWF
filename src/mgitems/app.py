@@ -126,8 +126,12 @@ class Puente:
     def progreso_busqueda(self) -> dict:
         return self._nucleo.progreso_busqueda()
 
-    def buscar_por_imagen(self, imagen: str, recorte: list | None = None) -> dict:
-        return self._nucleo.buscar_por_imagen(imagen, recorte)
+    def opciones_que_es(self) -> dict:
+        return self._nucleo.opciones_que_es()
+
+    def buscar_por_imagen(self, imagen: str, recorte: list | None = None, que: str | None = None,
+                          se_parece: list | None = None, descartados: list | None = None) -> dict:
+        return self._nucleo.buscar_por_imagen(imagen, recorte, que, se_parece, descartados)
 
     def comportamientos(self, tipo: str) -> dict:
         return self._nucleo.comportamientos(tipo)

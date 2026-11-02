@@ -20,6 +20,43 @@ ARCHIVO_MODELO = "clip_visual_int8.onnx"
 ARCHIVO_HUELLAS = "huellas_busqueda.npz"
 VERSION_DATOS = 1  # sube si cambia la forma de las huellas o el modelo
 
+# «¿Qué es?»: a qué se limita la búsqueda. La ropa, por la Parte del cuerpo donde va (cuenta la Prenda y lo que se
+# ve puesto): solo las Prendas que van únicamente ahí, porque el ícono de un disfraz es un Gaturro entero y se
+# parece a cualquier captura de ropa puesta; los disfraces (3 Partes o más), aparte. Lo demás, por el tipo de Item.
+QUE_ES = {
+    "hats": ("Gorro o sombrero", {"partes": {"hats"}}),
+    "hairs": ("Pelo", {"partes": {"hairs"}}),
+    "mouths": ("Cara o boca", {"partes": {"mouths"}}),
+    "accesories": ("Accesorio (anteojos, máscara…)", {"partes": {"accesories", "accesories2"}}),
+    "neck": ("Cuello", {"partes": {"neck"}}),
+    "cloth": ("Remera o torso", {"partes": {"cloth", "arm", "clothFront"}}),
+    "clothBack": ("Espalda (alas, capa…)", {"partes": {"clothBack"}}),
+    "grip": ("En la mano", {"partes": {"grip", "gripFore", "gripBack"}}),
+    "leg": ("Pantalón o pollera", {"partes": {"leg"}}),
+    "foot": ("Zapatos", {"partes": {"foot"}}),
+    "disfraz": ("Disfraz (varias partes)", {"disfraz": True}),
+    "transporte": ("Transporte", {"tipos": {"transporte"}}),
+    "casa": ("De la casa", {"tipos": {"casa"}}),
+    "mochila": ("De la mochila", {"tipos": {"mochila"}}),
+    "mascota": ("De mascota", {"tipos": {"mascota", "ropa_mascota", "comida_mascota", "juguete_mascota"}}),
+}
+
+# Cuánto se acerca la búsqueda a lo que se marcó «Se parece» y cuánto se aleja de lo descartado (la huella de la
+# captura vale 1).
+PESO_SE_PARECE = 0.8
+PESO_DESCARTADO = 0.25
+
+
+def guiar(consultas: np.ndarray, se_parece: np.ndarray, descartados: np.ndarray) -> np.ndarray:
+    """Las huellas de la captura (y su espejo) corridas hacia lo que se parece y lejos de lo descartado."""
+    guiadas = consultas.astype(np.float32).copy()
+    if len(se_parece):
+        guiadas += PESO_SE_PARECE * se_parece.mean(axis=0)
+    if len(descartados):
+        guiadas -= PESO_DESCARTADO * descartados.mean(axis=0)
+    return guiadas / np.linalg.norm(guiadas, axis=1, keepdims=True)
+
+
 LADO = 224
 # La normalización con la que se entrenó CLIP.
 _MEDIA = np.array([0.48145466, 0.4578275, 0.40821073], np.float32)
@@ -108,6 +145,11 @@ class Huellas:
         np.savez_compressed(archivo, version=np.array(VERSION_DATOS), rutas=np.array(self.rutas),
                             huellas=self.huellas.astype(np.float16),
                             prendas_de_pieza=np.array(json.dumps(self.prendas_de_pieza, ensure_ascii=False)))
+
+    def de_items(self, items: set[str]) -> np.ndarray:
+        """Las huellas de las imágenes de estos Items: la suya y las de las Piezas que visten."""
+        filas = [i for i, r in enumerate(self.rutas) if r in items or items & set(self.prendas_de_pieza.get(r, ()))]
+        return self.huellas[filas] if filas else np.zeros((0, self.huellas.shape[1]), np.float32)
 
     def parecidos(self, consultas: np.ndarray) -> list[tuple[str, float]]:
         """Todas las referencias de la más a la menos parecida a cualquiera de las `consultas` (la captura y su

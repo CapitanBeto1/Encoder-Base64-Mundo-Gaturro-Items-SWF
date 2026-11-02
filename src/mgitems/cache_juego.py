@@ -1,8 +1,7 @@
 """Lo que bajó el juego, según su caché HTTP (Chromium, en `<perfil del juego>/Cache`).
 
 En los archivos de bloques `data_*` están las claves, que son las direcciones de lo bajado; en los `f_*`, el contenido,
-que no hace falta leer. Al entrar a una sala, el juego baja el guion de cada NPC (`npc/<comportamiento>.npc`) y los
-SWF de lo que hay (`assets/<swf>.swf`), también en una casa ajena. Solo se leen nombres; no se toca nada.
+que no hace falta leer. Al entrar a una sala, el juego baja el guion de cada NPC (`npc/<comportamiento>.npc`). Solo se leen nombres; no se toca nada.
 """
 
 import os
@@ -10,17 +9,11 @@ import re
 from pathlib import Path
 
 _NPC = re.compile(rb"/juego/npc/([A-Za-z0-9_\-]+(?:/[A-Za-z0-9_\-]+)*)\.npc")
-_SWF = re.compile(rb"/juego/assets/([A-Za-z0-9_\-]+(?:/[A-Za-z0-9_\-]+)*)\.swf")
 
 
 def comportamientos_en_cache(cache: Path) -> set[str]:
     """Los comportamientos cuyo guion bajó el juego (al entrar a una sala baja el de cada NPC)."""
     return _nombres(cache, _NPC)
-
-
-def swfs_en_cache(cache: Path) -> set[str]:
-    """Los SWF de assets que bajó el juego (los de lo que había en las salas y casas que se recorrieron)."""
-    return _nombres(cache, _SWF)
 
 
 def _nombres(cache: Path, patron: re.Pattern) -> set[str]:

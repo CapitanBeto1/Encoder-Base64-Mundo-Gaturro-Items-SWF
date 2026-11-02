@@ -2407,7 +2407,13 @@ async function ponerDibujosDelJuego() {
 
 // --- Buscar por imagen: qué Item es una captura del juego (de una casa ajena, de otro Gaturro…) ---
 
-const busqueda = { imagen: null, recorte: null, listos: false, buscando: false };
+// `se_parece` y `descartados`: lo que el jugador marcó para buscar de nuevo, mejor (se olvida con otra captura).
+const busqueda = { imagen: null, recorte: null, listos: false, buscando: false, que: "", se_parece: [], descartados: [], resultados: [] };
+
+function olvidarGuia() {
+  busqueda.se_parece = [];
+  busqueda.descartados = [];
+}
 
 $("buscar-por-imagen").addEventListener("click", async () => {
   $("dialogo-imagen").showModal();
@@ -2416,7 +2422,27 @@ $("buscar-por-imagen").addEventListener("click", async () => {
   if (!estado.ok) return avisar($("mensaje-imagen"), estado.error, "error");
   busqueda.listos = estado.listos;
   $("tamano-datos").textContent = `${Math.round(estado.tamano / 1e6)} MB`;
+  if ($("que-imagen").options.length === 1) {
+    const opciones = await api().opciones_que_es();
+    if (opciones.ok) {
+      $("que-imagen").append(...opciones.opciones.map((o) => Object.assign(document.createElement("option"), { value: o.id, textContent: o.nombre })));
+    }
+  }
   mostrarBusqueda();
+});
+$("que-imagen").addEventListener("change", () => {
+  busqueda.que = $("que-imagen").value;
+  busqueda.descartados = []; // lo descartado era de otra cosa
+  buscarCaptura();
+});
+$("ninguno-imagen").addEventListener("click", () => {
+  busqueda.descartados = [...new Set([...busqueda.descartados, ...busqueda.resultados.map((r) => r.ruta)])];
+  busqueda.se_parece = busqueda.se_parece.filter((r) => !busqueda.descartados.includes(r));
+  buscarCaptura();
+});
+$("reiniciar-imagen").addEventListener("click", () => {
+  olvidarGuia();
+  buscarCaptura();
 });
 $("cerrar-imagen").addEventListener("click", () => $("dialogo-imagen").close());
 
@@ -2425,6 +2451,11 @@ function mostrarBusqueda() {
   $("buscar-imagen").hidden = !busqueda.listos;
   $("buscar-imagen").disabled = !busqueda.imagen || busqueda.buscando;
   $("quitar-rectangulo").disabled = !busqueda.recorte;
+  $("ninguno-imagen").disabled = !busqueda.resultados.length || busqueda.buscando;
+  $("reiniciar-imagen").disabled = (!busqueda.se_parece.length && !busqueda.descartados.length) || busqueda.buscando;
+  const guia = [busqueda.se_parece.length && `te guiás por ${busqueda.se_parece.map(claseDeRuta).join(", ")}`,
+                busqueda.descartados.length && `${busqueda.descartados.length} descartados`].filter(Boolean);
+  $("guia-imagen").textContent = guia.length ? `(${guia.join(" · ")})` : "";
   $("lienzo-imagen").hidden = !busqueda.imagen;
   $("ayuda-zona").hidden = Boolean(busqueda.imagen);
 }
@@ -2436,6 +2467,8 @@ function cargarCaptura(archivo) {
   lector.onload = () => {
     busqueda.imagen = lector.result;
     busqueda.recorte = null;
+    busqueda.resultados = [];
+    olvidarGuia();
     $("imagen-captura").src = busqueda.imagen;
     $("rectangulo-imagen").hidden = true;
     $("resultados-imagen").replaceChildren();
@@ -2504,11 +2537,13 @@ $("lienzo-imagen").addEventListener("pointerup", () => {
   const escala = $("imagen-captura").naturalWidth / caja.width;
   const x0 = (rect.left - caja.left) * escala, y0 = (rect.top - caja.top) * escala;
   busqueda.recorte = [x0, y0, x0 + rect.width * escala, y0 + rect.height * escala].map(Math.round);
+  olvidarGuia(); // es otra búsqueda
   mostrarBusqueda();
   buscarCaptura();
 });
 $("quitar-rectangulo").addEventListener("click", () => {
   busqueda.recorte = null;
+  olvidarGuia();
   $("rectangulo-imagen").hidden = true;
   mostrarBusqueda();
   buscarCaptura();
@@ -2520,12 +2555,16 @@ async function buscarCaptura() {
   mostrarBusqueda();
   avisar($("mensaje-imagen"), "Buscando…", "progreso");
   try {
-    const resultado = await api().buscar_por_imagen(busqueda.imagen, busqueda.recorte);
+    const resultado = await api().buscar_por_imagen(busqueda.imagen, busqueda.recorte, busqueda.que || null,
+      busqueda.se_parece, busqueda.descartados);
     if (!resultado.ok) return avisar($("mensaje-imagen"), resultado.error, "error");
+    busqueda.resultados = resultado.resultados;
     mostrarResultadosImagen(resultado.resultados);
-    avisar($("mensaje-imagen"), busqueda.recorte
-      ? "Tocá el que es para sumarlo a «Items a recibir»."
-      : "Tocá el que es para sumarlo a «Items a recibir». Si no está, marcá solo el objeto con un rectángulo.", "exito");
+    avisar($("mensaje-imagen"), !resultado.resultados.length
+      ? "No quedan más con eso: probá «Empezar de nuevo» u otra opción en «¿Qué es?»."
+      : !busqueda.recorte
+        ? "Tocá el que es para sumarlo a «Items a recibir». Si no está, marcá solo el objeto con un rectángulo o elegí «¿Qué es?»."
+        : "Tocá el que es para sumarlo. Si no está: «Se parece» en uno cercano, o «No es ninguno de estos».", "exito");
   } finally {
     busqueda.buscando = false;
     mostrarBusqueda();
@@ -2540,14 +2579,13 @@ function mostrarResultadosImagen(resultados) {
       const boton = Object.assign(document.createElement("button"), {
         type: "button", className: "resultado-imagen",
         title: `${item.clase} · ${item.swf} · ${que}\nLlega a: ${destino.nombre}` + (item.motivo ? ` (${item.motivo})` : "")
-          + (item.por_pieza ? `\nSe parece a lo que se ve puesto (${claseDeRuta(item.por_pieza)})` : "")
-          + (item.en_cache ? "\nSu SWF lo bajó el juego hace poco (lo viste en una sala o casa)" : ""),
+          + (item.por_pieza ? `\nSe parece a lo que se ve puesto (${claseDeRuta(item.por_pieza)})` : ""),
       });
       boton.setAttribute("aria-pressed", String(items.some((x) => x.ruta === item.ruta)));
       const llega = etiqueta(destino.nombre, "destino-item");
       llega.dataset.bien = String(!item.motivo);
       boton.append(elementoIcono(item.ruta), etiqueta(item.clase, "nombre-item"), etiqueta(item.swf, "swf-resultado"), llega,
-        etiqueta(`${i + 1}`, "puesto-resultado"), ...(item.en_cache ? [etiqueta("📍 visto hace poco", "marca-resultado")] : []));
+        etiqueta(`${i + 1}`, "puesto-resultado"));
       if (item.pasaporte) marcarPasaporte(boton);
       boton.addEventListener("click", () => {
         if (items.some((x) => x.ruta === item.ruta)) {
@@ -2560,8 +2598,21 @@ function mostrarResultadosImagen(resultados) {
         }
         boton.setAttribute("aria-pressed", String(items.some((x) => x.ruta === item.ruta)));
       });
+      // «Se parece»: buscar de nuevo, más cerca de este (cuando aparece algo parecido pero no el exacto).
+      const parecido = Object.assign(document.createElement("button"), {
+        type: "button", className: "se-parece", textContent: "≈ Se parece", title: "Buscar de nuevo, más parecidos a este",
+      });
+      parecido.setAttribute("aria-pressed", String(busqueda.se_parece.includes(item.ruta)));
+      parecido.addEventListener("click", (evento) => {
+        evento.stopPropagation();
+        busqueda.se_parece = busqueda.se_parece.includes(item.ruta)
+          ? busqueda.se_parece.filter((r) => r !== item.ruta)
+          : [...busqueda.se_parece, item.ruta];
+        buscarCaptura();
+      });
       const li = document.createElement("li");
-      li.append(boton);
+      li.style.position = "relative";
+      li.append(boton, parecido);
       return li;
     })
   );

@@ -45,8 +45,7 @@ from mgitems.items import (
     separar_rutas,
 )
 from mgitems.looks import FORMATO_ACCION, FORMATO_MINIJUEGO, FORMATO_PORTAL, FORMATO_TIENDA, FORMATO_TRUCADA, AlmacenLooks, Look, LookInvalido, archivo_de_look, look_de_archivo
-from mgitems.busqueda import DatosBusqueda, abrir_captura, espejada
-from mgitems.cache_juego import swfs_en_cache
+from mgitems.busqueda import QUE_ES, DatosBusqueda, abrir_captura, espejada, guiar
 from mgitems.mambo import atributo_en_codigo, clase_de_mochila
 from mgitems.npcs import (
     MINIJUEGO, PORTAL, TIENDA, TIPOS as TIPOS_NPC, Comportamientos, ComportamientosEncontrados, NoSePuedeConvertir, clase_npc, clasificar,
@@ -1229,7 +1228,6 @@ class Nucleo:
     # --- Búsqueda por imagen: qué Item es una captura del juego ---
 
     RESULTADOS_BUSQUEDA = 20
-    EMPUJON_DEL_CACHE = 0.03  # cuánto suben los de los SWF que bajó el juego (de lo que se vio hace poco)
 
     def estado_busqueda(self) -> dict:
         """Si ya están los datos de la búsqueda (el modelo y las huellas) y cuánto pesa bajarlos (en bytes)."""
@@ -1262,43 +1260,65 @@ class Nucleo:
     def progreso_busqueda(self) -> dict:
         return {"ok": True, **self._progreso_busqueda}
 
-    def buscar_por_imagen(self, imagen: str, recorte: list | None = None) -> dict:
+    def opciones_que_es(self) -> dict:
+        """Las opciones de «¿Qué es?» de la búsqueda por imagen, en orden."""
+        return {"ok": True, "opciones": [{"id": i, "nombre": nombre} for i, (nombre, _) in QUE_ES.items()]}
+
+    def buscar_por_imagen(self, imagen: str, recorte: list | None = None, que: str | None = None,
+                          se_parece: list | None = None, descartados: list | None = None) -> dict:
         """Los Items que más se parecen a una captura (`imagen`: data URL o base64 de un PNG/JPG; `recorte`:
         [x0, y0, x1, y1] del rectángulo marcado, o None). Cada uno con su ruta, SWF, tipo, adónde llega, el
-        parecido (de -1 a 1), la Pieza por la que se encontró si lo parecido era lo que se ve puesto (`por_pieza`),
-        y si su SWF está en el caché del juego (`en_cache`: de lo visto hace poco, que va un poco más arriba)."""
+        parecido (de -1 a 1) y la Pieza por la que se encontró si lo parecido era lo que se ve puesto (`por_pieza`).
+
+        Para buscar de nuevo, mejor: `que` (una de `opciones_que_es`) limita a ese tipo de Item; `se_parece` (rutas
+        de resultados) acerca la búsqueda a ellos y `descartados` (rutas) la aleja de ellos y los saca."""
         try:
             data = base64.b64decode(imagen.split(",", 1)[-1], validate=False)
             captura = abrir_captura(data, tuple(recorte) if recorte else None)
         except (ValueError, TypeError, AttributeError) as e:
             return {"ok": False, "error": f"No se pudo leer la imagen: {e}."}
+        if que is not None and que not in QUE_ES:
+            return {"ok": False, "error": f"No se puede buscar «{que}»."}
+        se_parece, descartados = set(se_parece or []), set(descartados or [])
+        if not all(isinstance(r, str) and es_ruta_valida(r) for r in se_parece | descartados):
+            return {"ok": False, "error": "Los resultados marcados no tienen la forma esperada."}
         try:
             datos = self._datos()
             if not datos.listos():
                 return {"ok": False, "faltan_datos": True, "error": "Primero hay que bajar los datos de la búsqueda."}
             modelo, huellas = datos.cargar()
-            parecidos = huellas.parecidos(modelo.huellas([captura, espejada(captura)]))
+            consultas = guiar(modelo.huellas([captura, espejada(captura)]), huellas.de_items(se_parece), huellas.de_items(descartados))
+            parecidos = huellas.parecidos(consultas)
         except (OSError, ValueError, RuntimeError) as e:
             return {"ok": False, "error": f"No se pudo buscar: {e}"}
-        try:
-            perfil = self._entorno.ruta("perfil")
-            en_cache = swfs_en_cache(perfil / "Cache") if perfil else set()
-        except OSError:
-            en_cache = set()  # sin el caché, se busca igual
 
-        candidatos: dict[str, dict] = {}
-        for ruta, parecido in parecidos[:400]:
+        limite = QUE_ES[que][1] if que else {}
+        filas, vistos = [], set(descartados)
+        for ruta, parecido in parecidos:
             por_pieza = ruta if ruta in huellas.prendas_de_pieza else None
             for item in huellas.prendas_de_pieza.get(ruta, [ruta]):
-                if item in candidatos:
+                if item in vistos:
                     continue
-                fila = self._fila_de_busqueda(item, parecido, por_pieza, en_cache)
-                if fila:
-                    candidatos[item] = fila
-        filas = sorted(candidatos.values(), key=lambda f: -(f["parecido"] + (self.EMPUJON_DEL_CACHE if f["en_cache"] else 0)))
+                vistos.add(item)
+                fila = self._fila_de_busqueda(item, parecido, por_pieza)
+                if fila and self._es_lo_que_busca(fila, limite):
+                    filas.append(fila)
+            if len(filas) >= self.RESULTADOS_BUSQUEDA:
+                break
         return {"ok": True, "resultados": filas[: self.RESULTADOS_BUSQUEDA]}
 
-    def _fila_de_busqueda(self, ruta: str, parecido: float, por_pieza: str | None, en_cache: set[str]) -> dict | None:
+    @staticmethod
+    def _es_lo_que_busca(fila: dict, limite: dict) -> bool:
+        partes = set(fila["partes"])
+        if "partes" in limite:
+            return bool(partes) and partes <= limite["partes"]
+        if limite.get("disfraz"):
+            return len(partes) >= 3
+        if "tipos" in limite:
+            return fila["tipo"] in limite["tipos"]
+        return True
+
+    def _fila_de_busqueda(self, ruta: str, parecido: float, por_pieza: str | None) -> dict | None:
         """Un resultado de la búsqueda, si `ruta` es un Item que llega al juego (las Piezas sueltas no se reciben)."""
         swf, _, clase = ruta.rpartition(".")
         obtenido = self._indice.leer(swf)
@@ -1307,8 +1327,7 @@ class Nucleo:
             return None
         return {"ruta": ruta, "clase": clase, "swf": swf, "tipo": item["tipo"], "partes": item.get("partes", []),
                 "mascota": item.get("mascota"), "destino": item.get("destino"), "motivo": item.get("motivo"),
-                "pasaporte": es_de_pasaporte(ruta), "parecido": round(parecido, 4), "por_pieza": por_pieza,
-                "en_cache": swf in en_cache}
+                "pasaporte": es_de_pasaporte(ruta), "parecido": round(parecido, 4), "por_pieza": por_pieza}
 
     def _datos(self) -> DatosBusqueda:
         if self._datos_busqueda is None:
