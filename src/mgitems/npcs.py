@@ -1,0 +1,142 @@
+"""NPC: Items que, puestos en la casa, hacen lo mismo que un NPC del juego (abrir una tienda, llevar a una sala…).
+
+Lo que hace un NPC lo dice su comportamiento (`behavior`): un archivo `npc/<comportamiento>.npc` del juego, en
+base64, con el guion que corre al tocarlo (el mismo lenguaje que el Encode de Lola).
+
+Cualquier Item de cualquier SWF puede ser un NPC (probado en el juego): su clase pasa a heredar de `MamboAsset`,
+que traen todos los SWF de assets, y escribe el comportamiento directamente en sus `attributes`. Al recibirlo, el
+juego manda esos atributos al servidor (`InventoryUtil.doAcquireObject`); sin `wear_*` ni `grabbable`, llega a la
+casa, y con `behavior` el juego lo trata como NPC (`GaturroRoom.createUnknownSceneObject`). No se usa
+`NpcMamboAsset` porque muchos SWF no la traen y FFDec no compila una clase que hereda de una que el SWF no tiene.
+"""
+
+import base64
+import binascii
+import json
+import re
+from pathlib import Path
+
+TIENDA = "tienda"
+PORTAL = "portal"
+MINIJUEGO = "minijuego"
+TIPOS = (TIENDA, PORTAL, MINIJUEGO)
+
+ARCHIVO_COMPORTAMIENTOS = Path(__file__).parent / "datos" / "comportamientos.json"
+
+_COMPORTAMIENTO = re.compile(r"^[A-Za-z0-9_\-]+(?:/[A-Za-z0-9_\-]+)*$")
+# Las órdenes del guion que hacen de un NPC una tienda, un portal o un minijuego (`NpcActionRunner`).
+_ORDENES_TIENDA = ("catalog", "pepionCatalog", "reyesCatalog", "navidadCatalog", "feriaCatalog", "pascuasCatalog",
+                   "mundialCatalog", "vipCatalog", "petCatalog", "open.shop", "carousel.open")
+_FIN_DE_ORDEN = r"(?=[ \t]|$)"  # así una etiqueta de estado («openCatalog:») no cuenta como orden
+_TIENDA = re.compile(r"^[ \t]*(?:" + "|".join(map(re.escape, _ORDENES_TIENDA)) + ")" + _FIN_DE_ORDEN + r"[ \t]*([^\s#]*)", re.M)
+_PORTAL = re.compile(r"^[ \t]*room\.(?:change|random)" + _FIN_DE_ORDEN + r"[ \t]*([^\s#]*)", re.M)
+_MINIJUEGO = re.compile(r"^[ \t]*(?:minigame|launch\.html5(?:_mmo)?)" + _FIN_DE_ORDEN + r"[ \t]*([^\s#]*)", re.M)
+_SIMBOLO = re.compile(r'\[Embed\(source="[^"]*",\s*symbol="([^"]+)"\)\]')
+_COMPORTAMIENTO_EN_CODIGO = re.compile(r'\battributes\.behavior\s*=\s*"([^"]*)"')
+
+
+class NoSePuedeConvertir(ValueError):
+    """El Item no se puede convertir en NPC (su código no tiene la forma esperada)."""
+
+
+def es_comportamiento_valido(comportamiento) -> bool:
+    return isinstance(comportamiento, str) and bool(_COMPORTAMIENTO.match(comportamiento))
+
+
+def leer_npc(data: bytes) -> str:
+    """El guion de un archivo `.npc` (viene en base64; alguno, en texto)."""
+    try:
+        return base64.b64decode(data, validate=True).decode("utf-8")
+    except (binascii.Error, ValueError):
+        return data.decode("utf-8", "replace")
+
+
+def clasificar(guion: str) -> dict:
+    """Qué hace un NPC según su guion: `{"tipo", "catalogos", "salas", "juegos"}`. `tipo` es la primera de
+    tienda, portal o minijuego que haga (ningún NPC del juego hace dos), o None si no hace ninguna."""
+    catalogos = list(dict.fromkeys(c for c in _TIENDA.findall(guion) if c))
+    salas = list(dict.fromkeys(int(s) for s in _PORTAL.findall(guion) if s.isdigit()))  # "$(…)": según el momento
+    portal = bool(_PORTAL.search(guion))
+    juegos = list(dict.fromkeys(j for j in _MINIJUEGO.findall(guion) if j))
+    tipo = TIENDA if _TIENDA.search(guion) else PORTAL if portal else MINIJUEGO if _MINIJUEGO.search(guion) else None
+    return {"tipo": tipo, "catalogos": catalogos, "salas": salas, "juegos": juegos}
+
+
+def describir(info: dict, nombres_salas: dict[str, str] | None = None) -> str:
+    """Qué hace el NPC, para la interfaz: «Abre el catálogo potions2024», «Te lleva a la sala 51687540»…"""
+    nombres_salas = nombres_salas or {}
+    if info["tipo"] == TIENDA:
+        catalogos = info["catalogos"]
+        if len(catalogos) == 1:
+            return f"Abre el catálogo {catalogos[0]}"
+        return f"Abre {len(catalogos)} catálogos: {', '.join(catalogos)}" if catalogos else "Abre una tienda"
+    if info["tipo"] == PORTAL:
+        salas = info["salas"]
+        if len(salas) == 1:
+            nombre = nombres_salas.get(str(salas[0]))
+            return f"Te lleva a la sala {salas[0]}" + (f" ({nombre})" if nombre else "")
+        return f"Te lleva a {len(salas)} salas" if salas else "Te lleva a otra sala"
+    if info["tipo"] == MINIJUEGO:
+        juegos = info["juegos"]
+        if len(juegos) == 1:
+            return f"Abre el minijuego {juegos[0]}"
+        return f"Abre {len(juegos)} minijuegos: {', '.join(juegos)}" if juegos else "Abre un minijuego"
+    return "No es una tienda, ni un portal, ni un minijuego"
+
+
+def comportamiento_en_codigo(fuente: str) -> str | None:
+    """El comportamiento que el código AS3 de un Item escribe en sus atributos (`behavior` de un NPC del juego
+    se lee aparte, en el armado del índice), o None."""
+    encontrado = _COMPORTAMIENTO_EN_CODIGO.search(fuente)
+    return encontrado.group(1) if encontrado else None
+
+
+def clase_npc(fuente: str, clase: str, comportamiento: str) -> str:
+    """El código AS3 de `clase` convertida en NPC con `comportamiento`, con el mismo dibujo (`fuente`: su código)."""
+    if not es_comportamiento_valido(comportamiento):
+        raise NoSePuedeConvertir(f"comportamiento no válido: {comportamiento}")
+    if not re.match(r"^[A-Za-z_][A-Za-z0-9_]*$", clase):
+        raise NoSePuedeConvertir(f"clase no válida: {clase}")
+    simbolo = _SIMBOLO.search(fuente)
+    if not simbolo:
+        raise NoSePuedeConvertir(f"{clase} no tiene dibujo")
+    return f'''package
+{{
+   [Embed(source="/_assets/assets.swf", symbol="{simbolo.group(1)}")]
+   public dynamic class {clase} extends MamboAsset
+   {{
+      public function {clase}()
+      {{
+         super();
+         addFrameScript(0,this.frame1);
+      }}
+
+      internal function frame1() : *
+      {{
+         attributes.behavior = "{comportamiento}";
+         attributes.monitorAttributes = false;
+         stop();
+      }}
+   }}
+}}
+'''
+
+
+class Comportamientos:
+    """Los comportamientos conocidos que trae el programa (`scripts/armar_comportamientos.py`):
+    `{"comportamientos": {nombre: {"tipo", "catalogos", "salas", "juegos", "objetos"}}, "salas": {id: nombre}}`.
+    `objetos`: los objetos del juego que lo usan ("swf.clase"), para mostrar su imagen."""
+
+    def __init__(self, archivo: Path = ARCHIVO_COMPORTAMIENTOS):
+        try:
+            datos = json.loads(archivo.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            datos = {}
+        self._comportamientos = datos.get("comportamientos", {})
+        self.salas: dict[str, str] = datos.get("salas", {})
+
+    def todos(self) -> dict[str, dict]:
+        return self._comportamientos
+
+    def leer(self, nombre: str) -> dict | None:
+        return self._comportamientos.get(nombre)

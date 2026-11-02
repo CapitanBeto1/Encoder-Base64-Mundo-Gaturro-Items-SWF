@@ -44,8 +44,18 @@ class FuenteCDN:
         with self._pedir(nombre, "GET", carpeta) as respuesta:
             return respuesta.read()
 
+    def npc(self, comportamiento: str) -> bytes:
+        """El archivo `.npc` de un comportamiento (el guion de un NPC). SwfNoEncontrado si no existe."""
+        url = URL_JUEGO + "npc/" + urllib.parse.quote(comportamiento) + ".npc"
+        with self._abrir(url, comportamiento, "GET") as respuesta:
+            return respuesta.read()
+
     def _pedir(self, nombre: str, metodo: str, carpeta: str):
-        pedido = urllib.request.Request(self.url(nombre, carpeta), method=metodo, headers={"User-Agent": "MGItems"})
+        return self._abrir(self.url(nombre, carpeta), nombre, metodo)
+
+    def _abrir(self, url: str, nombre: str, metodo: str):
+        # Con el User-Agent de Python, el CDN responde 403.
+        pedido = urllib.request.Request(url, method=metodo, headers={"User-Agent": "MGItems"})
         if self._tls is None:
             self._tls = ssl.create_default_context()  # verifica certificados
         try:

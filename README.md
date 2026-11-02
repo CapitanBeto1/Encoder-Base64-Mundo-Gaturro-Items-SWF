@@ -4,7 +4,7 @@ Programa para Windows que agrega Items de **Mundo Gaturro** a tu inventario, sol
 
 Buscás los Items en los SWF del juego (el programa los descarga solo), armás una lista, y con **Agregar al juego** el programa prepara todo: Fiddler, el caché del juego y la regla para el NPC Lola. Después entrás al juego, hacés clic en Lola y recibís los Items.
 
-> **Estado:** en desarrollo. Funcionan agregar Items, trucar Prendas, armar Looks y las acciones (ver la [spec](../../issues/1)).
+> **Estado:** en desarrollo. Funcionan agregar Items, trucar Prendas, armar Looks, las acciones, las tiendas y los portales (ver la [spec](../../issues/1)).
 
 ## Qué hace
 
@@ -14,6 +14,7 @@ Buscás los Items en los SWF del juego (el programa los descarga solo), armás u
 - **Trucar Prenda**: un Item que, en vez de lo suyo, muestra una sola Pieza de cualquier SWF (por ejemplo, un «Otro») en la Parte del cuerpo que elijas; armás una lista y las recibís todas en un solo Encode. Cada Prenda trucada se puede guardar con un nombre y pasar en un archivo, como los Looks. Las Prendas de `clothes1` no sirven de base: el juego no guarda lo trucado y vuelven a ser las originales.
 - **Looks**: armás un Gaturro con Piezas de cualquier SWF y lo recibís en una sola Prenda o Item; se guardan y se pasan en archivos.
 - **Acciones**: un Item de mochila que, al usarlo, hace una animación del juego mostrando cualquier Pieza o cualquier objeto de la casa (categoría Decoración); la vista previa la reproduce como el juego.
+- **Tiendas y Portales**: cualquier Item de cualquier SWF (de la casa, una Prenda, uno de mochila) llega a la casa y, al tocarlo, abre una tienda del juego o te lleva a otra sala. Se elige qué hace de una lista de 86 tiendas y 22 portales, o escribiendo un comportamiento a mano; se reciben varios juntos y se guardan como los Looks.
 - **Encode**: generarlo, copiarlo, guardarlo como `.txt` o importar uno existente (pegado o desde archivo).
 - **Agregar al juego**: cierra el juego y Fiddler, pone la regla de Lola en el AutoResponder de Fiddler (respetando tus reglas), borra el caché del juego y vuelve a abrir todo.
 - **Configuración**: revisa que estén Mundo Gaturro Desktop y Fiddler, y explica paso a paso qué falta.
@@ -66,6 +67,7 @@ python -m venv .venv
 
 - **Instalador:** `.venv\Scripts\python scripts\armar_instalador.py` arma `dist\MGItems\` con PyInstaller y, si está [Inno Setup 6](https://jrsoftware.org/isinfo.php), `dist\MGItems-Setup-<versión>.exe`.
 - **Catálogo de SWF:** `.venv\Scripts\python scripts\armar_catalogo.py [nombres.txt]` lo vuelve a armar desde el servidor del juego.
+- **Tiendas y portales:** `.venv\Scripts\python scripts\armar_comportamientos.py` vuelve a armar la lista de comportamientos de NPC (`src\mgitems\datos\comportamientos.json`).
 - El lenguaje del proyecto está en [GLOSSARY.md](GLOSSARY.md) y las decisiones de arquitectura en [docs/adr](docs/adr).
 
 ## Software de terceros

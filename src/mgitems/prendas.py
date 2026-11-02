@@ -175,21 +175,25 @@ class ItemsBaseFFDec:
             self._ffdec.ejecutar("-selectclass", ",".join(clases), "-export", "script", str(salida), str(swf))
             return {archivo.stem: archivo.read_text(encoding="utf-8", errors="replace") for archivo in salida.rglob("*.as")}
 
-    def trucar(self, data: bytes, clase: str, fuente: str, partes: dict[str, str]) -> bytes:
-        """El SWF con la clase reemplazada por `fuente`, verificado: la clase trucada declara `partes`."""
+    def reemplazar(self, data: bytes, codigos: dict[str, str]) -> bytes:
+        """El SWF con cada clase de `codigos` reemplazada por su código AS3 (sin verificar)."""
         with tempfile.TemporaryDirectory(prefix="mgitems-", ignore_cleanup_errors=True) as temporal:
             entrada = Path(temporal) / "original.swf"
             salida = Path(temporal) / "trucado.swf"
             scripts = Path(temporal) / "scripts"
             scripts.mkdir()
             entrada.write_bytes(data)
-            (scripts / f"{clase}.as").write_text(fuente, encoding="utf-8")
+            for clase, codigo in codigos.items():
+                (scripts / f"{clase}.as").write_text(codigo, encoding="utf-8")
             resultado = self._ffdec.ejecutar("-importScript", str(entrada), str(salida), str(scripts))
             if not salida.is_file():
                 detalle = (resultado.stderr or b"").decode("utf-8", "replace").strip().splitlines()[-1:] or [""]
                 raise TruqueoFallido(f"FFDec no generó el SWF trucado. {detalle[0]}".strip())
-            trucado = salida.read_bytes()
+            return salida.read_bytes()
 
+    def trucar(self, data: bytes, clase: str, fuente: str, partes: dict[str, str]) -> bytes:
+        """El SWF con la clase reemplazada por `fuente`, verificado: la clase trucada declara `partes`."""
+        trucado = self.reemplazar(data, {clase: fuente})
         verificado = self.analizar(trucado, [clase]).get(clase)
         if verificado is None or verificado.partes != partes:
             raise TruqueoFallido("El SWF trucado no quedó con las Piezas elegidas")

@@ -10,6 +10,14 @@ class FuenteFalsa(FuenteCDN):
         self.etags = {nombre: f'"v1-{nombre}"' for nombre in self.swfs}
         self.descargas: list[str] = []
         self.sin_conexion = False
+        self.npcs: dict[str, bytes] = {}  # comportamiento → archivo .npc
+
+    def npc(self, comportamiento):
+        if self.sin_conexion:
+            raise SinConexion("sin internet")
+        if comportamiento not in self.npcs:
+            raise SwfNoEncontrado(comportamiento)
+        return self.npcs[comportamiento]
 
     def publicar(self, nombre: str, data: bytes, etag: str) -> None:
         self.swfs[nombre] = data

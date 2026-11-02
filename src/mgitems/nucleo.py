@@ -42,7 +42,11 @@ from mgitems.items import (
     separar_prefijos,
     separar_rutas,
 )
-from mgitems.looks import FORMATO_ACCION, FORMATO_TRUCADA, AlmacenLooks, Look, LookInvalido, archivo_de_look, look_de_archivo
+from mgitems.looks import FORMATO_ACCION, FORMATO_PORTAL, FORMATO_TIENDA, FORMATO_TRUCADA, AlmacenLooks, Look, LookInvalido, archivo_de_look, look_de_archivo
+from mgitems.npcs import (
+    PORTAL, TIENDA, TIPOS as TIPOS_NPC, Comportamientos, NoSePuedeConvertir, clase_npc, clasificar, comportamiento_en_codigo,
+    describir, es_comportamiento_valido, leer_npc,
+)
 from mgitems.prendas import (
     ACCION, EFECTO, MOCHILA, PARTES_DEL_CUERPO, PREFIJO_EFECTO, PRENDA, CacheItemsBase, ItemBase, ItemsBaseFFDec, TruqueoFallido,
     leer_item_base, no_sirve_de_base, reescribir_partes,
@@ -63,8 +67,11 @@ class Nucleo:
         exportador: ExportadorFFDec | None = None,
         prendas_ffdec: ItemsBaseFFDec | None = None,
         indice: IndicePiezas | None = None,
+        comportamientos: Comportamientos | None = None,
     ):
         self._indice = indice or IndicePiezas()
+        self._comportamientos = comportamientos or Comportamientos()
+        self._comportamientos_a_mano: dict[str, dict] = {}  # los que no trae el programa, ya leídos del juego
         self._prendas_ffdec = prendas_ffdec or ItemsBaseFFDec()
         self._prendas: dict[tuple[str, str], dict[str, ItemBase]] = {}
         self._trucos: dict[str, dict[str, bytes]] = {}  # Encode → SWF trucados que necesita
@@ -924,6 +931,190 @@ class Nucleo:
     def _almacen_trucadas(self) -> AlmacenLooks:
         return AlmacenLooks(self._entorno.carpeta_programa() / "trucadas.json", clave="trucadas")
 
+    # --- Tiendas y portales: cualquier Item como NPC del juego ---
+
+    def comportamientos(self, tipo: str) -> dict:
+        """Los comportamientos de NPC conocidos de un tipo ("tienda", "portal", "minijuego"), por nombre."""
+        if tipo not in TIPOS_NPC:
+            return {"ok": False, "error": f"Tipo de NPC desconocido: {tipo}"}
+        filas = [self._fila_comportamiento(nombre, info) for nombre, info in self._comportamientos.todos().items()
+                 if info["tipo"] == tipo]
+        return {"ok": True, "comportamientos": sorted(filas, key=lambda f: orden_natural(f["comportamiento"]))}
+
+    def comportamiento(self, nombre: str) -> dict:
+        """Qué hace un comportamiento, también uno escrito a mano (se lee su guion del juego)."""
+        if not es_comportamiento_valido(nombre):
+            return {"ok": False, "error": f"«{nombre}» no es un nombre de comportamiento válido (letras, números, _ - y /)."}
+        info = self._comportamientos.leer(nombre) or self._comportamientos_a_mano.get(nombre)
+        if info is None:
+            try:
+                info = clasificar(leer_npc(self._fuente.npc(nombre))) | {"objetos": []}
+            except SwfNoEncontrado:
+                return {"ok": False, "error": f"El juego no tiene el comportamiento «{nombre}»."}
+            except OSError:
+                return {"ok": False, "error": "Para leer un comportamiento escrito a mano hace falta conexión a internet."}
+            self._comportamientos_a_mano[nombre] = info
+        return {"ok": True, "comportamiento": self._fila_comportamiento(nombre, info)}
+
+    def _fila_comportamiento(self, nombre: str, info: dict) -> dict:
+        return {"comportamiento": nombre, "tipo": info["tipo"], "descripcion": describir(info, self._comportamientos.salas),
+                "objeto": info["objetos"][0] if info.get("objetos") else None}
+
+    def convertir_en_npcs(self, pedidos: list) -> dict:
+        """Varios Items convertidos en NPC en un solo Encode: cada uno (`{"base", "comportamiento", "cantidad"}`) es
+        un Item ("swf.clase", de cualquier SWF) que llega a la casa y, al tocarlo, hace lo que su comportamiento.
+        Cada Item va una sola vez. Los de un mismo SWF van en el mismo SWF trucado."""
+        if not isinstance(pedidos, list) or not pedidos:
+            return {"ok": False, "error": "Agregá al menos uno a la lista."}
+        vistas, filas = set(), []
+        for p in pedidos:
+            if not isinstance(p, dict) or not isinstance(p.get("base"), str) or not es_ruta_valida(p["base"]) \
+                    or not isinstance(p.get("comportamiento"), str):
+                return {"ok": False, "error": "La lista no tiene la forma esperada."}
+            if p["base"] in vistas:
+                return {"ok": False, "error": f"{p['base']} está dos veces: cada uno necesita otro Item."}
+            vistas.add(p["base"])
+            if (cantidad := _cantidad(p.get("cantidad", 1))) is None:
+                return {"ok": False, "error": f"La cantidad de {p['base']} tiene que ser un número entero mayor que 0."}
+            descripto = self.comportamiento(p["comportamiento"])
+            if not descripto["ok"]:
+                return descripto
+            filas.append((p["base"], p["comportamiento"], cantidad))
+
+        por_swf: dict[str, dict[str, str]] = {}
+        for base, comportamiento, _ in filas:
+            swf, _, clase = base.rpartition(".")
+            obtenido = self._categorias_de(swf)
+            if not obtenido["ok"]:
+                return {"ok": False, "error": f"No se pudo usar {base}: {obtenido['error']}"}
+            item = obtenido["items"].get(clase)
+            if item is None:
+                return {"ok": False, "error": f"{clase} no es un Item de {swf}."}
+            if motivo := no_sirve_de_base(base, item["tipo"]):
+                return {"ok": False, "error": f"{clase} no sirve de Item base: {motivo}."}
+            por_swf.setdefault(swf, {})[clase] = comportamiento
+
+        trucados = {}
+        for swf, comportamientos in por_swf.items():
+            obtenido = {"ok": True, "data": self._data_swf} if swf == self._swf_abierto else self._datos_de_otro_swf(swf)
+            if not obtenido["ok"]:
+                return {"ok": False, "error": f"No se pudo usar {swf}: {obtenido['error']}"}
+            try:
+                trucados[swf] = self._convertidos(obtenido["data"], comportamientos)
+            except (TruqueoFallido, NoSePuedeConvertir) as e:
+                return {"ok": False, "error": f"No se pudieron convertir los Items de {swf}: {e}."}
+            except FFDecNoDisponible as e:
+                return {"ok": False, "error": f"{e}: no se puede trucar."}
+            except (OSError, subprocess.SubprocessError) as e:
+                return {"ok": False, "error": f"No se pudieron convertir los Items de {swf}: {e}"}
+
+        script = generar_script([(base, cantidad) for base, _, cantidad in filas])
+        encode = codificar(script)
+        self._trucos[encode] = trucados
+        return {"ok": True, "items": [{"ruta": base, "cantidad": cantidad} for base, _, cantidad in filas],
+                "script": script, "encode": encode}
+
+    def _convertidos(self, data: bytes, comportamientos: dict[str, str]) -> bytes:
+        """El SWF `data` con cada clase convertida en NPC con su comportamiento, verificado."""
+        clases = list(comportamientos)
+        with self._candado_ffdec:
+            fuentes = self._prendas_ffdec.fuentes(data, clases)
+        faltan = [c for c in clases if c not in fuentes]
+        if faltan:
+            raise NoSePuedeConvertir(f"no se encontró el código de {', '.join(faltan)}")
+        codigos = {c: clase_npc(fuentes[c], c, comportamientos[c]) for c in clases}
+        with self._candado_ffdec:
+            trucado = self._prendas_ffdec.reemplazar(data, codigos)
+            verificadas = self._prendas_ffdec.fuentes(trucado, clases)
+        mal = [c for c in clases if comportamiento_en_codigo(verificadas.get(c, "")) != comportamientos[c]]
+        if mal:
+            raise TruqueoFallido(f"el SWF trucado no quedó con el comportamiento de {', '.join(mal)}")
+        return trucado
+
+    # Mis tiendas y Mis portales: se guardan como los Looks, cada tipo en su archivo.
+
+    def npcs_guardados(self, tipo: str) -> dict:
+        """Las tiendas (o los portales) guardados, por nombre."""
+        try:
+            guardados = self._almacen_npcs(tipo).todos()
+        except KeyError:
+            return {"ok": False, "error": f"Tipo de NPC desconocido: {tipo}"}
+        except OSError as e:
+            return {"ok": False, "error": f"No se pudieron leer los guardados: {e}"}
+        return {"ok": True, "npcs": [asdict(n) for n in sorted(guardados, key=lambda n: orden_natural(n.nombre))]}
+
+    def guardar_npc(self, tipo: str, npc: dict) -> dict:
+        """Guarda una tienda (o un portal) nueva (sin id) o los cambios de una guardada."""
+        try:
+            guardado = self._almacen_npcs(tipo).guardar(_npc_valido(npc, tipo))
+        except LookInvalido as e:
+            return {"ok": False, "error": str(e)}
+        except KeyError:
+            return {"ok": False, "error": f"Tipo de NPC desconocido: {tipo}"}
+        except OSError as e:
+            return {"ok": False, "error": f"No se pudo guardar: {e}"}
+        return {"ok": True, "npc": asdict(guardado)}
+
+    def duplicar_npc(self, tipo: str, id_npc: str) -> dict:
+        """Una copia de una tienda (o un portal) guardada, con otro nombre."""
+        try:
+            almacen = self._almacen_npcs(tipo)
+            original = next((n for n in almacen.todos() if n.id == id_npc), None)
+            if original is None:
+                return {"ok": False, "error": "Ya no existe."}
+            nombre = _nombre_libre(f"{original.nombre} (copia)", {n.nombre for n in almacen.todos()}, "copia ")
+            copia = almacen.guardar(Look(nombre, original.base, comportamiento=original.comportamiento))
+        except KeyError:
+            return {"ok": False, "error": f"Tipo de NPC desconocido: {tipo}"}
+        except OSError as e:
+            return {"ok": False, "error": f"No se pudo duplicar: {e}"}
+        return {"ok": True, "npc": asdict(copia)}
+
+    def borrar_npc(self, tipo: str, id_npc: str) -> dict:
+        try:
+            borrado = self._almacen_npcs(tipo).borrar(id_npc)
+        except KeyError:
+            return {"ok": False, "error": f"Tipo de NPC desconocido: {tipo}"}
+        except OSError as e:
+            return {"ok": False, "error": f"No se pudo borrar: {e}"}
+        return {"ok": True} if borrado else {"ok": False, "error": "Ya no existe."}
+
+    def exportar_npc(self, tipo: str, npc: dict, ruta: str) -> dict:
+        """Guarda la tienda (o el portal) en un archivo para pasárselo a otra persona."""
+        if tipo not in _FORMATOS_NPC:
+            return {"ok": False, "error": f"Tipo de NPC desconocido: {tipo}"}
+        try:
+            Path(ruta).write_text(archivo_de_look(_npc_valido(npc, tipo), _FORMATOS_NPC[tipo]), encoding="utf-8")
+        except LookInvalido as e:
+            return {"ok": False, "error": str(e)}
+        except OSError as e:
+            return {"ok": False, "error": f"No se pudo guardar el archivo: {e.strerror or e}"}
+        return {"ok": True, "ruta": ruta}
+
+    def importar_npc_de_archivo(self, tipo: str, ruta: str) -> dict:
+        """Agrega a los guardados la tienda (o el portal) de un archivo (con otro nombre si ya hay uno igual)."""
+        if tipo not in _FORMATOS_NPC:
+            return {"ok": False, "error": f"Tipo de NPC desconocido: {tipo}"}
+        try:
+            contenido = Path(ruta).read_text(encoding="utf-8", errors="replace")
+        except OSError as e:
+            return {"ok": False, "error": f"No se pudo abrir el archivo: {e.strerror or e}"}
+        try:
+            npc = _npc_valido(asdict(look_de_archivo(contenido, _FORMATOS_NPC[tipo])), tipo)
+            almacen = self._almacen_npcs(tipo)
+            npc.nombre = _nombre_libre(npc.nombre, {n.nombre for n in almacen.todos()})
+            guardado = almacen.guardar(npc)
+        except LookInvalido as e:
+            return {"ok": False, "error": str(e)}
+        except OSError as e:
+            return {"ok": False, "error": f"No se pudo guardar: {e}"}
+        return {"ok": True, "npc": asdict(guardado)}
+
+    def _almacen_npcs(self, tipo: str) -> AlmacenLooks:
+        """KeyError si el tipo no es uno que se guarda."""
+        clave = {TIENDA: "tiendas", PORTAL: "portales"}[tipo]
+        return AlmacenLooks(self._entorno.carpeta_programa() / f"{clave}.json", clave=clave)
+
     def _swf_trucados(self, encode: str) -> tuple[list[SwfTrucado], dict | None]:
         """Los SWF trucados que necesita un Encode generado en esta sesión, con el tamaño actual del original."""
         trucados = []
@@ -1457,6 +1648,25 @@ def _trucada_valida(datos: dict) -> Look:
     if trucada.animacion:
         raise LookInvalido("Una Prenda trucada no lleva animación.")
     return trucada
+
+
+_FORMATOS_NPC = {TIENDA: FORMATO_TIENDA, PORTAL: FORMATO_PORTAL}
+_NOMBRE_NPC = {TIENDA: ("la tienda", "tienda"), PORTAL: ("el portal", "portal")}
+
+
+def _npc_valido(datos: dict, tipo: str) -> Look:
+    """Una tienda (o un portal) de las pestañas Tiendas y Portales, validada: con nombre, Item base y comportamiento."""
+    el, que = _NOMBRE_NPC.get(tipo, ("el NPC", "NPC"))
+    if not isinstance(datos, dict) or not str(datos.get("nombre") or "").strip():
+        raise LookInvalido(f"Poné un nombre a {el}.")
+    npc = Look.desde(datos)
+    if not npc.base:
+        raise LookInvalido(f"Elegí el Item que se convierte en {que}.")
+    if not npc.comportamiento:
+        raise LookInvalido("Elegí el comportamiento.")
+    if npc.partes or npc.animacion:
+        raise LookInvalido(f"{el[0].upper()}{el[1:]} no lleva Piezas ni animación.")
+    return npc
 
 
 def _nombre_libre(nombre: str, usados: set[str], sufijo: str = "") -> str:

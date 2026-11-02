@@ -75,7 +75,16 @@ class PrendasFalsas(ItemsBaseFFDec):
 
     def fuentes(self, data, clases):
         self.analisis += 1
-        return {c: self.codigo[c] for c in clases if c in self.codigo}
+        codigo = dict(self.codigo)
+        for marca in data.split(b"#reemplazado:")[1:]:  # lo que dejó `reemplazar`
+            codigo |= json.loads(marca.split(b"#")[0])
+        return {c: codigo[c] for c in clases if c in codigo}
+
+    def reemplazar(self, data, codigos):
+        if self.falla:
+            raise TruqueoFallido("FFDec no generó el SWF trucado.")
+        self.trucos += list(codigos.items())
+        return data + b"#reemplazado:" + json.dumps(codigos).encode()
 
     def trucar(self, data, clase, fuente, partes):
         if self.falla:
