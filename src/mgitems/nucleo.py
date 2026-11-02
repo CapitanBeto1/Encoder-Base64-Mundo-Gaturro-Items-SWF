@@ -45,7 +45,7 @@ from mgitems.items import (
     separar_rutas,
 )
 from mgitems.looks import FORMATO_ACCION, FORMATO_MINIJUEGO, FORMATO_PORTAL, FORMATO_TIENDA, FORMATO_TRUCADA, AlmacenLooks, Look, LookInvalido, archivo_de_look, look_de_archivo
-from mgitems.busqueda import QUE_ES, DatosBusqueda, abrir_captura, espejada, guiar
+from mgitems.busqueda import QUE_ES, DatosBusqueda, abrir_encuadres, espejada, guiar
 from mgitems.mambo import atributo_en_codigo, clase_de_mochila
 from mgitems.npcs import (
     MINIJUEGO, PORTAL, TIENDA, TIPOS as TIPOS_NPC, Comportamientos, ComportamientosEncontrados, NoSePuedeConvertir, clase_npc, clasificar,
@@ -1275,7 +1275,7 @@ class Nucleo:
         de resultados) acerca la búsqueda a ellos y `descartados` (rutas) la aleja de ellos y los saca."""
         try:
             data = base64.b64decode(imagen.split(",", 1)[-1], validate=False)
-            captura = abrir_captura(data, tuple(recorte) if recorte else None)
+            encuadres = abrir_encuadres(data, tuple(recorte) if recorte else None)
         except (ValueError, TypeError, AttributeError) as e:
             return {"ok": False, "error": f"No se pudo leer la imagen: {e}."}
         if que is not None and que not in QUE_ES:
@@ -1288,7 +1288,8 @@ class Nucleo:
             if not datos.listos():
                 return {"ok": False, "faltan_datos": True, "error": "Primero hay que bajar los datos de la búsqueda."}
             modelo, huellas = datos.cargar()
-            consultas = guiar(modelo.huellas([captura, espejada(captura)]), huellas.de_items(se_parece), huellas.de_items(descartados))
+            consultas = guiar(modelo.huellas(encuadres + [espejada(e) for e in encuadres]), huellas.de_items(se_parece),
+                              huellas.de_items(descartados))
             parecidos = huellas.parecidos(consultas)
         except (OSError, ValueError, RuntimeError) as e:
             return {"ok": False, "error": f"No se pudo buscar: {e}"}

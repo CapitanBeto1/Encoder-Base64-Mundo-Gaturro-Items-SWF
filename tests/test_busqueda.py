@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 from PIL import Image
 
-from mgitems.busqueda import Huellas, abrir_captura, con_fondo, espejada, preparar
+from mgitems.busqueda import Huellas, abrir_captura, abrir_encuadres, con_fondo, espejada, preparar
 
 
 def png(imagen: Image.Image) -> bytes:
@@ -61,3 +61,14 @@ def test_las_huellas_se_guardan_y_ordenan_por_parecido(tmp_path):
     assert parecidos[0][1] == pytest.approx(1)
     assert leidas.prendas_de_pieza == {"ropa.remera_on": ["ropa.remera"]}
 
+
+
+def test_con_rectangulo_tambien_se_compara_mas_amplio():
+    captura = Image.new("RGB", (100, 100), (0, 0, 255))
+
+    encuadres = abrir_encuadres(png(captura), (40, 40, 60, 60))
+    entera = abrir_encuadres(png(captura))
+
+    assert [e.size for e in encuadres] == [(20, 20), (30, 30), (44, 44)]  # el marcado, +25 % y +60 % por lado
+    assert [e.size for e in entera] == [(100, 100)]
+    assert abrir_encuadres(png(captura), (0, 0, 100, 100))[1].size == (100, 100)  # no se sale de la imagen
