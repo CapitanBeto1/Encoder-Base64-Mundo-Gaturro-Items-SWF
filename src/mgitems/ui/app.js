@@ -437,6 +437,8 @@ const PESTANAS = ["agregar", "trucar", "looks", "acciones", "tiendas", "portales
 // Tiendas, Portales y Minijuegos: cualquier Item que, puesto en la casa, hace lo mismo que un NPC del juego.
 const PESTANAS_NPC = { tiendas: "tienda", portales: "portal", minijuegos: "minijuego" };
 const esNpc = (pestana = vista) => pestana in PESTANAS_NPC;
+// Dónde el Item base puede ser cualquier Item (se convierte en lo que hace falta: ADR 0007).
+const cualquierItem = () => esNpc() || vista === "acciones";
 const documentos = {};
 let pestanaDelDocumento = "looks"; // de qué pestaña es `lookActual`
 
@@ -714,7 +716,7 @@ function mostrarLook() {
   $("base-look").replaceChildren(
     ...(base
       ? [elementoIcono(base), etiqueta(`${claseDeRuta(base)} (${swfDeRuta(base)})`, "nombre")]
-      : [etiqueta({ acciones: "elegí un Item de mochila", trucar: "elegí el Item base", tiendas: "elegí cualquier Item",
+      : [etiqueta({ acciones: "elegí cualquier Item", trucar: "elegí el Item base", tiendas: "elegí cualquier Item",
                    portales: "elegí cualquier Item", minijuegos: "elegí cualquier Item" }[vista] ?? "se elige al aplicar", "ayuda")])
   );
   if (vista === "acciones") $("animacion-accion").value = lookActual.animacion ?? "";
@@ -1264,7 +1266,7 @@ function mostrarBases() {
   $("solo-mochila").querySelector(".cantidad-tipo").textContent = `(${deMochila})`;
   $("solo-guardarropa").querySelector(".cantidad-tipo").textContent = `(${porNombre.length - deMochila})`;
   for (const id of BOTONES_TIPO) $(id).setAttribute("aria-checked", String($(id).dataset.tipo === tipoBase));
-  const tipo = vista === "acciones" ? "mochila" : esNpc() ? "ambos" : tipoBase; // una Prenda no hace acciones
+  const tipo = cualquierItem() ? "ambos" : tipoBase;
   const visibles = porNombre
     .filter((b) => tipo === "ambos" || (b.tipo === "mochila" ? "mochila" : "prenda") === tipo)
     .slice(0, 200);
@@ -1281,6 +1283,9 @@ function mostrarBases() {
         $("dialogo-base").close();
         lookActual.base = b.ruta;
         tiposDeItems.set(b.ruta, b.tipo);
+        if (vista === "acciones" && b.tipo !== "mochila") {
+          avisarLista(`${b.clase} no es de mochila: con la acción se convierte en uno y llega a la mochila.`, "advertencia");
+        }
         mostrarLook();
       });
       li.append(boton);
@@ -1304,7 +1309,7 @@ async function usarBasesDeTodos() {
   const resultado = await api().items_de_swfs(null);
   if (pedido !== pedidoBases) return;
   if (!resultado.ok) return avisar($("mensaje-base"), resultado.error, "error");
-  basesDelSwf = resultado.items.filter((i) => (esNpc() || i.tipo === "prenda" || i.tipo === "mochila") && i.destino !== "descartado" && !i.no_sirve_de_base);
+  basesDelSwf = resultado.items.filter((i) => (cualquierItem() || i.tipo === "prenda" || i.tipo === "mochila") && i.destino !== "descartado" && !i.no_sirve_de_base);
   avisar($("mensaje-base"), "Escribí un nombre para encontrar el Item base (se muestran los primeros 200).");
   mostrarBases();
 }
@@ -1319,12 +1324,14 @@ async function usarBasesDe(swf) {
   basesDelSwf = [];
   mostrarBases();
   avisar($("mensaje-base"), `Leyendo los Items base de ${swf}… (la primera vez tarda unos segundos)`);
-  // En Tiendas y Portales sirve cualquier Item (del índice, sin los que el juego descarta).
-  const resultado = esNpc() ? await api().items_de_swfs([swf]) : await api().items_base(swf);
+  // En Acciones, Tiendas, Portales y Minijuegos sirve cualquier Item (del índice, sin los que el juego descarta).
+  const resultado = cualquierItem() ? await api().items_de_swfs([swf]) : await api().items_base(swf);
   if (pedido !== pedidoBases) return;
   if (!resultado.ok) return avisar($("mensaje-base"), resultado.error, "error");
-  if (esNpc() && resultado.errores?.[swf]) return avisar($("mensaje-base"), resultado.errores[swf], "error");
-  basesDelSwf = esNpc() ? resultado.items.filter((i) => i.destino !== "descartado" && !i.no_sirve_de_base) : resultado.items;
+  if (cualquierItem() && resultado.errores?.[swf]) return avisar($("mensaje-base"), resultado.errores[swf], "error");
+  basesDelSwf = cualquierItem() ? resultado.items.filter((i) => i.destino !== "descartado" && !i.no_sirve_de_base) : resultado.items;
+  // En Acciones, los de mochila primero: son los que ya hacen acciones.
+  if (vista === "acciones") basesDelSwf.sort((a, b) => (b.tipo === "mochila") - (a.tipo === "mochila"));
   avisar($("mensaje-base"), resultado.aviso ?? (basesDelSwf.length ? "" : "Este SWF no tiene Prendas ni Items de mochila."), "advertencia");
   mostrarBases();
   prepararIconosDe(swf);
@@ -1332,13 +1339,12 @@ async function usarBasesDe(swf) {
 
 $("cambiar-base").addEventListener("click", () => {
   const enAcciones = vista === "acciones";
-  $("dialogo-base").classList.toggle("solo-mochila", enAcciones);
-  $("dialogo-base").classList.toggle("sin-tipos", esNpc());
+  $("dialogo-base").classList.toggle("sin-tipos", cualquierItem());
   $("titulo-base").textContent = { acciones: "¿Dónde se guarda la acción?", trucar: "¿Qué Item se truca?", tiendas: "¿Qué Item se convierte en tienda?",
                                    portales: "¿Qué Item se convierte en portal?", minijuegos: "¿Qué Item se convierte en minijuego?" }[vista]
                                    ?? "¿Dónde se guarda el Look?";
   $("ayuda-base").textContent = enAcciones
-    ? "Un Item de mochila de cualquier SWF: es lo que vas a recibir, y hace la acción cada vez que lo usás. Una Prenda no hace acciones."
+    ? "Cualquier Item de cualquier SWF: es lo que vas a recibir, y hace la acción cada vez que lo usás. Llega a la mochila, aunque sea una Prenda o de la casa."
     : esNpc()
     ? "Cualquier Item de cualquier SWF (de la casa, una Prenda, uno de mochila): llega a la casa con su dibujo y su nombre, y al tocarlo hace lo que elegiste."
     : vista === "trucar"
@@ -1409,7 +1415,7 @@ function mostrarBarraLook() {
   $("resumen-look").textContent = $("encode").value
     ? $("resumen").textContent
     : vista === "acciones"
-      ? n ? "Tocá «Aplicar acción» para generar el Encode." : "Elegí la animación y el Item de mochila donde se guarda."
+      ? n ? "Tocá «Aplicar acción» para generar el Encode." : "Elegí la animación y el Item donde se guarda."
       : esNpc()
       ? n ? "Tocá «Convertir todos» para generar el Encode." : "Elegí un Item y qué hace, y agregalo a la lista."
       : vista === "trucar"

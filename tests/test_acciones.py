@@ -1,4 +1,4 @@
-"""Acciones: un Item de mochila que, al usarlo, hace una animación del juego mostrando una Pieza."""
+"""Acciones: un Item (de mochila, o cualquiera convertido en uno) que, al usarlo, hace una animación del juego mostrando una Pieza."""
 import base64
 
 import pytest
@@ -9,7 +9,8 @@ from mgitems.prendas import USOS_ILIMITADOS, leer_item_base
 from procesos_falso import ProcesosFalso
 from swf_de_ejemplo import crear_swf
 from test_mochila import BRUJA, fuente, ffdec, sistema  # noqa: F401 (fixtures)
-from test_prendas import reglas
+from mgitems.mambo import atributo_en_codigo
+from test_prendas import CLASES, reglas
 
 
 @pytest.fixture
@@ -63,11 +64,42 @@ def test_una_accion_con_algo_en_la_cabeza(nucleo, ffdec):
     assert leer_item_base(ffdec.trucos[0][1]).partes == {"action": "flag.costumes2.gorra1_on", "effect": "head.costumes.coronaRey_on"}
 
 
-def test_una_prenda_no_hace_acciones(nucleo, ffdec):
-    resultado = nucleo.aplicar_accion({"animacion": "showObject", "pieza": "costumes.coronaRey_on", "base": "costumes2.buzo1"})
+LAMPARA = '''package
+{
+   [Embed(source="/_assets/assets.swf", symbol="symbol40")]
+   public dynamic class lampara extends HouseDecorationMamboAsset
+   {
+   }
+}
+'''
 
-    assert not resultado["ok"]
-    assert "Prenda" in resultado["error"]
+
+def test_una_prenda_o_un_objeto_de_la_casa_tambien_guardan_la_accion(nucleo, fuente, ffdec):
+    # Probado en el juego: la tostadora de virtualGoods (de la casa) llega a la mochila y, al usarla, baila.
+    fuente.publicar("mueblesDeEjemplo", crear_swf(["lampara"]), '"v1"')
+    ffdec.codigo["lampara"] = LAMPARA
+
+    prenda = nucleo.aplicar_accion({"animacion": "showObject", "pieza": "costumes.coronaRey_on", "efecto": "costumes.coronaRey_on",
+                                    "base": "costumes2.buzo1"})
+    casa = nucleo.aplicar_accion({"animacion": "dance", "base": "mueblesDeEjemplo.lampara"})
+
+    assert prenda["ok"], prenda
+    assert casa["ok"], casa
+    codigo = dict(ffdec.trucos)
+    assert "class buzo1 extends MamboAsset" in codigo["buzo1"] and 'symbol="symbol1"' in codigo["buzo1"]
+    assert atributo_en_codigo(codigo["buzo1"], "attr_action") == "showObject.costumes.coronaRey_on"
+    assert atributo_en_codigo(codigo["buzo1"], "attr_effect") == "head.costumes.coronaRey_on"
+    assert "attributes.grabbable = true;" in codigo["lampara"] and atributo_en_codigo(codigo["lampara"], "attr_action") == "dance"
+    assert prenda["prenda"]["tipo"] == "mochila"  # llega a la mochila
+    assert "inventory.add 1 mueblesDeEjemplo.lampara" in casa["script"]
+
+
+def test_una_prenda_de_clothes1_no_guarda_acciones(nucleo, fuente, ffdec):
+    fuente.publicar("clothes1", crear_swf(CLASES), '"v1"')
+
+    resultado = nucleo.aplicar_accion({"animacion": "dance", "base": "clothes1.buzo1"})
+
+    assert not resultado["ok"] and "no sirve de Item base" in resultado["error"]
     assert ffdec.trucos == []
 
 
@@ -180,3 +212,23 @@ def test_un_item_que_no_es_de_la_casa_ni_una_pieza_no_va_en_la_accion(nucleo, ff
 
     assert not resultado["ok"] and "no es una Pieza" in resultado["error"]
     assert ffdec.trucos == []
+
+
+from test_prendas import _hay_ffdec_y_red  # noqa: E402
+
+
+@pytest.mark.skipif(not _hay_ffdec_y_red(), reason="Hace falta Java, FFDec e internet")
+def test_con_ffdec_real_un_objeto_de_la_casa_guarda_la_accion(sistema):
+    # Probado en el juego: la tostadora de virtualGoods llega a la mochila y, al usarla, el Gaturro baila.
+    from pathlib import Path
+    from mgitems.prendas import ItemsBaseFFDec
+
+    nucleo = Nucleo(sistema, ProcesosFalso(), catalogo=[])
+
+    resultado = nucleo.aplicar_accion({"animacion": "dance", "base": "virtualGoods.tostadora"})
+
+    assert resultado["ok"], resultado
+    assert nucleo.entregar_encode(resultado["encode"])["ok"]
+    trucado = Path(reglas(sistema)[1]["Action"]).read_bytes()
+    codigo = ItemsBaseFFDec().fuentes(trucado, ["tostadora"])["tostadora"]
+    assert "extends MamboAsset" in codigo and atributo_en_codigo(codigo, "attr_action") == "dance"
