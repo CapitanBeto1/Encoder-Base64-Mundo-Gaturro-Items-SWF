@@ -7,6 +7,7 @@ versión del SWF salieron.
 
 import base64
 import hashlib
+import io
 import shutil
 import tempfile
 from pathlib import Path
@@ -65,6 +66,33 @@ class ExportadorFFDec:
                     shutil.move(imagen, destino / f"{formas[int(imagen.stem)]}.svg")
 
 
+# Si el dibujo ocupa menos que esto del ancho o del alto de su cuadro, se le saca el margen vacío.
+_OCUPA_POCO = 0.9
+
+
+def sin_margen(png: bytes) -> bytes:
+    """El PNG recortado a lo que tiene dibujado, si le sobra mucho margen transparente.
+
+    FFDec exporta algunos dibujos (fondos como `SocialNetBackgrounds`) en un cuadro enorme con el dibujo
+    chico en el medio: en la grilla quedaban como una rayita. Si no le sobra margen, o no se puede leer,
+    queda igual.
+    """
+    try:
+        from PIL import Image
+        imagen = Image.open(io.BytesIO(png))
+        caja = imagen.convert("RGBA").getbbox()
+    except Exception:
+        return png
+    if not caja:
+        return png
+    ancho, alto = imagen.size
+    if caja[2] - caja[0] >= _OCUPA_POCO * ancho and caja[3] - caja[1] >= _OCUPA_POCO * alto:
+        return png
+    salida = io.BytesIO()
+    imagen.crop(caja).save(salida, "PNG")
+    return salida.getvalue()
+
+
 class IconosItems:
     FORMATO = "png"
 
@@ -99,6 +127,7 @@ class IconosItems:
         swf, _, clase = ruta_item.rpartition(".")
         png = self._carpeta_swf(swf) / f"{clase}.png"
         try:
-            return "data:image/png;base64," + base64.b64encode(png.read_bytes()).decode("ascii")
+            data = png.read_bytes()
         except OSError:
             return None
+        return "data:image/png;base64," + base64.b64encode(sin_margen(data)).decode("ascii")
