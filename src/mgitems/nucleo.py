@@ -278,7 +278,7 @@ class Nucleo:
 
     def items_de_swfs(self, swfs: list | None = None) -> dict:
         """Los Items de varios SWF (None: todos los del juego) con su SWF, su tipo ("prenda", "mochila",
-        "transporte", "casa", "mascota", "ropa_mascota", "comida_mascota", "juguete_mascota" u "otro"),
+        "transporte", "casa", "mascota", "ropa_mascota", "comida_mascota", "juguete_mascota", "cuidado_mascota" u "otro"),
         las Partes del cuerpo que viste si es una Prenda, para qué mascota es (`mascota`, o None) y dónde
         llega al juego (`destino`, ver `destinos`; `motivo` si no llega bien, o None), si solo se la
         puede poner quien tiene pasaporte (`pasaporte`) y, si no sirve de Item base, por qué (`no_sirve_de_base`).

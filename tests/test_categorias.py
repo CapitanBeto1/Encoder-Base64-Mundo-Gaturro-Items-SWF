@@ -344,3 +344,16 @@ def test_un_vehiculo_puede_heredar_su_tipo(tmp_path, ffdec):
     [skate] = nucleo_con(tmp_path, fuente, ffdec, {}).piezas_de_swfs(["varios"])["piezas"]
 
     assert skate["solo_en"] == "transport"
+
+
+def test_un_dibujo_de_flash_tambien_es_un_item_que_llega_a_la_casa(tmp_path, ffdec):
+    # Como gatoonsClothes.combatGUI (la interfaz de combate) o los íconos de la granja: heredan de MovieClip, no de
+    # una clase de Items del juego. El juego igual los agrega si se piden: sin atributos, llegan a la casa.
+    ffdec.codigo |= {"combatGUI": clase_con("combatGUI", "MovieClip", ""), "banner2": clase_con("banner2", "Sprite", "")}
+    fuente = FuenteFalsa({"varios": crear_swf(["combatGUI", "banner2"])})
+
+    items = {i["ruta"]: i for i in nucleo_con(tmp_path, fuente, ffdec, {}).items_de_swfs(["varios"])["items"]}
+
+    assert set(items) == {"varios.combatGUI", "varios.banner2"}
+    assert (items["varios.combatGUI"]["tipo"], items["varios.combatGUI"]["destino"]) == ("otro", "casa")
+    assert "dibujo del juego" in items["varios.combatGUI"]["motivo"]

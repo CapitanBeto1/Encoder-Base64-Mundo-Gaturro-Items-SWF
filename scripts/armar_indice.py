@@ -51,6 +51,7 @@ from mgitems.catalogo import cargar_catalogo  # noqa: E402
 from mgitems.categorias import (  # noqa: E402
     ARCHIVO_INDICE, MASCOTA, categorias, decoracion_en_acciones, donde_se_ven, otros_usos, tipos_de_items, usos_de_piezas,
 )
+from mgitems.ffdec import FFDecNoDisponible  # noqa: E402
 from mgitems.fuente import FuenteCDN, SwfNoEncontrado  # noqa: E402
 from mgitems.iconos import version_de  # noqa: E402
 from mgitems.items import items_del_swf, piezas_del_swf  # noqa: E402
@@ -91,7 +92,7 @@ def analizar(fuente: FuenteCDN, ffdec: ItemsBaseFFDec, trabajo: Path, swf: str) 
     try:
         datos = json.loads(guardado.read_text(encoding="utf-8"))
         if datos["version"] == version_de(data) and datos.get("formato") == FORMATO_TRABAJO:
-            return swf, con_decoracion(swf, datos, data), ""
+            return swf, con_decoracion(swf, con_dibujos(swf, datos, data, ffdec), data), ""
     except (OSError, ValueError, KeyError):
         pass
     try:
@@ -115,6 +116,21 @@ def analizar(fuente: FuenteCDN, ffdec: ItemsBaseFFDec, trabajo: Path, swf: str) 
     }
     guardado.write_text(json.dumps(datos, ensure_ascii=False), encoding="utf-8")
     return swf, con_decoracion(swf, datos, data), ""
+
+
+def con_dibujos(swf: str, datos: dict, data: bytes, ffdec: ItemsBaseFFDec) -> dict:
+    """`datos` (lo guardado) con los Items que son un dibujo de Flash, que antes no se anotaban: se analizan con
+    FFDec solo esas clases, sin volver a analizar todo el SWF."""
+    faltan = [c for c in items_del_swf(leer_clases(data)) if c not in datos["items"]]
+    if not faltan:
+        return datos
+    try:
+        nuevos = tipos_de_items(swf, ffdec.fuentes(data, faltan))
+    except FFDecNoDisponible:
+        raise  # sin FFDec no se puede: que se vea
+    except Exception:  # FFDec puede fallar con un SWF raro: queda como estaba
+        return datos
+    return datos | {"items": datos["items"] | {c: t for c, t in nuevos.items() if c in faltan}}
 
 
 def con_decoracion(swf: str, datos: dict, data: bytes) -> dict:

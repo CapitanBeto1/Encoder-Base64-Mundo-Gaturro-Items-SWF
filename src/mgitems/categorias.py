@@ -28,12 +28,13 @@ ARCHIVO_INDICE = Path(__file__).parent / "datos" / "indice_piezas.json"
 # Lo que un Item de mochila agrega y viste al Gaturro (el resto de `adds`, como `action`, no viste).
 PARTES_QUE_VISTEN = (set(PARTES_DEL_CUERPO) - {EFECTO}) | {"clothFront", "armFore", "armBack", "gripBack", "glove", "gloveFore", "gloveBack"}
 # Sube cuando cambia cómo se clasifica, para no usar lo analizado antes en la computadora del jugador.
-FORMATO = 16  # 16: el tamaño de los objetos de la casa, para las acciones
+FORMATO = 17  # 16: el tamaño de los objetos de la casa, para las acciones; 17: los dibujos de Flash
 
 # Para qué usa el juego una Pieza que no viste al Gaturro; también, tipos de Items.
 TRANSPORTE, ACCION, CASA, MASCOTA = "transporte", "accion", "casa", "mascota"
 # Cosas para la mascota: el juego las trata como consumibles (van a la mochila y se usan en la mascota).
 ROPA_MASCOTA, COMIDA_MASCOTA, JUGUETE_MASCOTA = "ropa_mascota", "comida_mascota", "juguete_mascota"
+CUIDADO_MASCOTA = "cuidado_mascota"  # jabones y demás (`PetCareSceneObject` del juego)
 OTRO = "otro"
 # Tipo de Item según la clase del juego de la que hereda (las demás clases del SWF no son Items).
 TIPOS_DE_ITEM = {
@@ -45,8 +46,14 @@ TIPOS_DE_ITEM = {
     "NpcMamboAsset": CASA, "HomeInteractiveMamboAsset": CASA, "GrabbableMamboAsset": CASA, "MamboAsset": CASA,
     "OwnedNpcMamboAsset": MASCOTA,
     "PetClothMamboAsset": ROPA_MASCOTA, "PetFoodMamboAsset": COMIDA_MASCOTA, "PetToyMamboAsset": JUGUETE_MASCOTA,
+    "PetCareMamboAsset": CUIDADO_MASCOTA,
+    "PersonalPropertyMamboAsset": CASA,  # como `cars.customCar`
     "BannerMamboAsset": OTRO, "VendorMamboAsset": OTRO,
 }
+# Clases que son un dibujo de Flash y no un Item hecho para el inventario (íconos de la granja y de los logros, la
+# interfaz de combate…). El juego igual las agrega si se piden: sin atributos, llegan a la casa.
+_DIBUJOS_DE_FLASH = {"MovieClip", "Sprite", "SimpleButton"}
+DIBUJO = "es un dibujo del juego, no un Item hecho para el inventario: llega a la casa sin ninguna función"
 # Para qué mascota es: la ropa lo dice en `clothes` ("petType"), la comida en `forPetType`.
 _PARA_MASCOTA = re.compile(r'"petType"\s*:\s*"(\w+)"|\bforPetType\s*=\s*"(\w+)"')
 # Items cuya Pieza `<Item>_on` es de la casa.
@@ -104,7 +111,7 @@ def otros_usos(swf: str, fuentes: dict[str, str]) -> dict[str, dict[str, str]]:
 def tipos_de_items(swf: str, fuentes: dict[str, str]) -> dict[str, dict]:
     """Item → {"tipo", "destino"} (y "partes" si es una Prenda; "mascota" si es para una mascota en
     especial; "motivo" si no llega bien al juego; "pasaporte" si solo se la puede poner quien tiene
-    pasaporte), de las clases de `swf` que son Items.
+    pasaporte), de las clases de `swf` que son Items, también las que son un dibujo de Flash (`motivo`).
     `fuentes`: clase → código AS3."""
     tipos = {}
     for fuente in fuentes.values():
@@ -112,7 +119,7 @@ def tipos_de_items(swf: str, fuentes: dict[str, str]) -> dict[str, dict]:
         if not clase or clase.group(1).endswith("MamboAsset"):  # las clases base que trae cada SWF
             continue
         nombre, padre = clase.groups()
-        tipo = TIPOS_DE_ITEM.get(padre)
+        tipo = TIPOS_DE_ITEM.get(padre) or (OTRO if padre in _DIBUJOS_DE_FLASH else None)
         if not tipo:
             continue
         tipos[nombre] = {"tipo": tipo}
@@ -124,6 +131,8 @@ def tipos_de_items(swf: str, fuentes: dict[str, str]) -> dict[str, dict]:
         tipos[nombre] |= destino_de_item(f"{swf}.{nombre}", fuente)
         if requiere_pasaporte(f"{swf}.{nombre}", fuente):
             tipos[nombre]["pasaporte"] = True
+        if padre in _DIBUJOS_DE_FLASH:
+            tipos[nombre]["motivo"] = DIBUJO
         if tipos[nombre]["destino"] == MASCOTA:  # el juego la crea como mascota, herede de lo que herede
             tipos[nombre]["tipo"] = MASCOTA
         elif tipo == MASCOTA:  # de la clase de las mascotas, pero no da una (`pet.house`): es de la casa

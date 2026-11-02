@@ -38,7 +38,7 @@ QUE_ES = {
     "transporte": ("Transporte", {"tipos": {"transporte"}}),
     "casa": ("De la casa", {"tipos": {"casa"}}),
     "mochila": ("De la mochila", {"tipos": {"mochila"}}),
-    "mascota": ("De mascota", {"tipos": {"mascota", "ropa_mascota", "comida_mascota", "juguete_mascota"}}),
+    "mascota": ("De mascota", {"tipos": {"mascota", "ropa_mascota", "comida_mascota", "juguete_mascota", "cuidado_mascota"}}),
 }
 
 # Cuánto se acerca la búsqueda a lo que se marcó «Se parece» y cuánto se aleja de lo descartado (la huella de la
