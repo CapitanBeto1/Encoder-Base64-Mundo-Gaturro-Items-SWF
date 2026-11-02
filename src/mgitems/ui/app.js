@@ -432,10 +432,10 @@ let vista = "agregar";
 
 // Looks, Acciones y Trucar Prenda usan la misma pantalla (el Gaturro, los casilleros y el inventario), cada una
 // con su documento: lo que se está editando en una queda guardado mientras se está en otra.
-const PESTANAS_DEL_EDITOR = ["looks", "acciones", "trucar", "tiendas", "portales"];
-const PESTANAS = ["agregar", "trucar", "looks", "acciones", "tiendas", "portales"];
-// Tiendas y Portales: cualquier Item que, puesto en la casa, hace lo mismo que un NPC del juego.
-const PESTANAS_NPC = { tiendas: "tienda", portales: "portal" };
+const PESTANAS_DEL_EDITOR = ["looks", "acciones", "trucar", "tiendas", "portales", "minijuegos"];
+const PESTANAS = ["agregar", "trucar", "looks", "acciones", "tiendas", "portales", "minijuegos"];
+// Tiendas, Portales y Minijuegos: cualquier Item que, puesto en la casa, hace lo mismo que un NPC del juego.
+const PESTANAS_NPC = { tiendas: "tienda", portales: "portal", minijuegos: "minijuego" };
 const esNpc = (pestana = vista) => pestana in PESTANAS_NPC;
 const documentos = {};
 let pestanaDelDocumento = "looks"; // de qué pestaña es `lookActual`
@@ -458,14 +458,15 @@ function cambiarVista(nueva) {
   document.querySelector("main").classList.toggle("modo-acciones", vista === "acciones");
   document.querySelector("main").classList.toggle("modo-trucar", vista === "trucar");
   document.querySelector("main").classList.toggle("modo-npc", esNpc());
-  $("aplicar-look").textContent = { acciones: "Aplicar acción", trucar: "Trucar todas", tiendas: "Convertir todos", portales: "Convertir todos" }[vista] ?? "Aplicar Look";
+  $("aplicar-look").textContent = { acciones: "Aplicar acción", trucar: "Trucar todas", tiendas: "Convertir todos", portales: "Convertir todos",
+                                   minijuegos: "Convertir todos" }[vista] ?? "Aplicar Look";
   $("texto-se-guarda").textContent = vista === "trucar" ? "Se trucará:" : esNpc() ? "Se convierte:" : "Se guarda en:";
   $("nombre-look").placeholder = { acciones: "NOMBRE DE LA ACCIÓN", trucar: "NOMBRE DE LA PRENDA TRUCADA", tiendas: "NOMBRE DE LA TIENDA",
-                                   portales: "NOMBRE DEL PORTAL" }[vista] ?? "NOMBRE DEL LOOK";
+                                   portales: "NOMBRE DEL PORTAL", minijuegos: "NOMBRE DEL MINIJUEGO" }[vista] ?? "NOMBRE DEL LOOK";
   document.querySelector("main").classList.toggle("modo-agregar", vista === "agregar");
   $("items-a-recibir").hidden = vista !== "agregar";
   $("generar").textContent = { agregar: "Generar Encode", trucar: "Trucar Prenda", looks: "Aplicar Look", acciones: "Aplicar acción",
-                               tiendas: "Convertir todos", portales: "Convertir todos" }[vista];
+                               tiendas: "Convertir todos", portales: "Convertir todos", minijuegos: "Convertir todos" }[vista];
   avisarLista("");
   mostrarEncode(null);
   cargarParaLaVista();
@@ -524,13 +525,16 @@ const GUARDADOS = {
   trucar: { lista: "trucadas", guardar: "guardar_trucada", duplicar: "duplicar_trucada", borrar: "borrar_trucada", exportar: "exportar_trucada",
             importar: "importar_trucada", el: "la Prenda trucada", lo: "la", nuevo: "Prenda trucada nueva", mis: "Mis Prendas trucadas",
             titulo: "GUARDA TU PRENDA TRUCADA", sub: "GUARDA TUS PRENDAS TRUCADAS FAVORITAS" },
-  // Las de Tiendas y Portales reciben el tipo primero (`tipo`) y devuelven la lista en `npcs`.
+  // Las de Tiendas, Portales y Minijuegos reciben el tipo primero (`tipo`) y devuelven la lista en `npcs`.
   tiendas: { lista: "npcs_guardados", clave: "npcs", guardar: "guardar_npc", duplicar: "duplicar_npc", borrar: "borrar_npc", exportar: "exportar_npc",
              importar: "importar_npc", tipo: "tienda", el: "la tienda", lo: "la", nuevo: "Tienda nueva", mis: "Mis tiendas",
              titulo: "GUARDA TU TIENDA", sub: "GUARDA TUS TIENDAS FAVORITAS" },
   portales: { lista: "npcs_guardados", clave: "npcs", guardar: "guardar_npc", duplicar: "duplicar_npc", borrar: "borrar_npc", exportar: "exportar_npc",
               importar: "importar_npc", tipo: "portal", el: "el portal", lo: "lo", nuevo: "Portal nuevo", mis: "Mis portales",
               titulo: "GUARDA TU PORTAL", sub: "GUARDA TUS PORTALES FAVORITOS" },
+  minijuegos: { lista: "npcs_guardados", clave: "npcs", guardar: "guardar_npc", duplicar: "duplicar_npc", borrar: "borrar_npc", exportar: "exportar_npc",
+                importar: "importar_npc", tipo: "minijuego", el: "el minijuego", lo: "lo", nuevo: "Minijuego nuevo", mis: "Mis minijuegos",
+                titulo: "GUARDA TU MINIJUEGO", sub: "GUARDA TUS MINIJUEGOS FAVORITOS" },
 };
 const guardados = () => GUARDADOS[vista in GUARDADOS ? vista : "looks"];
 // Llama a la función `clave` de los guardados de la pestaña (con el tipo primero, si lo tiene).
@@ -538,7 +542,8 @@ const llamarGuardados = (clave, ...args) => {
   const g = guardados();
   return api()[g[clave]](...(g.tipo ? [g.tipo] : []), ...args);
 };
-const documentoNuevo = (pestana = vista) => ({ acciones: nuevaAccion, trucar: nuevaPrendaATrucar, tiendas: nuevoNpc, portales: nuevoNpc }[pestana] ?? nuevoLook)();
+const documentoNuevo = (pestana = vista) => ({ acciones: nuevaAccion, trucar: nuevaPrendaATrucar, tiendas: nuevoNpc, portales: nuevoNpc,
+                                                  minijuegos: nuevoNpc }[pestana] ?? nuevoLook)();
 const guardadoDe = (resultado) => resultado.look ?? resultado.accion ?? resultado.trucada ?? resultado.npc;
 // Lo que queda en el editor al abrir un guardado (o uno nuevo). En Trucar Prenda va al armado, con su Parte,
 // y la lista de las que se reciben juntas sigue como estaba.
@@ -629,7 +634,7 @@ function mostrarLookElegido() {
     mostrar(lookActual);
     return;
   }
-  $("nombre-look-elegido").textContent = look ? look.nombre : `Tocá ${{ acciones: "una acción", tiendas: "una tienda", portales: "un portal" }[vista] ?? "un Look"} para verlo`;
+  $("nombre-look-elegido").textContent = look ? look.nombre : `Tocá ${{ acciones: "una acción", tiendas: "una tienda", portales: "un portal", minijuegos: "un minijuego" }[vista] ?? "un Look"} para verlo`;
   $("equipar-look").disabled = !look;
   mostrar(look);
 }
@@ -710,7 +715,7 @@ function mostrarLook() {
     ...(base
       ? [elementoIcono(base), etiqueta(`${claseDeRuta(base)} (${swfDeRuta(base)})`, "nombre")]
       : [etiqueta({ acciones: "elegí un Item de mochila", trucar: "elegí el Item base", tiendas: "elegí cualquier Item",
-                   portales: "elegí cualquier Item" }[vista] ?? "se elige al aplicar", "ayuda")])
+                   portales: "elegí cualquier Item", minijuegos: "elegí cualquier Item" }[vista] ?? "se elige al aplicar", "ayuda")])
   );
   if (vista === "acciones") $("animacion-accion").value = lookActual.animacion ?? "";
   if (vista === "trucar") mostrarArmadoTrucar();
@@ -1330,7 +1335,8 @@ $("cambiar-base").addEventListener("click", () => {
   $("dialogo-base").classList.toggle("solo-mochila", enAcciones);
   $("dialogo-base").classList.toggle("sin-tipos", esNpc());
   $("titulo-base").textContent = { acciones: "¿Dónde se guarda la acción?", trucar: "¿Qué Item se truca?", tiendas: "¿Qué Item se convierte en tienda?",
-                                   portales: "¿Qué Item se convierte en portal?" }[vista] ?? "¿Dónde se guarda el Look?";
+                                   portales: "¿Qué Item se convierte en portal?", minijuegos: "¿Qué Item se convierte en minijuego?" }[vista]
+                                   ?? "¿Dónde se guarda el Look?";
   $("ayuda-base").textContent = enAcciones
     ? "Un Item de mochila de cualquier SWF: es lo que vas a recibir, y hace la acción cada vez que lo usás. Una Prenda no hace acciones."
     : esNpc()
@@ -1422,7 +1428,8 @@ async function aplicarLook() {
   mostrarBarraLook();
 }
 
-$("aplicar-look").addEventListener("click", () => ({ acciones: aplicarAccion, trucar: trucarPrenda, tiendas: convertirNpcs, portales: convertirNpcs }[vista] ?? aplicarLook)());
+$("aplicar-look").addEventListener("click", () => ({ acciones: aplicarAccion, trucar: trucarPrenda, tiendas: convertirNpcs, portales: convertirNpcs,
+                                                              minijuegos: convertirNpcs }[vista] ?? aplicarLook)());
 
 // --- Trucar Prenda: un Item base que muestra una sola Pieza (cualquiera) en una Parte (cualquiera); varias juntas ---
 
@@ -1612,7 +1619,7 @@ function mostrarArmadoNpc() {
     : tipo ? `Llega a la casa, no ${tipo === "prenda" ? "al guardarropa" : tipo === "mochila" ? "a la mochila" : "adonde llega hoy"}.`
     : "Llega a la casa.";
   $("agregar-npc").disabled = !conectado || ocupado || !base || !nombre;
-  $("titulo-lista-trucadas").textContent = vista === "tiendas" ? "Tiendas" : "Portales";
+  $("titulo-lista-trucadas").textContent = { tiendas: "Tiendas", portales: "Portales", minijuegos: "Minijuegos" }[vista];
   $("cantidad-trucadas").textContent = `(${lookActual.lista.length})`;
   $("lista-trucadas").replaceChildren(
     ...lookActual.lista.map((t, i) => {
@@ -1688,6 +1695,7 @@ async function convertirNpcs() {
 
 $("pestana-tiendas").addEventListener("click", () => cambiarVista("tiendas"));
 $("pestana-portales").addEventListener("click", () => cambiarVista("portales"));
+$("pestana-minijuegos").addEventListener("click", () => cambiarVista("minijuegos"));
 
 $("entregar-look").addEventListener("click", entregar);
 $("ver-encode").addEventListener("click", () => {

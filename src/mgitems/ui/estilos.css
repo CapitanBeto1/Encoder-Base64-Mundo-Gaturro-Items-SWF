@@ -243,8 +243,9 @@ button.derecha { margin-left: auto; }
 }
 
 .pestana {
-  padding: 7px 22px;
-  font-size: 15px;
+  padding: 7px 16px;
+  font-size: 14px;
+  white-space: nowrap;
 }
 
 .pestana[aria-selected="true"] {
@@ -1644,8 +1645,9 @@ select.filtro-lista {
   background: var(--amarillo);
   border-color: var(--amarillo-contorno);
 }
-.casillero-npc .icono { width: 100%; height: 100%; min-height: 0; box-shadow: none; background: transparent; }
-.casillero-npc .icono img { max-width: 100%; max-height: 100%; }
+.casillero-npc { overflow: hidden; }
+.casillero-npc .icono { width: 100%; height: 100%; min-height: 0; overflow: hidden; box-shadow: none; background: transparent; }
+.casillero-npc .icono img { width: 100%; height: 100%; max-width: 100%; max-height: 100%; object-fit: contain; }
 .icono-npc { display: grid; place-items: center; width: 100%; height: 100%; min-height: 0; font-size: 38px; line-height: 1; }
 .casillero-npc .nombre { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; color: var(--texto); }
 .casillero-npc .que-hace { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 9px; color: #5c4c00; }

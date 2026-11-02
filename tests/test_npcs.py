@@ -228,7 +228,22 @@ def test_exportar_e_importar_un_portal(nucleo, tmp_path):
     assert {k: importado["npc"][k] for k in portal} == portal
     assert "no es una tienda" in nucleo.importar_npc_de_archivo("tienda", str(archivo))["error"]
     assert nucleo.importar_npc_de_archivo("portal", str(archivo))["npc"]["nombre"] == "Al bosque (2)"
-    assert not nucleo.npcs_guardados("minijuego")["ok"]  # todavía no se guardan
+    assert not nucleo.npcs_guardados("banner")["ok"]  # solo tiendas, portales y minijuegos
+
+
+def test_los_minijuegos_se_convierten_y_se_guardan_como_las_tiendas(nucleo, ffdec, tmp_path):
+    escalada = {"nombre": "Escalar", "base": "costumes2.gorra1", "comportamiento": "escritoAMano"}
+
+    convertido = nucleo.convertir_en_npcs([{"base": escalada["base"], "comportamiento": "escritoAMano"}])
+    guardado = nucleo.guardar_npc("minijuego", escalada)
+    archivo = tmp_path / "escalar.mgminijuego"
+
+    assert convertido["ok"] and comportamiento_en_codigo(dict(ffdec.trucos)["gorra1"]) == "escritoAMano"
+    assert guardado["ok"] and [m["nombre"] for m in nucleo.npcs_guardados("minijuego")["npcs"]] == ["Escalar"]
+    assert nucleo.npcs_guardados("tienda")["npcs"] == []
+    assert nucleo.exportar_npc("minijuego", escalada, str(archivo))["ok"]
+    assert "no es un portal" in nucleo.importar_npc_de_archivo("portal", str(archivo))["error"]
+    assert nucleo.importar_npc_de_archivo("minijuego", str(archivo))["npc"]["nombre"] == "Escalar (2)"
 
 
 # --- Con FFDec y el servidor del juego de verdad ---

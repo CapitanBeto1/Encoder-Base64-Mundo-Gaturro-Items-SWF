@@ -47,7 +47,7 @@ Un Look guardado en un archivo para pasárselo a otra persona, que lo importa a 
 _Avoid_: Look exportado, preset
 
 **NPC** (de la casa):
-Un Item que, puesto en la casa, hace lo mismo que un personaje del juego al tocarlo: abrir una tienda (catálogo), llevar a otra sala (portal) o abrir un minijuego. Puede ser cualquier Item de cualquier SWF (menos las Prendas de `clothes1`): llega a la casa con su dibujo y su nombre. Es una tienda o un portal según su comportamiento.
+Un Item que, puesto en la casa, hace lo mismo que un personaje del juego al tocarlo: abrir una tienda (catálogo), llevar a otra sala (portal) o abrir un minijuego. Puede ser cualquier Item de cualquier SWF (menos las Prendas de `clothes1`): llega a la casa con su dibujo y su nombre. Es una tienda, un portal o un minijuego según su comportamiento.
 _Avoid_: tienda trucada, NPC trucado
 
 **Comportamiento**:
