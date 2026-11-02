@@ -1703,3 +1703,6 @@ dialog.dialogo-imagen { width: min(1000px, 96vw); height: min(680px, 92vh); }
 .resultado-imagen:has(.cortado-resultado) { grid-template-rows: minmax(0, 1fr) auto auto auto auto; padding-bottom: 22px; }
 .trucar-parte { position: absolute; left: 4px; right: 4px; bottom: 4px; padding: 1px 4px; border-radius: 8px; font-size: 9px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .resultados-imagen { grid-auto-rows: 150px; }
+.resultado-imagen .icono.icono-entero { position: absolute; top: 22px; left: 4px; width: 30px; height: 30px; min-height: 0; border-radius: 6px; background: rgba(255, 255, 255, 0.9); box-shadow: 0 0 0 1px var(--amarillo-contorno); }
+.resultado-imagen .gaturro-resultado { width: 100%; height: 100%; min-height: 0; object-fit: contain; transform: scale(2.3); }
+.marco-gaturro { display: block; width: 100%; height: 100%; min-height: 0; overflow: hidden; border-radius: 8px; }

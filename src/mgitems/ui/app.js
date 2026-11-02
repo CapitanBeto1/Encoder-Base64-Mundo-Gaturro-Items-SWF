@@ -2591,7 +2591,20 @@ function mostrarResultadosImagen(resultados) {
       const parte = item.cortado?.partes[0];
       const cortado = item.cortado ? [etiqueta(`✂ Solo ${nombreDeParte(parte).toLowerCase()}`, "cortado-resultado")] : [];
       if (item.cortado) boton.title += `\nSe parece a una sola parte: ${claseDeRuta(item.cortado.pieza)} (${nombreDeParte(parte)})`;
-      boton.append(elementoIcono(item.ruta), etiqueta(item.clase, "nombre-item"), etiqueta(item.swf, "swf-resultado"), llega,
+      // Si está cortado, se ve la parte que se parece (el pantalón), y el Item entero (el traje) chiquito en una esquina.
+      // (La parte se dibuja puesta en un Gaturro, como en Looks: suelta no se reconoce, un pantalón es un pedazo de cadera.)
+      const imagen = item.cortado ? Object.assign(document.createElement("img"), { className: "gaturro-resultado", alt: "" }) : elementoIcono(item.ruta);
+      if (item.cortado) {
+        imagen.dataset.zoom = "1";
+        // Acercado a donde va la parte (arriba la cabeza, abajo los pies).
+        imagen.style.transformOrigin = `50% ${ALTURA_DE_PARTE[parte] ?? 55}%`;
+        pedirGaturro(imagen, coloresDe(null), { [parte]: item.cortado.pieza });
+      }
+      const entero = item.cortado ? [Object.assign(elementoIcono(item.ruta), { title: `${item.clase}: lo que vas a recibir (entero)` })] : [];
+      entero.forEach((e) => e.classList.add("icono-entero"));
+      const marco = item.cortado ? Object.assign(document.createElement("span"), { className: "marco-gaturro" }) : imagen;
+      if (item.cortado) marco.append(imagen);
+      boton.append(marco, ...entero, etiqueta(item.clase, "nombre-item"), etiqueta(item.swf, "swf-resultado"), llega,
         ...cortado, etiqueta(`${i + 1}`, "puesto-resultado"));
       if (item.pasaporte) marcarPasaporte(boton);
       boton.addEventListener("click", () => {
@@ -2635,9 +2648,16 @@ function mostrarResultadosImagen(resultados) {
       return li;
     })
   );
-  cargarIconos(resultados.map((r) => r.ruta));
-  for (const swf of new Set(resultados.map((r) => r.swf))) prepararIconosDe(swf);
+  cargarIconos([...resultados.map((r) => r.ruta), ...resultados.filter((r) => r.cortado).map((r) => r.cortado.pieza)]);
+  for (const swf of new Set(resultados.flatMap((r) => [r.swf, ...(r.cortado ? [swfDeRuta(r.cortado.pieza)] : [])]))) prepararIconosDe(swf);
 }
+
+// A qué altura del Gaturro (en % desde arriba) está cada Parte, para acercar el dibujo de un resultado cortado.
+const ALTURA_DE_PARTE = {
+  hats: 8, hairs: 12, mouths: 30, accesories: 25, accesories2: 25, neck: 45, effect: 5,
+  cloth: 62, arm: 62, clothFront: 62, clothBack: 58, grip: 70, gripFore: 70, gripBack: 70, glove: 70,
+  leg: 84, foot: 95, transport: 90,
+};
 
 async function trucarSoloEstaParte(pieza, parte) {
   $("dialogo-imagen").close();
