@@ -233,9 +233,9 @@ def test_los_items_vienen_del_indice(tmp_path, fuente, ffdec):
 
     assert resultado["items"] == [
         {"ruta": "costumes.coronaRey", "clase": "coronaRey", "swf": "costumes", "tipo": "prenda", "partes": ["hats"], "mascota": None,
-         "destino": "guardarropa", "motivo": None, "parecido": [], "pasaporte": False, "no_sirve_de_base": None},
+         "destino": "guardarropa", "motivo": None, "parecido": [], "pasaporte": False, "dibujo": False, "no_sirve_de_base": None},
         {"ruta": "costumes.trono", "clase": "trono", "swf": "costumes", "tipo": "casa", "partes": [], "mascota": None,
-         "destino": "casa", "motivo": None, "parecido": [], "pasaporte": False, "no_sirve_de_base": None},
+         "destino": "casa", "motivo": None, "parecido": [], "pasaporte": False, "dibujo": False, "no_sirve_de_base": None},
     ]
     assert fuente.descargas == [] and ffdec.analisis == 0
 
@@ -356,4 +356,4 @@ def test_un_dibujo_de_flash_tambien_es_un_item_que_llega_a_la_casa(tmp_path, ffd
 
     assert set(items) == {"varios.combatGUI", "varios.banner2"}
     assert (items["varios.combatGUI"]["tipo"], items["varios.combatGUI"]["destino"]) == ("otro", "casa")
-    assert "dibujo del juego" in items["varios.combatGUI"]["motivo"]
+    assert items["varios.combatGUI"]["motivo"] is None and items["varios.combatGUI"]["dibujo"]  # probado: llegan bien

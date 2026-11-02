@@ -52,8 +52,7 @@ TIPOS_DE_ITEM = {
 }
 # Clases que son un dibujo de Flash y no un Item hecho para el inventario (íconos de la granja y de los logros, la
 # interfaz de combate…). El juego igual las agrega si se piden: sin atributos, llegan a la casa.
-_DIBUJOS_DE_FLASH = {"MovieClip", "Sprite", "SimpleButton"}
-DIBUJO = "es un dibujo del juego, no un Item hecho para el inventario: llega a la casa sin ninguna función"
+_DIBUJOS_DE_FLASH = {"MovieClip", "Sprite", "SimpleButton"}  # probado en el juego: llegan a la casa
 # Para qué mascota es: la ropa lo dice en `clothes` ("petType"), la comida en `forPetType`.
 _PARA_MASCOTA = re.compile(r'"petType"\s*:\s*"(\w+)"|\bforPetType\s*=\s*"(\w+)"')
 # Items cuya Pieza `<Item>_on` es de la casa.
@@ -111,7 +110,7 @@ def otros_usos(swf: str, fuentes: dict[str, str]) -> dict[str, dict[str, str]]:
 def tipos_de_items(swf: str, fuentes: dict[str, str]) -> dict[str, dict]:
     """Item → {"tipo", "destino"} (y "partes" si es una Prenda; "mascota" si es para una mascota en
     especial; "motivo" si no llega bien al juego; "pasaporte" si solo se la puede poner quien tiene
-    pasaporte), de las clases de `swf` que son Items, también las que son un dibujo de Flash (`motivo`).
+    pasaporte), de las clases de `swf` que son Items, también las que son un dibujo de Flash (`dibujo`).
     `fuentes`: clase → código AS3."""
     tipos = {}
     for fuente in fuentes.values():
@@ -132,7 +131,7 @@ def tipos_de_items(swf: str, fuentes: dict[str, str]) -> dict[str, dict]:
         if requiere_pasaporte(f"{swf}.{nombre}", fuente):
             tipos[nombre]["pasaporte"] = True
         if padre in _DIBUJOS_DE_FLASH:
-            tipos[nombre]["motivo"] = DIBUJO
+            tipos[nombre]["dibujo"] = True
         if tipos[nombre]["destino"] == MASCOTA:  # el juego la crea como mascota, herede de lo que herede
             tipos[nombre]["tipo"] = MASCOTA
         elif tipo == MASCOTA:  # de la clase de las mascotas, pero no da una (`pet.house`): es de la casa

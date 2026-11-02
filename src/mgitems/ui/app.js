@@ -471,7 +471,7 @@ function cambiarVista(nueva) {
                                tiendas: "Convertir todos", portales: "Convertir todos", minijuegos: "Convertir todos" }[vista];
   avisarLista("");
   mostrarEncode(null);
-  cargarParaLaVista();
+  return cargarParaLaVista();
 }
 
 // --- La ventana del Item base: cómo se ve cada uno ---
@@ -2275,7 +2275,8 @@ function mostrarBuscador() {
       const destino = DESTINOS[item.destino] ?? DESTINOS.casa;
       const boton = Object.assign(document.createElement("button"), {
         className: "pieza-grilla item-grilla",
-        title: `${item.clase} · ${item.swf} · ${que}\nLlega a: ${destino.nombre}` + (item.motivo ? ` (${item.motivo})` : ""),
+        title: `${item.clase} · ${item.swf} · ${que}\nLlega a: ${destino.nombre}` + (item.motivo ? ` (${item.motivo})` : "")
+          + (item.dibujo ? "\nEs un dibujo del juego, no un Item hecho para el inventario: llega a la casa como un objeto" : ""),
       });
       boton.setAttribute("aria-label", `${item.clase} de ${item.swf}`);
       boton.setAttribute("aria-pressed", String(items.some((i) => i.ruta === item.ruta)));
@@ -2419,6 +2420,7 @@ function olvidarGuia() {
 $("buscar-por-imagen").addEventListener("click", async () => {
   $("dialogo-imagen").showModal();
   $("zona-imagen").focus();
+  if (!partesConocidas.length) partesConocidas = (await api().partes_del_cuerpo()).partes_del_cuerpo; // para «Cortado: su …»
   const estado = await api().estado_busqueda();
   if (!estado.ok) return avisar($("mensaje-imagen"), estado.error, "error");
   busqueda.listos = estado.listos;
@@ -2564,7 +2566,7 @@ async function buscarCaptura() {
     avisar($("mensaje-imagen"), !resultado.resultados.length
       ? "No quedan más con eso: probá «Empezar de nuevo» u otra opción en «¿Qué es?»."
       : !busqueda.recorte
-        ? "Tocá el que es para sumarlo a «Items a recibir». Si no está, marcá solo el objeto con un rectángulo o elegí «¿Qué es?»."
+        ? "Tocá el que es para sumarlo a «Items a recibir». Si no está, marcá el objeto con un rectángulo (si es ropa puesta, con un poco del Gaturro alrededor) o elegí «¿Qué es?»."
         : "Tocá el que es para sumarlo. Si no está: «Se parece» en uno cercano, o «No es ninguno de estos».", "exito");
   } finally {
     busqueda.buscando = false;
@@ -2585,8 +2587,12 @@ function mostrarResultadosImagen(resultados) {
       boton.setAttribute("aria-pressed", String(items.some((x) => x.ruta === item.ruta)));
       const llega = etiqueta(destino.nombre, "destino-item");
       llega.dataset.bien = String(!item.motivo);
+      // Cortado: lo que se parece es una sola parte del Item (el pantalón de un traje, las mangas de una remera).
+      const parte = item.cortado?.partes[0];
+      const cortado = item.cortado ? [etiqueta(`✂ Solo ${nombreDeParte(parte).toLowerCase()}`, "cortado-resultado")] : [];
+      if (item.cortado) boton.title += `\nSe parece a una sola parte: ${claseDeRuta(item.cortado.pieza)} (${nombreDeParte(parte)})`;
       boton.append(elementoIcono(item.ruta), etiqueta(item.clase, "nombre-item"), etiqueta(item.swf, "swf-resultado"), llega,
-        etiqueta(`${i + 1}`, "puesto-resultado"));
+        ...cortado, etiqueta(`${i + 1}`, "puesto-resultado"));
       if (item.pasaporte) marcarPasaporte(boton);
       boton.addEventListener("click", () => {
         if (items.some((x) => x.ruta === item.ruta)) {
@@ -2614,11 +2620,32 @@ function mostrarResultadosImagen(resultados) {
       const li = document.createElement("li");
       li.style.position = "relative";
       li.append(boton, parecido);
+      if (item.cortado) {
+        // Recibir solo esa parte: Trucar Prenda con esa Pieza ya elegida (falta el Item base).
+        const trucar = Object.assign(document.createElement("button"), {
+          type: "button", className: "trucar-parte", textContent: "✂ Trucar solo esta parte",
+          title: `Abrir Trucar Prenda con ${claseDeRuta(item.cortado.pieza)} en ${nombreDeParte(parte)}`,
+        });
+        trucar.addEventListener("click", (evento) => {
+          evento.stopPropagation();
+          trucarSoloEstaParte(item.cortado.pieza, parte);
+        });
+        li.append(trucar);
+      }
       return li;
     })
   );
   cargarIconos(resultados.map((r) => r.ruta));
   for (const swf of new Set(resultados.map((r) => r.swf))) prepararIconosDe(swf);
+}
+
+async function trucarSoloEstaParte(pieza, parte) {
+  $("dialogo-imagen").close();
+  await cambiarVista("trucar"); // que termine de cargar, así el aviso no se borra
+  Object.assign(lookActual, { parte, partes: { [parte]: pieza } });
+  mostrarLook();
+  prepararIconosDe(swfDeRuta(pieza));
+  avisarLista(`Se eligió ${claseDeRuta(pieza)} en ${nombreDeParte(parte)}: elegí el Item base con «Cambiar…» y tocá «Agregar a la lista».`, "exito");
 }
 
 // La primera vez: bajar el modelo y las huellas, mostrando cuánto va.

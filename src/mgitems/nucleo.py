@@ -289,7 +289,7 @@ class Nucleo:
             return [{"ruta": f"{swf}.{clase}", "clase": clase, "swf": swf, "tipo": item["tipo"], "partes": item.get("partes", []),
                      "mascota": item.get("mascota"), "destino": item.get("destino"), "motivo": item.get("motivo"),
                      "parecido": item.get("parecido", []), "pasaporte": item.get("pasaporte", False),
-                     "no_sirve_de_base": no_sirve_de_base(f"{swf}.{clase}", item["tipo"])}
+                     "dibujo": item.get("dibujo", False), "no_sirve_de_base": no_sirve_de_base(f"{swf}.{clase}", item["tipo"])}
                     for clase, item in sorted(obtenido["items"].items(), key=lambda i: orden_natural(i[0]))]
 
         return self._de_varios_swf(swfs, "items", items)
@@ -1269,6 +1269,7 @@ class Nucleo:
         """Los Items que más se parecen a una captura (`imagen`: data URL o base64 de un PNG/JPG; `recorte`:
         [x0, y0, x1, y1] del rectángulo marcado, o None). Cada uno con su ruta, SWF, tipo, adónde llega, el
         parecido (de -1 a 1) y la Pieza por la que se encontró si lo parecido era lo que se ve puesto (`por_pieza`).
+        Si esa Pieza es solo una parte del Item (está «cortado»: el pantalón de un traje), `cortado` dice cuál.
 
         Para buscar de nuevo, mejor: `que` (una de `opciones_que_es`) limita a ese tipo de Item; `se_parece` (rutas
         de resultados) acerca la búsqueda a ellos y `descartados` (rutas) la aleja de ellos y los saca."""
@@ -1299,10 +1300,13 @@ class Nucleo:
             for item in huellas.prendas_de_pieza.get(ruta, [ruta]):
                 if item in vistos:
                     continue
-                vistos.add(item)
                 fila = self._fila_de_busqueda(item, parecido, por_pieza)
-                if fila and self._es_lo_que_busca(fila, limite):
-                    filas.append(fila)
+                if fila is None or self._es_lo_que_busca(fila, limite):
+                    vistos.add(item)
+                    if fila:
+                        filas.append(fila)
+                # Si no es lo que se busca (el ícono de un traje, buscando un pantalón), puede serlo más abajo por
+                # una de sus Piezas (su pantalón, cortado).
             if len(filas) >= self.RESULTADOS_BUSQUEDA:
                 break
         return {"ok": True, "resultados": filas[: self.RESULTADOS_BUSQUEDA]}
@@ -1311,7 +1315,8 @@ class Nucleo:
     def _es_lo_que_busca(fila: dict, limite: dict) -> bool:
         partes = set(fila["partes"])
         if "partes" in limite:
-            return bool(partes) and partes <= limite["partes"]
+            cortado = fila["cortado"]
+            return (bool(partes) and partes <= limite["partes"]) or bool(cortado and set(cortado["partes"]) & limite["partes"])
         if limite.get("disfraz"):
             return len(partes) >= 3
         if "tipos" in limite:
@@ -1327,7 +1332,17 @@ class Nucleo:
             return None
         return {"ruta": ruta, "clase": clase, "swf": swf, "tipo": item["tipo"], "partes": item.get("partes", []),
                 "mascota": item.get("mascota"), "destino": item.get("destino"), "motivo": item.get("motivo"),
-                "pasaporte": es_de_pasaporte(ruta), "parecido": round(parecido, 4), "por_pieza": por_pieza}
+                "pasaporte": es_de_pasaporte(ruta), "parecido": round(parecido, 4), "por_pieza": por_pieza,
+                "cortado": self._cortado(item, por_pieza)}
+
+    def _cortado(self, item: dict, por_pieza: str | None) -> dict | None:
+        """Si lo que se parece es una sola Pieza de un Item que tiene más (el pantalón de un traje, las mangas de una
+        remera): `{"pieza", "partes"}` de esa Pieza; si no, None."""
+        if not por_pieza:
+            return None
+        swf, _, clase = por_pieza.rpartition(".")
+        partes = (self._indice.leer(swf) or {}).get("piezas", {}).get(clase) or []
+        return {"pieza": por_pieza, "partes": partes} if partes and set(item.get("partes", [])) - set(partes) else None
 
     def _datos(self) -> DatosBusqueda:
         if self._datos_busqueda is None:
