@@ -256,3 +256,33 @@ def test_con_ffdec_real_un_item_con_imagen_jpeg_no_corta_la_exportacion(sistema,
 
     iconos = nucleo.iconos(["clothes1.foto", "clothes1.remera5", "clothes1.gorra1"])["iconos"]
     assert all(iconos.values()), iconos
+
+
+class ExportadorConMargen(ExportadorFalso):
+    """Como FFDec con algunos dibujos (un fondo, SocialNetBackgrounds): el cuadro es enorme y el dibujo, chico en el medio."""
+
+    def exportar(self, swf, simbolos, destino, formato="png"):
+        import io
+        from PIL import Image
+        super().exportar(swf, simbolos, destino, formato)
+        imagen = Image.new("RGBA", (600, 200), (0, 0, 0, 0))
+        imagen.paste((0, 128, 0, 255), (250, 80, 350, 130))
+        salida = io.BytesIO()
+        imagen.save(salida, "PNG")
+        (destino / "remera5.png").write_bytes(salida.getvalue())
+
+
+def test_la_imagen_se_recorta_a_su_dibujo_para_que_no_quede_chiquita(sistema, tmp_path):
+    import io
+    from PIL import Image
+    nucleo = Nucleo(sistema, catalogo=[], exportador=ExportadorConMargen())
+    swf = tmp_path / "clothes1.swf"
+    swf.write_bytes(crear_swf(CLASES))
+    nucleo.abrir_swf(str(swf))
+    nucleo.preparar_iconos()
+
+    iconos = nucleo.iconos(["clothes1.remera5", "clothes1.gorra1"])["iconos"]
+
+    recortada = Image.open(io.BytesIO(base64.b64decode(iconos["clothes1.remera5"].partition(",")[2])))
+    assert recortada.size == (100, 50)
+    assert iconos["clothes1.gorra1"] == "data:image/png;base64," + base64.b64encode(PNG_MINIMO).decode()  # sin margen: igual
