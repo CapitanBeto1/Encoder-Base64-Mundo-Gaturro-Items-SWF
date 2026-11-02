@@ -1658,3 +1658,5 @@ main.modo-npc #lista-trucadas { overflow-y: hidden; }
 .casillero-look .icono { width: 70%; height: auto; aspect-ratio: 1; background: transparent; box-shadow: none; }
 .zoom-escenario[hidden] { display: none; }
 .casillero-npc .icono.sin-imagen::after { content: "…"; color: #9a8400; font-size: 18px; }
+.casillero-npc { position: relative; }
+.encontrado-npc { position: absolute; top: 3px; left: 3px; padding: 1px 5px; border-radius: 8px; background: #2f6421; color: #fff; font-size: 8px; text-transform: uppercase; }

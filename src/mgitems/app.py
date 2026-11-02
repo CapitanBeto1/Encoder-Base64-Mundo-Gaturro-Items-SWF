@@ -120,6 +120,9 @@ class Puente:
     def comportamientos(self, tipo: str) -> dict:
         return self._nucleo.comportamientos(tipo)
 
+    def buscar_comportamientos_en_el_juego(self) -> dict:
+        return self._nucleo.buscar_comportamientos_en_el_juego()
+
     def comportamiento(self, nombre: str) -> dict:
         return self._nucleo.comportamiento(nombre)
 
