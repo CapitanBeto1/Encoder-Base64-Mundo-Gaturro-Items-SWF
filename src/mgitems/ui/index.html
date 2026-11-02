@@ -98,6 +98,7 @@
             </div>
             <button id="todas-las-fuentes-items" class="enlace boton-todos" aria-pressed="false" title="Los Items de todos los SWF del juego">Todos</button>
             <button id="abrir-archivo-items" class="enlace boton-todos" title="Un SWF de tu computadora">Archivo…</button>
+            <button id="buscar-por-imagen" class="enlace boton-todos" title="¿Viste algo y no sabés cómo se llama? Buscalo con una captura">🔍 Buscar por imagen</button>
           </div>
           <div id="categorias-items" class="categorias categorias-items" role="tablist" aria-label="Categorías de Items"></div>
           <div class="filtros-items">
@@ -421,6 +422,38 @@
           <div class="selector-color abajo" data-color="color2"><span class="rotulo-color">- COLOR DE CUERPO -</span></div>
           <div class="selector-color abajo" data-color="color4"><span class="rotulo-color">- COLOR DE NARIZ -</span></div>
         </div>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="dialogo-imagen" class="dialogo-imagen">
+    <div class="panel">
+      <h2>🔍 Buscar por imagen</h2>
+      <p class="ayuda">Pegá una captura (Ctrl+V), arrastrala acá o elegí un archivo. <strong>Marcá solo el objeto, sin el Gaturro ni otros objetos alrededor</strong>: tocá y arrastrá sobre la imagen.</p>
+      <div class="cuerpo-imagen">
+        <div id="zona-imagen" class="zona-imagen" tabindex="0" aria-label="La captura: pegala, arrastrala o elegí un archivo">
+          <p id="ayuda-zona" class="ayuda-zona">📋 Pegá (Ctrl+V) o arrastrá una imagen acá</p>
+          <div id="lienzo-imagen" class="lienzo-imagen" hidden>
+            <img id="imagen-captura" alt="La captura" draggable="false">
+            <div id="rectangulo-imagen" class="rectangulo-imagen" hidden></div>
+          </div>
+        </div>
+        <div class="columna-resultados">
+          <div id="bajar-datos" class="bajar-datos" hidden>
+            <p>La primera vez hay que bajar los datos de la búsqueda (<span id="tamano-datos">107 MB</span>). Se bajan una sola vez.</p>
+            <progress id="progreso-datos" max="1" value="0" hidden></progress>
+          </div>
+          <ul id="resultados-imagen" class="resultados-imagen" aria-label="Los Items más parecidos"></ul>
+        </div>
+      </div>
+      <p id="mensaje-imagen" class="mensaje" role="status" aria-live="polite"></p>
+      <div class="acciones">
+        <button type="button" id="elegir-imagen">Elegir archivo…</button>
+        <input type="file" id="archivo-imagen" accept="image/png,image/jpeg,image/gif,image/webp,image/bmp" hidden>
+        <button type="button" id="quitar-rectangulo">Quitar el rectángulo</button>
+        <button type="button" id="bajar-datos-busqueda" class="primario" hidden>Bajar los datos</button>
+        <button type="button" id="buscar-imagen" class="primario">Buscar</button>
+        <button type="button" id="cerrar-imagen" class="derecha">Cerrar</button>
       </div>
     </div>
   </dialog>
