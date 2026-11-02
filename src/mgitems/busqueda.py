@@ -36,8 +36,10 @@ QUE_ES = {
     "foot": ("Zapatos", {"partes": {"foot"}}),
     "disfraz": ("Disfraz (varias partes)", {"disfraz": True}),
     "transporte": ("Transporte", {"tipos": {"transporte"}}),
-    "casa": ("De la casa", {"tipos": {"casa"}}),
-    "mochila": ("De la mochila", {"tipos": {"mochila"}}),
+    # Por adónde llega (lo que dice cada resultado), no por su tipo: un dibujo del juego («Otro») llega a la casa, y
+    # algunos objetos de la casa, a la mochila.
+    "casa": ("De la casa", {"destinos": {"casa"}}),
+    "mochila": ("De la mochila", {"destinos": {"mochila"}}),
     "mascota": ("De mascota", {"tipos": {"mascota", "ropa_mascota", "comida_mascota", "juguete_mascota", "cuidado_mascota"}}),
 }
 

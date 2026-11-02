@@ -52,7 +52,7 @@ class DatosFalsos:
 
 
 INDICE = {"swfs": {
-    "muebles": {"items": {"silla": {"tipo": "casa", "destino": "casa"}, "mesa": {"tipo": "casa", "destino": "casa"},
+    "muebles": {"items": {"silla": {"tipo": "casa", "destino": "casa"}, "mesa": {"tipo": "otro", "destino": "casa", "dibujo": True},
                           "rota": {"tipo": "casa", "destino": "descartado"}}},
     "ropa": {"piezas": {"remera_on": ["cloth"], "disfrazPantalon_on": ["leg"]}, "items": {"remera": {"tipo": "prenda", "partes": ["cloth", "arm"], "destino": "guardarropa"},
                        "pantalon": {"tipo": "prenda", "partes": ["leg"], "destino": "guardarropa"},
@@ -114,7 +114,7 @@ def test_que_es_limita_la_busqueda_a_ese_tipo_de_item(sistema, tmp_path):
 
     # Aunque lo más parecido sea la silla, si es un pantalón, solo pantalones (y los trajes, por su pantalón).
     assert [r["ruta"] for r in pantalones] == ["ropa.pantalon", "ropa.disfraz"]
-    assert [r["ruta"] for r in de_la_casa] == ["muebles.silla", "muebles.mesa"]
+    assert [r["ruta"] for r in de_la_casa] == ["muebles.silla", "muebles.mesa"]  # la mesa es «Otro», pero llega a la casa
     assert [r["ruta"] for r in remeras] == ["ropa.remera"]  # por lo que se ve puesto
     # Un disfraz también va en las piernas, pero no es un pantalón: tiene su propia opción.
     assert [r["ruta"] for r in nucleo.buscar_por_imagen(captura((255, 0, 0)), que="disfraz")["resultados"]] == ["ropa.disfraz"]

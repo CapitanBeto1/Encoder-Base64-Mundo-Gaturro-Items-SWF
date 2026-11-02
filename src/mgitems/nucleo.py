@@ -1322,6 +1322,8 @@ class Nucleo:
             return len(partes) >= 3
         if "tipos" in limite:
             return fila["tipo"] in limite["tipos"]
+        if "destinos" in limite:
+            return fila["destino"] in limite["destinos"]
         return True
 
     def _fila_de_busqueda(self, ruta: str, parecido: float, por_pieza: str | None) -> dict | None:
