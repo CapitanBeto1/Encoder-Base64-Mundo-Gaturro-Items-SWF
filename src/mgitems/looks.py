@@ -5,7 +5,8 @@ Piezas de varios SWF. Se guardan en un archivo JSON de la carpeta del programa.
 
 Las acciones de la pestaña Acciones se guardan igual, en su propio archivo: un Item de mochila con su
 `animacion` y, como Partes, la Pieza de la acción (`action`) y la de la cabeza (`effect`). Las Prendas
-trucadas de la pestaña Trucar Prenda, también: un Item base con una sola Parte y su Pieza.
+trucadas de la pestaña Trucar Prenda, también: un Item base con una sola Parte y su Pieza. Y las tiendas y
+los portales: un Item base con el `comportamiento` del NPC que imita.
 """
 
 import json
@@ -16,6 +17,7 @@ from pathlib import Path
 
 _RUTA = re.compile(r"^[A-Za-z0-9_\-]+(?:/[A-Za-z0-9_\-]+)*\.[A-Za-z_][A-Za-z0-9_]*$")
 _PARTE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+_COMPORTAMIENTO = re.compile(r"^[A-Za-z0-9_\-]+(?:/[A-Za-z0-9_\-]+)*$")
 _COLOR = re.compile(r"^#[0-9a-fA-F]{6}$")
 _CLAVES_COLOR = {"color1", "color2", "color3", "color4"}
 
@@ -34,6 +36,7 @@ class Look:
     # los que falten, los de fábrica. Solo para la vista previa: no cambian lo que se entrega al juego.
     colores: dict[str, str] = field(default_factory=dict)
     animacion: str | None = None  # solo las acciones: la animación del juego ("showObject", "dance"…)
+    comportamiento: str | None = None  # solo las tiendas y los portales: el del NPC ("brujaMesa", "magia/portal"…)
 
     @classmethod
     def desde(cls, datos: dict) -> "Look":
@@ -59,16 +62,22 @@ class Look:
         animacion = datos.get("animacion") or None
         if animacion is not None and not _PARTE.match(str(animacion)):
             raise LookInvalido(f"La animación no es válida: {animacion}")
+        comportamiento = datos.get("comportamiento") or None
+        if comportamiento is not None and not _COMPORTAMIENTO.match(str(comportamiento)):
+            raise LookInvalido(f"El comportamiento no es válido: {comportamiento}")
         return cls(nombre, base, {str(p): str(v) for p, v in partes.items()}, str(datos.get("id") or ""), dict(colores),
-                   animacion and str(animacion))
+                   animacion and str(animacion), comportamiento and str(comportamiento))
 
 
 FORMATO = "mgitems-look"
 FORMATO_ACCION = "mgitems-accion"
 FORMATO_TRUCADA = "mgitems-trucada"
+FORMATO_TIENDA = "mgitems-tienda"
+FORMATO_PORTAL = "mgitems-portal"
 # Cómo se nombra lo de cada formato en los mensajes: (uno, "este…", "es de…").
 _NOMBRES = {FORMATO: ("un Look", "Este Look es"), FORMATO_ACCION: ("una acción", "Esta acción es"),
-            FORMATO_TRUCADA: ("una Prenda trucada", "Esta Prenda trucada es")}
+            FORMATO_TRUCADA: ("una Prenda trucada", "Esta Prenda trucada es"),
+            FORMATO_TIENDA: ("una tienda", "Esta tienda es"), FORMATO_PORTAL: ("un portal", "Este portal es")}
 VERSION_FORMATO = 1
 
 
@@ -78,6 +87,8 @@ def archivo_de_look(look: Look, formato: str = FORMATO) -> str:
              "colores": look.colores}
     if look.animacion:
         datos["animacion"] = look.animacion
+    if look.comportamiento:
+        datos["comportamiento"] = look.comportamiento
     return json.dumps(datos, ensure_ascii=False, indent=1)
 
 
@@ -92,7 +103,7 @@ def look_de_archivo(contenido: str, formato: str = FORMATO) -> Look:
         raise LookInvalido(f"Este archivo no es {uno} de MG Items.")
     if not isinstance(datos.get("version"), int) or datos["version"] > VERSION_FORMATO:
         raise LookInvalido(f"{este_es} de una versión más nueva de MG Items: actualizá el programa.")
-    look = Look.desde({k: datos.get(k) for k in ("nombre", "base", "partes", "colores", "animacion")})
+    look = Look.desde({k: datos.get(k) for k in ("nombre", "base", "partes", "colores", "animacion", "comportamiento")})
     if formato == FORMATO and not look.partes:
         raise LookInvalido("El Look del archivo no tiene Piezas.")
     if formato == FORMATO_ACCION and not look.animacion:

@@ -1,0 +1,1169 @@
+{
+ "comportamientos": {
+  "aeropuertoRecepcion": {
+   "catalogos": [
+    "pasajesAvion"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "animales2018/vendedor": {
+   "catalogos": [
+    "animales2018ropa"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "antro2017/djCatalog": {
+   "catalogos": [
+    "antro2017"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "aparador3tecno": {
+   "catalogos": [
+    "smartphones"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "armariopepiones": {
+   "catalogos": [
+    "hotelHalloween"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "atlantisCueva": {
+   "catalogos": [],
+   "juegos": [],
+   "objetos": [
+    "atlantis.portal"
+   ],
+   "salas": [
+    38355
+   ],
+   "tipo": "portal"
+  },
+  "barEspacialMenuComidas": {
+   "catalogos": [
+    "barEspacialComidas"
+   ],
+   "juegos": [],
+   "objetos": [
+    "barEspacial.mesa",
+    "barEspacial.mesada"
+   ],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "beachStoreRasta": {
+   "catalogos": [
+    "casaRefrito2018"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "brujaMesa": {
+   "catalogos": [
+    "potions2024"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "cafeteriaGaturro": {
+   "catalogos": [
+    "cafeteriaClothes"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "carnival2Cofre": {
+   "catalogos": [
+    "carnaval2019"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "carreraEspacial2017/alienRegala": {
+   "catalogos": [
+    "alienVioleta"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "catRopaDuos": {
+   "catalogos": [
+    "ropaDuos"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "catalogoBarrilete": {
+   "catalogos": [
+    "juegosPlaza",
+    "helados"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "catalogoCampamento": {
+   "catalogos": [
+    "campamento"
+   ],
+   "juegos": [],
+   "objetos": [
+    "reunion.catalogo"
+   ],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "catalogoHavanna": {
+   "catalogos": [
+    "objetosHavanna"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "christmasPuesto": {
+   "catalogos": [
+    "navidad_classic"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "cinePerchero": {
+   "catalogos": [
+    "cine"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "clubPuertaMonstruos": {
+   "catalogos": [],
+   "juegos": [],
+   "objetos": [],
+   "salas": [
+    2539404
+   ],
+   "tipo": "portal"
+  },
+  "coronacionGuardias": {
+   "catalogos": [],
+   "juegos": [],
+   "objetos": [],
+   "salas": [
+    51683048
+   ],
+   "tipo": "portal"
+  },
+  "cuevajurasica": {
+   "catalogos": [],
+   "juegos": [],
+   "objetos": [],
+   "salas": [
+    51686813
+   ],
+   "tipo": "portal"
+  },
+  "entradaKitty": {
+   "catalogos": [],
+   "juegos": [],
+   "objetos": [
+    "kitty.proximamente"
+   ],
+   "salas": [
+    51684299
+   ],
+   "tipo": "portal"
+  },
+  "entradaPiletaMonstruosos": {
+   "catalogos": [],
+   "juegos": [],
+   "objetos": [],
+   "salas": [
+    51683053
+   ],
+   "tipo": "portal"
+  },
+  "escenarioVip/doorBackstage": {
+   "catalogos": [],
+   "juegos": [],
+   "objetos": [],
+   "salas": [
+    51688699
+   ],
+   "tipo": "portal"
+  },
+  "escenarioVip/gatovica": {
+   "catalogos": [],
+   "juegos": [],
+   "objetos": [],
+   "salas": [
+    51688699
+   ],
+   "tipo": "portal"
+  },
+  "escuelaCatalogo": {
+   "catalogos": [
+    "escuelaRopa"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "fashion2019/pantalones1": {
+   "catalogos": [
+    "fashion2019pantalones1"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "fashion2019/pantalones2": {
+   "catalogos": [
+    "fashion2019pantalones2"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "fashion2019/pantalones3": {
+   "catalogos": [
+    "fashion2019pantalones3"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "fashion2019/pantalones4": {
+   "catalogos": [
+    "fashion2019pantalones4"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "fashion2019/pantalones5": {
+   "catalogos": [
+    "fashion2019pantalones5"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "fashion2019/remeras1": {
+   "catalogos": [
+    "fashion2019remeras1"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "fashion2019/remeras2": {
+   "catalogos": [
+    "fashion2019remeras2"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "fashion2019/remeras3": {
+   "catalogos": [
+    "fashion2019remeras3"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "fashion2019/remeras4": {
+   "catalogos": [
+    "fashion2019remeras4"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "fashion2019/remeras5": {
+   "catalogos": [
+    "fashion2019remeras5"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "fashion_Cambiante1": {
+   "catalogos": [
+    "poliLadron",
+    "modaMedieval",
+    "banquetePerdices",
+    "buenasOndas",
+    "unaMilNoches",
+    "sonDePaz",
+    "leyendasCine"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "fashion_Cambiante2": {
+   "catalogos": [
+    "salidaCine",
+    "viviendoVerano",
+    "fiestaPileta",
+    "fiestaNeon",
+    "salonRebeldes",
+    "tardeLluvia",
+    "diaClub"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "fashion_Cambiante3": {
+   "catalogos": [
+    "fashionMonster"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "fashion_Cambiante4": {
+   "catalogos": [
+    "catalogoAnime"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "fashion_collares": {
+   "catalogos": [
+    "tienda1_collares"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "fashion_collares2": {
+   "catalogos": [
+    "tienda1_collares2"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "fashion_pantalones_femeninos": {
+   "catalogos": [
+    "tienda1_pantalones_femeninos_visa",
+    "tienda1_pantalones_femeninos"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "fashion_remeras_femeninas": {
+   "catalogos": [
+    "tienda1_remeras_femeninas_visa",
+    "tienda1_remeras_femeninas"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "fashion_remeras_masculinas": {
+   "catalogos": [
+    "tienda1_remeras_masculinas_visa",
+    "tienda1_remeras_masculinas"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "fashion_zapatos_femeninos": {
+   "catalogos": [
+    "tienda1_zapatos_femeninos"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "fashion_zapatos_masculinos": {
+   "catalogos": [
+    "tienda1_zapatos_masculinos"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "feriaAmbulante": {
+   "catalogos": [
+    "feriaA",
+    "feriaB"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "flowersStoreCatalog": {
+   "catalogos": [
+    "flowersStoreCatalog"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "galaPremios2017/ventaCatalogo": {
+   "catalogos": [
+    "gala2017"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "gatoonsMantero": {
+   "catalogos": [
+    "gatoonsPiezasMonstruos"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "gatubers/tecno": {
+   "catalogos": [
+    "gatubers2018chroma"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "gatucineTv": {
+   "catalogos": [],
+   "juegos": [
+    "cinecomunidad"
+   ],
+   "objetos": [
+    "cinema.televisor"
+   ],
+   "salas": [],
+   "tipo": "minijuego"
+  },
+  "giacomoPuesto": {
+   "catalogos": [
+    "giacomo"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "halloween2017/catalogoMulita": {
+   "catalogos": [
+    "halloween2017_mulita"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "heladeroSummer2020": {
+   "catalogos": [
+    "helados2020"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "homenaje/maradona": {
+   "catalogos": [
+    "homenaje_maradona"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "hotelKeyA": {
+   "catalogos": [],
+   "juegos": [],
+   "objetos": [
+    "hotelTransylvania.npcKeyA"
+   ],
+   "salas": [
+    47964
+   ],
+   "tipo": "portal"
+  },
+  "hotelKeyB": {
+   "catalogos": [],
+   "juegos": [],
+   "objetos": [
+    "hotelTransylvania.npcKeyB"
+   ],
+   "salas": [
+    47964
+   ],
+   "tipo": "portal"
+  },
+  "hw20/onlyVip": {
+   "catalogos": [
+    "halloweenRecycle"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "hwAtico2018/escalera": {
+   "catalogos": [],
+   "juegos": [],
+   "objetos": [],
+   "salas": [
+    69397
+   ],
+   "tipo": "portal"
+  },
+  "kittyCatalog": {
+   "catalogos": [
+    "helloKitty"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "lunaNave": {
+   "catalogos": [],
+   "juegos": [],
+   "objetos": [],
+   "salas": [
+    39003
+   ],
+   "tipo": "portal"
+  },
+  "magia/portal": {
+   "catalogos": [],
+   "juegos": [],
+   "objetos": [],
+   "salas": [
+    43032,
+    2539743
+   ],
+   "tipo": "portal"
+  },
+  "marioneta": {
+   "catalogos": [
+    "nocolor"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "modaVeranoMasc": {
+   "catalogos": [
+    "ofertaVerano_masc"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "mueblesArena": {
+   "catalogos": [
+    "mueblesVeranoVIP",
+    "mueblesVerano"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "navidad20/trajes": {
+   "catalogos": [
+    "navidad20_ropa"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "navidad2016/catalogoRopaAzul": {
+   "catalogos": [
+    "navidad2016_trajes_boreales"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "navidad2016/catalogoRopaDuende": {
+   "catalogos": [
+    "navidad2016_trajes_duendes"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "navidad2017/trineo": {
+   "catalogos": [],
+   "juegos": [],
+   "objetos": [],
+   "salas": [
+    43001
+   ],
+   "tipo": "portal"
+  },
+  "navidad2018/catalogo": {
+   "catalogos": [
+    "navidad2018_ropa"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "nieve2017/vendedorPatines": {
+   "catalogos": [
+    "ropaNieve2017"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "ofertasRopa": {
+   "catalogos": [
+    "rotativo$(time.day)"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "parqueDiversiones/abreTickets": {
+   "catalogos": [
+    "ticketsParqueDiversiones"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "parqueDiversiones/puestoCatalogo": {
+   "catalogos": [
+    "parqueDiversiones_puesto"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "parqueDiversiones/puestoFood": {
+   "catalogos": [
+    "comidaFeria2017"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "parqueDiversiones/ticketeadoraCaminata": {
+   "catalogos": [],
+   "juegos": [],
+   "objetos": [],
+   "salas": [
+    51688281
+   ],
+   "tipo": "portal"
+  },
+  "pascuas2020/vendor": {
+   "catalogos": [
+    "easter2020"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "peluqueria2018/sillon": {
+   "catalogos": [],
+   "juegos": [],
+   "objetos": [],
+   "salas": [
+    51688689
+   ],
+   "tipo": "portal"
+  },
+  "peluqueria2018/sillonVip": {
+   "catalogos": [],
+   "juegos": [],
+   "objetos": [],
+   "salas": [
+    51688689
+   ],
+   "tipo": "portal"
+  },
+  "peluqueria2018/vendedor": {
+   "catalogos": [
+    "peinados2018"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "peluqueria2018/vendedor3": {
+   "catalogos": [
+    "maquillaje2018"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "peluqueria2019/degrade_catalog": {
+   "catalogos": [
+    "peluqueria2019_degrade"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "petShopRopa": {
+   "catalogos": [
+    "mascotas"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "primavera2020/catalogo": {
+   "catalogos": [
+    "primavera2020"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "profesionMedico": {
+   "catalogos": [
+    "profesionMedico"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "puertaSalida": {
+   "catalogos": [],
+   "juegos": [],
+   "objetos": [
+    "casaRaton.puerta"
+   ],
+   "salas": [],
+   "tipo": "portal"
+  },
+  "puestojurasico": {
+   "catalogos": [
+    "catalogoJurasico"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "reyMomo2018/catalogo": {
+   "catalogos": [
+    "reyMomo2018"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "reyes2017/armario": {
+   "catalogos": [
+    "armarioReyes2017"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "salitaMedica/catalogo": {
+   "catalogos": [
+    "salita_medica"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "salitaMedica/catalogoDerma": {
+   "catalogos": [
+    "salita_medica_derma"
+   ],
+   "juegos": [],
+   "objetos": [
+    "salitaMedica.mesa_dermatologo"
+   ],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "sanValentin2023/pamela": {
+   "catalogos": [
+    "snorkelStore"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "serenito2017/door": {
+   "catalogos": [],
+   "juegos": [],
+   "objetos": [],
+   "salas": [
+    51688342
+   ],
+   "tipo": "portal"
+  },
+  "serenitoConsola": {
+   "catalogos": [],
+   "juegos": [
+    "whackacat2",
+    "islandPlatform",
+    "tumba",
+    "spacehunters",
+    "climbing"
+   ],
+   "objetos": [
+    "serenito.consola",
+    "serenito.fichinPixel"
+   ],
+   "salas": [],
+   "tipo": "minijuego"
+  },
+  "serenitoFichin": {
+   "catalogos": [],
+   "juegos": [
+    "platformDream",
+    "jetpack"
+   ],
+   "objetos": [
+    "serenito.arcadeSerenito"
+   ],
+   "salas": [],
+   "tipo": "minijuego"
+  },
+  "serenitoPostre": {
+   "catalogos": [],
+   "juegos": [],
+   "objetos": [
+    "serenito.serenitoPoteNPC"
+   ],
+   "salas": [
+    51686790
+   ],
+   "tipo": "portal"
+  },
+  "serenitoTablet": {
+   "catalogos": [],
+   "juegos": [
+    "speed",
+    "islandcannon",
+    "colourcode",
+    "maquinadeltiempo",
+    "planes"
+   ],
+   "objetos": [
+    "serenito.tabletPremio"
+   ],
+   "salas": [],
+   "tipo": "minijuego"
+  },
+  "shopping2017/accesoriosPieles": {
+   "catalogos": [
+    "salita_medica_derma"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "shopping2017/cofreAtico": {
+   "catalogos": [
+    "showroomAtico"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "shopping2018/trajesInvisibles": {
+   "catalogos": [
+    "trajesInvisibles"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "shopping2018/vestidor": {
+   "catalogos": [
+    "vestidores2018"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "snowStore": {
+   "catalogos": [
+    "snowStore"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "subteJapon": {
+   "catalogos": [],
+   "juegos": [],
+   "objetos": [],
+   "salas": [
+    51687540
+   ],
+   "tipo": "portal"
+  },
+  "tallerTrineo": {
+   "catalogos": [],
+   "juegos": [],
+   "objetos": [
+    "taller.trineo"
+   ],
+   "salas": [
+    72847
+   ],
+   "tipo": "portal"
+  },
+  "unicefViaje": {
+   "catalogos": [],
+   "juegos": [
+    "turismo"
+   ],
+   "objetos": [
+    "unicef.Viaje"
+   ],
+   "salas": [],
+   "tipo": "minijuego"
+  },
+  "usuario2018/homeItems": {
+   "catalogos": [
+    "ftuecasa2018"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "vacunaBarbijos": {
+   "catalogos": [
+    "vacunaBarbijo"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "vendorCaballos": {
+   "catalogos": [
+    "caballos"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "versusAparador": {
+   "catalogos": [
+    "vsanime",
+    "vskpop",
+    "$(versusKA)"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "vueltaCole2018/banderas": {
+   "catalogos": [
+    "banderas2018"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  },
+  "waterShop": {
+   "catalogos": [
+    "waterShop"
+   ],
+   "juegos": [],
+   "objetos": [],
+   "salas": [],
+   "tipo": "tienda"
+  }
+ },
+ "salas": {
+  "25355": "¡¿QUIÉN LLAMA?!",
+  "25356": "¡CUIDAR LA CIUDAD!",
+  "25357": "PARQUE",
+  "25358": "MONO PUNCH",
+  "25360": "PLAYA",
+  "25361": "PLAYA",
+  "25362": "CIUDAD",
+  "25363": "CIUDAD",
+  "25364": "PLAYA",
+  "25367": "NIEVE",
+  "25368": "JUEGOS DE NIEVE",
+  "25369": "DESPEGUE",
+  "25370": "¡CATÁSTROFE GIGANTE!",
+  "25371": "TERRAZA PH",
+  "25373": "CABLES",
+  "25374": "¡MÁSCARAS THERIANS!",
+  "25375": "PELUQUERIA",
+  "25376": "¡AYUDA A ABUELURRA!",
+  "25377": "¡TREPAR Y ATRAPAR!",
+  "25378": "HOGAR",
+  "26580": "BAR",
+  "31739": "CIUDAD",
+  "31755": "TIENDA-REGALOS",
+  "32540": "MARIPOSAS",
+  "33168": "MUELLE",
+  "33764": "ISLA",
+  "33767": "BUSCANDO HUESOS",
+  "33769": "CATACUMBAS",
+  "33770": "GATRIX",
+  "33860": "COMPRA-VENTA",
+  "35342": "FLORERIA",
+  "37747": "TEMPLO ISLEÑO",
+  "38318": "ROSEDAL",
+  "38341": "¡PROTEGER LA PLAYA!",
+  "38355": "AQUAWOMAN",
+  "39006": "¡DANCE!",
+  "42325": "MUSEO",
+  "42382": "CIENCIAS GEOGRÁFICAS",
+  "42736": "¡CAZADORES LUNARES!",
+  "42739": "¡LLUVIA DE METEORITOS!",
+  "43019": "LUCHA PIRATA",
+  "43032": "BOSQUE EMBRUJADO",
+  "43121": "CABAÑA DE ANGÉLICA",
+  "43657": "VETERINARIA",
+  "45419": "PLAZA",
+  "45583": "TECNOLOGIA",
+  "45698": "ESTADIO",
+  "46749": "COMISARÍA",
+  "46751": "REMERAS",
+  "47731": "PLANETA UNICEF",
+  "47964": "BOSQUE EMBRUJADO",
+  "47985": "BIBLIOTECA REVUELTA",
+  "51683119": "¡CASAMIENTO!",
+  "51684239": "¡LIMPIANDO SMOG!",
+  "51684299": "BAZAR",
+  "51684582": "¡ESCUELA!",
+  "51684596": "LETRAS",
+  "51686897": "AL ESPACIO",
+  "51687464": "EXPEDICION ESPACIAL",
+  "51688107": "¡ADOPCIÓN!",
+  "51688279": "PARQUE DE DIVERSIONES",
+  "51688280": "CENA DE SAN VALENTIN",
+  "51688342": "¡PET BOUNCER!",
+  "51688753": "¡SALÓN DE FIESTA!",
+  "51689003": "CIUDAD",
+  "51689134": "¡CRUMBL COOKIES!",
+  "51689177": "¡COLECCIÓN ZODIACAL!",
+  "51689178": "¡MUEBLES ANIMAL PRINT!",
+  "51689644": "CALABOZOS",
+  "51689698": "¿TRABAJO?",
+  "51690069": "ACCESORIOS E INDUMENTARIA",
+  "51690211": "VARIEDADES",
+  "51690212": "CEMENTERIO",
+  "51690474": "¡CAMPAMENTO!",
+  "51690673": "STRANGER THINGS",
+  "51690677": "¡GALERÍA DE ARTE!",
+  "54163": "AEROPUERTO",
+  "56076": "PELEA COMO HEROE",
+  "56280": "DISCOTECA",
+  "66835": "ARTÍCULOS DE VERANO",
+  "68114": "EXPEDICIÓN NATURALEZA",
+  "69138": "¡NUEVOS PISOS!",
+  "69633": "VISTIENDO A GATURRO",
+  "70155": "TRÁFICO LIVIANO",
+  "72746": "¡CONCURSO REMERAS!",
+  "73066": "MISIÓN GPS"
+ }
+}

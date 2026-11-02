@@ -12,6 +12,7 @@ UI = Path(__file__).parent / "ui" / "index.html"
 _TIPOS_LOOK = ("Look de MG Items (*.mglook)", "Todos los archivos (*.*)")
 _TIPOS_ACCION = ("Acción de MG Items (*.mgaccion)", "Todos los archivos (*.*)")
 _TIPOS_TRUCADA = ("Prenda trucada de MG Items (*.mgtrucada)", "Todos los archivos (*.*)")
+_TIPOS_NPC = {"tienda": ("mgtienda", "Tienda"), "portal": ("mgportal", "Portal")}  # tipo → (extensión, nombre)
 _NO_VALE_EN_ARCHIVOS = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
 
 
@@ -115,6 +116,43 @@ class Puente:
         if not ruta:
             return {"ok": False, "cancelado": True}
         return self._nucleo.importar_accion_de_archivo(ruta)
+
+    def comportamientos(self, tipo: str) -> dict:
+        return self._nucleo.comportamientos(tipo)
+
+    def comportamiento(self, nombre: str) -> dict:
+        return self._nucleo.comportamiento(nombre)
+
+    def convertir_en_npcs(self, pedidos: list) -> dict:
+        return self._nucleo.convertir_en_npcs(pedidos)
+
+    def npcs_guardados(self, tipo: str) -> dict:
+        return self._nucleo.npcs_guardados(tipo)
+
+    def guardar_npc(self, tipo: str, npc: dict) -> dict:
+        return self._nucleo.guardar_npc(tipo, npc)
+
+    def duplicar_npc(self, tipo: str, id_npc: str) -> dict:
+        return self._nucleo.duplicar_npc(tipo, id_npc)
+
+    def borrar_npc(self, tipo: str, id_npc: str) -> dict:
+        return self._nucleo.borrar_npc(tipo, id_npc)
+
+    def exportar_npc(self, tipo: str, npc: dict) -> dict:
+        extension, que = _TIPOS_NPC.get(tipo, ("mgnpc", "NPC"))
+        nombre = _NO_VALE_EN_ARCHIVOS.sub("_", str(npc.get("nombre") or "").strip()) or que
+        ruta = _dialogo(webview.FileDialog.SAVE, save_filename=f"{nombre}.{extension}",
+                        file_types=(f"{que} de MG Items (*.{extension})", "Todos los archivos (*.*)"))
+        if not ruta:
+            return {"ok": False, "cancelado": True}
+        return self._nucleo.exportar_npc(tipo, npc, ruta)
+
+    def importar_npc(self, tipo: str) -> dict:
+        extension, que = _TIPOS_NPC.get(tipo, ("mgnpc", "NPC"))
+        ruta = _dialogo(webview.FileDialog.OPEN, file_types=(f"{que} de MG Items (*.{extension})", "Todos los archivos (*.*)"))
+        if not ruta:
+            return {"ok": False, "cancelado": True}
+        return self._nucleo.importar_npc_de_archivo(tipo, ruta)
 
     def trucadas(self) -> dict:
         return self._nucleo.trucadas()

@@ -46,6 +46,14 @@ _Avoid_: Outfit, conjunto
 Un Look guardado en un archivo para pasárselo a otra persona, que lo importa a sus Looks y lo aplica (los SWF que le falten se descargan solos).
 _Avoid_: Look exportado, preset
 
+**NPC** (de la casa):
+Un Item que, puesto en la casa, hace lo mismo que un personaje del juego al tocarlo: abrir una tienda (catálogo), llevar a otra sala (portal) o abrir un minijuego. Puede ser cualquier Item de cualquier SWF (menos las Prendas de `clothes1`): llega a la casa con su dibujo y su nombre. Es una tienda o un portal según su comportamiento.
+_Avoid_: tienda trucada, NPC trucado
+
+**Comportamiento**:
+Lo que hace un NPC, por su nombre en el juego (`behavior`, ej. `brujaMesa`, `magia/portal`): el guion `npc/<comportamiento>.npc` que corre al tocarlo.
+_Avoid_: behavior (en la interfaz), script de NPC
+
 ## Entrega al juego
 
 **Script**:

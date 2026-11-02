@@ -103,6 +103,9 @@ function mostrarEncode(resultado) {
   } else if (resultado?.look) {
     const n = Object.keys(resultado.prenda.partes).length;
     $("resumen").textContent = `Look «${resultado.look.nombre}»: ${resultado.prenda.ruta} con ${n === 1 ? "1 Pieza" : `${n} Piezas`}.` + (resultado.prenda.tipo === "mochila" ? " Está en la mochila: usalo para vestirte." : "");
+  } else if (resultado && esNpc()) {
+    const n = resultado.items.length;
+    $("resumen").textContent = `${n === 1 ? `1 ${PESTANAS_NPC[vista]}` : `${n} ${vista}`}: ${resultado.items.map((i) => claseDeRuta(i.ruta)).join(", ")}. ${n === 1 ? "Llega" : "Llegan"} a la casa.`;
   } else if (resultado?.prenda) {
     const n = Object.keys(resultado.prenda.partes).length;
     $("resumen").textContent = `Prenda trucada: ${resultado.prenda.ruta} con ${n === 1 ? "1 Pieza" : `${n} Piezas`}.` + (resultado.prenda.tipo === "mochila" ? " Está en la mochila: usalo para vestirte." : "");
@@ -110,7 +113,9 @@ function mostrarEncode(resultado) {
     $("resumen").textContent = `Encode con ${contarItems(resultado.items.length)}.`;
   } else {
     $("resumen").textContent =
-      vista === "trucar"
+      esNpc()
+        ? lookActual.lista.length ? "Tocá «Convertir todos» para generar el Encode." : "Armá uno y agregalo a la lista."
+        : vista === "trucar"
         ? lookActual.lista.length ? "Tocá «Trucar todas» para generar el Encode." : "Agregá Prendas trucadas a la lista."
         : vista === "acciones"
           ? lookActual.animacion ? "Tocá «Aplicar acción» para generar el Encode." : "Elegí la animación."
@@ -131,14 +136,15 @@ function actualizarControles() {
   $("quitar-todos").disabled = !listo || items.length === 0;
   $("importar").disabled = !listo;
   $("abrir-entorno").disabled = !conectado;
-  const puedeGenerar = vista === "agregar" ? items.length > 0 : vista === "trucar" ? lookActual.lista.length > 0 : Object.keys(lookActual.partes).length > 0;
+  const puedeGenerar = vista === "agregar" ? items.length > 0 : vista === "trucar" || esNpc() ? lookActual.lista.length > 0 : Object.keys(lookActual.partes).length > 0;
   $("generar").disabled = !listo || !puedeGenerar;
   $("guardar-look").disabled = $("descartar-look").disabled = $("nuevo-look").disabled = $("importar-look").disabled = !listo;
   $("abrir-mis-looks").disabled = !listo;
   $("borrar-look").disabled = !listo || !lookActual.id;
   $("nombre-look").disabled = $("cambiar-base").disabled = $("agregar-fuente").disabled = $("todas-las-fuentes").disabled = $("abrir-archivo-looks").disabled = !listo;
   mostrarBarraLook();
-  $("pestana-agregar").disabled = $("pestana-trucar").disabled = $("pestana-looks").disabled = $("pestana-acciones").disabled = !conectado || ocupado;
+  for (const nombre of PESTANAS) $(`pestana-${nombre}`).disabled = !conectado || ocupado;
+  $("usar-comportamiento").disabled = $("comportamiento-a-mano").disabled = !listo;
   $("copiar").disabled = $("guardar").disabled = $("entregar").disabled = !listo || !$("encode").value;
 }
 
@@ -209,6 +215,7 @@ async function cargarParaLaVista() {
   if (vista === "trucar") await cargarTrucar();
   if (vista === "looks") await cargarLooks();
   if (vista === "acciones") await cargarAcciones();
+  if (esNpc()) await cargarNpcs();
   if (vista === "agregar" && !buscador.cargado) await cargarItemsBuscados();
 }
 
@@ -425,7 +432,11 @@ let vista = "agregar";
 
 // Looks, Acciones y Trucar Prenda usan la misma pantalla (el Gaturro, los casilleros y el inventario), cada una
 // con su documento: lo que se está editando en una queda guardado mientras se está en otra.
-const PESTANAS_DEL_EDITOR = ["looks", "acciones", "trucar"];
+const PESTANAS_DEL_EDITOR = ["looks", "acciones", "trucar", "tiendas", "portales"];
+const PESTANAS = ["agregar", "trucar", "looks", "acciones", "tiendas", "portales"];
+// Tiendas y Portales: cualquier Item que, puesto en la casa, hace lo mismo que un NPC del juego.
+const PESTANAS_NPC = { tiendas: "tienda", portales: "portal" };
+const esNpc = (pestana = vista) => pestana in PESTANAS_NPC;
 const documentos = {};
 let pestanaDelDocumento = "looks"; // de qué pestaña es `lookActual`
 
@@ -442,16 +453,19 @@ function cambiarVista(nueva) {
   vista = nueva;
   const pantalla = PESTANAS_DEL_EDITOR.includes(vista) ? "looks" : vista;
   for (const nombre of ["agregar", "looks"]) $(`vista-${nombre}`).hidden = nombre !== pantalla;
-  for (const nombre of ["agregar", "trucar", "looks", "acciones"]) $(`pestana-${nombre}`).setAttribute("aria-selected", String(nombre === vista));
+  for (const nombre of PESTANAS) $(`pestana-${nombre}`).setAttribute("aria-selected", String(nombre === vista));
   document.querySelector("main").classList.toggle("modo-looks", pantalla === "looks");
   document.querySelector("main").classList.toggle("modo-acciones", vista === "acciones");
   document.querySelector("main").classList.toggle("modo-trucar", vista === "trucar");
-  $("aplicar-look").textContent = { acciones: "Aplicar acción", trucar: "Trucar todas" }[vista] ?? "Aplicar Look";
-  $("texto-se-guarda").textContent = vista === "trucar" ? "Se trucará:" : "Se guarda en:";
-  $("nombre-look").placeholder = { acciones: "NOMBRE DE LA ACCIÓN", trucar: "NOMBRE DE LA PRENDA TRUCADA" }[vista] ?? "NOMBRE DEL LOOK";
+  document.querySelector("main").classList.toggle("modo-npc", esNpc());
+  $("aplicar-look").textContent = { acciones: "Aplicar acción", trucar: "Trucar todas", tiendas: "Convertir todos", portales: "Convertir todos" }[vista] ?? "Aplicar Look";
+  $("texto-se-guarda").textContent = vista === "trucar" ? "Se trucará:" : esNpc() ? "Se convierte:" : "Se guarda en:";
+  $("nombre-look").placeholder = { acciones: "NOMBRE DE LA ACCIÓN", trucar: "NOMBRE DE LA PRENDA TRUCADA", tiendas: "NOMBRE DE LA TIENDA",
+                                   portales: "NOMBRE DEL PORTAL" }[vista] ?? "NOMBRE DEL LOOK";
   document.querySelector("main").classList.toggle("modo-agregar", vista === "agregar");
   $("items-a-recibir").hidden = vista !== "agregar";
-  $("generar").textContent = { agregar: "Generar Encode", trucar: "Trucar Prenda", looks: "Aplicar Look", acciones: "Aplicar acción" }[vista];
+  $("generar").textContent = { agregar: "Generar Encode", trucar: "Trucar Prenda", looks: "Aplicar Look", acciones: "Aplicar acción",
+                               tiendas: "Convertir todos", portales: "Convertir todos" }[vista];
   avisarLista("");
   mostrarEncode(null);
   cargarParaLaVista();
@@ -464,7 +478,8 @@ const filaConImagen = (o) => [elementoIcono(o.ruta), etiqueta(o.clase, "nombre")
 const filaDeBase = (o) => [
   ...filaConImagen(o),
   ...(basesDeTodos ? [etiqueta(swfDeRuta(o.ruta), "ayuda swf-base")] : []),
-  etiqueta(o.tipo === "mochila" ? "🎒 mochila" : "👕 guardarropa", `ayuda tipo-${o.tipo === "mochila" ? "mochila" : "prenda"}`),
+  etiqueta({ mochila: "🎒 mochila", prenda: "👕 guardarropa", casa: "🏠 casa" }[o.tipo] ?? `📦 ${o.tipo}`,
+           `ayuda tipo-${o.tipo === "mochila" ? "mochila" : "prenda"}`),
 ];
 
 $("pestana-agregar").addEventListener("click", () => cambiarVista("agregar"));
@@ -509,30 +524,49 @@ const GUARDADOS = {
   trucar: { lista: "trucadas", guardar: "guardar_trucada", duplicar: "duplicar_trucada", borrar: "borrar_trucada", exportar: "exportar_trucada",
             importar: "importar_trucada", el: "la Prenda trucada", lo: "la", nuevo: "Prenda trucada nueva", mis: "Mis Prendas trucadas",
             titulo: "GUARDA TU PRENDA TRUCADA", sub: "GUARDA TUS PRENDAS TRUCADAS FAVORITAS" },
+  // Las de Tiendas y Portales reciben el tipo primero (`tipo`) y devuelven la lista en `npcs`.
+  tiendas: { lista: "npcs_guardados", clave: "npcs", guardar: "guardar_npc", duplicar: "duplicar_npc", borrar: "borrar_npc", exportar: "exportar_npc",
+             importar: "importar_npc", tipo: "tienda", el: "la tienda", lo: "la", nuevo: "Tienda nueva", mis: "Mis tiendas",
+             titulo: "GUARDA TU TIENDA", sub: "GUARDA TUS TIENDAS FAVORITAS" },
+  portales: { lista: "npcs_guardados", clave: "npcs", guardar: "guardar_npc", duplicar: "duplicar_npc", borrar: "borrar_npc", exportar: "exportar_npc",
+              importar: "importar_npc", tipo: "portal", el: "el portal", lo: "lo", nuevo: "Portal nuevo", mis: "Mis portales",
+              titulo: "GUARDA TU PORTAL", sub: "GUARDA TUS PORTALES FAVORITOS" },
 };
 const guardados = () => GUARDADOS[vista in GUARDADOS ? vista : "looks"];
-const documentoNuevo = (pestana = vista) => ({ acciones: nuevaAccion, trucar: nuevaPrendaATrucar }[pestana] ?? nuevoLook)();
-const guardadoDe = (resultado) => resultado.look ?? resultado.accion ?? resultado.trucada;
+// Llama a la función `clave` de los guardados de la pestaña (con el tipo primero, si lo tiene).
+const llamarGuardados = (clave, ...args) => {
+  const g = guardados();
+  return api()[g[clave]](...(g.tipo ? [g.tipo] : []), ...args);
+};
+const documentoNuevo = (pestana = vista) => ({ acciones: nuevaAccion, trucar: nuevaPrendaATrucar, tiendas: nuevoNpc, portales: nuevoNpc }[pestana] ?? nuevoLook)();
+const guardadoDe = (resultado) => resultado.look ?? resultado.accion ?? resultado.trucada ?? resultado.npc;
 // Lo que queda en el editor al abrir un guardado (o uno nuevo). En Trucar Prenda va al armado, con su Parte,
 // y la lista de las que se reciben juntas sigue como estaba.
 const enElEditor = (documento) => vista === "trucar"
   ? { ...nuevaPrendaATrucar(), ...structuredClone(documento), parte: Object.keys(documento.partes)[0] ?? lookActual.parte, lista: lookActual.lista }
+  : esNpc() ? { ...nuevoNpc(), ...structuredClone(documento), lista: lookActual.lista }
   : structuredClone(documento);
 // Lo que se dibuja quieto (miniaturas, escenario): en una acción, solo lo de la cabeza.
 const partesQuietas = (documento) =>
   vista === "acciones" ? (documento.partes.effect ? { effect: documento.partes.effect } : {}) : documento.partes;
+// Lo que se muestra de un guardado: el Gaturro, o en Tiendas y Portales, el Item que se convierte.
+function mostrarGuardadoEn(img, documento) {
+  if (!esNpc()) return pedirGaturro(img, coloresDe(documento), partesQuietas(documento));
+  img.replaceWith(Object.assign(elementoIcono(documento.base), { title: documento.base }));
+  cargarIconos([documento.base]);
+}
 
 async function cargarLooks() {
   if (!partesConocidas.length) partesConocidas = (await api().partes_del_cuerpo()).partes_del_cuerpo;
-  const resultado = await api()[guardados().lista]();
+  const resultado = await llamarGuardados("lista");
   if (!resultado.ok) return avisarLista(resultado.error, "error");
-  looksGuardados = resultado[guardados().lista];
+  looksGuardados = resultado[guardados().clave ?? guardados().lista];
   $("texto-mis-looks").textContent = guardados().mis;
   $("titulo-mis-looks").textContent = guardados().titulo;
   $("sub-mis-looks").textContent = guardados().sub;
   mostrarListaLooks();
   mostrarLook();
-  if (!inventario.cargado) await cargarInventario();
+  if (!inventario.cargado && !esNpc()) await cargarInventario();
 }
 
 // --- Mis Looks: la ventana "Guarda tu Look", como en el juego ---
@@ -558,7 +592,7 @@ function mostrarGrillaLooks() {
     boton.append(miniatura, etiqueta(look.nombre, "nombre-casillero-look"));
     boton.addEventListener("click", () => elegirLook(look.id));
     boton.addEventListener("dblclick", () => equiparLook(look.id));
-    pedirGaturro(miniatura, coloresDe(look), partesQuietas(look));
+    mostrarGuardadoEn(miniatura, look);
     li.append(boton);
     return li;
   });
@@ -576,17 +610,28 @@ function mostrarLookElegido() {
   const look = looksGuardados.find((l) => l.id === lookElegido);
   document.querySelectorAll("#grilla-looks .casillero-look:not(.nuevo)").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.id === lookElegido)));
   $("exportar-look").disabled = $("duplicar-look").disabled = $("eliminar-look-elegido").disabled = !look;
+  // En Tiendas y Portales se ve el Item, no un Gaturro.
+  const mostrar = (documento) => {
+    $("gaturro-mis-looks").hidden = esNpc() || !documento;
+    $("icono-mis-looks").hidden = !esNpc() || !documento?.base;
+    document.querySelector(".zoom-escenario").hidden = esNpc();
+    if (!documento) return;
+    if (esNpc()) {
+      if (documento.base) $("icono-mis-looks").replaceChildren(elementoIcono(documento.base));
+      cargarIconos(documento.base ? [documento.base] : []);
+    } else {
+      pedirGaturro($("gaturro-mis-looks"), coloresDe(documento), partesQuietas(documento));
+    }
+  };
   if (mostrandoPuesto) {
     $("nombre-look-elegido").textContent = `${lookActual.nombre || guardados().nuevo} (puesto)`;
     $("equipar-look").disabled = true; // ya está puesto
-    $("gaturro-mis-looks").hidden = false;
-    pedirGaturro($("gaturro-mis-looks"), coloresDe(lookActual), partesQuietas(lookActual));
+    mostrar(lookActual);
     return;
   }
-  $("nombre-look-elegido").textContent = look ? look.nombre : `Tocá ${vista === "acciones" ? "una acción" : "un Look"} para verlo`;
+  $("nombre-look-elegido").textContent = look ? look.nombre : `Tocá ${{ acciones: "una acción", tiendas: "una tienda", portales: "un portal" }[vista] ?? "un Look"} para verlo`;
   $("equipar-look").disabled = !look;
-  $("gaturro-mis-looks").hidden = !look;
-  if (look) pedirGaturro($("gaturro-mis-looks"), coloresDe(look), partesQuietas(look));
+  mostrar(look);
 }
 
 function elegirLook(id) {
@@ -632,7 +677,7 @@ for (const barra of [$("zoom-gaturro"), $("zoom-escenario")]) {
 $("eliminar-look-elegido").addEventListener("click", async () => {
   const look = looksGuardados.find((l) => l.id === lookElegido);
   if (!look || !confirm(`¿Eliminar ${guardados().el} «${look.nombre}»?`)) return;
-  const resultado = await api()[guardados().borrar](look.id);
+  const resultado = await llamarGuardados("borrar", look.id);
   if (!resultado.ok) return avisarLista(resultado.error, "error");
   const posicion = looksGuardados.indexOf(look);
   if (lookActual.id === look.id) {
@@ -664,13 +709,15 @@ function mostrarLook() {
   $("base-look").replaceChildren(
     ...(base
       ? [elementoIcono(base), etiqueta(`${claseDeRuta(base)} (${swfDeRuta(base)})`, "nombre")]
-      : [etiqueta({ acciones: "elegí un Item de mochila", trucar: "elegí el Item base" }[vista] ?? "se elige al aplicar", "ayuda")])
+      : [etiqueta({ acciones: "elegí un Item de mochila", trucar: "elegí el Item base", tiendas: "elegí cualquier Item",
+                   portales: "elegí cualquier Item" }[vista] ?? "se elige al aplicar", "ayuda")])
   );
   if (vista === "acciones") $("animacion-accion").value = lookActual.animacion ?? "";
   if (vista === "trucar") mostrarArmadoTrucar();
+  if (esNpc()) mostrarArmadoNpc();
   mostrarCasilleros();
   cargarIconos([...Object.values(lookActual.partes), ...(base ? [base] : [])]);
-  mostrarInventario();
+  if (!esNpc()) mostrarInventario();
   mostrarEncode(null);
   mostrarBarraLook();
   dibujarGaturro();
@@ -1064,6 +1111,7 @@ async function pedirGaturro(img, colores, partes = lookActual.partes) {
 
 async function dibujarGaturro() {
   detenerAnimacion();
+  if (esNpc()) return; // en Tiendas y Portales no hay Gaturro
   if (vista === "acciones") return dibujarAccion();
   const espera = setTimeout(() => ($("estado-gaturro").textContent = "Preparando las imágenes…"), 400);
   const resultado = await pedirGaturro($("imagen-gaturro"), coloresDe(lookActual));
@@ -1211,7 +1259,7 @@ function mostrarBases() {
   $("solo-mochila").querySelector(".cantidad-tipo").textContent = `(${deMochila})`;
   $("solo-guardarropa").querySelector(".cantidad-tipo").textContent = `(${porNombre.length - deMochila})`;
   for (const id of BOTONES_TIPO) $(id).setAttribute("aria-checked", String($(id).dataset.tipo === tipoBase));
-  const tipo = vista === "acciones" ? "mochila" : tipoBase; // una Prenda no hace acciones
+  const tipo = vista === "acciones" ? "mochila" : esNpc() ? "ambos" : tipoBase; // una Prenda no hace acciones
   const visibles = porNombre
     .filter((b) => tipo === "ambos" || (b.tipo === "mochila" ? "mochila" : "prenda") === tipo)
     .slice(0, 200);
@@ -1222,11 +1270,12 @@ function mostrarBases() {
       boton.setAttribute("aria-pressed", String(lookActual.base === b.ruta));
       boton.append(...filaDeBase(b));
       boton.addEventListener("click", () => {
-        if (vista === "trucar" && lookActual.lista.some((t) => t.base === b.ruta)) {
-          return avisar($("mensaje-base"), `${b.clase} ya está en la lista: cada Prenda trucada necesita otro Item base.`, "advertencia");
+        if ((vista === "trucar" || esNpc()) && lookActual.lista.some((t) => t.base === b.ruta)) {
+          return avisar($("mensaje-base"), `${b.clase} ya está en la lista: cada uno necesita otro Item.`, "advertencia");
         }
         $("dialogo-base").close();
         lookActual.base = b.ruta;
+        tiposDeItems.set(b.ruta, b.tipo);
         mostrarLook();
       });
       li.append(boton);
@@ -1250,7 +1299,7 @@ async function usarBasesDeTodos() {
   const resultado = await api().items_de_swfs(null);
   if (pedido !== pedidoBases) return;
   if (!resultado.ok) return avisar($("mensaje-base"), resultado.error, "error");
-  basesDelSwf = resultado.items.filter((i) => (i.tipo === "prenda" || i.tipo === "mochila") && i.destino !== "descartado" && !i.no_sirve_de_base);
+  basesDelSwf = resultado.items.filter((i) => (esNpc() || i.tipo === "prenda" || i.tipo === "mochila") && i.destino !== "descartado" && !i.no_sirve_de_base);
   avisar($("mensaje-base"), "Escribí un nombre para encontrar el Item base (se muestran los primeros 200).");
   mostrarBases();
 }
@@ -1265,10 +1314,12 @@ async function usarBasesDe(swf) {
   basesDelSwf = [];
   mostrarBases();
   avisar($("mensaje-base"), `Leyendo los Items base de ${swf}… (la primera vez tarda unos segundos)`);
-  const resultado = await api().items_base(swf);
+  // En Tiendas y Portales sirve cualquier Item (del índice, sin los que el juego descarta).
+  const resultado = esNpc() ? await api().items_de_swfs([swf]) : await api().items_base(swf);
   if (pedido !== pedidoBases) return;
   if (!resultado.ok) return avisar($("mensaje-base"), resultado.error, "error");
-  basesDelSwf = resultado.items;
+  if (esNpc() && resultado.errores?.[swf]) return avisar($("mensaje-base"), resultado.errores[swf], "error");
+  basesDelSwf = esNpc() ? resultado.items.filter((i) => i.destino !== "descartado" && !i.no_sirve_de_base) : resultado.items;
   avisar($("mensaje-base"), resultado.aviso ?? (basesDelSwf.length ? "" : "Este SWF no tiene Prendas ni Items de mochila."), "advertencia");
   mostrarBases();
   prepararIconosDe(swf);
@@ -1277,9 +1328,13 @@ async function usarBasesDe(swf) {
 $("cambiar-base").addEventListener("click", () => {
   const enAcciones = vista === "acciones";
   $("dialogo-base").classList.toggle("solo-mochila", enAcciones);
-  $("titulo-base").textContent = { acciones: "¿Dónde se guarda la acción?", trucar: "¿Qué Item se truca?" }[vista] ?? "¿Dónde se guarda el Look?";
+  $("dialogo-base").classList.toggle("sin-tipos", esNpc());
+  $("titulo-base").textContent = { acciones: "¿Dónde se guarda la acción?", trucar: "¿Qué Item se truca?", tiendas: "¿Qué Item se convierte en tienda?",
+                                   portales: "¿Qué Item se convierte en portal?" }[vista] ?? "¿Dónde se guarda el Look?";
   $("ayuda-base").textContent = enAcciones
     ? "Un Item de mochila de cualquier SWF: es lo que vas a recibir, y hace la acción cada vez que lo usás. Una Prenda no hace acciones."
+    : esNpc()
+    ? "Cualquier Item de cualquier SWF (de la casa, una Prenda, uno de mochila): llega a la casa con su dibujo y su nombre, y al tocarlo hace lo que elegiste."
     : vista === "trucar"
       ? "Es lo que vas a recibir: una Prenda (guardarropa) o un Item de mochila de cualquier SWF, que en vez de lo suyo muestra la Pieza elegida."
       : "El Item base es lo que vas a recibir: una Prenda (guardarropa) o un Item de mochila. Puede ser de cualquier SWF.";
@@ -1310,7 +1365,7 @@ $("cerrar-base").addEventListener("click", () => $("dialogo-base").close());
 // --- Guardar, descartar, borrar, duplicar ---
 
 async function guardarLook() {
-  const resultado = await api()[guardados().guardar](lookActual);
+  const resultado = await llamarGuardados("guardar", lookActual);
   if (!resultado.ok) return avisarLista(resultado.error, "error");
   lookActual = enElEditor(guardadoDe(resultado));
   avisarLista(`Se guardó ${guardados().el} «${lookActual.nombre}».`, "exito");
@@ -1319,7 +1374,7 @@ async function guardarLook() {
 
 // Duplica el Look elegido en "Mis Looks" y elige la copia.
 async function duplicarLook() {
-  const resultado = await api()[guardados().duplicar](lookElegido);
+  const resultado = await llamarGuardados("duplicar", lookElegido);
   if (!resultado.ok) return avisarLista(resultado.error, "error");
   lookElegido = guardadoDe(resultado).id;
   mostrandoPuesto = false;
@@ -1329,7 +1384,7 @@ async function duplicarLook() {
 
 async function borrarLook() {
   if (!confirm(`¿Borrar ${guardados().el} «${lookActual.nombre}»?`)) return;
-  const resultado = await api()[guardados().borrar](lookActual.id);
+  const resultado = await llamarGuardados("borrar", lookActual.id);
   if (!resultado.ok) return avisarLista(resultado.error, "error");
   avisarLista(`Se borró «${lookActual.nombre}».`, "exito");
   lookActual = enElEditor(documentoNuevo());
@@ -1340,7 +1395,7 @@ async function borrarLook() {
 
 function mostrarBarraLook() {
   const n = vista === "acciones" ? Number(Boolean(lookActual.animacion && lookActual.base))
-    : vista === "trucar" ? lookActual.lista.length
+    : vista === "trucar" || esNpc() ? lookActual.lista.length
     : Object.keys(lookActual.partes).length;
   const listo = conectado && !ocupado;
   $("aplicar-look").disabled = !listo || !n;
@@ -1349,6 +1404,8 @@ function mostrarBarraLook() {
     ? $("resumen").textContent
     : vista === "acciones"
       ? n ? "Tocá «Aplicar acción» para generar el Encode." : "Elegí la animación y el Item de mochila donde se guarda."
+      : esNpc()
+      ? n ? "Tocá «Convertir todos» para generar el Encode." : "Elegí un Item y qué hace, y agregalo a la lista."
       : vista === "trucar"
       ? n ? "Tocá «Trucar todas» para generar el Encode." : "Armá una Prenda trucada y agregala a la lista."
       : n ? "Tocá «Aplicar Look» para generar el Encode." : "Elegí las Piezas del Look.";
@@ -1365,7 +1422,7 @@ async function aplicarLook() {
   mostrarBarraLook();
 }
 
-$("aplicar-look").addEventListener("click", () => ({ acciones: aplicarAccion, trucar: trucarPrenda }[vista] ?? aplicarLook)());
+$("aplicar-look").addEventListener("click", () => ({ acciones: aplicarAccion, trucar: trucarPrenda, tiendas: convertirNpcs, portales: convertirNpcs }[vista] ?? aplicarLook)());
 
 // --- Trucar Prenda: un Item base que muestra una sola Pieza (cualquiera) en una Parte (cualquiera); varias juntas ---
 
@@ -1399,6 +1456,7 @@ function mostrarArmadoTrucar() {
   );
   $("parte-trucar").value = lookActual.parte;
   $("agregar-trucada").disabled = !conectado || ocupado || !pieza || !lookActual.base;
+  $("titulo-lista-trucadas").textContent = "Prendas trucadas";
   $("cantidad-trucadas").textContent = `(${lookActual.lista.length})`;
   $("lista-trucadas").replaceChildren(
     ...lookActual.lista.map((t, i) => {
@@ -1448,6 +1506,162 @@ async function trucarPrenda() {
   avisarLista(`${lista.length === 1 ? "Prenda trucada" : "Prendas trucadas"}: tocá «Agregar al juego» para recibirlas.`, "exito");
   mostrarBarraLook();
 }
+// --- Tiendas y Portales: cualquier Item que, puesto en la casa, hace lo mismo que un NPC del juego ---
+
+const ICONO_NPC = { tienda: "🛒", portal: "🚪", minijuego: "🎮" };
+const comportamientosConocidos = {}; // tipo → [{comportamiento, tipo, descripcion, objeto}]
+const descripciones = new Map(); // comportamiento → su fila (también los escritos a mano)
+const tiposDeItems = new Map(); // ruta → tipo ("casa", "prenda", "mochila"…), de la ventana del Item base
+
+// El que se está armando (`base` y `comportamiento`) y la lista de los que se reciben juntos.
+function nuevoNpc() {
+  return { id: "", nombre: "", base: null, comportamiento: null, partes: {}, colores: {}, lista: [] };
+}
+
+async function cargarNpcs() {
+  const tipo = PESTANAS_NPC[vista];
+  if (!comportamientosConocidos[tipo]) {
+    const resultado = await api().comportamientos(tipo);
+    if (!resultado.ok) return avisarLista(resultado.error, "error");
+    comportamientosConocidos[tipo] = resultado.comportamientos;
+    for (const c of resultado.comportamientos) descripciones.set(c.comportamiento, c);
+  }
+  $("filtro-comportamientos").value = "";
+  await cargarLooks(); // los guardados y el armado
+  mostrarComportamientos();
+}
+
+function mostrarComportamientos() {
+  if (!esNpc()) return;
+  const todos = comportamientosConocidos[PESTANAS_NPC[vista]] ?? [];
+  const texto = $("filtro-comportamientos").value.trim().toLowerCase();
+  const filas = todos.filter((c) => `${c.comportamiento} ${c.descripcion}`.toLowerCase().includes(texto));
+  $("cantidad-comportamientos").textContent = texto ? `${filas.length} de ${todos.length}` : `${todos.length}`;
+  $("grilla-comportamientos").replaceChildren(
+    ...filas.map((c) => {
+      const li = document.createElement("li");
+      const boton = Object.assign(document.createElement("button"), { type: "button", className: "casillero-npc", title: `${c.comportamiento}: ${c.descripcion}` });
+      boton.setAttribute("aria-pressed", String(lookActual.comportamiento === c.comportamiento));
+      boton.append(
+        c.objeto ? elementoIcono(c.objeto) : etiqueta(ICONO_NPC[c.tipo], "icono-npc"),
+        etiqueta(c.comportamiento, "nombre"),
+        etiqueta(c.descripcion, "que-hace")
+      );
+      boton.addEventListener("click", () => elegirComportamiento(c.comportamiento));
+      li.append(boton);
+      return li;
+    })
+  );
+  if (!filas.length) $("grilla-comportamientos").append(etiqueta("No hay ninguno con ese nombre: podés escribirlo a mano a la izquierda.", "ayuda"));
+  const objetos = filas.filter((c) => c.objeto).map((c) => c.objeto);
+  cargarIconos(objetos);
+  for (const swf of new Set(objetos.map(swfDeRuta))) prepararIconosDe(swf);
+}
+
+function elegirComportamiento(nombre) {
+  lookActual.comportamiento = nombre;
+  mostrarEncode(null);
+  mostrarLook();
+  mostrarComportamientos();
+}
+
+function mostrarArmadoNpc() {
+  const nombre = lookActual.comportamiento;
+  const fila = nombre && descripciones.get(nombre);
+  $("comportamiento-elegido").replaceChildren(
+    ...(nombre
+      ? [etiqueta(`${ICONO_NPC[fila?.tipo] ?? "❔"} ${nombre}`, "nombre"), ...(fila ? [etiqueta(`· ${fila.descripcion}`, "ayuda")] : [])]
+      : [etiqueta("tocá uno de la grilla", "ayuda")])
+  );
+  if (nombre && !fila) leerComportamiento(nombre); // uno guardado que no está en la grilla
+  const base = lookActual.base;
+  $("vista-npc").replaceChildren(
+    ...(base ? [elementoIcono(base), etiqueta(`${claseDeRuta(base)} (${swfDeRuta(base)})`, "ayuda")] : [etiqueta("Elegí el Item que se convierte con «Cambiar…».", "ayuda")])
+  );
+  if (base) prepararIconosDe(swfDeRuta(base));
+  const tipo = base && tiposDeItems.get(base);
+  $("aviso-npc").textContent = !base ? ""
+    : tipo === "casa" ? "Llega a la casa. Si tenía una función propia (sentarse, acostarse…), deja de tenerla."
+    : tipo ? `Llega a la casa, no ${tipo === "prenda" ? "al guardarropa" : tipo === "mochila" ? "a la mochila" : "adonde llega hoy"}.`
+    : "Llega a la casa.";
+  $("agregar-npc").disabled = !conectado || ocupado || !base || !nombre;
+  $("titulo-lista-trucadas").textContent = vista === "tiendas" ? "Tiendas" : "Portales";
+  $("cantidad-trucadas").textContent = `(${lookActual.lista.length})`;
+  $("lista-trucadas").replaceChildren(
+    ...lookActual.lista.map((t, i) => {
+      const li = document.createElement("li");
+      li.title = `${t.base}: ${t.comportamiento}`;
+      const cantidad = Object.assign(document.createElement("input"), { type: "number", min: 1, value: t.cantidad, className: "cantidad-npc", title: "Cantidad" });
+      cantidad.addEventListener("change", () => {
+        t.cantidad = Math.max(1, parseInt(cantidad.value, 10) || 1);
+        cantidad.value = t.cantidad;
+        mostrarEncode(null);
+      });
+      const quitar = Object.assign(document.createElement("button"), { className: "quitar", textContent: "✕", title: "Sacar de la lista" });
+      quitar.addEventListener("click", () => {
+        lookActual.lista.splice(i, 1);
+        mostrarEncode(null);
+        mostrarLook();
+      });
+      const texto = `${claseDeRuta(t.base)} → ${t.comportamiento}`;
+      li.append(elementoIcono(t.base), etiqueta(t.nombre ? `${t.nombre}: ${texto}` : texto, "nombre"), cantidad, quitar);
+      return li;
+    })
+  );
+  if (!lookActual.lista.length) $("lista-trucadas").append(etiqueta("Elegí un Item y qué hace, y tocá «Agregar a la lista».", "ayuda"));
+  cargarIconos([...(base ? [base] : []), ...lookActual.lista.map((t) => t.base)]);
+}
+
+async function leerComportamiento(nombre) {
+  const resultado = await api().comportamiento(nombre);
+  if (!resultado.ok) return avisarLista(resultado.error, "error");
+  descripciones.set(nombre, resultado.comportamiento);
+  if (esNpc() && lookActual.comportamiento === nombre) mostrarArmadoNpc();
+  return resultado.comportamiento;
+}
+
+$("filtro-comportamientos").addEventListener("input", mostrarComportamientos);
+$("form-comportamiento").addEventListener("submit", async (evento) => {
+  evento.preventDefault();
+  const nombre = $("comportamiento-a-mano").value.trim();
+  if (!nombre) return;
+  const fila = descripciones.get(nombre) ?? (await mientras(`Leyendo el comportamiento ${nombre}…`, () => leerComportamiento(nombre)));
+  if (!fila) return;
+  $("comportamiento-a-mano").value = "";
+  elegirComportamiento(nombre);
+  const otro = fila.tipo !== PESTANAS_NPC[vista];
+  avisarLista(`«${nombre}»: ${fila.descripcion}.${otro ? " Se puede usar igual." : ""}`, otro ? "advertencia" : "exito");
+});
+
+$("agregar-npc").addEventListener("click", () => {
+  const { base, comportamiento } = lookActual;
+  if (!base || !comportamiento) return;
+  if (lookActual.lista.some((t) => t.base === base)) {
+    return avisarLista(`${claseDeRuta(base)} ya está en la lista: cada uno necesita otro Item.`, "advertencia");
+  }
+  lookActual.lista.push({ base, comportamiento, cantidad: 1, nombre: lookActual.nombre.trim() });
+  avisarLista(`Se agregó ${claseDeRuta(base)} (${comportamiento}). Armá otro o tocá «Convertir todos».`, "exito");
+  Object.assign(lookActual, { id: "", nombre: "", base: null, comportamiento: null });
+  mostrarEncode(null);
+  mostrarListaLooks();
+  mostrarLook();
+  mostrarComportamientos();
+});
+
+async function convertirNpcs() {
+  const lista = lookActual.lista;
+  const pedidos = lista.map(({ base, comportamiento, cantidad }) => ({ base, comportamiento, cantidad }));
+  const resultado = await mientras(`Convirtiendo ${lista.length === 1 ? "el Item" : `${lista.length} Items`}… (tarda unos segundos)`,
+    () => api().convertir_en_npcs(pedidos));
+  if (!resultado.ok) return avisarLista(resultado.error, "error");
+  mostrarEncode(resultado);
+  avisarLista(`Listo: tocá «Agregar al juego» para recibir${lista.length === 1 ? "lo" : "los"}. ${lista.length === 1 ? "Llega" : "Llegan"} a la casa.`, "exito");
+  mostrarBarraLook();
+}
+
+$("pestana-tiendas").addEventListener("click", () => cambiarVista("tiendas"));
+$("pestana-portales").addEventListener("click", () => cambiarVista("portales"));
+
 $("entregar-look").addEventListener("click", entregar);
 $("ver-encode").addEventListener("click", () => {
   $("resumen-ver-encode").textContent = $("resumen").textContent;
@@ -1460,7 +1674,7 @@ $("cerrar-ver-encode").addEventListener("click", () => $("dialogo-ver-encode").c
 
 $("nombre-look").addEventListener("input", () => {
   lookActual.nombre = $("nombre-look").value;
-  if (vista !== "trucar") mostrarEncode(null); // en Trucar Prenda, el Encode es de la lista, no del armado
+  if (vista !== "trucar" && !esNpc()) mostrarEncode(null); // en Trucar Prenda, Tiendas y Portales, el Encode es de la lista
   mostrarBarraLook();
 });
 
@@ -1484,13 +1698,13 @@ $("descartar-look").addEventListener("click", () => {
 $("exportar-look").addEventListener("click", async () => {
   const look = looksGuardados.find((l) => l.id === lookElegido);
   if (!look) return;
-  const resultado = await api()[guardados().exportar](look);
+  const resultado = await llamarGuardados("exportar", look);
   if (resultado.ok) avisarLista(`Se exportó ${guardados().el} en ${resultado.ruta}`, "exito");
   else if (!resultado.cancelado) avisarLista(resultado.error, "error");
 });
 // El Look importado queda elegido en "Mis Looks" (EQUIPAR lo abre).
 $("importar-look").addEventListener("click", async () => {
-  const resultado = await api()[guardados().importar]();
+  const resultado = await llamarGuardados("importar");
   if (resultado.cancelado) return;
   if (!resultado.ok) return avisarLista(resultado.error, "error");
   lookElegido = guardadoDe(resultado).id;

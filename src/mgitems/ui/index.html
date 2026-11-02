@@ -64,6 +64,8 @@
     <button id="pestana-trucar" class="pestana" role="tab" aria-selected="false" aria-controls="vista-looks">Trucar Prenda</button>
     <button id="pestana-looks" class="pestana" role="tab" aria-selected="false" aria-controls="vista-looks">Looks</button>
     <button id="pestana-acciones" class="pestana" role="tab" aria-selected="false" aria-controls="vista-looks">Acciones</button>
+    <button id="pestana-tiendas" class="pestana" role="tab" aria-selected="false" aria-controls="vista-looks">Tiendas</button>
+    <button id="pestana-portales" class="pestana" role="tab" aria-selected="false" aria-controls="vista-looks">Portales</button>
   </nav>
 
   <main class="paneles modo-agregar">
@@ -162,6 +164,19 @@
                 <select id="parte-trucar" class="filtro-lista" aria-label="La Parte del cuerpo donde se ve la Pieza"></select>
               </label>
             </div>
+            <div class="armado-npc solo-npc">
+              <div class="fila-npc">
+                <span class="ayuda">Hace:</span>
+                <span id="comportamiento-elegido" class="pieza-trucar comportamiento-elegido"></span>
+              </div>
+              <form id="form-comportamiento" class="fila-npc">
+                <input id="comportamiento-a-mano" type="text" spellcheck="false" autocomplete="off"
+                       placeholder="O escribí un comportamiento, ej: brujaMesa" aria-label="Escribir un comportamiento a mano">
+                <button id="usar-comportamiento" type="submit" class="enlace">Usar</button>
+              </form>
+            </div>
+            <figure id="vista-npc" class="vista-npc solo-npc"></figure>
+            <p id="aviso-npc" class="aviso-npc solo-npc"></p>
             <label class="fila-animacion solo-acciones">
               <span class="ayuda">Animación:</span>
               <select id="animacion-accion" class="filtro-lista" aria-label="La animación que hace el Gaturro al usar el Item"></select>
@@ -182,6 +197,7 @@
             </div>
             <div class="botones-tarjeta">
               <button id="agregar-trucada" class="primario solo-trucar" title="Sumar esta Prenda trucada a la lista">Agregar a la lista</button>
+              <button id="agregar-npc" class="primario solo-npc" title="Sumar este Item a la lista">Agregar a la lista</button>
               <button id="colores-look" class="boton-cuadrado boton-colores" title="Colores del Gaturro" aria-label="Colores del Gaturro">⚙</button>
               <button id="borrar-look" class="boton-cuadrado guardables" title="Borrar el Look" aria-label="Borrar el Look">🗑</button>
               <button id="descartar-look" class="boton-cuadrado boton-descartar guardables" title="Descartar los cambios" aria-label="Descartar los cambios">✗</button>
@@ -191,6 +207,12 @@
 
           <!-- Mitad derecha: el inventario. -->
           <div class="armario">
+            <div class="filtros-items solo-npc">
+              <input id="filtro-comportamientos" type="search" spellcheck="false" autocomplete="off"
+                     placeholder="Buscar por nombre, catálogo o sala" aria-label="Buscar los comportamientos">
+              <span id="cantidad-comportamientos" class="cantidad-comportamientos"></span>
+            </div>
+            <ul id="grilla-comportamientos" class="grilla-comportamientos solo-npc" aria-label="Comportamientos para elegir"></ul>
             <div class="fuentes">
               <span class="ayuda etiqueta-campo">De:</span>
               <div id="lista-fuentes" class="lista-fuentes"></div>
@@ -245,8 +267,8 @@
           </div>
         </div>
 
-        <div class="lista-trucadas solo-trucar">
-          <span class="ayuda">Prendas trucadas <span id="cantidad-trucadas"></span></span>
+        <div class="lista-trucadas solo-lista">
+          <span class="ayuda"><span id="titulo-lista-trucadas">Prendas trucadas</span> <span id="cantidad-trucadas"></span></span>
           <ul id="lista-trucadas" aria-label="Las Prendas trucadas que se reciben juntas"></ul>
         </div>
 
@@ -310,6 +332,7 @@
             <button type="button" id="reiniciar-look" class="girar-look" title="Volver al Look que tenés puesto" aria-label="Volver al Look que tenés puesto" data-dibujo="reiniciar">↻</button>
             <button type="button" id="eliminar-look-elegido" class="girar-look eliminar-look" title="Eliminar el Look elegido" aria-label="Eliminar el Look elegido" data-dibujo="eliminar">🗑</button>
             <img id="gaturro-mis-looks" data-zoom="1" alt="El Look elegido">
+            <div id="icono-mis-looks" class="icono-mis-looks" hidden></div>
             <label class="zoom-gaturro zoom-escenario" title="Acercar o alejar el Gaturro">
               <span aria-hidden="true">−</span>
               <input id="zoom-escenario" type="range" min="0.4" max="1.6" step="0.05" value="1" aria-label="Zoom del Gaturro" data-img="gaturro-mis-looks">
