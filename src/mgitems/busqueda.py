@@ -108,6 +108,27 @@ def abrir_captura(data: bytes, recorte: tuple[int, int, int, int] | None = None)
     return imagen
 
 
+# Además del rectángulo que marcó el jugador, el mismo rectángulo más grande: una captura de ropa puesta se parece a
+# su Pieza dibujada puesta solo si se ve un poco del Gaturro alrededor (como en las referencias), y es difícil marcarlo
+# justo así. Con los tres, el pantalón de un traje quedó 1.º o 2.º con cualquier rectángulo (#125).
+AMPLIACIONES = (0.25, 0.6)
+
+
+def abrir_encuadres(data: bytes, recorte: tuple[int, int, int, int] | None = None) -> list[Image.Image]:
+    """Las imágenes a comparar de una captura: el rectángulo marcado y el mismo más grande (ver `AMPLIACIONES`), o
+    la captura entera si no se marcó ninguno. ValueError como `abrir_captura`."""
+    marcada = abrir_captura(data, recorte)
+    if not recorte:
+        return [marcada]
+    entera = abrir_captura(data)
+    x0, x1 = sorted(int(v) for v in (recorte[0], recorte[2]))
+    y0, y1 = sorted(int(v) for v in (recorte[1], recorte[3]))
+    ancho, alto = x1 - x0, y1 - y0
+    return [marcada] + [entera.crop((max(0, round(x0 - ancho * f)), max(0, round(y0 - alto * f)),
+                                     min(entera.width, round(x1 + ancho * f)), min(entera.height, round(y1 + alto * f))))
+                        for f in AMPLIACIONES]
+
+
 def espejada(imagen: Image.Image) -> Image.Image:
     return ImageOps.mirror(imagen)
 
