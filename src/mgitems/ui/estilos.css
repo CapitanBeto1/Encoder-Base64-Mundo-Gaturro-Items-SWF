@@ -266,7 +266,7 @@ button.derecha { margin-left: auto; }
   gap: 10px;
 }
 
-/* Looks, Acciones y Trucar Prenda comparten la pantalla: cada una esconde lo de las otras. */
+/* Looks, Acciones, Trucar Prenda, Tiendas, Portales y Minijuegos comparten la pantalla: cada una esconde lo de las otras. */
 main:not(.modo-acciones) .solo-acciones,
 main:not(.modo-trucar) .solo-trucar,
 main:not(.modo-npc) .solo-npc,
@@ -274,9 +274,8 @@ main:not(.modo-trucar):not(.modo-npc) .solo-lista,
 main.modo-npc .escena,
 main.modo-npc #colores-look,
 main.modo-npc .armario > :not(.solo-npc),
-.dialogo-base.sin-tipos .tipos-base,
 main.modo-acciones .solo-looks,
-.dialogo-base.solo-mochila .tipos-base {
+.dialogo-base.sin-tipos .tipos-base {
   display: none;
 }
 

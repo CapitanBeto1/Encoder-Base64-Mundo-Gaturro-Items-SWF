@@ -44,6 +44,7 @@ from mgitems.items import (
     separar_rutas,
 )
 from mgitems.looks import FORMATO_ACCION, FORMATO_MINIJUEGO, FORMATO_PORTAL, FORMATO_TIENDA, FORMATO_TRUCADA, AlmacenLooks, Look, LookInvalido, archivo_de_look, look_de_archivo
+from mgitems.mambo import atributo_en_codigo, clase_de_mochila
 from mgitems.npcs import (
     MINIJUEGO, PORTAL, TIENDA, TIPOS as TIPOS_NPC, Comportamientos, ComportamientosEncontrados, NoSePuedeConvertir, clase_npc, clasificar,
     comportamiento_en_codigo, comportamientos_en_cache, describir, es_comportamiento_valido, leer_npc,
@@ -441,10 +442,13 @@ class Nucleo:
         return {"ok": True, "animaciones": animaciones()}
 
     def aplicar_accion(self, accion: dict) -> dict:
-        """Truca el Item de mochila `accion["base"]` para que, al usarlo, el Gaturro haga la animación
-        `accion["animacion"]` mostrando `accion["pieza"]` (opcional; cualquier Pieza, también un vehículo o un objeto de la casa) y,
-        si se elige, ponga `accion["efecto"]` sobre la cabeza. Con usos ilimitados. Devuelve el Encode que lo
-        agrega, y en `avisos` lo que el juego haría distinto de lo elegido."""
+        """Truca el Item `accion["base"]` para que, al usarlo, el Gaturro haga la animación `accion["animacion"]`
+        mostrando `accion["pieza"]` (opcional; cualquier Pieza, también un vehículo o un objeto de la casa) y, si se
+        elige, ponga `accion["efecto"]` sobre la cabeza. Con usos ilimitados. Devuelve el Encode que lo agrega, y en
+        `avisos` lo que el juego haría distinto de lo elegido.
+
+        El Item puede ser cualquiera de cualquier SWF (menos las Prendas de `clothes1`): uno de mochila guarda la
+        acción en `adds.action`; cualquier otro se convierte en uno de mochila (ADR 0007) y llega a la mochila."""
         if not isinstance(accion, dict):
             return {"ok": False, "error": "La acción no tiene la forma esperada."}
         animacion, base = accion.get("animacion"), accion.get("base")
@@ -452,25 +456,21 @@ class Nucleo:
         if animacion not in ANIMACIONES:
             return {"ok": False, "error": "Elegí una animación."}
         if not isinstance(base, str) or not es_ruta_valida(base):
-            return {"ok": False, "error": "Elegí el Item de mochila donde se guarda la acción."}
+            return {"ok": False, "error": "Elegí el Item donde se guarda la acción."}
         if any(p is not None and not (isinstance(p, str) and es_ruta_valida(p)) for p in (pieza, efecto)):
             return {"ok": False, "error": "La Pieza no tiene la forma esperada."}
 
         swf, _, clase = base.rpartition(".")
         obtenido = {"ok": True, "data": self._data_swf} if swf == self._swf_abierto else self._datos_de_otro_swf(swf)
         if not obtenido["ok"]:
-            return {"ok": False, "error": f"No se pudo usar el Item de mochila: {obtenido['error']}"}
+            return {"ok": False, "error": f"No se pudo usar el Item: {obtenido['error']}"}
         data = obtenido["data"]
         try:
             item = self._prendas_de(swf, data).get(clase)
         except FFDecNoDisponible as e:
-            return {"ok": False, "error": f"{e}: no se pueden leer los Items de mochila."}
+            return {"ok": False, "error": f"{e}: no se pueden leer los Items."}
         except (OSError, subprocess.SubprocessError) as e:
-            return {"ok": False, "error": f"No se pudieron leer los Items de mochila: {e}"}
-        if item is None:
-            return {"ok": False, "error": f"{clase} no es un Item de mochila de {swf}."}
-        if item.tipo != MOCHILA:
-            return {"ok": False, "error": "Una Prenda no hace acciones: elegí un Item de mochila."}
+            return {"ok": False, "error": f"No se pudieron leer los Items: {e}"}
 
         piezas_propias = set(piezas_del_swf([c for _, c in leer_simbolos(data)]))
         valores, avisos = {}, []
@@ -492,10 +492,46 @@ class Nucleo:
             if motivo := self._motivo_no_se_ve(valor, EFECTO):
                 avisos.append({"ruta": valor, "motivo": motivo})
 
-        resultado = self._trucar_item(swf, data, item, valores)
+        if item is not None and item.tipo == MOCHILA:
+            resultado = self._trucar_item(swf, data, item, valores)
+        else:
+            resultado = self._accion_en_cualquier_item(swf, data, clase, valores)
         if resultado["ok"]:
             resultado["avisos"] = avisos
         return resultado
+
+    def _accion_en_cualquier_item(self, swf: str, data: bytes, clase: str, valores: dict[str, str]) -> dict:
+        """Convierte `clase` (una Prenda, un objeto de la casa…) en un Item de mochila que hace la acción (ADR 0007)."""
+        base = f"{swf}.{clase}"
+        obtenido = self._categorias_de(swf)
+        if not obtenido["ok"]:
+            return {"ok": False, "error": f"No se pudo usar {base}: {obtenido['error']}"}
+        item = obtenido["items"].get(clase)
+        if item is None:
+            return {"ok": False, "error": f"{clase} no es un Item de {swf}."}
+        if motivo := no_sirve_de_base(base, item["tipo"]):
+            return {"ok": False, "error": f"{clase} no sirve de Item base: {motivo}."}
+        adds = {"action": valores[ACCION], **({"effect": valores[EFECTO]} if EFECTO in valores else {})}
+        try:
+            with self._candado_ffdec:
+                fuente = self._prendas_ffdec.fuentes(data, [clase]).get(clase)
+                if fuente is None:
+                    raise NoSePuedeConvertir(f"no se encontró el código de {clase}")
+                trucado = self._prendas_ffdec.reemplazar(data, {clase: clase_de_mochila(fuente, clase, adds)})
+                verificado = self._prendas_ffdec.fuentes(trucado, [clase]).get(clase, "")
+            if any(atributo_en_codigo(verificado, f"attr_{k}") != v for k, v in adds.items()):
+                raise TruqueoFallido("el SWF trucado no quedó con la acción elegida")
+        except (TruqueoFallido, NoSePuedeConvertir) as e:
+            return {"ok": False, "error": f"No se pudo poner la acción en {clase}: {e}."}
+        except FFDecNoDisponible as e:
+            return {"ok": False, "error": f"{e}: no se puede trucar."}
+        except (OSError, subprocess.SubprocessError) as e:
+            return {"ok": False, "error": f"No se pudo poner la acción en {clase}: {e}"}
+        script = generar_script([(base, 1)])
+        encode = codificar(script)
+        self._trucos[encode] = {swf: trucado}
+        return {"ok": True, "prenda": {"ruta": base, "tipo": MOCHILA, "partes": dict(valores)},
+                "items": [{"ruta": base, "cantidad": 1}], "script": script, "encode": encode}
 
     def animacion_de_accion(self, accion: dict, colores: dict | None = None) -> dict:
         """La vista previa de la acción: el Gaturro haciendo la animación entera, cuadro por cuadro como en el

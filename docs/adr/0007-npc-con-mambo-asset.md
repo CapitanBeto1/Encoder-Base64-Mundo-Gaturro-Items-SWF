@@ -35,5 +35,5 @@ Lo que hace cada comportamiento se lee de su guion (`npc/<comportamiento>.npc`) 
 
 ## Consecuencias
 
-- El mismo mecanismo sirve para otros destinos. Por ejemplo, un objeto de la casa llega a la mochila con `attributes.grabbable` y hace una acción con `attributes.attr_action` (probado en el juego; ver #108 y #109).
+- El mismo mecanismo sirve para otros destinos (`mgitems.mambo`). En Acciones, un Item que no es de mochila llega a la mochila con `attributes.grabbable` y hace la acción con `attributes.attr_action` (y `attr_effect`), como `UsableMamboAsset`, que no todos los SWF traen. Probado en el juego con la tostadora de `virtualGoods` (#108). Para Prendas, ver #109.
 - Si el juego cambia `MamboAsset` o cómo decide adónde llega un Item, hay que revisarlo.

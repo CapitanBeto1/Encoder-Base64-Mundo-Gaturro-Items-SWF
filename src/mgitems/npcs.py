@@ -17,6 +17,8 @@ import os
 import re
 from pathlib import Path
 
+from mgitems.mambo import NoSePuedeConvertir, atributo_en_codigo, clase_mambo, texto  # noqa: F401 (NoSePuedeConvertir)
+
 TIENDA = "tienda"
 PORTAL = "portal"
 MINIJUEGO = "minijuego"
@@ -32,12 +34,6 @@ _FIN_DE_ORDEN = r"(?=[ \t]|$)"  # así una etiqueta de estado («openCatalog:»)
 _TIENDA = re.compile(r"^[ \t]*(?:" + "|".join(map(re.escape, _ORDENES_TIENDA)) + ")" + _FIN_DE_ORDEN + r"[ \t]*([^\s#]*)", re.M)
 _PORTAL = re.compile(r"^[ \t]*room\.(?:change|random)" + _FIN_DE_ORDEN + r"[ \t]*([^\s#]*)", re.M)
 _MINIJUEGO = re.compile(r"^[ \t]*(?:minigame|launch\.html5(?:_mmo)?)" + _FIN_DE_ORDEN + r"[ \t]*([^\s#]*)", re.M)
-_SIMBOLO = re.compile(r'\[Embed\(source="[^"]*",\s*symbol="([^"]+)"\)\]')
-_COMPORTAMIENTO_EN_CODIGO = re.compile(r'\battributes\.behavior\s*=\s*"([^"]*)"')
-
-
-class NoSePuedeConvertir(ValueError):
-    """El Item no se puede convertir en NPC (su código no tiene la forma esperada)."""
 
 
 def es_comportamiento_valido(comportamiento) -> bool:
@@ -86,41 +82,15 @@ def describir(info: dict, nombres_salas: dict[str, str] | None = None) -> str:
 
 
 def comportamiento_en_codigo(fuente: str) -> str | None:
-    """El comportamiento que el código AS3 de un Item escribe en sus atributos (`behavior` de un NPC del juego
-    se lee aparte, en el armado del índice), o None."""
-    encontrado = _COMPORTAMIENTO_EN_CODIGO.search(fuente)
-    return encontrado.group(1) if encontrado else None
+    """El comportamiento que el código AS3 de un Item convertido escribe en sus atributos, o None."""
+    return atributo_en_codigo(fuente, "behavior")
 
 
 def clase_npc(fuente: str, clase: str, comportamiento: str) -> str:
     """El código AS3 de `clase` convertida en NPC con `comportamiento`, con el mismo dibujo (`fuente`: su código)."""
     if not es_comportamiento_valido(comportamiento):
         raise NoSePuedeConvertir(f"comportamiento no válido: {comportamiento}")
-    if not re.match(r"^[A-Za-z_][A-Za-z0-9_]*$", clase):
-        raise NoSePuedeConvertir(f"clase no válida: {clase}")
-    simbolo = _SIMBOLO.search(fuente)
-    if not simbolo:
-        raise NoSePuedeConvertir(f"{clase} no tiene dibujo")
-    return f'''package
-{{
-   [Embed(source="/_assets/assets.swf", symbol="{simbolo.group(1)}")]
-   public dynamic class {clase} extends MamboAsset
-   {{
-      public function {clase}()
-      {{
-         super();
-         addFrameScript(0,this.frame1);
-      }}
-
-      internal function frame1() : *
-      {{
-         attributes.behavior = "{comportamiento}";
-         attributes.monitorAttributes = false;
-         stop();
-      }}
-   }}
-}}
-'''
+    return clase_mambo(fuente, clase, [f"attributes.behavior = {texto(comportamiento)};", "attributes.monitorAttributes = false;"])
 
 
 class Comportamientos:
