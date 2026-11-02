@@ -289,7 +289,7 @@ class Nucleo:
             return [{"ruta": f"{swf}.{clase}", "clase": clase, "swf": swf, "tipo": item["tipo"], "partes": item.get("partes", []),
                      "mascota": item.get("mascota"), "destino": item.get("destino"), "motivo": item.get("motivo"),
                      "parecido": item.get("parecido", []), "pasaporte": item.get("pasaporte", False),
-                     "no_sirve_de_base": no_sirve_de_base(f"{swf}.{clase}", item["tipo"])}
+                     "dibujo": item.get("dibujo", False), "no_sirve_de_base": no_sirve_de_base(f"{swf}.{clase}", item["tipo"])}
                     for clase, item in sorted(obtenido["items"].items(), key=lambda i: orden_natural(i[0]))]
 
         return self._de_varios_swf(swfs, "items", items)

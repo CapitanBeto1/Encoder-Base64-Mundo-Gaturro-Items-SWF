@@ -356,4 +356,4 @@ def test_un_dibujo_de_flash_tambien_es_un_item_que_llega_a_la_casa(tmp_path, ffd
 
     assert set(items) == {"varios.combatGUI", "varios.banner2"}
     assert (items["varios.combatGUI"]["tipo"], items["varios.combatGUI"]["destino"]) == ("otro", "casa")
-    assert "dibujo del juego" in items["varios.combatGUI"]["motivo"]
+    assert items["varios.combatGUI"]["motivo"] is None and items["varios.combatGUI"]["dibujo"]  # probado: llegan bien

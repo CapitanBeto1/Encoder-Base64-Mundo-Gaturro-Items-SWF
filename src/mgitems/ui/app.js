@@ -2275,7 +2275,8 @@ function mostrarBuscador() {
       const destino = DESTINOS[item.destino] ?? DESTINOS.casa;
       const boton = Object.assign(document.createElement("button"), {
         className: "pieza-grilla item-grilla",
-        title: `${item.clase} · ${item.swf} · ${que}\nLlega a: ${destino.nombre}` + (item.motivo ? ` (${item.motivo})` : ""),
+        title: `${item.clase} · ${item.swf} · ${que}\nLlega a: ${destino.nombre}` + (item.motivo ? ` (${item.motivo})` : "")
+          + (item.dibujo ? "\nEs un dibujo del juego, no un Item hecho para el inventario: llega a la casa como un objeto" : ""),
       });
       boton.setAttribute("aria-label", `${item.clase} de ${item.swf}`);
       boton.setAttribute("aria-pressed", String(items.some((i) => i.ruta === item.ruta)));
