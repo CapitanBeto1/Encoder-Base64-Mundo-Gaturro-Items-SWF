@@ -2405,6 +2405,193 @@ async function ponerDibujosDelJuego() {
   }
 }
 
+// --- Buscar por imagen: qué Item es una captura del juego (de una casa ajena, de otro Gaturro…) ---
+
+const busqueda = { imagen: null, recorte: null, listos: false, buscando: false };
+
+$("buscar-por-imagen").addEventListener("click", async () => {
+  $("dialogo-imagen").showModal();
+  $("zona-imagen").focus();
+  const estado = await api().estado_busqueda();
+  if (!estado.ok) return avisar($("mensaje-imagen"), estado.error, "error");
+  busqueda.listos = estado.listos;
+  $("tamano-datos").textContent = `${Math.round(estado.tamano / 1e6)} MB`;
+  mostrarBusqueda();
+});
+$("cerrar-imagen").addEventListener("click", () => $("dialogo-imagen").close());
+
+function mostrarBusqueda() {
+  $("bajar-datos").hidden = $("bajar-datos-busqueda").hidden = busqueda.listos;
+  $("buscar-imagen").hidden = !busqueda.listos;
+  $("buscar-imagen").disabled = !busqueda.imagen || busqueda.buscando;
+  $("quitar-rectangulo").disabled = !busqueda.recorte;
+  $("lienzo-imagen").hidden = !busqueda.imagen;
+  $("ayuda-zona").hidden = Boolean(busqueda.imagen);
+}
+
+// La captura: pegada, arrastrada o elegida. Se busca enseguida (y otra vez al marcar el rectángulo).
+function cargarCaptura(archivo) {
+  if (!archivo || !archivo.type.startsWith("image/")) return avisar($("mensaje-imagen"), "Eso no es una imagen.", "advertencia");
+  const lector = new FileReader();
+  lector.onload = () => {
+    busqueda.imagen = lector.result;
+    busqueda.recorte = null;
+    $("imagen-captura").src = busqueda.imagen;
+    $("rectangulo-imagen").hidden = true;
+    $("resultados-imagen").replaceChildren();
+    mostrarBusqueda();
+    buscarCaptura();
+  };
+  lector.readAsDataURL(archivo);
+}
+document.addEventListener("paste", (evento) => {
+  if (!$("dialogo-imagen").open) return;
+  const archivo = [...(evento.clipboardData?.items ?? [])].find((i) => i.type.startsWith("image/"))?.getAsFile();
+  if (archivo) {
+    evento.preventDefault();
+    cargarCaptura(archivo);
+  } else {
+    avisar($("mensaje-imagen"), "No hay una imagen copiada. Recortá con Win+Shift+S y pegá con Ctrl+V.", "advertencia");
+  }
+});
+$("zona-imagen").addEventListener("dragover", (evento) => {
+  evento.preventDefault();
+  $("zona-imagen").classList.add("arrastrando");
+});
+$("zona-imagen").addEventListener("dragleave", () => $("zona-imagen").classList.remove("arrastrando"));
+$("zona-imagen").addEventListener("drop", (evento) => {
+  evento.preventDefault();
+  $("zona-imagen").classList.remove("arrastrando");
+  cargarCaptura(evento.dataTransfer.files[0]);
+});
+$("elegir-imagen").addEventListener("click", () => $("archivo-imagen").click());
+$("archivo-imagen").addEventListener("change", () => {
+  cargarCaptura($("archivo-imagen").files[0]);
+  $("archivo-imagen").value = "";
+});
+
+// El rectángulo: se arrastra sobre la imagen. Se manda en píxeles de la imagen original.
+let arrastre = null;
+$("lienzo-imagen").addEventListener("pointerdown", (evento) => {
+  const caja = $("imagen-captura").getBoundingClientRect();
+  arrastre = { x: evento.clientX - caja.left, y: evento.clientY - caja.top, caja };
+  try {
+    $("lienzo-imagen").setPointerCapture(evento.pointerId); // así el arrastre sigue aunque se salga de la imagen
+  } catch {}
+});
+$("lienzo-imagen").addEventListener("pointermove", (evento) => {
+  if (!arrastre) return;
+  const { caja } = arrastre;
+  const x = Math.min(Math.max(evento.clientX - caja.left, 0), caja.width);
+  const y = Math.min(Math.max(evento.clientY - caja.top, 0), caja.height);
+  Object.assign($("rectangulo-imagen").style, {
+    left: `${Math.min(x, arrastre.x)}px`, top: `${Math.min(y, arrastre.y)}px`,
+    width: `${Math.abs(x - arrastre.x)}px`, height: `${Math.abs(y - arrastre.y)}px`,
+  });
+  arrastre.fin = { x, y };
+  $("rectangulo-imagen").hidden = false;
+});
+$("lienzo-imagen").addEventListener("pointerup", () => {
+  if (!arrastre) return;
+  const { caja, fin } = arrastre;
+  arrastre = null;
+  if (!fin) return; // un toque sin arrastrar: queda como estaba
+  const rect = $("rectangulo-imagen").getBoundingClientRect();
+  if (rect.width < 6 || rect.height < 6) {
+    $("rectangulo-imagen").hidden = true;
+    return;
+  }
+  const escala = $("imagen-captura").naturalWidth / caja.width;
+  const x0 = (rect.left - caja.left) * escala, y0 = (rect.top - caja.top) * escala;
+  busqueda.recorte = [x0, y0, x0 + rect.width * escala, y0 + rect.height * escala].map(Math.round);
+  mostrarBusqueda();
+  buscarCaptura();
+});
+$("quitar-rectangulo").addEventListener("click", () => {
+  busqueda.recorte = null;
+  $("rectangulo-imagen").hidden = true;
+  mostrarBusqueda();
+  buscarCaptura();
+});
+
+async function buscarCaptura() {
+  if (!busqueda.imagen || !busqueda.listos || busqueda.buscando) return;
+  busqueda.buscando = true;
+  mostrarBusqueda();
+  avisar($("mensaje-imagen"), "Buscando…", "progreso");
+  try {
+    const resultado = await api().buscar_por_imagen(busqueda.imagen, busqueda.recorte);
+    if (!resultado.ok) return avisar($("mensaje-imagen"), resultado.error, "error");
+    mostrarResultadosImagen(resultado.resultados);
+    avisar($("mensaje-imagen"), busqueda.recorte
+      ? "Tocá el que es para sumarlo a «Items a recibir»."
+      : "Tocá el que es para sumarlo a «Items a recibir». Si no está, marcá solo el objeto con un rectángulo.", "exito");
+  } finally {
+    busqueda.buscando = false;
+    mostrarBusqueda();
+  }
+}
+
+function mostrarResultadosImagen(resultados) {
+  $("resultados-imagen").replaceChildren(
+    ...resultados.map((item, i) => {
+      const destino = DESTINOS[item.destino] ?? DESTINOS.casa;
+      const que = queEsItem(item);
+      const boton = Object.assign(document.createElement("button"), {
+        type: "button", className: "resultado-imagen",
+        title: `${item.clase} · ${item.swf} · ${que}\nLlega a: ${destino.nombre}` + (item.motivo ? ` (${item.motivo})` : "")
+          + (item.por_pieza ? `\nSe parece a lo que se ve puesto (${claseDeRuta(item.por_pieza)})` : "")
+          + (item.en_cache ? "\nSu SWF lo bajó el juego hace poco (lo viste en una sala o casa)" : ""),
+      });
+      boton.setAttribute("aria-pressed", String(items.some((x) => x.ruta === item.ruta)));
+      const llega = etiqueta(destino.nombre, "destino-item");
+      llega.dataset.bien = String(!item.motivo);
+      boton.append(elementoIcono(item.ruta), etiqueta(item.clase, "nombre-item"), etiqueta(item.swf, "swf-resultado"), llega,
+        etiqueta(`${i + 1}`, "puesto-resultado"), ...(item.en_cache ? [etiqueta("📍 visto hace poco", "marca-resultado")] : []));
+      if (item.pasaporte) marcarPasaporte(boton);
+      boton.addEventListener("click", () => {
+        if (items.some((x) => x.ruta === item.ruta)) {
+          quitarItem(item.ruta);
+          avisar($("mensaje-imagen"), `Se sacó ${item.clase} de «Items a recibir».`, "exito");
+        } else {
+          agregarItems([item.ruta]);
+          avisar($("mensaje-imagen"), `Se sumó ${item.clase} (${item.swf}) a «Items a recibir».` + (item.motivo ? ` Ojo: ${item.motivo}.` : ""),
+            item.motivo ? "advertencia" : "exito");
+        }
+        boton.setAttribute("aria-pressed", String(items.some((x) => x.ruta === item.ruta)));
+      });
+      const li = document.createElement("li");
+      li.append(boton);
+      return li;
+    })
+  );
+  cargarIconos(resultados.map((r) => r.ruta));
+  for (const swf of new Set(resultados.map((r) => r.swf))) prepararIconosDe(swf);
+}
+
+// La primera vez: bajar el modelo y las huellas, mostrando cuánto va.
+$("bajar-datos-busqueda").addEventListener("click", async () => {
+  $("bajar-datos-busqueda").disabled = true;
+  $("progreso-datos").hidden = false;
+  avisar($("mensaje-imagen"), "Bajando los datos de la búsqueda… (unos minutos)", "progreso");
+  const avance = setInterval(async () => {
+    const p = await api().progreso_busqueda();
+    if (p.total) $("progreso-datos").value = p.hechos / p.total;
+  }, 500);
+  try {
+    const resultado = await api().preparar_busqueda();
+    if (!resultado.ok) return avisar($("mensaje-imagen"), resultado.error, "error");
+    busqueda.listos = true;
+    avisar($("mensaje-imagen"), "Listo: ya se puede buscar.", "exito");
+    mostrarBusqueda();
+    buscarCaptura();
+  } finally {
+    clearInterval(avance);
+    $("bajar-datos-busqueda").disabled = false;
+  }
+});
+$("buscar-imagen").addEventListener("click", buscarCaptura);
+
 window.addEventListener("pywebviewready", async () => {
   conectado = true;
   actualizarControles();

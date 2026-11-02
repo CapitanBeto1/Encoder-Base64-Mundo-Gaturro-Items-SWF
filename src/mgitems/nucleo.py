@@ -1305,8 +1305,10 @@ class Nucleo:
         item = (obtenido or {}).get("items", {}).get(clase)
         if item is None or item.get("destino") == DESCARTADO:
             return None
-        return {"ruta": ruta, "clase": clase, "swf": swf, "tipo": item["tipo"], "destino": item.get("destino"),
-                "motivo": item.get("motivo"), "parecido": round(parecido, 4), "por_pieza": por_pieza, "en_cache": swf in en_cache}
+        return {"ruta": ruta, "clase": clase, "swf": swf, "tipo": item["tipo"], "partes": item.get("partes", []),
+                "mascota": item.get("mascota"), "destino": item.get("destino"), "motivo": item.get("motivo"),
+                "pasaporte": es_de_pasaporte(ruta), "parecido": round(parecido, 4), "por_pieza": por_pieza,
+                "en_cache": swf in en_cache}
 
     def _datos(self) -> DatosBusqueda:
         if self._datos_busqueda is None:
