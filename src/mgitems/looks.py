@@ -6,7 +6,7 @@ Piezas de varios SWF. Se guardan en un archivo JSON de la carpeta del programa.
 Las acciones de la pestaña Acciones se guardan igual, en su propio archivo: un Item de mochila con su
 `animacion` y, como Partes, la Pieza de la acción (`action`) y la de la cabeza (`effect`). Las Prendas
 trucadas de la pestaña Trucar Prenda, también: un Item base con una sola Parte y su Pieza. Y las tiendas y
-los portales: un Item base con el `comportamiento` del NPC que imita.
+los portales y los minijuegos: un Item base con el `comportamiento` del NPC que imita.
 """
 
 import json
@@ -36,7 +36,7 @@ class Look:
     # los que falten, los de fábrica. Solo para la vista previa: no cambian lo que se entrega al juego.
     colores: dict[str, str] = field(default_factory=dict)
     animacion: str | None = None  # solo las acciones: la animación del juego ("showObject", "dance"…)
-    comportamiento: str | None = None  # solo las tiendas y los portales: el del NPC ("brujaMesa", "magia/portal"…)
+    comportamiento: str | None = None  # solo tiendas, portales y minijuegos: el del NPC ("brujaMesa", "magia/portal"…)
 
     @classmethod
     def desde(cls, datos: dict) -> "Look":
@@ -74,10 +74,12 @@ FORMATO_ACCION = "mgitems-accion"
 FORMATO_TRUCADA = "mgitems-trucada"
 FORMATO_TIENDA = "mgitems-tienda"
 FORMATO_PORTAL = "mgitems-portal"
+FORMATO_MINIJUEGO = "mgitems-minijuego"
 # Cómo se nombra lo de cada formato en los mensajes: (uno, "este…", "es de…").
 _NOMBRES = {FORMATO: ("un Look", "Este Look es"), FORMATO_ACCION: ("una acción", "Esta acción es"),
             FORMATO_TRUCADA: ("una Prenda trucada", "Esta Prenda trucada es"),
-            FORMATO_TIENDA: ("una tienda", "Esta tienda es"), FORMATO_PORTAL: ("un portal", "Este portal es")}
+            FORMATO_TIENDA: ("una tienda", "Esta tienda es"), FORMATO_PORTAL: ("un portal", "Este portal es"),
+            FORMATO_MINIJUEGO: ("un minijuego", "Este minijuego es")}
 VERSION_FORMATO = 1
 
 

@@ -12,7 +12,7 @@ UI = Path(__file__).parent / "ui" / "index.html"
 _TIPOS_LOOK = ("Look de MG Items (*.mglook)", "Todos los archivos (*.*)")
 _TIPOS_ACCION = ("Acción de MG Items (*.mgaccion)", "Todos los archivos (*.*)")
 _TIPOS_TRUCADA = ("Prenda trucada de MG Items (*.mgtrucada)", "Todos los archivos (*.*)")
-_TIPOS_NPC = {"tienda": ("mgtienda", "Tienda"), "portal": ("mgportal", "Portal")}  # tipo → (extensión, nombre)
+_TIPOS_NPC = {"tienda": ("mgtienda", "Tienda"), "portal": ("mgportal", "Portal"), "minijuego": ("mgminijuego", "Minijuego")}  # tipo → (extensión, nombre)
 _NO_VALE_EN_ARCHIVOS = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
 
 

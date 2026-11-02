@@ -43,9 +43,9 @@ from mgitems.items import (
     separar_prefijos,
     separar_rutas,
 )
-from mgitems.looks import FORMATO_ACCION, FORMATO_PORTAL, FORMATO_TIENDA, FORMATO_TRUCADA, AlmacenLooks, Look, LookInvalido, archivo_de_look, look_de_archivo
+from mgitems.looks import FORMATO_ACCION, FORMATO_MINIJUEGO, FORMATO_PORTAL, FORMATO_TIENDA, FORMATO_TRUCADA, AlmacenLooks, Look, LookInvalido, archivo_de_look, look_de_archivo
 from mgitems.npcs import (
-    PORTAL, TIENDA, TIPOS as TIPOS_NPC, Comportamientos, ComportamientosEncontrados, NoSePuedeConvertir, clase_npc, clasificar,
+    MINIJUEGO, PORTAL, TIENDA, TIPOS as TIPOS_NPC, Comportamientos, ComportamientosEncontrados, NoSePuedeConvertir, clase_npc, clasificar,
     comportamiento_en_codigo, comportamientos_en_cache, describir, es_comportamiento_valido, leer_npc,
 )
 from mgitems.prendas import (
@@ -933,7 +933,7 @@ class Nucleo:
     def _almacen_trucadas(self) -> AlmacenLooks:
         return AlmacenLooks(self._entorno.carpeta_programa() / "trucadas.json", clave="trucadas")
 
-    # --- Tiendas y portales: cualquier Item como NPC del juego ---
+    # --- Tiendas, portales y minijuegos: cualquier Item como NPC del juego ---
 
     def comportamientos(self, tipo: str) -> dict:
         """Los comportamientos de NPC conocidos de un tipo ("tienda", "portal", "minijuego"), por nombre: los que trae
@@ -1100,7 +1100,7 @@ class Nucleo:
             raise TruqueoFallido(f"el SWF trucado no quedó con el comportamiento de {', '.join(mal)}")
         return trucado
 
-    # Mis tiendas y Mis portales: se guardan como los Looks, cada tipo en su archivo.
+    # Mis tiendas, Mis portales y Mis minijuegos: se guardan como los Looks, cada tipo en su archivo.
 
     def npcs_guardados(self, tipo: str) -> dict:
         """Las tiendas (o los portales) guardados, por nombre."""
@@ -1181,7 +1181,7 @@ class Nucleo:
 
     def _almacen_npcs(self, tipo: str) -> AlmacenLooks:
         """KeyError si el tipo no es uno que se guarda."""
-        clave = {TIENDA: "tiendas", PORTAL: "portales"}[tipo]
+        clave = {TIENDA: "tiendas", PORTAL: "portales", MINIJUEGO: "minijuegos"}[tipo]
         return AlmacenLooks(self._entorno.carpeta_programa() / f"{clave}.json", clave=clave)
 
     def _swf_trucados(self, encode: str) -> tuple[list[SwfTrucado], dict | None]:
@@ -1719,8 +1719,8 @@ def _trucada_valida(datos: dict) -> Look:
     return trucada
 
 
-_FORMATOS_NPC = {TIENDA: FORMATO_TIENDA, PORTAL: FORMATO_PORTAL}
-_NOMBRE_NPC = {TIENDA: ("la tienda", "tienda"), PORTAL: ("el portal", "portal")}
+_FORMATOS_NPC = {TIENDA: FORMATO_TIENDA, PORTAL: FORMATO_PORTAL, MINIJUEGO: FORMATO_MINIJUEGO}
+_NOMBRE_NPC = {TIENDA: ("la tienda", "tienda"), PORTAL: ("el portal", "portal"), MINIJUEGO: ("el minijuego", "minijuego")}
 
 
 def _npc_valido(datos: dict, tipo: str) -> Look:
