@@ -32,8 +32,9 @@ class DatosFalsos:
     def __init__(self, listos=True):
         self._listos = listos
         self.huellas = Huellas(
-            ["muebles.silla", "ropa.remera_on", "muebles.rota", "ropa.suelta_on", "muebles.mesa"],
-            np.stack([unitario(1, 0, 0), unitario(1, 0.04, 0), unitario(0, 1, 0), unitario(0, 0, 1), unitario(0.7, 0.7, 0)]),
+            ["muebles.silla", "ropa.remera_on", "muebles.rota", "ropa.suelta_on", "muebles.mesa", "ropa.pantalon", "ropa.disfraz"],
+            np.stack([unitario(1, 0, 0), unitario(1, 0.04, 0), unitario(0, 1, 0), unitario(0, 0, 1), unitario(0.7, 0.7, 0),
+                      unitario(0.2, 0.2, 1), unitario(1, 0.1, 0.1)]),
             {"ropa.remera_on": ["ropa.remera"]},
         )
 
@@ -51,7 +52,9 @@ class DatosFalsos:
 INDICE = {"swfs": {
     "muebles": {"items": {"silla": {"tipo": "casa", "destino": "casa"}, "mesa": {"tipo": "casa", "destino": "casa"},
                           "rota": {"tipo": "casa", "destino": "descartado"}}},
-    "ropa": {"items": {"remera": {"tipo": "prenda", "destino": "guardarropa"}}},
+    "ropa": {"items": {"remera": {"tipo": "prenda", "partes": ["cloth", "arm"], "destino": "guardarropa"},
+                       "pantalon": {"tipo": "prenda", "partes": ["leg"], "destino": "guardarropa"},
+                       "disfraz": {"tipo": "prenda", "partes": ["cloth", "leg", "hats"], "destino": "guardarropa"}}},
 }}
 
 
@@ -100,18 +103,41 @@ def test_lo_que_se_ve_puesto_lleva_a_la_prenda(sistema, tmp_path):
     assert remera["por_pieza"] == "ropa.remera_on" and remera["tipo"] == "prenda"
 
 
-def test_los_del_cache_del_juego_van_un_poco_mas_arriba(sistema, tmp_path):
-    cache = sistema.base / "Roaming" / "MundoGaturro" / "Cache"
-    (cache / "data_1").write_bytes(b"\x00https://cdn-ar.mundogaturro.com/juego/assets/ropa.swf?123\x00")
+def test_que_es_limita_la_busqueda_a_ese_tipo_de_item(sistema, tmp_path):
     nucleo = nucleo_con(sistema, tmp_path, DatosFalsos())
 
-    resultados = nucleo.buscar_por_imagen(captura((255, 0, 0)))["resultados"]
+    pantalones = nucleo.buscar_por_imagen(captura((255, 0, 0)), que="leg")["resultados"]
+    de_la_casa = nucleo.buscar_por_imagen(captura((255, 0, 0)), que="casa")["resultados"]
+    remeras = nucleo.buscar_por_imagen(captura((255, 0, 0)), que="cloth")["resultados"]
 
-    # La remera se parece casi igual que la silla, y su SWF lo bajó el juego (se vio hace poco).
-    assert [r["ruta"] for r in resultados[:2]] == ["ropa.remera", "muebles.silla"]
-    assert resultados[0]["en_cache"] and not resultados[1]["en_cache"]
-    # Lo que se parece mucho menos no se adelanta por estar en el caché.
-    assert resultados[-1]["ruta"] == "muebles.mesa" or "muebles.mesa" in [r["ruta"] for r in resultados[2:]]
+    # Aunque lo más parecido sea la silla, si es un pantalón, solo pantalones.
+    assert [r["ruta"] for r in pantalones] == ["ropa.pantalon"]
+    assert [r["ruta"] for r in de_la_casa] == ["muebles.silla", "muebles.mesa"]
+    assert [r["ruta"] for r in remeras] == ["ropa.remera"]  # por lo que se ve puesto
+    # Un disfraz también va en las piernas, pero no es un pantalón: tiene su propia opción.
+    assert [r["ruta"] for r in nucleo.buscar_por_imagen(captura((255, 0, 0)), que="disfraz")["resultados"]] == ["ropa.disfraz"]
+    assert [o["id"] for o in nucleo.opciones_que_es()["opciones"]][:2] == ["hats", "hairs"]
+    assert not nucleo.buscar_por_imagen(captura((255, 0, 0)), que="planeta")["ok"]
+
+
+def test_no_es_ninguno_saca_los_descartados_y_se_aleja_de_ellos(sistema, tmp_path):
+    nucleo = nucleo_con(sistema, tmp_path, DatosFalsos())
+
+    antes = [r["ruta"] for r in nucleo.buscar_por_imagen(captura((255, 0, 0)))["resultados"]]
+    despues = [r["ruta"] for r in nucleo.buscar_por_imagen(captura((255, 0, 0)), descartados=antes[:2])["resultados"]]
+
+    assert antes[:2] == ["muebles.silla", "ropa.remera"]
+    assert despues and not set(despues) & set(antes[:2])
+
+
+def test_se_parece_a_este_acerca_la_busqueda(sistema, tmp_path):
+    nucleo = nucleo_con(sistema, tmp_path, DatosFalsos())
+
+    sin_guia = [r["ruta"] for r in nucleo.buscar_por_imagen(captura((255, 0, 0)))["resultados"]]
+    con_guia = [r["ruta"] for r in nucleo.buscar_por_imagen(captura((255, 0, 0)), se_parece=["ropa.pantalon"])["resultados"]]
+
+    assert sin_guia.index("ropa.pantalon") > con_guia.index("ropa.pantalon")
+    assert not nucleo.buscar_por_imagen(captura((255, 0, 0)), se_parece=['x"; y'])["ok"]
 
 
 def test_sin_los_datos_primero_hay_que_bajarlos(sistema, tmp_path):

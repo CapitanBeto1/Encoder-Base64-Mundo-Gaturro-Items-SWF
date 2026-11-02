@@ -439,6 +439,13 @@
           </div>
         </div>
         <div class="columna-resultados">
+          <div class="fila-que-es">
+            <label class="ayuda" for="que-imagen">¿Qué es?</label>
+            <select id="que-imagen" class="filtro-lista" aria-label="Qué es lo que buscás">
+              <option value="">No sé (todo)</option>
+            </select>
+            <span id="guia-imagen" class="guia-imagen"></span>
+          </div>
           <div id="bajar-datos" class="bajar-datos" hidden>
             <p>La primera vez hay que bajar los datos de la búsqueda (<span id="tamano-datos">107 MB</span>). Se bajan una sola vez.</p>
             <progress id="progreso-datos" max="1" value="0" hidden></progress>
@@ -451,6 +458,8 @@
         <button type="button" id="elegir-imagen">Elegir archivo…</button>
         <input type="file" id="archivo-imagen" accept="image/png,image/jpeg,image/gif,image/webp,image/bmp" hidden>
         <button type="button" id="quitar-rectangulo">Quitar el rectángulo</button>
+        <button type="button" id="ninguno-imagen" title="Descarta estos 20 y busca otros, alejándose de ellos">No es ninguno de estos</button>
+        <button type="button" id="reiniciar-imagen" title="Olvida lo descartado y lo marcado como parecido">Empezar de nuevo</button>
         <button type="button" id="bajar-datos-busqueda" class="primario" hidden>Bajar los datos</button>
         <button type="button" id="buscar-imagen" class="primario">Buscar</button>
         <button type="button" id="cerrar-imagen" class="derecha">Cerrar</button>
