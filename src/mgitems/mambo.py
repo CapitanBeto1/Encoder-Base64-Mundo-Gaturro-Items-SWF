@@ -66,9 +66,12 @@ def clase_mambo(fuente: str, clase: str, lineas: list[str], sin_mambo_ok: bool =
 
 
 def _clase_con_attributes(simbolo: str, clase: str, base: str, imports: list[str], lineas: list[str]) -> str:
-    """`clase` heredando de su base original (`base`) con un `attributes` propio (para los SWF sin `MamboAsset`)."""
-    importar = "\n".join(f"   {i.strip()}" for i in imports)
-    cuerpo = "\n".join(f"         {linea}" for linea in ["attributes = {};", *lineas, "stop();"])
+    """`clase` heredando de su base original (`base`), con lo mismo que trae `MamboAsset` (para los SWF que no la
+    traen): sus campos, `process()` y el `Security.allowDomain` de su constructor, sin el cual el cliente del juego no
+    puede leer el objeto. Los atributos se escriben en el constructor: el juego crea el Item (`new`) y lee sus
+    atributos en el acto (`Library.getItem` → `InventoryUtil.doAcquireObject`)."""
+    importar = "\n".join(dict.fromkeys(f"   {i.strip()}" for i in [*imports, "import flash.system.Security;"]))
+    constructor = "\n".join(f"         {linea}" for linea in lineas)
     return f'''package
 {{
 {importar}
@@ -76,17 +79,36 @@ def _clase_con_attributes(simbolo: str, clase: str, base: str, imports: list[str
    [Embed(source="/_assets/assets.swf", symbol="{simbolo}")]
    public dynamic class {clase} extends {base}
    {{
-      public var attributes:Object;
+      public var blocks:Boolean = true;
+
+      public var sizeW:uint = 1;
+
+      public var sizeH:uint = 1;
+
+      public var attributes:Object = {{}};
+
+      public var questItem:Boolean = false;
 
       public function {clase}()
       {{
          super();
+         Security.allowDomain("*");
+         Security.allowInsecureDomain("*");
+{constructor}
          addFrameScript(0,this.frame1);
+      }}
+
+      public function process() : void
+      {{
+         if(this.questItem)
+         {{
+            this.attributes.questItem = true;
+         }}
       }}
 
       internal function frame1() : *
       {{
-{cuerpo}
+         stop();
       }}
    }}
 }}
