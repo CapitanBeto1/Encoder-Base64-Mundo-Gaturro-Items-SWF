@@ -58,6 +58,10 @@ _Avoid_: tienda trucada, NPC trucado
 Lo que hace un NPC, por su nombre en el juego (`behavior`, ej. `brujaMesa`, `magia/portal`): el guion `npc/<comportamiento>.npc` que corre al tocarlo.
 _Avoid_: behavior (en la interfaz), script de NPC
 
+**Fondo**:
+Un objeto de la casa cuyo dibujo tiene varios **cuadros** y muestra el que se eligió, para todos los que entran y para siempre (ej. `socialNetBackgrounds.SocialNetBackgrounds`, 23 fondos, dos de playa). Es un NPC con el comportamiento `painting` del juego: el dueño lo cambia al siguiente cuadro tocándolo. Solo sirven los dibujos que se quedan quietos en el primer cuadro; los demás son animaciones.
+_Avoid_: painting (en la interfaz), cuadro trucado
+
 ## Entrega al juego
 
 **Script**:

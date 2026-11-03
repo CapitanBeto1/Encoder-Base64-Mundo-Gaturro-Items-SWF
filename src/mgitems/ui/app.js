@@ -432,10 +432,12 @@ let vista = "agregar";
 
 // Looks, Acciones y Trucar Prenda usan la misma pantalla (el Gaturro, los casilleros y el inventario), cada una
 // con su documento: lo que se está editando en una queda guardado mientras se está en otra.
-const PESTANAS_DEL_EDITOR = ["looks", "acciones", "trucar", "tiendas", "portales", "minijuegos"];
-const PESTANAS = ["agregar", "trucar", "looks", "acciones", "tiendas", "portales", "minijuegos"];
+const PESTANAS_DEL_EDITOR = ["looks", "acciones", "trucar", "tiendas", "portales", "minijuegos", "fondos"];
+const PESTANAS = ["agregar", "trucar", "looks", "acciones", "tiendas", "portales", "minijuegos", "fondos"];
 // Tiendas, Portales y Minijuegos: cualquier Item que, puesto en la casa, hace lo mismo que un NPC del juego.
-const PESTANAS_NPC = { tiendas: "tienda", portales: "portal", minijuegos: "minijuego" };
+// Fondos: un objeto cuyo dibujo tiene varios cuadros, que muestra el elegido (comportamiento `painting`).
+const PESTANAS_NPC = { tiendas: "tienda", portales: "portal", minijuegos: "minijuego", fondos: "fondo" };
+const esFondos = () => vista === "fondos";
 const esNpc = (pestana = vista) => pestana in PESTANAS_NPC;
 // Dónde el Item base puede ser cualquier Item (se convierte en lo que hace falta: ADR 0007).
 const cualquierItem = () => esNpc() || vista === "acciones";
@@ -460,15 +462,16 @@ function cambiarVista(nueva) {
   document.querySelector("main").classList.toggle("modo-acciones", vista === "acciones");
   document.querySelector("main").classList.toggle("modo-trucar", vista === "trucar");
   document.querySelector("main").classList.toggle("modo-npc", esNpc());
+  document.querySelector("main").classList.toggle("modo-fondos", esFondos());
   $("aplicar-look").textContent = { acciones: "Aplicar acción", trucar: "Trucar todas", tiendas: "Convertir todos", portales: "Convertir todos",
-                                   minijuegos: "Convertir todos" }[vista] ?? "Aplicar Look";
+                                   minijuegos: "Convertir todos", fondos: "Convertir todos" }[vista] ?? "Aplicar Look";
   $("texto-se-guarda").textContent = vista === "trucar" ? "Se trucará:" : esNpc() ? "Se convierte:" : "Se guarda en:";
   $("nombre-look").placeholder = { acciones: "NOMBRE DE LA ACCIÓN", trucar: "NOMBRE DE LA PRENDA TRUCADA", tiendas: "NOMBRE DE LA TIENDA",
-                                   portales: "NOMBRE DEL PORTAL", minijuegos: "NOMBRE DEL MINIJUEGO" }[vista] ?? "NOMBRE DEL LOOK";
+                                   portales: "NOMBRE DEL PORTAL", minijuegos: "NOMBRE DEL MINIJUEGO", fondos: "NOMBRE DEL FONDO" }[vista] ?? "NOMBRE DEL LOOK";
   document.querySelector("main").classList.toggle("modo-agregar", vista === "agregar");
   $("items-a-recibir").hidden = vista !== "agregar";
   $("generar").textContent = { agregar: "Generar Encode", trucar: "Trucar Prenda", looks: "Aplicar Look", acciones: "Aplicar acción",
-                               tiendas: "Convertir todos", portales: "Convertir todos", minijuegos: "Convertir todos" }[vista];
+                               tiendas: "Convertir todos", portales: "Convertir todos", minijuegos: "Convertir todos", fondos: "Convertir todos" }[vista];
   avisarLista("");
   mostrarEncode(null);
   return cargarParaLaVista();
@@ -537,6 +540,9 @@ const GUARDADOS = {
   minijuegos: { lista: "npcs_guardados", clave: "npcs", guardar: "guardar_npc", duplicar: "duplicar_npc", borrar: "borrar_npc", exportar: "exportar_npc",
                 importar: "importar_npc", tipo: "minijuego", el: "el minijuego", lo: "lo", nuevo: "Minijuego nuevo", mis: "Mis minijuegos",
                 titulo: "GUARDA TU MINIJUEGO", sub: "GUARDA TUS MINIJUEGOS FAVORITOS" },
+  fondos: { lista: "npcs_guardados", clave: "npcs", guardar: "guardar_npc", duplicar: "duplicar_npc", borrar: "borrar_npc", exportar: "exportar_npc",
+            importar: "importar_npc", tipo: "fondo", el: "el fondo", lo: "lo", nuevo: "Fondo nuevo", mis: "Mis fondos",
+            titulo: "GUARDA TU FONDO", sub: "GUARDA TUS FONDOS FAVORITOS" },
 };
 const guardados = () => GUARDADOS[vista in GUARDADOS ? vista : "looks"];
 // Llama a la función `clave` de los guardados de la pestaña (con el tipo primero, si lo tiene).
@@ -545,13 +551,13 @@ const llamarGuardados = (clave, ...args) => {
   return api()[g[clave]](...(g.tipo ? [g.tipo] : []), ...args);
 };
 const documentoNuevo = (pestana = vista) => ({ acciones: nuevaAccion, trucar: nuevaPrendaATrucar, tiendas: nuevoNpc, portales: nuevoNpc,
-                                                  minijuegos: nuevoNpc }[pestana] ?? nuevoLook)();
+                                                  minijuegos: nuevoNpc, fondos: nuevoFondo }[pestana] ?? nuevoLook)();
 const guardadoDe = (resultado) => resultado.look ?? resultado.accion ?? resultado.trucada ?? resultado.npc;
 // Lo que queda en el editor al abrir un guardado (o uno nuevo). En Trucar Prenda va al armado, con su Parte,
 // y la lista de las que se reciben juntas sigue como estaba.
 const enElEditor = (documento) => vista === "trucar"
   ? { ...nuevaPrendaATrucar(), ...structuredClone(documento), parte: Object.keys(documento.partes)[0] ?? lookActual.parte, lista: lookActual.lista }
-  : esNpc() ? { ...nuevoNpc(), ...structuredClone(documento), lista: lookActual.lista }
+  : esNpc() ? { ...documentoNuevo(), ...structuredClone(documento), lista: lookActual.lista }
   : structuredClone(documento);
 // Lo que se dibuja quieto (miniaturas, escenario): en una acción, solo lo de la cabeza.
 const partesQuietas = (documento) =>
@@ -636,7 +642,7 @@ function mostrarLookElegido() {
     mostrar(lookActual);
     return;
   }
-  $("nombre-look-elegido").textContent = look ? look.nombre : `Tocá ${{ acciones: "una acción", tiendas: "una tienda", portales: "un portal", minijuegos: "un minijuego" }[vista] ?? "un Look"} para verlo`;
+  $("nombre-look-elegido").textContent = look ? look.nombre : `Tocá ${{ acciones: "una acción", tiendas: "una tienda", portales: "un portal", minijuegos: "un minijuego", fondos: "un fondo" }[vista] ?? "un Look"} para verlo`;
   $("equipar-look").disabled = !look;
   mostrar(look);
 }
@@ -717,7 +723,8 @@ function mostrarLook() {
     ...(base
       ? [elementoIcono(base), etiqueta(`${claseDeRuta(base)} (${swfDeRuta(base)})`, "nombre")]
       : [etiqueta({ acciones: "elegí cualquier Item", trucar: "elegí el Item base", tiendas: "elegí cualquier Item",
-                   portales: "elegí cualquier Item", minijuegos: "elegí cualquier Item" }[vista] ?? "se elige al aplicar", "ayuda")])
+                   portales: "elegí cualquier Item", minijuegos: "elegí cualquier Item", fondos: "elegí un objeto de la derecha" }[vista]
+                   ?? "se elige al aplicar", "ayuda")])
   );
   if (vista === "acciones") $("animacion-accion").value = lookActual.animacion ?? "";
   if (vista === "trucar") mostrarArmadoTrucar();
@@ -1341,7 +1348,8 @@ $("cambiar-base").addEventListener("click", () => {
   const enAcciones = vista === "acciones";
   $("dialogo-base").classList.toggle("sin-tipos", cualquierItem());
   $("titulo-base").textContent = { acciones: "¿Dónde se guarda la acción?", trucar: "¿Qué Item se truca?", tiendas: "¿Qué Item se convierte en tienda?",
-                                   portales: "¿Qué Item se convierte en portal?", minijuegos: "¿Qué Item se convierte en minijuego?" }[vista]
+                                   portales: "¿Qué Item se convierte en portal?", minijuegos: "¿Qué Item se convierte en minijuego?",
+                                   fondos: "¿Qué objeto se convierte en fondo?" }[vista]
                                    ?? "¿Dónde se guarda el Look?";
   $("ayuda-base").textContent = enAcciones
     ? "Cualquier Item de cualquier SWF: es lo que vas a recibir, y hace la acción cada vez que lo usás. Llega a la mochila, aunque sea una Prenda o de la casa."
@@ -1416,6 +1424,8 @@ function mostrarBarraLook() {
     ? $("resumen").textContent
     : vista === "acciones"
       ? n ? "Tocá «Aplicar acción» para generar el Encode." : "Elegí la animación y el Item donde se guarda."
+      : esFondos()
+      ? n ? "Tocá «Convertir todos» para generar el Encode." : "Elegí un objeto y su fondo, y agregalo a la lista."
       : esNpc()
       ? n ? "Tocá «Convertir todos» para generar el Encode." : "Elegí un Item y qué hace, y agregalo a la lista."
       : vista === "trucar"
@@ -1435,7 +1445,7 @@ async function aplicarLook() {
 }
 
 $("aplicar-look").addEventListener("click", () => ({ acciones: aplicarAccion, trucar: trucarPrenda, tiendas: convertirNpcs, portales: convertirNpcs,
-                                                              minijuegos: convertirNpcs }[vista] ?? aplicarLook)());
+                                                              minijuegos: convertirNpcs, fondos: convertirNpcs }[vista] ?? aplicarLook)());
 
 // --- Trucar Prenda: un Item base que muestra una sola Pieza (cualquiera) en una Parte (cualquiera); varias juntas ---
 
@@ -1521,7 +1531,7 @@ async function trucarPrenda() {
 }
 // --- Tiendas y Portales: cualquier Item que, puesto en la casa, hace lo mismo que un NPC del juego ---
 
-const ICONO_NPC = { tienda: "🛒", portal: "🚪", minijuego: "🎮" };
+const ICONO_NPC = { tienda: "🛒", portal: "🚪", minijuego: "🎮", fondo: "🖼️" };
 const comportamientosConocidos = {}; // tipo → [{comportamiento, tipo, descripcion, objeto}]
 const descripciones = new Map(); // comportamiento → su fila (también los escritos a mano)
 const tiposDeItems = new Map(); // ruta → tipo ("casa", "prenda", "mochila"…), de la ventana del Item base
@@ -1531,7 +1541,126 @@ function nuevoNpc() {
   return { id: "", nombre: "", base: null, comportamiento: null, partes: {}, colores: {}, lista: [] };
 }
 
+// --- Fondos: un objeto cuyo dibujo tiene varios cuadros (como socialNetBackgrounds) que muestra el que se elija,
+// para todos y para siempre (`mgitems.fondos`). Comparte la pantalla de Tiendas, Portales y Minijuegos: la grilla
+// muestra los objetos y, elegido uno, sus cuadros. ---
+
+let comportamientoFondo = "painting";
+let fondosConocidos = null; // [{ruta, clase, swf, cuadros}]
+const cuadrosDeFondo = new Map(); // ruta → [data URL de cada cuadro], o una promesa mientras se exportan
+let verObjetos = true; // la grilla muestra los objetos (si no, los cuadros del elegido)
+const MAXIMO_OBJETOS_FONDO = 48;
+
+function nuevoFondo() {
+  return { ...nuevoNpc(), comportamiento: comportamientoFondo, cuadro: null };
+}
+
+async function cargarFondos() {
+  if (!fondosConocidos) {
+    const resultado = await api().fondos();
+    if (!resultado.ok) return avisarLista(resultado.error, "error");
+    fondosConocidos = resultado.fondos;
+    comportamientoFondo = resultado.comportamiento;
+  }
+  $("filtro-comportamientos").value = "";
+  verObjetos = !lookActual.base;
+  await cargarLooks(); // los guardados y el armado
+  mostrarComportamientos();
+}
+
+// Los cuadros de un objeto, exportados por el núcleo (la primera vez tarda unos segundos).
+async function cuadrosDe(ruta) {
+  if (!cuadrosDeFondo.has(ruta)) {
+    cuadrosDeFondo.set(ruta, api().cuadros_de_fondo(ruta).then((r) => {
+      if (!r.ok) {
+        cuadrosDeFondo.delete(ruta);
+        avisarLista(r.error, "error");
+        return null;
+      }
+      cuadrosDeFondo.set(ruta, r.cuadros);
+      return r.cuadros;
+    }));
+  }
+  return cuadrosDeFondo.get(ruta);
+}
+
+function elegirObjetoDeFondo(ruta) {
+  if (lookActual.lista.some((t) => t.base === ruta)) {
+    return avisarLista(`${claseDeRuta(ruta)} ya está en la lista: cada uno necesita otro Item.`, "advertencia");
+  }
+  if (lookActual.base !== ruta) lookActual.cuadro = null;
+  lookActual.base = ruta;
+  tiposDeItems.set(ruta, "casa");
+  verObjetos = false;
+  mostrarEncode(null);
+  mostrarLook();
+  mostrarComportamientos();
+}
+
+function elegirCuadro(n) {
+  lookActual.cuadro = n;
+  mostrarEncode(null);
+  mostrarLook();
+  mostrarComportamientos();
+}
+
+function casilleroFondo(contenido, titulo, presionado, alTocar) {
+  const li = document.createElement("li");
+  const boton = Object.assign(document.createElement("button"), { type: "button", className: "casillero-npc", title: titulo });
+  boton.setAttribute("aria-pressed", String(presionado));
+  boton.append(...contenido);
+  boton.addEventListener("click", alTocar);
+  li.append(boton);
+  return li;
+}
+
+async function mostrarFondos() {
+  const grilla = $("grilla-comportamientos");
+  const base = lookActual.base;
+  const enCuadros = !verObjetos && base;
+  $("otros-fondos").hidden = !enCuadros;
+  $("filtro-comportamientos").hidden = Boolean(enCuadros);
+  grilla.classList.toggle("con-cuadros", Boolean(enCuadros));
+  if (!enCuadros) {
+    $("filtro-comportamientos").placeholder = "Buscar un objeto por nombre";
+    const todos = fondosConocidos ?? [];
+    const texto = $("filtro-comportamientos").value.trim().toLowerCase();
+    // Se muestran los primeros: con todos, se pedirían las imágenes de cientos de SWF a la vez.
+    const encontrados = todos.filter((f) => f.ruta.toLowerCase().includes(texto));
+    const filas = encontrados.slice(0, MAXIMO_OBJETOS_FONDO);
+    $("cantidad-comportamientos").textContent = texto ? `${encontrados.length} de ${todos.length}` : `${todos.length}`;
+    grilla.replaceChildren(...filas.map((f) => casilleroFondo(
+      [elementoIcono(f.ruta), etiqueta(f.clase, "nombre"), etiqueta(`${f.swf} · ${f.cuadros} fondos`, "que-hace")],
+      `${f.ruta}: ${f.cuadros} cuadros`, base === f.ruta, () => elegirObjetoDeFondo(f.ruta))));
+    if (!filas.length) grilla.append(etiqueta("No hay ninguno con ese nombre.", "ayuda"));
+    if (encontrados.length > filas.length) {
+      grilla.append(etiqueta(`Se muestran los primeros ${filas.length}: escribí un nombre para encontrar los demás.`, "ayuda"));
+    }
+    cargarIconos(filas.map((f) => f.ruta));
+    for (const swf of new Set(filas.map((f) => f.swf))) prepararIconosDe(swf);
+    return;
+  }
+  const listos = cuadrosDeFondo.get(base);
+  if (!Array.isArray(listos)) {
+    $("cantidad-comportamientos").textContent = "";
+    grilla.replaceChildren(etiqueta(`Preparando los cuadros de ${claseDeRuta(base)}… (la primera vez tarda unos segundos)`, "ayuda"));
+    const cuadros = await cuadrosDe(base);
+    if (cuadros && esFondos() && lookActual.base === base) mostrarComportamientos();
+    return;
+  }
+  $("cantidad-comportamientos").textContent = `${listos.length} cuadros`;
+  grilla.replaceChildren(...listos.map((url, i) => casilleroFondo(
+    [Object.assign(document.createElement("img"), { src: url, className: "cuadro-fondo", alt: `Cuadro ${i + 1}` }), etiqueta(`Cuadro ${i + 1}`, "nombre")],
+    `Que se vea el cuadro ${i + 1}`, lookActual.cuadro === i + 1, () => elegirCuadro(i + 1))));
+}
+
+$("otros-fondos").addEventListener("click", () => {
+  verObjetos = true;
+  mostrarComportamientos();
+});
+
 async function cargarNpcs() {
+  if (esFondos()) return cargarFondos();
   const tipo = PESTANAS_NPC[vista];
   if (!comportamientosConocidos[tipo] && !(await leerComportamientos(tipo))) return;
   $("filtro-comportamientos").value = "";
@@ -1569,6 +1698,7 @@ async function buscarEnElJuego() {
 
 function mostrarComportamientos() {
   if (!esNpc()) return;
+  if (esFondos()) return mostrarFondos();
   const todos = comportamientosConocidos[PESTANAS_NPC[vista]] ?? [];
   const texto = $("filtro-comportamientos").value.trim().toLowerCase();
   const filas = todos.filter((c) => `${c.comportamiento} ${c.descripcion}`.toLowerCase().includes(texto));
@@ -1605,7 +1735,34 @@ function elegirComportamiento(nombre) {
   mostrarComportamientos();
 }
 
+function mostrarArmadoFondo() {
+  const base = lookActual.base;
+  const cuadro = lookActual.cuadro;
+  const cuadros = base && cuadrosDeFondo.get(base);
+  $("comportamiento-elegido").replaceChildren(
+    cuadro ? etiqueta(`🖼️ Cuadro ${cuadro}${Array.isArray(cuadros) ? ` de ${cuadros.length}` : ""}`, "nombre")
+      : etiqueta(base ? "tocá un cuadro de la derecha" : "elegí un objeto de la derecha", "ayuda")
+  );
+  $("vista-npc").replaceChildren(
+    ...(!base ? [etiqueta("Elegí a la derecha un objeto con varios fondos.", "ayuda")]
+      : cuadro && Array.isArray(cuadros) && cuadros[cuadro - 1]
+        ? [Object.assign(document.createElement("img"), { src: cuadros[cuadro - 1], className: "cuadro-fondo", alt: `Cuadro ${cuadro}` }),
+           etiqueta(`${claseDeRuta(base)} (${swfDeRuta(base)})`, "ayuda")]
+        : [elementoIcono(base), etiqueta(`${claseDeRuta(base)} (${swfDeRuta(base)})`, "ayuda")])
+  );
+  if (base && !Array.isArray(cuadros)) cuadrosDe(base).then((c) => c && esFondos() && lookActual.base === base && mostrarArmadoNpc());
+  $("aviso-npc").textContent = base
+    ? "Llega a la casa mostrando ese fondo, y así lo ven todos. Si lo tocás en tu casa, pasa al siguiente."
+    : "";
+  $("agregar-npc").disabled = !conectado || ocupado || !base || !cuadro;
+}
+
 function mostrarArmadoNpc() {
+  if (esFondos()) {
+    mostrarArmadoFondo();
+    mostrarListaNpc();
+    return;
+  }
   const nombre = lookActual.comportamiento;
   const fila = nombre && descripciones.get(nombre);
   $("comportamiento-elegido").replaceChildren(
@@ -1625,7 +1782,12 @@ function mostrarArmadoNpc() {
     : tipo ? `Llega a la casa, no ${tipo === "prenda" ? "al guardarropa" : tipo === "mochila" ? "a la mochila" : "adonde llega hoy"}.`
     : "Llega a la casa.";
   $("agregar-npc").disabled = !conectado || ocupado || !base || !nombre;
-  $("titulo-lista-trucadas").textContent = { tiendas: "Tiendas", portales: "Portales", minijuegos: "Minijuegos" }[vista];
+  mostrarListaNpc();
+}
+
+function mostrarListaNpc() {
+  const base = lookActual.base;
+  $("titulo-lista-trucadas").textContent = { tiendas: "Tiendas", portales: "Portales", minijuegos: "Minijuegos", fondos: "Fondos" }[vista];
   $("cantidad-trucadas").textContent = `(${lookActual.lista.length})`;
   $("lista-trucadas").replaceChildren(
     ...lookActual.lista.map((t, i) => {
@@ -1643,12 +1805,14 @@ function mostrarArmadoNpc() {
         mostrarEncode(null);
         mostrarLook();
       });
-      const texto = `${claseDeRuta(t.base)} → ${t.comportamiento}`;
+      const texto = `${claseDeRuta(t.base)} → ${t.cuadro ? `cuadro ${t.cuadro}` : t.comportamiento}`;
       li.append(elementoIcono(t.base), etiqueta(t.nombre ? `${t.nombre}: ${texto}` : texto, "nombre"), cantidad, quitar);
       return li;
     })
   );
-  if (!lookActual.lista.length) $("lista-trucadas").append(etiqueta("Elegí un Item y qué hace, y tocá «Agregar a la lista».", "ayuda"));
+  if (!lookActual.lista.length) {
+    $("lista-trucadas").append(etiqueta(esFondos() ? "Elegí un objeto y su fondo, y tocá «Agregar a la lista»." : "Elegí un Item y qué hace, y tocá «Agregar a la lista».", "ayuda"));
+  }
   cargarIconos([...(base ? [base] : []), ...lookActual.lista.map((t) => t.base)]);
 }
 
@@ -1674,14 +1838,15 @@ $("form-comportamiento").addEventListener("submit", async (evento) => {
 });
 
 $("agregar-npc").addEventListener("click", () => {
-  const { base, comportamiento } = lookActual;
-  if (!base || !comportamiento) return;
+  const { base, comportamiento, cuadro } = lookActual;
+  if (!base || !comportamiento || (esFondos() && !cuadro)) return;
   if (lookActual.lista.some((t) => t.base === base)) {
     return avisarLista(`${claseDeRuta(base)} ya está en la lista: cada uno necesita otro Item.`, "advertencia");
   }
-  lookActual.lista.push({ base, comportamiento, cantidad: 1, nombre: lookActual.nombre.trim() });
-  avisarLista(`Se agregó ${claseDeRuta(base)} (${comportamiento}). Armá otro o tocá «Convertir todos».`, "exito");
-  Object.assign(lookActual, { id: "", nombre: "", base: null, comportamiento: null });
+  lookActual.lista.push({ base, comportamiento, cantidad: 1, nombre: lookActual.nombre.trim(), ...(esFondos() ? { cuadro } : {}) });
+  avisarLista(`Se agregó ${claseDeRuta(base)} (${esFondos() ? `cuadro ${cuadro}` : comportamiento}). Armá otro o tocá «Convertir todos».`, "exito");
+  Object.assign(lookActual, { id: "", nombre: "", base: null, comportamiento: esFondos() ? comportamientoFondo : null, cuadro: null });
+  verObjetos = true;
   mostrarEncode(null);
   mostrarListaLooks();
   mostrarLook();
@@ -1690,7 +1855,7 @@ $("agregar-npc").addEventListener("click", () => {
 
 async function convertirNpcs() {
   const lista = lookActual.lista;
-  const pedidos = lista.map(({ base, comportamiento, cantidad }) => ({ base, comportamiento, cantidad }));
+  const pedidos = lista.map(({ base, comportamiento, cantidad, cuadro }) => ({ base, comportamiento, cantidad, ...(cuadro ? { cuadro } : {}) }));
   const resultado = await mientras(`Convirtiendo ${lista.length === 1 ? "el Item" : `${lista.length} Items`}… (tarda unos segundos)`,
     () => api().convertir_en_npcs(pedidos));
   if (!resultado.ok) return avisarLista(resultado.error, "error");
@@ -1702,6 +1867,7 @@ async function convertirNpcs() {
 $("pestana-tiendas").addEventListener("click", () => cambiarVista("tiendas"));
 $("pestana-portales").addEventListener("click", () => cambiarVista("portales"));
 $("pestana-minijuegos").addEventListener("click", () => cambiarVista("minijuegos"));
+$("pestana-fondos").addEventListener("click", () => cambiarVista("fondos"));
 
 $("entregar-look").addEventListener("click", entregar);
 $("ver-encode").addEventListener("click", () => {

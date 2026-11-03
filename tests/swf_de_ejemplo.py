@@ -91,16 +91,17 @@ def _cuadrado(id_forma: int, color: tuple[int, int, int], id_imagen: int | None 
     return _tag(TAG_DEFINE_SHAPE, cuerpo)
 
 
-def _sprite(id_sprite: int, id_forma: int) -> bytes:
-    """DefineSprite de un cuadro que muestra la forma."""
+def _sprite(id_sprite: int, id_forma: int, cuadros: int = 1) -> bytes:
+    """DefineSprite de `cuadros` cuadros que muestra la forma."""
     colocar = _tag(TAG_PLACE_OBJECT2, bytes([0x02]) + struct.pack("<HH", 1, id_forma))
-    cuerpo = struct.pack("<HH", id_sprite, 1) + colocar + _tag(TAG_SHOW_FRAME, b"") + _tag(TAG_FIN, b"")
+    cuerpo = struct.pack("<HH", id_sprite, cuadros) + colocar + _tag(TAG_SHOW_FRAME, b"") * cuadros + _tag(TAG_FIN, b"")
     return _tag(TAG_DEFINE_SPRITE, cuerpo)
 
 
 def crear_swf(clases: list[str], compresion: str = "CWS", con_dibujos: bool = False,
-              con_jpeg: tuple[str, ...] = ()) -> bytes:
-    """`con_jpeg`: clases cuyo dibujo es una imagen JPEG en vez de un color."""
+              con_jpeg: tuple[str, ...] = (), cuadros: dict[str, int] | None = None) -> bytes:
+    """`con_jpeg`: clases cuyo dibujo es una imagen JPEG en vez de un color. `cuadros`: cuántos cuadros tiene el
+    dibujo de algunas clases (con `con_dibujos`; las demás, 1)."""
     tags = b""
     ids = list(range(1, len(clases) + 1))
     if con_dibujos:
@@ -110,7 +111,7 @@ def crear_swf(clases: list[str], compresion: str = "CWS", con_dibujos: bool = Fa
             id_imagen = 2000 + n if clase in con_jpeg else None
             if id_imagen:
                 tags += _jpeg(id_imagen)
-            tags += _cuadrado(1000 + n, color, id_imagen) + _sprite(n, 1000 + n)
+            tags += _cuadrado(1000 + n, color, id_imagen) + _sprite(n, 1000 + n, (cuadros or {}).get(clase, 1))
     symbol_class = struct.pack("<H", len(clases))
     for id_simbolo, nombre in zip(ids, clases):
         symbol_class += struct.pack("<H", id_simbolo) + nombre.encode("utf-8") + b"\0"

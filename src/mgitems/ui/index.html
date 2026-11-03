@@ -67,6 +67,7 @@
     <button id="pestana-tiendas" class="pestana" role="tab" aria-selected="false" aria-controls="vista-looks">Tiendas</button>
     <button id="pestana-portales" class="pestana" role="tab" aria-selected="false" aria-controls="vista-looks">Portales</button>
     <button id="pestana-minijuegos" class="pestana" role="tab" aria-selected="false" aria-controls="vista-looks">Minijuegos</button>
+    <button id="pestana-fondos" class="pestana" role="tab" aria-selected="false" aria-controls="vista-looks">Fondos</button>
   </nav>
 
   <main class="paneles modo-agregar">
@@ -171,7 +172,7 @@
                 <span class="ayuda">Hace:</span>
                 <span id="comportamiento-elegido" class="pieza-trucar comportamiento-elegido"></span>
               </div>
-              <form id="form-comportamiento" class="fila-npc">
+              <form id="form-comportamiento" class="fila-npc no-fondos">
                 <input id="comportamiento-a-mano" type="text" spellcheck="false" autocomplete="off"
                        placeholder="O escribí un comportamiento, ej: brujaMesa" aria-label="Escribir un comportamiento a mano">
                 <button id="usar-comportamiento" type="submit" class="enlace">Usar</button>
@@ -213,6 +214,7 @@
               <input id="filtro-comportamientos" type="search" spellcheck="false" autocomplete="off"
                      placeholder="Buscar por nombre, catálogo o sala" aria-label="Buscar los comportamientos">
               <span id="cantidad-comportamientos" class="cantidad-comportamientos"></span>
+              <button id="otros-fondos" class="enlace solo-fondos" title="Volver a la lista de objetos" hidden>◀ Otros objetos</button>
             </div>
             <ul id="grilla-comportamientos" class="grilla-comportamientos solo-npc" aria-label="Comportamientos para elegir"></ul>
             <div class="fuentes">

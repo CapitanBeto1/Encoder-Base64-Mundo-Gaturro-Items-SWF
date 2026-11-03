@@ -24,6 +24,9 @@ TIENDA = "tienda"
 PORTAL = "portal"
 MINIJUEGO = "minijuego"
 TIPOS = (TIENDA, PORTAL, MINIJUEGO)
+# Los fondos (pestaña Fondos, ver `mgitems.fondos`) se guardan como los NPC, pero no son un tipo de comportamiento:
+# todos usan `painting`.
+FONDO = "fondo"
 
 ARCHIVO_COMPORTAMIENTOS = Path(__file__).parent / "datos" / "comportamientos.json"
 
@@ -87,12 +90,17 @@ def comportamiento_en_codigo(fuente: str) -> str | None:
     return atributo_en_codigo(fuente, "behavior")
 
 
-def clase_npc(fuente: str, clase: str, comportamiento: str) -> str:
-    """El código AS3 de `clase` convertida en NPC con `comportamiento`, con el mismo dibujo (`fuente`: su código)."""
+def clase_npc(fuente: str, clase: str, comportamiento: str, cuadro: int | None = None) -> str:
+    """El código AS3 de `clase` convertida en NPC con `comportamiento`, con el mismo dibujo (`fuente`: su código).
+    `cuadro`: el que muestra al llegar (su atributo `frame`, el que lee `painting`)."""
     if not es_comportamiento_valido(comportamiento):
         raise NoSePuedeConvertir(f"comportamiento no válido: {comportamiento}")
-    return clase_mambo(fuente, clase, [f"attributes.behavior = {texto(comportamiento)};", "attributes.monitorAttributes = false;"],
-                       sin_mambo_ok=True)
+    if cuadro is not None and (isinstance(cuadro, bool) or not isinstance(cuadro, int) or cuadro < 1):
+        raise NoSePuedeConvertir(f"cuadro no válido: {cuadro}")
+    lineas = [f"attributes.behavior = {texto(comportamiento)};", "attributes.monitorAttributes = false;"]
+    if cuadro is not None:
+        lineas.append(f"attributes.frame = {cuadro};")
+    return clase_mambo(fuente, clase, lineas, sin_mambo_ok=True)
 
 
 class Comportamientos:

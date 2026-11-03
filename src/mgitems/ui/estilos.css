@@ -238,14 +238,19 @@ button.derecha { margin-left: auto; }
 
 .pestanas {
   display: flex;
-  gap: 8px;
-  padding: 8px 28px 0;
+  gap: 6px;
+  padding: 8px 20px 0;
 }
 
+/* Las pestañas se achican para entrar todas en el ancho de la ventana. */
 .pestana {
-  padding: 7px 16px;
-  font-size: 14px;
+  flex: 0 1 auto;
+  min-width: 0;
+  padding: 7px 12px;
+  font-size: 13px;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .pestana[aria-selected="true"] {
@@ -275,6 +280,8 @@ main.modo-npc .escena,
 main.modo-npc #colores-look,
 main.modo-npc .armario > :not(.solo-npc),
 main.modo-acciones .solo-looks,
+main:not(.modo-fondos) .solo-fondos,
+main.modo-fondos .no-fondos,
 .dialogo-base.sin-tipos .tipos-base {
   display: none;
 }
@@ -1653,6 +1660,12 @@ select.filtro-lista {
 .casillero-npc[aria-pressed="true"] { background: #6fc054; border-color: #2f6421; box-shadow: inset 0 0 0 3px #2f6421; }
 #lista-trucadas .cantidad-npc { width: 44px; padding: 0 4px; font-size: 12px; }
 main.modo-npc #lista-trucadas { overflow-y: hidden; }
+
+/* Fondos: los cuadros del dibujo, más grandes, con fondo claro (muchos son paisajes). */
+main.modo-fondos .grilla-comportamientos.con-cuadros { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); grid-auto-rows: 132px; }
+.cuadro-fondo { width: 100%; height: 100%; min-height: 0; object-fit: contain; background: rgba(255, 255, 255, 0.85); border-radius: 8px; }
+.vista-npc .cuadro-fondo { flex: 0 1 220px; height: 220px; width: 100%; max-width: 360px; }
+#otros-fondos[hidden] { display: none; }
 .icono-mis-looks { display: grid; place-items: center; flex: 1; min-height: 0; padding: 30px; }
 .icono-mis-looks[hidden] { display: none; }
 .icono-mis-looks .icono { width: 220px; height: 220px; background: rgba(255, 255, 255, 0.85); }

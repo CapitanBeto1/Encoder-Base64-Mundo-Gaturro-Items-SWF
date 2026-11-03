@@ -37,6 +37,7 @@ class Look:
     colores: dict[str, str] = field(default_factory=dict)
     animacion: str | None = None  # solo las acciones: la animación del juego ("showObject", "dance"…)
     comportamiento: str | None = None  # solo tiendas, portales y minijuegos: el del NPC ("brujaMesa", "magia/portal"…)
+    cuadro: int | None = None  # solo fondos: el cuadro del dibujo que se ve (1 es el primero)
 
     @classmethod
     def desde(cls, datos: dict) -> "Look":
@@ -65,8 +66,11 @@ class Look:
         comportamiento = datos.get("comportamiento") or None
         if comportamiento is not None and not _COMPORTAMIENTO.match(str(comportamiento)):
             raise LookInvalido(f"El comportamiento no es válido: {comportamiento}")
+        cuadro = datos.get("cuadro")
+        if cuadro is not None and (isinstance(cuadro, bool) or not isinstance(cuadro, int) or not 1 <= cuadro <= 9999):
+            raise LookInvalido(f"El cuadro no es válido: {cuadro}")
         return cls(nombre, base, {str(p): str(v) for p, v in partes.items()}, str(datos.get("id") or ""), dict(colores),
-                   animacion and str(animacion), comportamiento and str(comportamiento))
+                   animacion and str(animacion), comportamiento and str(comportamiento), cuadro)
 
 
 FORMATO = "mgitems-look"
@@ -75,11 +79,12 @@ FORMATO_TRUCADA = "mgitems-trucada"
 FORMATO_TIENDA = "mgitems-tienda"
 FORMATO_PORTAL = "mgitems-portal"
 FORMATO_MINIJUEGO = "mgitems-minijuego"
+FORMATO_FONDO = "mgitems-fondo"
 # Cómo se nombra lo de cada formato en los mensajes: (uno, "este…", "es de…").
 _NOMBRES = {FORMATO: ("un Look", "Este Look es"), FORMATO_ACCION: ("una acción", "Esta acción es"),
             FORMATO_TRUCADA: ("una Prenda trucada", "Esta Prenda trucada es"),
             FORMATO_TIENDA: ("una tienda", "Esta tienda es"), FORMATO_PORTAL: ("un portal", "Este portal es"),
-            FORMATO_MINIJUEGO: ("un minijuego", "Este minijuego es")}
+            FORMATO_MINIJUEGO: ("un minijuego", "Este minijuego es"), FORMATO_FONDO: ("un fondo", "Este fondo es")}
 VERSION_FORMATO = 1
 
 
@@ -91,6 +96,8 @@ def archivo_de_look(look: Look, formato: str = FORMATO) -> str:
         datos["animacion"] = look.animacion
     if look.comportamiento:
         datos["comportamiento"] = look.comportamiento
+    if look.cuadro:
+        datos["cuadro"] = look.cuadro
     return json.dumps(datos, ensure_ascii=False, indent=1)
 
 
@@ -105,7 +112,7 @@ def look_de_archivo(contenido: str, formato: str = FORMATO) -> Look:
         raise LookInvalido(f"Este archivo no es {uno} de MG Items.")
     if not isinstance(datos.get("version"), int) or datos["version"] > VERSION_FORMATO:
         raise LookInvalido(f"{este_es} de una versión más nueva de MG Items: actualizá el programa.")
-    look = Look.desde({k: datos.get(k) for k in ("nombre", "base", "partes", "colores", "animacion", "comportamiento")})
+    look = Look.desde({k: datos.get(k) for k in ("nombre", "base", "partes", "colores", "animacion", "comportamiento", "cuadro")})
     if formato == FORMATO and not look.partes:
         raise LookInvalido("El Look del archivo no tiene Piezas.")
     if formato == FORMATO_ACCION and not look.animacion:

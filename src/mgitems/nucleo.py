@@ -44,11 +44,12 @@ from mgitems.items import (
     separar_prefijos,
     separar_rutas,
 )
-from mgitems.looks import FORMATO_ACCION, FORMATO_MINIJUEGO, FORMATO_PORTAL, FORMATO_TIENDA, FORMATO_TRUCADA, AlmacenLooks, Look, LookInvalido, archivo_de_look, look_de_archivo
+from mgitems.fondos import COMPORTAMIENTO as COMPORTAMIENTO_FONDO, CuadrosFFDec, Fondos
+from mgitems.looks import FORMATO_ACCION, FORMATO_FONDO, FORMATO_MINIJUEGO, FORMATO_PORTAL, FORMATO_TIENDA, FORMATO_TRUCADA, AlmacenLooks, Look, LookInvalido, archivo_de_look, look_de_archivo
 from mgitems.busqueda import QUE_ES, DatosBusqueda, abrir_encuadres, espejada, guiar
 from mgitems.mambo import atributo_en_codigo, clase_de_mochila
 from mgitems.npcs import (
-    MINIJUEGO, PORTAL, TIENDA, TIPOS as TIPOS_NPC, Comportamientos, ComportamientosEncontrados, NoSePuedeConvertir, clase_npc, clasificar,
+    FONDO, MINIJUEGO, PORTAL, TIENDA, TIPOS as TIPOS_NPC, Comportamientos, ComportamientosEncontrados, NoSePuedeConvertir, clase_npc, clasificar,
     comportamiento_en_codigo, comportamientos_en_cache, describir, es_comportamiento_valido, leer_npc,
 )
 from mgitems.prendas import (
@@ -73,8 +74,12 @@ class Nucleo:
         indice: IndicePiezas | None = None,
         comportamientos: Comportamientos | None = None,
         datos_busqueda: DatosBusqueda | None = None,
+        fondos: Fondos | None = None,
+        cuadros: CuadrosFFDec | None = None,
     ):
         self._indice = indice or IndicePiezas()
+        self._fondos = fondos or Fondos()
+        self._cuadros = cuadros
         self._comportamientos = comportamientos or Comportamientos()
         self._comportamientos_a_mano: dict[str, dict] = {}  # los que no trae el programa, ya leídos del juego
         self._datos_busqueda = datos_busqueda
@@ -1086,13 +1091,17 @@ class Nucleo:
             vistas.add(p["base"])
             if (cantidad := _cantidad(p.get("cantidad", 1))) is None:
                 return {"ok": False, "error": f"La cantidad de {p['base']} tiene que ser un número entero mayor que 0."}
+            cuadro = p.get("cuadro")
+            if cuadro is not None and (isinstance(cuadro, bool) or not isinstance(cuadro, int) or cuadro < 1):
+                return {"ok": False, "error": f"El cuadro de {p['base']} no es válido."}
             descripto = self.comportamiento(p["comportamiento"])
             if not descripto["ok"]:
                 return descripto
-            filas.append((p["base"], p["comportamiento"], cantidad))
+            filas.append((p["base"], p["comportamiento"], cantidad, cuadro))
 
         por_swf: dict[str, dict[str, str]] = {}
-        for base, comportamiento, _ in filas:
+        cuadros: dict[str, dict[str, int]] = {}
+        for base, comportamiento, _, cuadro in filas:
             swf, _, clase = base.rpartition(".")
             obtenido = self._categorias_de(swf)
             if not obtenido["ok"]:
@@ -1103,6 +1112,8 @@ class Nucleo:
             if motivo := no_sirve_de_base(base, item["tipo"]):
                 return {"ok": False, "error": f"{clase} no sirve de Item base: {motivo}."}
             por_swf.setdefault(swf, {})[clase] = comportamiento
+            if cuadro is not None:
+                cuadros.setdefault(swf, {})[clase] = cuadro
 
         trucados = {}
         for swf, comportamientos in por_swf.items():
@@ -1110,7 +1121,7 @@ class Nucleo:
             if not obtenido["ok"]:
                 return {"ok": False, "error": f"No se pudo usar {swf}: {obtenido['error']}"}
             try:
-                trucados[swf] = self._convertidos(obtenido["data"], comportamientos)
+                trucados[swf] = self._convertidos(obtenido["data"], comportamientos, cuadros.get(swf))
             except (TruqueoFallido, NoSePuedeConvertir) as e:
                 return {"ok": False, "error": f"No se pudieron convertir los Items de {swf}: {e}."}
             except FFDecNoDisponible as e:
@@ -1118,21 +1129,21 @@ class Nucleo:
             except (OSError, subprocess.SubprocessError) as e:
                 return {"ok": False, "error": f"No se pudieron convertir los Items de {swf}: {e}"}
 
-        script = generar_script([(base, cantidad) for base, _, cantidad in filas])
+        script = generar_script([(base, cantidad) for base, _, cantidad, _ in filas])
         encode = codificar(script)
         self._trucos[encode] = trucados
-        return {"ok": True, "items": [{"ruta": base, "cantidad": cantidad} for base, _, cantidad in filas],
+        return {"ok": True, "items": [{"ruta": base, "cantidad": cantidad} for base, _, cantidad, _ in filas],
                 "script": script, "encode": encode}
 
-    def _convertidos(self, data: bytes, comportamientos: dict[str, str]) -> bytes:
-        """El SWF `data` con cada clase convertida en NPC con su comportamiento, verificado."""
+    def _convertidos(self, data: bytes, comportamientos: dict[str, str], cuadros: dict[str, int] | None = None) -> bytes:
+        """El SWF `data` con cada clase convertida en NPC con su comportamiento (y su cuadro, si tiene), verificado."""
         clases = list(comportamientos)
         with self._candado_ffdec:
             fuentes = self._prendas_ffdec.fuentes(data, clases)
         faltan = [c for c in clases if c not in fuentes]
         if faltan:
             raise NoSePuedeConvertir(f"no se encontró el código de {', '.join(faltan)}")
-        codigos = {c: clase_npc(fuentes[c], c, comportamientos[c]) for c in clases}
+        codigos = {c: clase_npc(fuentes[c], c, comportamientos[c], (cuadros or {}).get(c)) for c in clases}
         with self._candado_ffdec:
             trucado = self._prendas_ffdec.reemplazar(data, codigos)
             verificadas = self._prendas_ffdec.fuentes(trucado, clases)
@@ -1141,7 +1152,33 @@ class Nucleo:
             raise TruqueoFallido(f"el SWF trucado no quedó con el comportamiento de {', '.join(mal)}")
         return trucado
 
-    # Mis tiendas, Mis portales y Mis minijuegos: se guardan como los Looks, cada tipo en su archivo.
+    # --- Fondos: objetos de la casa que muestran el cuadro de su dibujo que se elija (`mgitems.fondos`) ---
+
+    def fondos(self) -> dict:
+        """Los objetos que sirven de fondo (los que trae el programa), con cuántos cuadros tiene cada uno."""
+        filas = [{"ruta": ruta, "clase": ruta.rpartition(".")[2], "swf": ruta.rpartition(".")[0], "cuadros": cuadros}
+                 for ruta, cuadros in self._fondos.todos().items()]
+        return {"ok": True, "fondos": sorted(filas, key=lambda f: orden_natural(f["clase"])), "comportamiento": COMPORTAMIENTO_FONDO}
+
+    def cuadros_de_fondo(self, ruta: str) -> dict:
+        """La vista previa de cada cuadro del dibujo de un Item ("swf.clase"), para elegir cuál se ve."""
+        if not isinstance(ruta, str) or not es_ruta_valida(ruta):
+            return {"ok": False, "error": "El Item no es válido."}
+        swf, _, clase = ruta.rpartition(".")
+        obtenido = {"ok": True, "data": self._data_swf} if swf == self._swf_abierto else self._datos_de_otro_swf(swf)
+        if not obtenido["ok"]:
+            return {"ok": False, "error": f"No se pudo leer {swf}: {obtenido['error']}"}
+        cuadros = self._cuadros or CuadrosFFDec(self._entorno.carpeta_cache() / "cuadros")
+        try:
+            with self._candado_ffdec:
+                imagenes = cuadros.cuadros(swf, clase, obtenido["data"])
+        except FFDecNoDisponible as e:
+            return {"ok": False, "error": f"{e}: no se pueden mostrar los cuadros."}
+        except (OSError, ValueError, subprocess.SubprocessError) as e:
+            return {"ok": False, "error": f"No se pudieron mostrar los cuadros de {clase}: {e}"}
+        return {"ok": True, "ruta": ruta, "cuadros": imagenes}
+
+    # Mis tiendas, Mis portales, Mis minijuegos y Mis fondos: se guardan como los Looks, cada tipo en su archivo.
 
     def npcs_guardados(self, tipo: str) -> dict:
         """Las tiendas (o los portales) guardados, por nombre."""
@@ -1173,7 +1210,7 @@ class Nucleo:
             if original is None:
                 return {"ok": False, "error": "Ya no existe."}
             nombre = _nombre_libre(f"{original.nombre} (copia)", {n.nombre for n in almacen.todos()}, "copia ")
-            copia = almacen.guardar(Look(nombre, original.base, comportamiento=original.comportamiento))
+            copia = almacen.guardar(Look(nombre, original.base, comportamiento=original.comportamiento, cuadro=original.cuadro))
         except KeyError:
             return {"ok": False, "error": f"Tipo de NPC desconocido: {tipo}"}
         except OSError as e:
@@ -1222,7 +1259,7 @@ class Nucleo:
 
     def _almacen_npcs(self, tipo: str) -> AlmacenLooks:
         """KeyError si el tipo no es uno que se guarda."""
-        clave = {TIENDA: "tiendas", PORTAL: "portales", MINIJUEGO: "minijuegos"}[tipo]
+        clave = {TIENDA: "tiendas", PORTAL: "portales", MINIJUEGO: "minijuegos", FONDO: "fondos"}[tipo]
         return AlmacenLooks(self._entorno.carpeta_programa() / f"{clave}.json", clave=clave)
 
     # --- Búsqueda por imagen: qué Item es una captura del juego ---
@@ -1887,8 +1924,9 @@ def _trucada_valida(datos: dict) -> Look:
     return trucada
 
 
-_FORMATOS_NPC = {TIENDA: FORMATO_TIENDA, PORTAL: FORMATO_PORTAL, MINIJUEGO: FORMATO_MINIJUEGO}
-_NOMBRE_NPC = {TIENDA: ("la tienda", "tienda"), PORTAL: ("el portal", "portal"), MINIJUEGO: ("el minijuego", "minijuego")}
+_FORMATOS_NPC = {TIENDA: FORMATO_TIENDA, PORTAL: FORMATO_PORTAL, MINIJUEGO: FORMATO_MINIJUEGO, FONDO: FORMATO_FONDO}
+_NOMBRE_NPC = {TIENDA: ("la tienda", "tienda"), PORTAL: ("el portal", "portal"), MINIJUEGO: ("el minijuego", "minijuego"),
+               FONDO: ("el fondo", "fondo")}
 
 
 def _npc_valido(datos: dict, tipo: str) -> Look:
@@ -1903,6 +1941,8 @@ def _npc_valido(datos: dict, tipo: str) -> Look:
         raise LookInvalido("Elegí el comportamiento.")
     if npc.partes or npc.animacion:
         raise LookInvalido(f"{el[0].upper()}{el[1:]} no lleva Piezas ni animación.")
+    if tipo == FONDO and (npc.comportamiento != COMPORTAMIENTO_FONDO or npc.cuadro is None):
+        raise LookInvalido("Elegí el cuadro que se ve.")
     return npc
 
 
