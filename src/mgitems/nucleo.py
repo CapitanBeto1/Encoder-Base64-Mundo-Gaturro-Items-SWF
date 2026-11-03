@@ -56,7 +56,7 @@ from mgitems.prendas import (
     ACCION, EFECTO, MOCHILA, PARTES_DEL_CUERPO, PREFIJO_EFECTO, PRENDA, CacheItemsBase, ItemBase, ItemsBaseFFDec, TruqueoFallido,
     leer_item_base, no_sirve_de_base, reescribir_partes,
 )
-from mgitems.script import EncodeInvalido, codificar, decodificar, generar_script, leer_script
+from mgitems.script import EncodeInvalido, codificar, decodificar, generar_script, generar_script_con_atributos, leer_script
 from mgitems.swf import SwfInvalido, congelado_en, leer_simbolos, limites_de_simbolos, rotulos
 
 _NOMBRE_SWF = re.compile(r"^[A-Za-z0-9_\-]+(?:/[A-Za-z0-9_\-]+)*$")
@@ -1159,6 +1159,41 @@ class Nucleo:
         filas = [{"ruta": ruta, "clase": ruta.rpartition(".")[2], "swf": ruta.rpartition(".")[0], "cuadros": cuadros}
                  for ruta, cuadros in self._fondos.todos().items()]
         return {"ok": True, "fondos": sorted(filas, key=lambda f: orden_natural(f["clase"])), "comportamiento": COMPORTAMIENTO_FONDO}
+
+    def convertir_en_fondos(self, pedidos: list) -> dict:
+        """Varios fondos en un solo Encode: cada uno (`{"base", "cuadro", "cantidad"}`) es un Item ("swf.clase") que
+        llega a la casa con el comportamiento `painting` y mostrando su cuadro. No se truca ningún SWF: los atributos
+        van en el Encode (`inventory.addOptions`), así el mismo Item puede ir varias veces, con otro cuadro cada vez."""
+        if not isinstance(pedidos, list) or not pedidos:
+            return {"ok": False, "error": "Agregá al menos uno a la lista."}
+        filas, vistos = [], set()
+        for p in pedidos:
+            if not isinstance(p, dict) or not isinstance(p.get("base"), str) or not es_ruta_valida(p["base"]):
+                return {"ok": False, "error": "La lista no tiene la forma esperada."}
+            base, cuadro = p["base"], p.get("cuadro")
+            if isinstance(cuadro, bool) or not isinstance(cuadro, int) or cuadro < 1:
+                return {"ok": False, "error": f"Elegí el cuadro de {base}."}
+            if (base, cuadro) in vistos:
+                return {"ok": False, "error": f"{base} con el cuadro {cuadro} está dos veces: subí su cantidad."}
+            vistos.add((base, cuadro))
+            if (cantidad := _cantidad(p.get("cantidad", 1))) is None:
+                return {"ok": False, "error": f"La cantidad de {base} tiene que ser un número entero mayor que 0."}
+            swf, _, clase = base.rpartition(".")
+            obtenido = self._categorias_de(swf)
+            if not obtenido["ok"]:
+                return {"ok": False, "error": f"No se pudo usar {base}: {obtenido['error']}"}
+            item = obtenido["items"].get(clase)
+            if item is None:
+                return {"ok": False, "error": f"{clase} no es un Item de {swf}."}
+            if motivo := no_sirve_de_base(base, item["tipo"]):
+                return {"ok": False, "error": f"{clase} no sirve: {motivo}."}
+            if item.get("destino") == DESCARTADO:
+                return {"ok": False, "error": f"{clase} no llega al juego: {motivo_de(item) or 'el juego lo descarta'}."}
+            atributos = {"behavior": COMPORTAMIENTO_FONDO, "monitorAttributes": False, "frame": cuadro}
+            filas.append((base, cantidad, atributos))
+        script = generar_script_con_atributos(filas)
+        return {"ok": True, "items": [{"ruta": base, "cantidad": cantidad} for base, cantidad, _ in filas],
+                "script": script, "encode": codificar(script)}
 
     def cuadros_de_fondo(self, ruta: str) -> dict:
         """La vista previa de cada cuadro del dibujo de un Item ("swf.clase"), para elegir cuál se ve."""

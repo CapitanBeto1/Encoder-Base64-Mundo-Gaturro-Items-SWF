@@ -63,3 +63,9 @@ Primera prueba en el juego (sin `allowDomain`, sin los campos de `MamboAsset` y 
 Solo se usa para comportamiento (escribe únicamente en `attributes.*`, lo único que comparten todas las bases); para los demás destinos se sigue exigiendo `MamboAsset` (`mgitems.mambo.clase_mambo`, parámetro `sin_mambo_ok`).
 
 Caso de uso: `socialNetBackgrounds.SocialNetBackgrounds` con comportamiento `painting` (un guion real del juego) es un objeto de la casa que muestra, de sus 23 fondos, el que se elija. `painting` guarda el cuadro en un atributo persistido del objeto (`self.attrPersist frame`), lo avisa a la sala (`room.message update`) y cada visitante lo aplica (`self.state $(self.attr.frame)`): el fondo elegido (p. ej. una playa) se ve en la casa, para todos, y sigue al volver a entrar. El dueño cambia de fondo tocándolo.
+
+## Atributos sin trucar: `inventory.addOptions`
+
+El guion de Lola tiene `inventory.addOptions <Item> <cantidad> <catálogo> <atributos JSON>` (`NpcActionRunner.addItemWithOptions`). Los atributos llegan a `InventoryUtil.acquireObject` como `mergeAttrs` y `doAcquireObject` los suma a los del Item antes de mandarlos al servidor, que los guarda en ese objeto. El JSON va sin espacios: el guion separa los argumentos por espacios, y un argumento entre comillas no puede llevar comillas adentro.
+
+Así no hace falta trucar el SWF, y el mismo Item puede llegar varias veces con otros atributos en un solo Encode. La pestaña Fondos lo usa (`script.generar_script_con_atributos`, `Nucleo.convertir_en_fondos`): cada fondo es `{"behavior":"painting","monitorAttributes":false,"frame":N}`, de modo que cada cuadro de `SocialNetBackgrounds` llega como un objeto aparte. Las demás pestañas siguen trucando, que está probado en el juego. Si `addOptions` se confirma en el juego, también podrían dejar de trucar.

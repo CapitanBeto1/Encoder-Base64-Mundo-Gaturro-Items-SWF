@@ -6,6 +6,7 @@ Script en Base64, listo para que el juego lo cargue en lugar de `lola.npc`.
 
 import base64
 import binascii
+import json
 import re
 
 INDENTACION = "    "
@@ -38,6 +39,31 @@ def generar_script(pedidos: list[tuple[str, int]]) -> str:
             f"A{n}: DO",
             f"{INDENTACION}user.state get",
             f"{INDENTACION}inventory.add {cantidad} {ruta}",
+            f"{INDENTACION}after 1 {siguiente}",
+        ]
+        if n < len(pedidos):
+            lineas.append("")
+    return "\n".join(lineas) + "\n\n"
+
+
+def generar_script_con_atributos(pedidos: list[tuple[str, int, dict]]) -> str:
+    """Como `generar_script`, pero cada Item llega con atributos propios (`inventory.addOptions`).
+
+    `inventory.addOptions <Item> <cantidad> <catálogo> <atributos>` del juego (`NpcActionRunner.addItemWithOptions`)
+    los suma a los del Item al recibirlo (`mergeAttrs` en `InventoryUtil.doAcquireObject`), y el servidor los guarda
+    en ese objeto: el mismo Item puede llegar varias veces, cada una con otros atributos, sin trucar su SWF. Los
+    atributos van como JSON sin espacios, porque el guion separa los argumentos por espacios (y no deja comillas
+    dentro de un argumento entre comillas). Sin catálogo: `null`."""
+    lineas = ["INICIO: DO", f"{INDENTACION}on activate A1", INDENTACION]
+    for n, (ruta, cantidad, atributos) in enumerate(pedidos, start=1):
+        texto = json.dumps(atributos, separators=(",", ":"), ensure_ascii=True)
+        if any(c.isspace() for c in texto):
+            raise ValueError(f"los atributos de {ruta} no pueden tener espacios")
+        siguiente = f"A{n + 1}" if n < len(pedidos) else "INICIO"
+        lineas += [
+            f"A{n}: DO",
+            f"{INDENTACION}user.state get",
+            f"{INDENTACION}inventory.addOptions {ruta} {cantidad} null {texto}",
             f"{INDENTACION}after 1 {siguiente}",
         ]
         if n < len(pedidos):

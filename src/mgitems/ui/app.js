@@ -1284,7 +1284,7 @@ function mostrarBases() {
       boton.setAttribute("aria-pressed", String(lookActual.base === b.ruta));
       boton.append(...filaDeBase(b));
       boton.addEventListener("click", () => {
-        if ((vista === "trucar" || esNpc()) && lookActual.lista.some((t) => t.base === b.ruta)) {
+        if ((vista === "trucar" || (esNpc() && !esFondos())) && lookActual.lista.some((t) => t.base === b.ruta)) {
           return avisar($("mensaje-base"), `${b.clase} ya está en la lista: cada uno necesita otro Item.`, "advertencia");
         }
         $("dialogo-base").close();
@@ -1588,10 +1588,8 @@ async function cuadrosDe(ruta) {
   return cuadrosDeFondo.get(ruta);
 }
 
+// El mismo objeto puede ir varias veces a la lista, con otro cuadro: cada uno llega como un objeto aparte.
 function elegirObjetoDeFondo(ruta) {
-  if (lookActual.lista.some((t) => t.base === ruta)) {
-    return avisarLista(`${claseDeRuta(ruta)} ya está en la lista: cada uno necesita otro Item.`, "advertencia");
-  }
   if (lookActual.base !== ruta) lookActual.cuadro = null;
   lookActual.base = ruta;
   tiposDeItems.set(ruta, "casa");
@@ -1764,7 +1762,8 @@ function mostrarArmadoFondo() {
   );
   if (base && !Array.isArray(cuadros)) cuadrosDe(base).then((c) => c && esFondos() && lookActual.base === base && mostrarArmadoNpc());
   $("aviso-npc").textContent = base
-    ? "Llega a la casa mostrando ese fondo, y así lo ven todos. Si lo tocás en tu casa, pasa al siguiente."
+    ? "Llega a la casa mostrando ese fondo, y así lo ven todos. Si lo tocás en tu casa, pasa al siguiente. "
+      + "Podés agregar el mismo objeto con otros cuadros: cada uno llega como un objeto aparte."
     : "";
   $("agregar-npc").disabled = !conectado || ocupado || !base || !cuadro;
 }
@@ -1852,7 +1851,10 @@ $("form-comportamiento").addEventListener("submit", async (evento) => {
 $("agregar-npc").addEventListener("click", () => {
   const { base, comportamiento, cuadro } = lookActual;
   if (!base || !comportamiento || (esFondos() && !cuadro)) return;
-  if (lookActual.lista.some((t) => t.base === base)) {
+  if (esFondos() && lookActual.lista.some((t) => t.base === base && t.cuadro === cuadro)) {
+    return avisarLista(`${claseDeRuta(base)} con el cuadro ${cuadro} ya está en la lista: si querés más, subí su cantidad.`, "advertencia");
+  }
+  if (!esFondos() && lookActual.lista.some((t) => t.base === base)) {
     return avisarLista(`${claseDeRuta(base)} ya está en la lista: cada uno necesita otro Item.`, "advertencia");
   }
   lookActual.lista.push({ base, comportamiento, cantidad: 1, nombre: lookActual.nombre.trim(), ...(esFondos() ? { cuadro } : {}) });
@@ -1867,9 +1869,11 @@ $("agregar-npc").addEventListener("click", () => {
 
 async function convertirNpcs() {
   const lista = lookActual.lista;
-  const pedidos = lista.map(({ base, comportamiento, cantidad, cuadro }) => ({ base, comportamiento, cantidad, ...(cuadro ? { cuadro } : {}) }));
-  const resultado = await mientras(`Convirtiendo ${lista.length === 1 ? "el Item" : `${lista.length} Items`}… (tarda unos segundos)`,
-    () => api().convertir_en_npcs(pedidos));
+  const resultado = esFondos()
+    // Los fondos no se trucan: sus atributos van en el Encode (y el mismo objeto puede ir con varios cuadros).
+    ? await mientras("Armando el Encode…", () => api().convertir_en_fondos(lista.map(({ base, cantidad, cuadro }) => ({ base, cantidad, cuadro }))))
+    : await mientras(`Convirtiendo ${lista.length === 1 ? "el Item" : `${lista.length} Items`}… (tarda unos segundos)`,
+      () => api().convertir_en_npcs(lista.map(({ base, comportamiento, cantidad }) => ({ base, comportamiento, cantidad }))));
   if (!resultado.ok) return avisarLista(resultado.error, "error");
   mostrarEncode(resultado);
   avisarLista(`Listo: tocá «Agregar al juego» para recibir${lista.length === 1 ? "lo" : "los"}. ${lista.length === 1 ? "Llega" : "Llegan"} a la casa.`, "exito");
