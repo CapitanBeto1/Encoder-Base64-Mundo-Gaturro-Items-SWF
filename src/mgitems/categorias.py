@@ -155,13 +155,19 @@ def donde_se_ven(swf: str, piezas: list[str], fuentes: dict[str, str], limites: 
     return resultado
 
 
+def es_decoracion(item: dict) -> bool:
+    """Si una acción puede mostrar el Item como a una Pieza: un objeto de la casa, o un dibujo de Flash (que
+    llega a la casa como un objeto)."""
+    return item.get("tipo") == CASA or (item.get("tipo") == OTRO and bool(item.get("dibujo")))
+
+
 def decoracion_en_acciones(swf: str, items: dict[str, dict], limites: dict[str, tuple]) -> dict[str, dict]:
-    """Objeto de la casa → {"accion": "grande" o "vacia"}, de los de `swf` que una acción no mostraría
+    """Objeto de la casa (o dibujo) → {"accion": "grande" o "vacia"}, de los de `swf` que una acción no mostraría
     (ver `se_ve.donde_se_ve`): una acción puede mostrar cualquier objeto de la casa, como una Pieza.
     `items`: los Items del SWF (de `tipos_de_items`); `limites`: el rectángulo de cada símbolo."""
     resultado = {}
     for clase, item in items.items():
-        if item.get("tipo") == CASA and (accion := donde_se_ve(f"{swf}.{clase}", limites.get(clase)).get("accion")):
+        if es_decoracion(item) and (accion := donde_se_ve(f"{swf}.{clase}", limites.get(clase)).get("accion")):
             resultado[clase] = {"accion": accion}
     return resultado
 
