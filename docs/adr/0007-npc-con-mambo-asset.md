@@ -42,16 +42,23 @@ Lo que hace cada comportamiento se lee de su guion (`npc/<comportamiento>.npc`) 
 
 Unos pocos SWF son solo un envoltorio de un dibujo del gran `assets.swf` y no traen `MamboAsset` (por ejemplo `socialNetBackgrounds`, un fondo de 23 cuadros, o `YoBackgrounds`). Ahí no se puede heredar de `MamboAsset`.
 
-Pero el juego lee los atributos por «duck typing», no por tipo: `InventoryUtil.doAcquireObject` hace `if("attributes" in item) customAttributes.mergeObject(item.attributes)`. No exige `MamboAsset`; alcanza con que el Item tenga una propiedad `attributes`. Como estas clases ya son `dynamic`, la clase se deja heredando de su base original (`MovieClip`…) y se le agrega un `attributes` propio:
+Pero el juego lee los atributos por «duck typing», no por tipo: `InventoryUtil.doAcquireObject` hace `if("attributes" in item) customAttributes.mergeObject(item.attributes)`. No exige `MamboAsset`; alcanza con que el Item tenga una propiedad `attributes`. Así que la clase se deja heredando de su base original (`MovieClip`…) y se le pone lo mismo que trae `MamboAsset` (que es solo eso): sus campos (`blocks`, `sizeW`, `sizeH`, `attributes = {}`, `questItem`), `process()` y el `Security.allowDomain("*")` de su constructor, sin el cual el cliente del juego no puede leer un objeto de otro SWF.
+
+Los atributos se escriben en el **constructor**, no en el primer cuadro: el juego crea el Item (`Library.getItem` hace `new`) y le pasa la instancia a `doAcquireObject` en el acto.
 
 ```as3
-public var attributes:Object;
-...
-attributes = {};
-attributes.behavior = "<comportamiento>";
-attributes.monitorAttributes = false;
-stop();
+public function SocialNetBackgrounds()
+{
+   super();
+   Security.allowDomain("*");
+   Security.allowInsecureDomain("*");
+   attributes.behavior = "<comportamiento>";
+   attributes.monitorAttributes = false;
+   addFrameScript(0,this.frame1);   // frame1: stop();
+}
 ```
+
+Primera prueba en el juego (sin `allowDomain`, sin los campos de `MamboAsset` y con los atributos en el primer cuadro): el SWF trucado llegó, pero el objeto quedó como decoración común, sin comportamiento.
 
 Solo se usa para comportamiento (escribe únicamente en `attributes.*`, lo único que comparten todas las bases); para los demás destinos se sigue exigiendo `MamboAsset` (`mgitems.mambo.clase_mambo`, parámetro `sin_mambo_ok`).
 

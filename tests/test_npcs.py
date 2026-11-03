@@ -113,7 +113,12 @@ def test_un_swf_sin_mambo_asset_hereda_de_su_base_con_un_attributes_propio():
     assert 'symbol="symbol306"' in codigo  # el mismo dibujo (de varios cuadros)
     assert "extends MovieClip" in codigo and "MamboAsset" not in codigo  # no se puede heredar de la que el SWF no trae
     assert "import flash.display.MovieClip;" in codigo
-    assert "public var attributes:Object;" in codigo and "attributes = {};" in codigo  # su propio attributes
+    assert "public var attributes:Object = {};" in codigo  # su propio attributes, como el de MamboAsset
+    assert 'Security.allowDomain("*");' in codigo  # sin esto el juego no puede leer el objeto
+    assert "public function process()" in codigo
+    # Los atributos se escriben en el constructor, antes del primer cuadro: el juego los lee apenas crea el Item.
+    constructor = codigo.split("public function SocialNetBackgrounds()")[1].split("public function process()")[0]
+    assert 'attributes.behavior = "painting";' in constructor
     assert comportamiento_en_codigo(codigo) == "painting"
 
 
