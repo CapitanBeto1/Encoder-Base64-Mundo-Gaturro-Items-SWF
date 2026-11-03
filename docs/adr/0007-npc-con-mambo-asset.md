@@ -37,3 +37,22 @@ Lo que hace cada comportamiento se lee de su guion (`npc/<comportamiento>.npc`) 
 
 - El mismo mecanismo sirve para otros destinos (`mgitems.mambo`). En Acciones, un Item que no es de mochila llega a la mochila con `attributes.grabbable` y hace la acción con `attributes.attr_action` (y `attr_effect`), como `UsableMamboAsset`, que no todos los SWF traen. Probado en el juego con la tostadora de `virtualGoods` (#108). Para Prendas, ver #109.
 - Si el juego cambia `MamboAsset` o cómo decide adónde llega un Item, hay que revisarlo.
+
+## SWF que no traen ni siquiera `MamboAsset`
+
+Unos pocos SWF son solo un envoltorio de un dibujo del gran `assets.swf` y no traen `MamboAsset` (por ejemplo `socialNetBackgrounds`, un fondo de 23 cuadros, o `YoBackgrounds`). Ahí no se puede heredar de `MamboAsset`.
+
+Pero el juego lee los atributos por «duck typing», no por tipo: `InventoryUtil.doAcquireObject` hace `if("attributes" in item) customAttributes.mergeObject(item.attributes)`. No exige `MamboAsset`; alcanza con que el Item tenga una propiedad `attributes`. Como estas clases ya son `dynamic`, la clase se deja heredando de su base original (`MovieClip`…) y se le agrega un `attributes` propio:
+
+```as3
+public var attributes:Object;
+...
+attributes = {};
+attributes.behavior = "<comportamiento>";
+attributes.monitorAttributes = false;
+stop();
+```
+
+Solo se usa para comportamiento (escribe únicamente en `attributes.*`, lo único que comparten todas las bases); para los demás destinos se sigue exigiendo `MamboAsset` (`mgitems.mambo.clase_mambo`, parámetro `sin_mambo_ok`).
+
+Caso de uso: `socialNetBackgrounds.SocialNetBackgrounds` con comportamiento `painting` (un guion real del juego) es un objeto de la casa que muestra, de sus 23 fondos, el que se elija. `painting` guarda el cuadro en un atributo persistido del objeto (`self.attrPersist frame`), lo avisa a la sala (`room.message update`) y cada visitante lo aplica (`self.state $(self.attr.frame)`): el fondo elegido (p. ej. una playa) se ve en la casa, para todos, y sigue al volver a entrar. El dueño cambia de fondo tocándolo.
