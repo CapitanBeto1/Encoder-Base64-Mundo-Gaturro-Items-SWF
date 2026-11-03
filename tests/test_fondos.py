@@ -7,6 +7,7 @@ from mgitems.categorias import IndicePiezas
 from mgitems.fondos import Fondos, frena_en_el_primer_cuadro
 from mgitems.npcs import Comportamientos, NoSePuedeConvertir, clase_npc, comportamiento_en_codigo
 from mgitems.nucleo import Nucleo
+from mgitems.script import decodificar
 from mgitems.swf import cuadros_de_clases
 from fuente_falsa import FuenteFalsa
 from procesos_falso import ProcesosFalso
@@ -114,3 +115,31 @@ def test_mis_fondos_se_guardan_con_su_cuadro(nucleo, tmp_path):
     importado = nucleo.importar_npc_de_archivo("fondo", str(archivo))
     assert importado["ok"] and importado["npc"]["cuadro"] == 2
     assert "no es una tienda" in nucleo.importar_npc_de_archivo("tienda", str(archivo))["error"]
+
+
+def test_el_mismo_objeto_llega_varias_veces_cada_una_con_su_cuadro(nucleo, ffdec):
+    resultado = nucleo.convertir_en_fondos([
+        {"base": "costumes2.remera5", "cuadro": 2},
+        {"base": "costumes2.remera5", "cuadro": 3, "cantidad": 2},
+    ])
+
+    assert resultado["ok"], resultado
+    script = decodificar(resultado["encode"])
+    assert 'inventory.addOptions costumes2.remera5 1 null {"behavior":"painting","monitorAttributes":false,"frame":2}' in script
+    assert 'inventory.addOptions costumes2.remera5 2 null {"behavior":"painting","monitorAttributes":false,"frame":3}' in script
+    assert resultado["items"] == [{"ruta": "costumes2.remera5", "cantidad": 1}, {"ruta": "costumes2.remera5", "cantidad": 2}]
+    assert ffdec.trucos == []  # sin trucar ningún SWF: los atributos van en el Encode
+    assert not nucleo.tiene_swf_trucado(resultado["encode"])
+
+
+@pytest.mark.parametrize("pedidos, error", [
+    ([], "al menos uno"),
+    ([{"base": "costumes2.remera5"}], "Elegí el cuadro"),
+    ([{"base": "costumes2.remera5", "cuadro": 2}] * 2, "dos veces"),
+    ([{"base": "costumes2.noEsUnItem", "cuadro": 2}], "no es un Item"),
+    ([{"base": "costumes2.remera5", "cuadro": 2, "cantidad": 0}], "cantidad"),
+])
+def test_lo_que_no_se_puede_entregar_como_fondo(nucleo, pedidos, error):
+    resultado = nucleo.convertir_en_fondos(pedidos)
+
+    assert not resultado["ok"] and error in resultado["error"], resultado
