@@ -38,6 +38,23 @@ def leer_simbolos(data: bytes) -> list[tuple[int, str]]:
     return simbolos
 
 
+def cuadros_de_clases(data: bytes) -> dict[str, int]:
+    """Cuántos cuadros tiene el dibujo (`DefineSprite`) de cada clase del SWF; 1 si no es un sprite."""
+    swf = _descomprimir(data)
+    cuadros: dict[int, int] = {}
+    simbolos: list[tuple[int, str]] = []
+    try:
+        for codigo, cuerpo in _tags(swf):
+            if codigo == TAG_DEFINE_SPRITE:
+                id_sprite, cantidad = struct.unpack_from("<HH", cuerpo, 0)
+                cuadros[id_sprite] = cantidad
+            elif codigo == TAG_SYMBOL_CLASS:
+                simbolos += _entradas_symbol_class(cuerpo)
+    except (struct.error, IndexError, ValueError, UnicodeDecodeError) as e:
+        raise SwfInvalido("El SWF está dañado") from e
+    return {clase: max(cuadros.get(id_simbolo, 1), 1) for id_simbolo, clase in simbolos}
+
+
 def limites_de_simbolos(data: bytes) -> dict[str, tuple[float, float, float, float]]:
     """Clase → rectángulo (x0, y0, x1, y1, en píxeles) del primer cuadro de su símbolo.
 

@@ -12,7 +12,8 @@ UI = Path(__file__).parent / "ui" / "index.html"
 _TIPOS_LOOK = ("Look de MG Items (*.mglook)", "Todos los archivos (*.*)")
 _TIPOS_ACCION = ("Acción de MG Items (*.mgaccion)", "Todos los archivos (*.*)")
 _TIPOS_TRUCADA = ("Prenda trucada de MG Items (*.mgtrucada)", "Todos los archivos (*.*)")
-_TIPOS_NPC = {"tienda": ("mgtienda", "Tienda"), "portal": ("mgportal", "Portal"), "minijuego": ("mgminijuego", "Minijuego")}  # tipo → (extensión, nombre)
+_TIPOS_NPC = {"tienda": ("mgtienda", "Tienda"), "portal": ("mgportal", "Portal"), "minijuego": ("mgminijuego", "Minijuego"),
+              "fondo": ("mgfondo", "Fondo")}  # tipo → (extensión, nombre)
 _NO_VALE_EN_ARCHIVOS = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
 
 
@@ -144,6 +145,12 @@ class Puente:
 
     def convertir_en_npcs(self, pedidos: list) -> dict:
         return self._nucleo.convertir_en_npcs(pedidos)
+
+    def fondos(self) -> dict:
+        return self._nucleo.fondos()
+
+    def cuadros_de_fondo(self, ruta: str) -> dict:
+        return self._nucleo.cuadros_de_fondo(ruta)
 
     def npcs_guardados(self, tipo: str) -> dict:
         return self._nucleo.npcs_guardados(tipo)
