@@ -1549,7 +1549,11 @@ let comportamientoFondo = "painting";
 let fondosConocidos = null; // [{ruta, clase, swf, cuadros}]
 const cuadrosDeFondo = new Map(); // ruta → [data URL de cada cuadro], o una promesa mientras se exportan
 let verObjetos = true; // la grilla muestra los objetos (si no, los cuadros del elegido)
-const MAXIMO_OBJETOS_FONDO = 48;
+// Los objetos se ven por páginas, como en el buscador de Items (con todos juntos se pedirían las imágenes de
+// cientos de SWF a la vez).
+const OBJETOS_POR_PAGINA = 12;
+let paginaFondos = 0;
+let filtroFondos = "";
 
 function nuevoFondo() {
   return { ...nuevoNpc(), comportamiento: comportamientoFondo, cuadro: null };
@@ -1621,21 +1625,29 @@ async function mostrarFondos() {
   $("otros-fondos").hidden = !enCuadros;
   $("filtro-comportamientos").hidden = Boolean(enCuadros);
   grilla.classList.toggle("con-cuadros", Boolean(enCuadros));
+  if (enCuadros) $("paginas-fondos").replaceChildren();
   if (!enCuadros) {
     $("filtro-comportamientos").placeholder = "Buscar un objeto por nombre";
     const todos = fondosConocidos ?? [];
     const texto = $("filtro-comportamientos").value.trim().toLowerCase();
-    // Se muestran los primeros: con todos, se pedirían las imágenes de cientos de SWF a la vez.
+    if (texto !== filtroFondos) {
+      filtroFondos = texto;
+      paginaFondos = 0;
+    }
     const encontrados = todos.filter((f) => f.ruta.toLowerCase().includes(texto));
-    const filas = encontrados.slice(0, MAXIMO_OBJETOS_FONDO);
+    const paginas = Math.ceil(encontrados.length / OBJETOS_POR_PAGINA);
+    paginaFondos = Math.min(paginaFondos, Math.max(paginas - 1, 0));
+    const filas = encontrados.slice(paginaFondos * OBJETOS_POR_PAGINA, (paginaFondos + 1) * OBJETOS_POR_PAGINA);
     $("cantidad-comportamientos").textContent = texto ? `${encontrados.length} de ${todos.length}` : `${todos.length}`;
+    mostrarPaginas($("paginas-fondos"), filas.length ? paginaFondos : -1, paginas, (n) => {
+      paginaFondos = n;
+      mostrarComportamientos();
+    });
     grilla.replaceChildren(...filas.map((f) => casilleroFondo(
       [elementoIcono(f.ruta), etiqueta(f.clase, "nombre"), etiqueta(`${f.swf} · ${f.cuadros} fondos`, "que-hace")],
       `${f.ruta}: ${f.cuadros} cuadros`, base === f.ruta, () => elegirObjetoDeFondo(f.ruta))));
     if (!filas.length) grilla.append(etiqueta("No hay ninguno con ese nombre.", "ayuda"));
-    if (encontrados.length > filas.length) {
-      grilla.append(etiqueta(`Se muestran los primeros ${filas.length}: escribí un nombre para encontrar los demás.`, "ayuda"));
-    }
+    grilla.scrollTop = 0;
     cargarIconos(filas.map((f) => f.ruta));
     for (const swf of new Set(filas.map((f) => f.swf))) prepararIconosDe(swf);
     return;
