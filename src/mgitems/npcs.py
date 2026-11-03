@@ -91,7 +91,8 @@ def clase_npc(fuente: str, clase: str, comportamiento: str) -> str:
     """El código AS3 de `clase` convertida en NPC con `comportamiento`, con el mismo dibujo (`fuente`: su código)."""
     if not es_comportamiento_valido(comportamiento):
         raise NoSePuedeConvertir(f"comportamiento no válido: {comportamiento}")
-    return clase_mambo(fuente, clase, [f"attributes.behavior = {texto(comportamiento)};", "attributes.monitorAttributes = false;"])
+    return clase_mambo(fuente, clase, [f"attributes.behavior = {texto(comportamiento)};", "attributes.monitorAttributes = false;"],
+                       sin_mambo_ok=True)
 
 
 class Comportamientos:

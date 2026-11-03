@@ -94,6 +94,29 @@ def test_no_convierte_con_datos_invalidos(fuente, clase, comportamiento):
         clase_npc(fuente, clase, comportamiento)
 
 
+# Un envoltorio de un dibujo (como socialNetBackgrounds): su SWF no trae MamboAsset y la clase hereda de MovieClip.
+ENVOLTORIO = '''package
+{
+   import flash.display.MovieClip;
+
+   [Embed(source="/_assets/assets.swf", symbol="symbol306")]
+   public dynamic class SocialNetBackgrounds extends MovieClip
+   {
+   }
+}
+'''
+
+
+def test_un_swf_sin_mambo_asset_hereda_de_su_base_con_un_attributes_propio():
+    codigo = clase_npc(ENVOLTORIO, "SocialNetBackgrounds", "painting")
+
+    assert 'symbol="symbol306"' in codigo  # el mismo dibujo (de varios cuadros)
+    assert "extends MovieClip" in codigo and "MamboAsset" not in codigo  # no se puede heredar de la que el SWF no trae
+    assert "import flash.display.MovieClip;" in codigo
+    assert "public var attributes:Object;" in codigo and "attributes = {};" in codigo  # su propio attributes
+    assert comportamiento_en_codigo(codigo) == "painting"
+
+
 # --- El núcleo ---
 
 CONOCIDOS = {
