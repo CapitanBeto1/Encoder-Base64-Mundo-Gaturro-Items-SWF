@@ -125,9 +125,10 @@ def test_el_mismo_objeto_llega_varias_veces_cada_una_con_su_cuadro(nucleo, ffdec
 
     assert resultado["ok"], resultado
     script = decodificar(resultado["encode"])
-    assert 'inventory.addOptions costumes2.remera5 1 null {"behavior":"painting","monitorAttributes":false,"frame":2}' in script
-    assert 'inventory.addOptions costumes2.remera5 2 null {"behavior":"painting","monitorAttributes":false,"frame":3}' in script
-    assert resultado["items"] == [{"ruta": "costumes2.remera5", "cantidad": 1}, {"ruta": "costumes2.remera5", "cantidad": 2}]
+    # Cada cuadro con su nombre: el inventario junta por nombre, y el juego ignora lo que sigue a un segundo punto.
+    assert 'inventory.addOptions costumes2.remera5.cuadro2 1 null {"behavior":"painting","monitorAttributes":false,"frame":2}' in script
+    assert 'inventory.addOptions costumes2.remera5.cuadro3 2 null {"behavior":"painting","monitorAttributes":false,"frame":3}' in script
+    assert resultado["items"] == [{"ruta": "costumes2.remera5.cuadro2", "cantidad": 1}, {"ruta": "costumes2.remera5.cuadro3", "cantidad": 2}]
     assert ffdec.trucos == []  # sin trucar ningún SWF: los atributos van en el Encode
     assert not nucleo.tiene_swf_trucado(resultado["encode"])
 

@@ -44,7 +44,7 @@ from mgitems.items import (
     separar_prefijos,
     separar_rutas,
 )
-from mgitems.fondos import COMPORTAMIENTO as COMPORTAMIENTO_FONDO, CuadrosFFDec, Fondos
+from mgitems.fondos import COMPORTAMIENTO as COMPORTAMIENTO_FONDO, SUFIJO_CUADRO, CuadrosFFDec, Fondos
 from mgitems.looks import FORMATO_ACCION, FORMATO_FONDO, FORMATO_MINIJUEGO, FORMATO_PORTAL, FORMATO_TIENDA, FORMATO_TRUCADA, AlmacenLooks, Look, LookInvalido, archivo_de_look, look_de_archivo
 from mgitems.busqueda import QUE_ES, DatosBusqueda, abrir_encuadres, espejada, guiar
 from mgitems.mambo import atributo_en_codigo, clase_de_mochila
@@ -1190,7 +1190,10 @@ class Nucleo:
             if item.get("destino") == DESCARTADO:
                 return {"ok": False, "error": f"{clase} no llega al juego: {motivo_de(item) or 'el juego lo descarta'}."}
             atributos = {"behavior": COMPORTAMIENTO_FONDO, "monitorAttributes": False, "frame": cuadro}
-            filas.append((base, cantidad, atributos))
+            # El inventario junta los Items por su nombre (`Inventory.itemsGrouped`), así que cada cuadro lleva uno
+            # propio: el juego carga `swf.clase` e ignora lo que sigue a un segundo punto (`Libraries.getPackName` y
+            # `getItemName` toman `split(".")[0]` y `[1]`), y el mismo dibujo llega en otra casilla.
+            filas.append((f"{base}{SUFIJO_CUADRO}{cuadro}", cantidad, atributos))
         script = generar_script_con_atributos(filas)
         return {"ok": True, "items": [{"ruta": base, "cantidad": cantidad} for base, cantidad, _ in filas],
                 "script": script, "encode": codificar(script)}

@@ -24,6 +24,9 @@ from mgitems.swf import leer_simbolos
 
 ARCHIVO_FONDOS = Path(__file__).parent / "datos" / "fondos.json"
 COMPORTAMIENTO = "painting"
+# Cada cuadro llega con su propio nombre ("swf.clase.cuadro2") para que el inventario no los junte en una casilla:
+# el juego ignora lo que sigue a un segundo punto. Sin "_so" ni "_on": el juego rechaza los nombres que los tienen.
+SUFIJO_CUADRO = ".cuadro"
 # Más cuadros son animaciones largas, no fondos; y exportarlos tardaría mucho.
 MAXIMO_CUADROS = 60
 # El tamaño más grande de las vistas previas de cada cuadro (en píxeles).
