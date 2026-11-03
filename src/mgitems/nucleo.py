@@ -16,7 +16,7 @@ from pathlib import Path
 from mgitems.cache_swf import CacheSwf
 from mgitems.catalogo import buscar_en_catalogo, cargar_catalogo
 from mgitems.categorias import (
-    CASA, CacheCategorias, IndicePiezas, categorias, decoracion_en_acciones, donde_se_ven, otros_usos, tipos_de_items,
+    CASA, CacheCategorias, IndicePiezas, categorias, decoracion_en_acciones, es_decoracion, donde_se_ven, otros_usos, tipos_de_items,
     usos_de_piezas,
 )
 from mgitems.destinos import DESCARTADO, descarte_por_nombre, es_de_pasaporte, motivo_de
@@ -269,7 +269,8 @@ class Nucleo:
         return self._de_varios_swf(swfs, "piezas", piezas)
 
     def decoracion_de_swfs(self, swfs: list | None = None) -> dict:
-        """Los objetos de la casa (muebles, decoración) de varios SWF (None: todos los del juego), con la
+        """Los objetos de la casa (muebles, decoración, y los dibujos de Flash, que llegan a la casa como un objeto)
+        de varios SWF (None: todos los del juego), con la
         forma de las Piezas de `piezas_de_swfs` (`partes` vacías, `uso` "casa", `decoracion`): una acción
         los puede mostrar como a una Pieza (probado en el juego). `sin_accion`: por qué no lo mostraría."""
         def decoracion(swf, obtenido):
@@ -277,7 +278,7 @@ class Nucleo:
                      "pasaporte": item.get("pasaporte", False),
                      "sin_accion": motivo_pieza_sin_accion(f"{swf}.{clase}", obtenido["se_ve"].get(clase, {}))}
                     for clase, item in sorted(obtenido["items"].items(), key=lambda i: orden_natural(i[0]))
-                    if item["tipo"] == CASA and item.get("destino") != DESCARTADO]
+                    if es_decoracion(item) and item.get("destino") != DESCARTADO]
 
         return self._de_varios_swf(swfs, "decoracion", decoracion)
 

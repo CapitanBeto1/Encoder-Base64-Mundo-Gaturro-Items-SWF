@@ -232,3 +232,14 @@ def test_con_ffdec_real_un_objeto_de_la_casa_guarda_la_accion(sistema):
     trucado = Path(reglas(sistema)[1]["Action"]).read_bytes()
     codigo = ItemsBaseFFDec().fuentes(trucado, ["tostadora"])["tostadora"]
     assert "extends MamboAsset" in codigo and atributo_en_codigo(codigo, "attr_action") == "dance"
+
+
+def test_una_accion_puede_mostrar_objetos_de_la_casa_y_dibujos():
+    from mgitems.categorias import decoracion_en_acciones, es_decoracion
+
+    items = {"silla": {"tipo": "casa"}, "fondo": {"tipo": "otro", "dibujo": True}, "raro": {"tipo": "otro"},
+             "remera": {"tipo": "prenda"}}
+    assert [c for c, i in items.items() if es_decoracion(i)] == ["silla", "fondo"]
+    # Un dibujo grande (como socialNetBackgrounds.SocialNetBackgrounds) queda marcado, como un mueble grande.
+    limites = {"silla": (0, 0, 40, 40), "fondo": (0, 0, 1050, 600), "raro": (0, 0, 900, 900)}
+    assert decoracion_en_acciones("x", items, limites) == {"fondo": {"accion": "grande"}}
