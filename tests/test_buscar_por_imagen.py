@@ -225,3 +225,20 @@ def test_una_prenda_cortada_lleva_al_traje_y_dice_que_parte(sistema, tmp_path):
     pantalon = next(r for r in resultados if r["ruta"] == "ropa.pantalon")
     assert pantalon["cortado"] is None  # se encontró por su ícono
 
+
+
+def test_una_pieza_que_ningun_item_trae_se_muestra_como_pieza_sola(sistema, tmp_path):
+    # Como unicefClothes.remeraEscritor_on: se ve puesta en otros Gaturros (armada con Trucar Prenda o Looks), pero
+    # ningún Item la trae. Se muestra igual, para ponerla en una Prenda trucada.
+    indice = json.loads(json.dumps(INDICE))
+    indice["swfs"]["ropa"]["piezas"]["suelta_on"] = ["cloth"]
+    (tmp_path / "indice.json").write_text(json.dumps(indice), encoding="utf-8")
+    nucleo = Nucleo(sistema, ProcesosFalso(), catalogo=[], indice=IndicePiezas(tmp_path / "indice.json"), datos_busqueda=DatosFalsos())
+
+    resultados = nucleo.buscar_por_imagen(captura((0, 0, 255)))["resultados"]
+    torsos = nucleo.buscar_por_imagen(captura((0, 0, 255)), que="cloth")["resultados"]
+
+    suelta = next(r for r in resultados if r["ruta"] == "ropa.suelta_on")
+    assert suelta["suelta"] and suelta["tipo"] == "pieza" and suelta["destino"] is None
+    assert suelta["cortado"] == {"pieza": "ropa.suelta_on", "partes": ["cloth"]}  # para «Trucar solo esta parte»
+    assert "ropa.suelta_on" in [r["ruta"] for r in torsos]

@@ -1376,11 +1376,19 @@ class Nucleo:
         return True
 
     def _fila_de_busqueda(self, ruta: str, parecido: float, por_pieza: str | None) -> dict | None:
-        """Un resultado de la búsqueda, si `ruta` es un Item que llega al juego (las Piezas sueltas no se reciben)."""
+        """Un resultado de la búsqueda, si `ruta` es un Item que llega al juego, o una Pieza que se viste pero que
+        ningún Item trae (`suelta`: se ve puesta en otros Gaturros, armada con Trucar Prenda o con Looks)."""
         swf, _, clase = ruta.rpartition(".")
         obtenido = self._indice.leer(swf)
         item = (obtenido or {}).get("items", {}).get(clase)
-        if item is None or item.get("destino") == DESCARTADO:
+        if item is None:
+            partes = (obtenido or {}).get("piezas", {}).get(clase) or []
+            if not partes:
+                return None
+            return {"ruta": ruta, "clase": clase, "swf": swf, "tipo": "pieza", "partes": partes, "mascota": None,
+                    "destino": None, "motivo": None, "pasaporte": es_de_pasaporte(ruta), "parecido": round(parecido, 4),
+                    "por_pieza": ruta, "cortado": {"pieza": ruta, "partes": partes}, "suelta": True}
+        if item.get("destino") == DESCARTADO:
             return None
         return {"ruta": ruta, "clase": clase, "swf": swf, "tipo": item["tipo"], "partes": item.get("partes", []),
                 "mascota": item.get("mascota"), "destino": item.get("destino"), "motivo": motivo_de(item),

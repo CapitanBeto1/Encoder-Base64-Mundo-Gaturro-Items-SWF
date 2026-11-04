@@ -2760,20 +2760,24 @@ async function buscarCaptura() {
 function mostrarResultadosImagen(resultados) {
   $("resultados-imagen").replaceChildren(
     ...resultados.map((item, i) => {
-      const destino = DESTINOS[item.destino] ?? DESTINOS.casa;
-      const que = queEsItem(item);
+      // Una Pieza suelta: se ve puesta (en otros Gaturros, armada con Trucar Prenda o Looks), pero ningún Item la trae.
+      const destino = item.suelta ? { nombre: "Pieza sola" } : DESTINOS[item.destino] ?? DESTINOS.casa;
+      const que = item.suelta ? nombreDeParte(item.partes[0]) : queEsItem(item);
       const boton = Object.assign(document.createElement("button"), {
         type: "button", className: "resultado-imagen",
-        title: `${item.clase} · ${item.swf} · ${que}\nLlega a: ${destino.nombre}` + (item.motivo ? ` (${item.motivo})` : "")
-          + (item.por_pieza ? `\nSe parece a lo que se ve puesto (${claseDeRuta(item.por_pieza)})` : ""),
+        title: item.suelta
+          ? `${item.clase} · ${item.swf} · ${que}\nEs una Pieza que ningún Item del juego trae: tocala para ponerla en una Prenda trucada.`
+          : `${item.clase} · ${item.swf} · ${que}\nLlega a: ${destino.nombre}` + (item.motivo ? ` (${item.motivo})` : "")
+            + (item.por_pieza ? `\nSe parece a lo que se ve puesto (${claseDeRuta(item.por_pieza)})` : ""),
       });
       boton.setAttribute("aria-pressed", String(items.some((x) => x.ruta === item.ruta)));
       const llega = etiqueta(destino.nombre, "destino-item");
-      llega.dataset.bien = String(!item.motivo);
+      llega.dataset.bien = String(!item.motivo && !item.suelta);
       // Cortado: lo que se parece es una sola parte del Item (el pantalón de un traje, las mangas de una remera).
       const parte = item.cortado?.partes[0];
-      const cortado = item.cortado ? [etiqueta(`✂ Solo ${nombreDeParte(parte).toLowerCase()}`, "cortado-resultado")] : [];
-      if (item.cortado) boton.title += `\nSe parece a una sola parte: ${claseDeRuta(item.cortado.pieza)} (${nombreDeParte(parte)})`;
+      const cortado = item.suelta ? [etiqueta("Ningún Item la trae", "cortado-resultado")]
+        : item.cortado ? [etiqueta(`✂ Solo ${nombreDeParte(parte).toLowerCase()}`, "cortado-resultado")] : [];
+      if (item.cortado && !item.suelta) boton.title += `\nSe parece a una sola parte: ${claseDeRuta(item.cortado.pieza)} (${nombreDeParte(parte)})`;
       // Si está cortado, se ve la parte que se parece (el pantalón), y el Item entero (el traje) chiquito en una esquina.
       // (La parte se dibuja puesta en un Gaturro, como en Looks: suelta no se reconoce, un pantalón es un pedazo de cadera.)
       const imagen = item.cortado ? Object.assign(document.createElement("img"), { className: "gaturro-resultado", alt: "" }) : elementoIcono(item.ruta);
@@ -2783,7 +2787,7 @@ function mostrarResultadosImagen(resultados) {
         imagen.style.transformOrigin = `50% ${ALTURA_DE_PARTE[parte] ?? 55}%`;
         pedirGaturro(imagen, coloresDe(null), { [parte]: item.cortado.pieza });
       }
-      const entero = item.cortado ? [Object.assign(elementoIcono(item.ruta), { title: `${item.clase}: lo que vas a recibir (entero)` })] : [];
+      const entero = item.cortado && !item.suelta ? [Object.assign(elementoIcono(item.ruta), { title: `${item.clase}: lo que vas a recibir (entero)` })] : [];
       entero.forEach((e) => e.classList.add("icono-entero"));
       const marco = item.cortado ? Object.assign(document.createElement("span"), { className: "marco-gaturro" }) : imagen;
       if (item.cortado) marco.append(imagen);
@@ -2791,6 +2795,7 @@ function mostrarResultadosImagen(resultados) {
         ...cortado, etiqueta(`${i + 1}`, "puesto-resultado"));
       if (item.pasaporte) marcarPasaporte(boton);
       boton.addEventListener("click", () => {
+        if (item.suelta) return trucarSoloEstaParte(item.ruta, parte); // no hay Item que recibir
         if (items.some((x) => x.ruta === item.ruta)) {
           quitarItem(item.ruta);
           avisar($("mensaje-imagen"), `Se sacó ${item.clase} de «Items a recibir».`, "exito");
