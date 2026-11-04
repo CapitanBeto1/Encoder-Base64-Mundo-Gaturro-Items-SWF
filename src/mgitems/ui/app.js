@@ -1284,7 +1284,7 @@ function mostrarBases() {
       boton.setAttribute("aria-pressed", String(lookActual.base === b.ruta));
       boton.append(...filaDeBase(b));
       boton.addEventListener("click", () => {
-        if ((vista === "trucar" || (esNpc() && !esFondos())) && lookActual.lista.some((t) => t.base === b.ruta)) {
+        if (vista === "trucar" && lookActual.lista.some((t) => t.base === b.ruta)) {
           return avisar($("mensaje-base"), `${b.clase} ya está en la lista: cada uno necesita otro Item.`, "advertencia");
         }
         $("dialogo-base").close();
@@ -1854,8 +1854,9 @@ $("agregar-npc").addEventListener("click", () => {
   if (esFondos() && lookActual.lista.some((t) => t.base === base && t.cuadro === cuadro)) {
     return avisarLista(`${claseDeRuta(base)} con el cuadro ${cuadro} ya está en la lista: si querés más, subí su cantidad.`, "advertencia");
   }
-  if (!esFondos() && lookActual.lista.some((t) => t.base === base)) {
-    return avisarLista(`${claseDeRuta(base)} ya está en la lista: cada uno necesita otro Item.`, "advertencia");
+  // El mismo Item puede ir con otro comportamiento (llega como otro objeto); con el mismo, se sube la cantidad.
+  if (!esFondos() && lookActual.lista.some((t) => t.base === base && t.comportamiento === comportamiento)) {
+    return avisarLista(`${claseDeRuta(base)} con ${comportamiento} ya está en la lista: si querés más, subí su cantidad.`, "advertencia");
   }
   lookActual.lista.push({ base, comportamiento, cantidad: 1, nombre: lookActual.nombre.trim(), ...(esFondos() ? { cuadro } : {}) });
   avisarLista(`Se agregó ${claseDeRuta(base)} (${esFondos() ? `cuadro ${cuadro}` : comportamiento}). Armá otro o tocá «Convertir todos».`, "exito");
@@ -1872,7 +1873,7 @@ async function convertirNpcs() {
   const resultado = esFondos()
     // Los fondos no se trucan: sus atributos van en el Encode (y el mismo objeto puede ir con varios cuadros).
     ? await mientras("Armando el Encode…", () => api().convertir_en_fondos(lista.map(({ base, cantidad, cuadro }) => ({ base, cantidad, cuadro }))))
-    : await mientras(`Convirtiendo ${lista.length === 1 ? "el Item" : `${lista.length} Items`}… (tarda unos segundos)`,
+    : await mientras("Armando el Encode…",
       () => api().convertir_en_npcs(lista.map(({ base, comportamiento, cantidad }) => ({ base, comportamiento, cantidad }))));
   if (!resultado.ok) return avisarLista(resultado.error, "error");
   mostrarEncode(resultado);

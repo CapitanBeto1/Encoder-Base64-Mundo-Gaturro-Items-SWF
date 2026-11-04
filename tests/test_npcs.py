@@ -187,23 +187,34 @@ def test_convertir_cualquier_item_en_un_npc(nucleo, ffdec):
     ])
 
     assert resultado["ok"], resultado
-    assert decodificar(resultado["encode"]).count("inventory.add") == 2
-    assert "inventory.add 2 costumes2.remera5" in resultado["script"]
+    # Los atributos van en el Encode (inventory.addOptions): no se truca ningún SWF.
+    script = decodificar(resultado["encode"])
+    assert 'inventory.addOptions costumes2.remera5 2 null {"behavior":"brujaMesa","monitorAttributes":false}' in script
+    assert 'inventory.addOptions costumes2.gorra1 1 null {"behavior":"magia/portal","monitorAttributes":false}' in script
     assert resultado["items"] == [{"ruta": "costumes2.remera5", "cantidad": 2}, {"ruta": "costumes2.gorra1", "cantidad": 1}]
-    convertidas = dict(ffdec.trucos)
-    assert comportamiento_en_codigo(convertidas["remera5"]) == "brujaMesa"
-    assert "extends MamboAsset" in convertidas["gorra1"]
-    assert nucleo.tiene_swf_trucado(resultado["encode"])  # las dos en el mismo SWF trucado
+    assert ffdec.trucos == [] and not nucleo.tiene_swf_trucado(resultado["encode"])
+
+
+def test_el_mismo_item_con_otro_comportamiento_llega_como_otro_objeto(nucleo):
+    resultado = nucleo.convertir_en_npcs([
+        {"base": "costumes2.remera5", "comportamiento": "brujaMesa"},
+        {"base": "costumes2.remera5", "comportamiento": "magia/portal"},
+        {"base": "costumes2.gorra1", "comportamiento": "brujaMesa"},
+    ])
+
+    assert resultado["ok"], resultado
+    # El inventario junta por nombre: cada uno lleva su comportamiento detrás de un segundo punto (el juego lo ignora).
+    assert [i["ruta"] for i in resultado["items"]] == ["costumes2.remera5.brujaMesa", "costumes2.remera5.magiaportal",
+                                                        "costumes2.gorra1"]
 
 
 @pytest.mark.parametrize("pedidos, error", [
     ([], "al menos uno"),
-    ([{"base": "costumes2.remera5", "comportamiento": "brujaMesa"}] * 2, "dos veces"),
+    ([{"base": "costumes2.remera5", "comportamiento": "brujaMesa"}] * 2, "subí su cantidad"),
     ([{"base": "costumes2.remera5", "comportamiento": "brujaMesa", "cantidad": 0}], "cantidad"),
     ([{"base": "costumes2.remera5", "comportamiento": "noExiste"}], "no tiene el comportamiento"),
     ([{"base": "costumes2.noEsUnItem", "comportamiento": "brujaMesa"}], "no es un Item"),
     ([{"base": "clothes1.remera5", "comportamiento": "brujaMesa"}], "no sirve de Item base"),
-    ([{"base": "costumes2.silla", "comportamiento": "brujaMesa"}], "no tiene dibujo"),
 ])
 def test_lo_que_no_se_puede_convertir(nucleo, ffdec, pedidos, error):
     resultado = nucleo.convertir_en_npcs(pedidos)
@@ -266,7 +277,7 @@ def test_los_minijuegos_se_convierten_y_se_guardan_como_las_tiendas(nucleo, ffde
     guardado = nucleo.guardar_npc("minijuego", escalada)
     archivo = tmp_path / "escalar.mgminijuego"
 
-    assert convertido["ok"] and comportamiento_en_codigo(dict(ffdec.trucos)["gorra1"]) == "escritoAMano"
+    assert convertido["ok"] and '{"behavior":"escritoAMano","monitorAttributes":false}' in convertido["script"]
     assert guardado["ok"] and [m["nombre"] for m in nucleo.npcs_guardados("minijuego")["npcs"]] == ["Escalar"]
     assert nucleo.npcs_guardados("tienda")["npcs"] == []
     assert nucleo.exportar_npc("minijuego", escalada, str(archivo))["ok"]
@@ -280,12 +291,9 @@ from test_prendas import _hay_ffdec_y_red, reglas  # noqa: E402
 
 
 @pytest.mark.skipif(not _hay_ffdec_y_red(), reason="Hace falta Java, FFDec e internet")
-def test_con_ffdec_real_una_prenda_y_un_objeto_de_la_casa_se_convierten_en_npc(sistema):
-    # Probado en el juego: gorroVietnamita (una Prenda de un SWF sin NpcMamboAsset) como la tienda brujaMesa
-    # y el semáforo de virtualGoods como el portal subteJapon. Llegan a la casa y siguen así al volver a entrar.
-    from pathlib import Path
-    from mgitems.prendas import ItemsBaseFFDec
-
+def test_se_entrega_sin_swf_trucado(sistema):
+    # Probado en el juego con la pestaña Fondos: los atributos de inventory.addOptions llegan y se guardan. Antes se
+    # trucaba el SWF (ADR 0007); ahora la entrega es solo la regla de Lola.
     nucleo = Nucleo(sistema, ProcesosFalso(), catalogo=[])
 
     resultado = nucleo.convertir_en_npcs([
@@ -295,11 +303,7 @@ def test_con_ffdec_real_una_prenda_y_un_objeto_de_la_casa_se_convierten_en_npc(s
 
     assert resultado["ok"], resultado
     assert nucleo.entregar_encode(resultado["encode"])["ok"]
-    swf_trucados = {Path(r["Action"]).name: Path(r["Action"]).read_bytes() for r in reglas(sistema)[1:]}
-    assert len(swf_trucados) == 2
-    for clase, comportamiento in (("gorroVietnamita", "brujaMesa"), ("semaforo", "subteJapon")):
-        codigo = next(c for data in swf_trucados.values() if (c := ItemsBaseFFDec().fuentes(data, [clase]).get(clase)))
-        assert "extends MamboAsset" in codigo and comportamiento_en_codigo(codigo) == comportamiento
+    assert len(reglas(sistema)) == 1  # solo Lola
 
 
 # --- Encontrados en las salas que se recorrieron (el caché del juego) ---
