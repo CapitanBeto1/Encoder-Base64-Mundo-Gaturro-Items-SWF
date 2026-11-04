@@ -157,6 +157,21 @@ def test_sin_los_datos_primero_hay_que_bajarlos(sistema, tmp_path):
     assert nucleo.buscar_por_imagen(captura((255, 0, 0)))["ok"]
 
 
+def test_sin_onnxruntime_avisa_antes_de_bajar_nada(sistema, tmp_path, monkeypatch):
+    # En algunos Python (32 bits, versiones muy nuevas) no hay onnxruntime: lo demás del programa funciona igual.
+    import mgitems.busqueda
+    import mgitems.nucleo
+    monkeypatch.setattr(mgitems.nucleo, "hay_onnxruntime", lambda: False)
+    monkeypatch.setitem(__import__("sys").modules, "onnxruntime", None)  # `import onnxruntime` falla
+    nucleo = nucleo_con(sistema, tmp_path, DatosFalsos(listos=False))
+
+    estado = nucleo.estado_busqueda()
+
+    assert not estado["ok"] and estado["sin_onnxruntime"] and "onnxruntime" in estado["error"]
+    with pytest.raises(RuntimeError, match="onnxruntime"):
+        mgitems.busqueda.Modelo(tmp_path / "modelo.onnx")
+
+
 def test_una_imagen_que_no_se_puede_leer(sistema, tmp_path):
     nucleo = nucleo_con(sistema, tmp_path, DatosFalsos())
 
