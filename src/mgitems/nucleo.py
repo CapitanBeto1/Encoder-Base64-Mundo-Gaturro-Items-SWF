@@ -1840,11 +1840,13 @@ class Nucleo:
                 return interpretados
             items = interpretados["items"]
 
+        # Un Item puede llevar atributos propios (`atributos`, ej. una Pieza suelta: ver `pieza_para_recibir`).
+        atributos = {i.get("ruta", ""): i.get("atributos") for i in items if isinstance(i, dict) and i.get("atributos")}
         pedidos = [(i, 1) if isinstance(i, str) else (i.get("ruta", ""), i.get("cantidad", 1)) for i in items]
         if not pedidos:
             return {"ok": False, "error": "Agregá al menos un Item a la lista."}
 
-        invalidas = [ruta for ruta, _ in pedidos if not es_ruta_valida(ruta)]
+        invalidas = [ruta for ruta, _ in pedidos if not (es_ruta_valida(ruta) or (ruta in atributos and _ruta_con_sufijo(ruta)))]
         if invalidas:
             return {
                 "ok": False,
@@ -1858,10 +1860,53 @@ class Nucleo:
                 "error": "La cantidad tiene que ser un número entero mayor que 0: " + ", ".join(cantidades_invalidas),
             }
 
+        malos = [ruta for ruta, a in atributos.items() if not _atributos_de_prenda(a)]
+        if malos:
+            return {"ok": False, "error": "Los atributos no tienen la forma esperada: " + ", ".join(malos)}
+
         pedidos = [(ruta, _cantidad(cantidad)) for ruta, cantidad in pedidos]
-        script = generar_script(pedidos)
-        avisos = [{"ruta": ruta, **aviso} for ruta, _ in pedidos if (aviso := self._aviso_de_destino(ruta))]
+        script = generar_script_con_atributos([(r, c, atributos.get(r)) for r, c in pedidos]) if atributos else generar_script(pedidos)
+        avisos = [{"ruta": ruta, **aviso} for ruta, _ in pedidos if ruta not in atributos and (aviso := self._aviso_de_destino(ruta))]
         return {"ok": True, "items": _como_items(pedidos), "script": script, "encode": codificar(script), "avisos": avisos}
+
+    def pieza_para_recibir(self, ruta: str) -> dict:
+        """Una Pieza que ningún Item trae ("swf.pieza_on"), lista para recibirla vestible: `item` para «Items a
+        recibir», con sus `atributos`.
+
+        Una Prenda del juego es solo un Item con atributos `wear_<Parte>` = la Pieza (`ClothMamboAsset.process`), y
+        `inventory.addOptions` manda atributos propios que reemplazan a los suyos (`mergeAttrs`). El juego no acepta
+        un Item cuyo nombre tenga «_on» (`ItemControl.isOlderOrSuffixed`), así que la Pieza no puede ser el Item:
+        llega en una Prenda que viste las mismas Partes (`base`, de la que toma el nombre y el ícono en el juego),
+        con esas Partes reemplazadas. Sin trucar ningún SWF. Con la remera va su manga (`…_brazo_on`), si la hay."""
+        if not isinstance(ruta, str) or not es_ruta_valida(ruta):
+            return {"ok": False, "error": "La Pieza no es válida."}
+        swf, _, pieza = ruta.rpartition(".")
+        piezas = (self._indice.leer(swf) or {}).get("piezas", {})
+        partes = piezas.get(pieza) or []
+        if not partes:
+            return {"ok": False, "error": f"{pieza} no es una Pieza que se viste."}
+        wear = {partes[0]: ruta}
+        manga = pieza.removesuffix("_on") + "_brazo_on"
+        if partes[0] == "cloth" and manga in piezas:
+            wear["arm"] = f"{swf}.{manga}"
+        base = self._prenda_que_viste(set(wear), swf)
+        if base is None:
+            return {"ok": False, "error": f"No hay una Prenda que vista solo {', '.join(sorted(wear))} para llevar {pieza}."}
+        nombre = f"{base}.{_sufijo_de_nombre(pieza.removesuffix('_on'))}"
+        return {"ok": True, "item": {"ruta": nombre, "cantidad": 1, "atributos": {f"wear_{p}": v for p, v in wear.items()},
+                                     "pieza": ruta, "base": base}}
+
+    def _prenda_que_viste(self, partes: set[str], swf_preferido: str) -> str | None:
+        """Una Prenda que viste exactamente esas Partes (la primera del mismo SWF, si hay), que llega al guardarropa,
+        no es de `clothes1` (el servidor la vuelve a la original) ni de pasaporte."""
+        swfs = [swf_preferido] + sorted((s for s in self._indice.swfs() if s != swf_preferido), key=orden_natural)
+        for swf in swfs:
+            for clase, item in sorted((self._indice.leer(swf) or {}).get("items", {}).items(), key=lambda i: orden_natural(i[0])):
+                ruta = f"{swf}.{clase}"
+                if (item.get("tipo") == PRENDA and set(item.get("partes", [])) == partes and item.get("destino") == "guardarropa"
+                        and swf != "clothes1" and not es_de_pasaporte(ruta) and not no_sirve_de_base(ruta, PRENDA)):
+                    return ruta
+        return None
 
     def _aviso_de_destino(self, ruta: str) -> dict | None:
         """{"destino", "motivo"} si el Item no va a llegar bien al juego (según el índice o su nombre), o None."""
@@ -1964,6 +2009,21 @@ def _npc_valido(datos: dict, tipo: str) -> Look:
     if tipo == FONDO and (npc.comportamiento != COMPORTAMIENTO_FONDO or npc.cuadro is None):
         raise LookInvalido("Elegí el cuadro que se ve.")
     return npc
+
+
+def _ruta_con_sufijo(ruta: str) -> bool:
+    """"swf.clase.sufijo": un Item con otro nombre para el inventario (el juego ignora lo que sigue al 2.º punto)."""
+    base, _, sufijo = ruta.rpartition(".")
+    return es_ruta_valida(base) and sufijo.isalnum()
+
+
+_ATRIBUTO_WEAR = re.compile(r"^wear_[A-Za-z][A-Za-z0-9]*$")
+
+
+def _atributos_de_prenda(atributos) -> bool:
+    """Si son atributos `wear_<Parte>` = Pieza ("swf.pieza"), los únicos que se aceptan en «Items a recibir»."""
+    return isinstance(atributos, dict) and bool(atributos) and all(
+        isinstance(k, str) and _ATRIBUTO_WEAR.match(k) and isinstance(v, str) and es_ruta_valida(v) for k, v in atributos.items())
 
 
 def _sufijo_de_nombre(texto: str) -> str:
