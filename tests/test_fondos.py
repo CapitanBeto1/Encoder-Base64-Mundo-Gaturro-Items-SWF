@@ -94,8 +94,7 @@ def test_convertir_un_fondo_con_su_cuadro(nucleo, ffdec):
     resultado = nucleo.convertir_en_npcs([{"base": "costumes2.remera5", "comportamiento": "painting", "cuadro": 2}])
 
     assert resultado["ok"], resultado
-    codigo = dict(ffdec.trucos)["remera5"]
-    assert comportamiento_en_codigo(codigo) == "painting" and "attributes.frame = 2;" in codigo
+    assert '{"behavior":"painting","monitorAttributes":false,"frame":2}' in resultado["script"] and ffdec.trucos == []
     malo = nucleo.convertir_en_npcs([{"base": "costumes2.gorra1", "comportamiento": "painting", "cuadro": 0}])
     assert not malo["ok"] and "cuadro" in malo["error"]
 

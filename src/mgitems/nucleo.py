@@ -49,7 +49,7 @@ from mgitems.looks import FORMATO_ACCION, FORMATO_FONDO, FORMATO_MINIJUEGO, FORM
 from mgitems.busqueda import FALTA_ONNXRUNTIME, QUE_ES, DatosBusqueda, hay_onnxruntime, abrir_encuadres, espejada, guiar
 from mgitems.mambo import atributo_en_codigo, clase_de_mochila
 from mgitems.npcs import (
-    FONDO, MINIJUEGO, PORTAL, TIENDA, TIPOS as TIPOS_NPC, Comportamientos, ComportamientosEncontrados, NoSePuedeConvertir, clase_npc, clasificar,
+    FONDO, MINIJUEGO, PORTAL, TIENDA, TIPOS as TIPOS_NPC, Comportamientos, ComportamientosEncontrados, NoSePuedeConvertir, clasificar,
     comportamiento_en_codigo, comportamientos_en_cache, describir, es_comportamiento_valido, leer_npc,
 )
 from mgitems.prendas import (
@@ -1079,17 +1079,21 @@ class Nucleo:
     def convertir_en_npcs(self, pedidos: list) -> dict:
         """Varios Items convertidos en NPC en un solo Encode: cada uno (`{"base", "comportamiento", "cantidad"}`) es
         un Item ("swf.clase", de cualquier SWF) que llega a la casa y, al tocarlo, hace lo que su comportamiento.
-        Cada Item va una sola vez. Los de un mismo SWF van en el mismo SWF trucado."""
+
+        No se truca ningún SWF: los atributos van en el Encode (`inventory.addOptions`, ADR 0007), así que sirve
+        cualquier SWF (también los que no traen `MamboAsset`) y el mismo Item puede ir varias veces con otro
+        comportamiento. Como el inventario junta los Items por nombre, el que va más de una vez lleva, en cada una,
+        su comportamiento detrás de un segundo punto ("swf.clase.brujaMesa"), que el juego ignora al cargarlo.
+        `cuadro` (opcional): el que muestra al llegar, para `painting` (atributo `frame`)."""
         if not isinstance(pedidos, list) or not pedidos:
             return {"ok": False, "error": "Agregá al menos uno a la lista."}
         vistas, filas = set(), []
         for p in pedidos:
-            if not isinstance(p, dict) or not isinstance(p.get("base"), str) or not es_ruta_valida(p["base"]) \
-                    or not isinstance(p.get("comportamiento"), str):
+            if not isinstance(p, dict) or not isinstance(p.get("base"), str) or not es_ruta_valida(p["base"])                     or not isinstance(p.get("comportamiento"), str):
                 return {"ok": False, "error": "La lista no tiene la forma esperada."}
-            if p["base"] in vistas:
-                return {"ok": False, "error": f"{p['base']} está dos veces: cada uno necesita otro Item."}
-            vistas.add(p["base"])
+            if (p["base"], p["comportamiento"]) in vistas:
+                return {"ok": False, "error": f"{p['base']} con {p['comportamiento']} está dos veces: subí su cantidad."}
+            vistas.add((p["base"], p["comportamiento"]))
             if (cantidad := _cantidad(p.get("cantidad", 1))) is None:
                 return {"ok": False, "error": f"La cantidad de {p['base']} tiene que ser un número entero mayor que 0."}
             cuadro = p.get("cuadro")
@@ -1098,60 +1102,26 @@ class Nucleo:
             descripto = self.comportamiento(p["comportamiento"])
             if not descripto["ok"]:
                 return descripto
-            filas.append((p["base"], p["comportamiento"], cantidad, cuadro))
-
-        por_swf: dict[str, dict[str, str]] = {}
-        cuadros: dict[str, dict[str, int]] = {}
-        for base, comportamiento, _, cuadro in filas:
-            swf, _, clase = base.rpartition(".")
+            swf, _, clase = p["base"].rpartition(".")
             obtenido = self._categorias_de(swf)
             if not obtenido["ok"]:
-                return {"ok": False, "error": f"No se pudo usar {base}: {obtenido['error']}"}
+                return {"ok": False, "error": f"No se pudo usar {p['base']}: {obtenido['error']}"}
             item = obtenido["items"].get(clase)
             if item is None:
                 return {"ok": False, "error": f"{clase} no es un Item de {swf}."}
-            if motivo := no_sirve_de_base(base, item["tipo"]):
+            if motivo := no_sirve_de_base(p["base"], item["tipo"]):
                 return {"ok": False, "error": f"{clase} no sirve de Item base: {motivo}."}
-            por_swf.setdefault(swf, {})[clase] = comportamiento
-            if cuadro is not None:
-                cuadros.setdefault(swf, {})[clase] = cuadro
+            filas.append((p["base"], p["comportamiento"], cantidad, cuadro))
 
-        trucados = {}
-        for swf, comportamientos in por_swf.items():
-            obtenido = {"ok": True, "data": self._data_swf} if swf == self._swf_abierto else self._datos_de_otro_swf(swf)
-            if not obtenido["ok"]:
-                return {"ok": False, "error": f"No se pudo usar {swf}: {obtenido['error']}"}
-            try:
-                trucados[swf] = self._convertidos(obtenido["data"], comportamientos, cuadros.get(swf))
-            except (TruqueoFallido, NoSePuedeConvertir) as e:
-                return {"ok": False, "error": f"No se pudieron convertir los Items de {swf}: {e}."}
-            except FFDecNoDisponible as e:
-                return {"ok": False, "error": f"{e}: no se puede trucar."}
-            except (OSError, subprocess.SubprocessError) as e:
-                return {"ok": False, "error": f"No se pudieron convertir los Items de {swf}: {e}"}
-
-        script = generar_script([(base, cantidad) for base, _, cantidad, _ in filas])
-        encode = codificar(script)
-        self._trucos[encode] = trucados
-        return {"ok": True, "items": [{"ruta": base, "cantidad": cantidad} for base, _, cantidad, _ in filas],
-                "script": script, "encode": encode}
-
-    def _convertidos(self, data: bytes, comportamientos: dict[str, str], cuadros: dict[str, int] | None = None) -> bytes:
-        """El SWF `data` con cada clase convertida en NPC con su comportamiento (y su cuadro, si tiene), verificado."""
-        clases = list(comportamientos)
-        with self._candado_ffdec:
-            fuentes = self._prendas_ffdec.fuentes(data, clases)
-        faltan = [c for c in clases if c not in fuentes]
-        if faltan:
-            raise NoSePuedeConvertir(f"no se encontró el código de {', '.join(faltan)}")
-        codigos = {c: clase_npc(fuentes[c], c, comportamientos[c], (cuadros or {}).get(c)) for c in clases}
-        with self._candado_ffdec:
-            trucado = self._prendas_ffdec.reemplazar(data, codigos)
-            verificadas = self._prendas_ffdec.fuentes(trucado, clases)
-        mal = [c for c in clases if comportamiento_en_codigo(verificadas.get(c, "")) != comportamientos[c]]
-        if mal:
-            raise TruqueoFallido(f"el SWF trucado no quedó con el comportamiento de {', '.join(mal)}")
-        return trucado
+        repetidos = {b for b in (f[0] for f in filas) if sum(f[0] == b for f in filas) > 1}
+        entregas = []
+        for base, comportamiento, cantidad, cuadro in filas:
+            atributos = {"behavior": comportamiento, "monitorAttributes": False} | ({"frame": cuadro} if cuadro else {})
+            nombre = f"{base}.{_sufijo_de_nombre(comportamiento)}" if base in repetidos else base
+            entregas.append((nombre, cantidad, atributos))
+        script = generar_script_con_atributos(entregas)
+        return {"ok": True, "items": [{"ruta": nombre, "cantidad": cantidad} for nombre, cantidad, _ in entregas],
+                "script": script, "encode": codificar(script)}
 
     # --- Fondos: objetos de la casa que muestran el cuadro de su dibujo que se elija (`mgitems.fondos`) ---
 
@@ -1986,6 +1956,12 @@ def _npc_valido(datos: dict, tipo: str) -> Look:
     if tipo == FONDO and (npc.comportamiento != COMPORTAMIENTO_FONDO or npc.cuadro is None):
         raise LookInvalido("Elegí el cuadro que se ve.")
     return npc
+
+
+def _sufijo_de_nombre(texto: str) -> str:
+    """Lo que va detrás del segundo punto del nombre de un Item para que el inventario no lo junte con otro: solo
+    letras y números (el juego rechaza los nombres con «_so» u «_on», y los de «_catalog» van a otro lado)."""
+    return re.sub(r"[^A-Za-z0-9]", "", texto) or "npc"
 
 
 def _nombre_libre(nombre: str, usados: set[str], sufijo: str = "") -> str:
