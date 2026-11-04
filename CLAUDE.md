@@ -2,7 +2,7 @@
 
 El programa vive en `src/mgitems/` (núcleo en Python, interfaz web en `src/mgitems/ui/`). Los scripts de armado (catálogo, binarios de terceros, instalador) están en `scripts/`.
 
-- Instalar: `python -m venv .venv` y `.venv/Scripts/python -m pip install -e ".[dev]"`
+- Instalar: `python -m venv .venv` y `.venv/Scripts/python -m pip install -e ".[dev,imagen]"`. `imagen` (onnxruntime, para «Buscar por imagen») no existe para todos los Python: si pip no lo encuentra, `.[dev]` instala todo lo demás.
 - FFDec y Java (imágenes de los Items): `.venv/Scripts/python scripts/obtener_binarios.py` los descarga a `vendor/` (no se versiona)
 - Abrir el programa: `.venv/Scripts/python -m mgitems`
 - Pruebas: `.venv/Scripts/python -m pytest`

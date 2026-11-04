@@ -46,7 +46,7 @@ from mgitems.items import (
 )
 from mgitems.fondos import COMPORTAMIENTO as COMPORTAMIENTO_FONDO, SUFIJO_CUADRO, CuadrosFFDec, Fondos
 from mgitems.looks import FORMATO_ACCION, FORMATO_FONDO, FORMATO_MINIJUEGO, FORMATO_PORTAL, FORMATO_TIENDA, FORMATO_TRUCADA, AlmacenLooks, Look, LookInvalido, archivo_de_look, look_de_archivo
-from mgitems.busqueda import QUE_ES, DatosBusqueda, abrir_encuadres, espejada, guiar
+from mgitems.busqueda import FALTA_ONNXRUNTIME, QUE_ES, DatosBusqueda, hay_onnxruntime, abrir_encuadres, espejada, guiar
 from mgitems.mambo import atributo_en_codigo, clase_de_mochila
 from mgitems.npcs import (
     FONDO, MINIJUEGO, PORTAL, TIENDA, TIPOS as TIPOS_NPC, Comportamientos, ComportamientosEncontrados, NoSePuedeConvertir, clase_npc, clasificar,
@@ -1306,7 +1306,10 @@ class Nucleo:
     RESULTADOS_BUSQUEDA = 20
 
     def estado_busqueda(self) -> dict:
-        """Si ya están los datos de la búsqueda (el modelo y las huellas) y cuánto pesa bajarlos (en bytes)."""
+        """Si ya están los datos de la búsqueda (el modelo y las huellas) y cuánto pesa bajarlos (en bytes). Sin
+        onnxruntime no se puede buscar: se avisa antes de bajar nada."""
+        if not hay_onnxruntime():
+            return {"ok": False, "sin_onnxruntime": True, "error": FALTA_ONNXRUNTIME}
         try:
             datos = self._datos()
         except OSError as e:

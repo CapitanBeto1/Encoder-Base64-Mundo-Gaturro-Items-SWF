@@ -60,12 +60,13 @@ Python 3.12 o más nuevo, en Windows.
 
 ```
 python -m venv .venv
-.venv\Scripts\python -m pip install -e ".[dev]"
+.venv\Scripts\python -m pip install -e ".[dev,imagen]"
 .venv\Scripts\python scripts\obtener_binarios.py    # FFDec y Java en vendor\ (para las imágenes)
 .venv\Scripts\python -m mgitems                      # abrir el programa
 .venv\Scripts\python -m pytest                       # pruebas
 ```
 
+- **Sin «Buscar por imagen»:** `imagen` instala onnxruntime, que no existe para todos los Python (32 bits, versiones muy nuevas, Windows en ARM). Si pip dice «No matching distribution found for onnxruntime», instalá con `".[dev]"`: el resto del programa funciona igual.
 - **Instalador:** `.venv\Scripts\python scripts\armar_instalador.py` arma `dist\MGItems\` con PyInstaller y, si está [Inno Setup 6](https://jrsoftware.org/isinfo.php), `dist\MGItems-Setup-<versión>.exe`.
 - **Catálogo de SWF:** `.venv\Scripts\python scripts\armar_catalogo.py [nombres.txt]` lo vuelve a armar desde el servidor del juego.
 - **Tiendas y portales:** `.venv\Scripts\python scripts\armar_comportamientos.py` vuelve a armar la lista de comportamientos de NPC (`src\mgitems\datos\comportamientos.json`).

@@ -9,10 +9,13 @@ description = "Agregar Items, trucar Prendas y armar Looks en Mundo Gaturro, sol
 readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.12"
-dependencies = ["pywebview>=6.0", "onnxruntime>=1.20", "numpy>=2.0", "pillow>=11.0"]
+dependencies = ["pywebview>=6.0", "numpy>=2.0", "pillow>=11.0"]
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "pyinstaller>=6.10"]
+# Para «Buscar por imagen». Aparte porque no hay onnxruntime para todos los Python (32 bits, versiones muy nuevas,
+# Windows en ARM): sin él, el resto del programa funciona igual.
+imagen = ["onnxruntime>=1.20"]
 indice = ["scikit-learn>=1.5"]  # para scripts/armar_indice.py
 busqueda = ["torch>=2.5", "open-clip-torch>=3.0", "onnx>=1.17", "onnxscript", "resvg-py>=0.2"]  # para scripts/armar_busqueda.py
 

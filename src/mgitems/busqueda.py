@@ -13,6 +13,8 @@ import io
 import json
 from pathlib import Path
 
+import importlib.util
+
 import numpy as np
 from PIL import Image, ImageOps
 
@@ -135,11 +137,26 @@ def espejada(imagen: Image.Image) -> Image.Image:
     return ImageOps.mirror(imagen)
 
 
+FALTA_ONNXRUNTIME = (
+    "La búsqueda por imagen necesita onnxruntime, que no está instalado. Instalalo con "
+    "«python -m pip install onnxruntime». Si pip no lo encuentra, este Python no lo admite: hace falta uno de "
+    "64 bits y de una versión que onnxruntime ya admita. El resto del programa funciona igual sin él."
+)
+
+
+def hay_onnxruntime() -> bool:
+    """Si está onnxruntime, sin importarlo (tarda)."""
+    return importlib.util.find_spec("onnxruntime") is not None
+
+
 class Modelo:
     """La parte de imágenes de CLIP, con onnxruntime: imágenes → huellas (normalizadas)."""
 
     def __init__(self, archivo: Path):
-        import onnxruntime  # tarda en importarse: solo cuando se busca
+        try:
+            import onnxruntime  # tarda en importarse: solo cuando se busca
+        except ImportError as e:
+            raise RuntimeError(FALTA_ONNXRUNTIME) from e
 
         opciones = onnxruntime.SessionOptions()
         opciones.log_severity_level = 3
