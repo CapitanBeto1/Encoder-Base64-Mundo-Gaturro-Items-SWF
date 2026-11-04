@@ -149,9 +149,6 @@ class Puente:
     def fondos(self) -> dict:
         return self._nucleo.fondos()
 
-    def pieza_para_recibir(self, ruta: str) -> dict:
-        return self._nucleo.pieza_para_recibir(ruta)
-
     def convertir_en_fondos(self, pedidos: list) -> dict:
         return self._nucleo.convertir_en_fondos(pedidos)
 
