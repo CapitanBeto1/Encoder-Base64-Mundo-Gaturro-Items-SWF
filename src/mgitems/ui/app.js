@@ -42,6 +42,17 @@ function agregarItems(rutas) {
   return nuevas.length;
 }
 
+// Una Pieza que ningún Item trae, lista para recibirla vestible (`pieza_para_recibir`): va dentro de una Prenda que
+// viste las mismas Partes, con atributos propios.
+async function agregarPieza(pieza) {
+  if (items.some((i) => i.pieza === pieza)) return { ok: true, ya: true };
+  const resultado = await api().pieza_para_recibir(pieza);
+  if (!resultado.ok) return resultado;
+  items = [...items, resultado.item];
+  mostrarLista();
+  return resultado;
+}
+
 function quitarItem(ruta) {
   items = items.filter((i) => i.ruta !== ruta);
   mostrarLista();
@@ -54,13 +65,14 @@ function cambiarCantidad(ruta, valor) {
   mostrarEncode(null);
 }
 
-function filaDeItem({ ruta, cantidad }) {
+function filaDeItem({ ruta, cantidad, pieza, base }) {
   const fila = document.createElement("li");
 
   const nombre = document.createElement("span");
   nombre.className = "nombre";
-  nombre.textContent = ruta;
-  nombre.title = ruta;
+  // Una Pieza suelta: se ve la Pieza; en el juego llega con el nombre y el ícono de la Prenda que la lleva.
+  nombre.textContent = pieza ? `${pieza} (en ${base})` : ruta;
+  nombre.title = pieza ? `${pieza}: llega al guardarropa como ${base}, que al ponértelo muestra esta Pieza` : ruta;
 
   const campoCantidad = document.createElement("input");
   campoCantidad.type = "number";
@@ -79,13 +91,13 @@ function filaDeItem({ ruta, cantidad }) {
   quitar.setAttribute("aria-label", `Quitar ${ruta}`);
   quitar.addEventListener("click", () => quitarItem(ruta));
 
-  fila.append(elementoIcono(ruta), nombre, campoCantidad, quitar);
+  fila.append(elementoIcono(pieza ?? ruta), nombre, campoCantidad, quitar);
   return fila;
 }
 
 function mostrarLista() {
   $("lista").replaceChildren(...items.map(filaDeItem));
-  cargarIconos(items.map((i) => i.ruta));
+  cargarIconos(items.map((i) => i.pieza ?? i.ruta));
   $("cantidad").textContent = items.length ? `(${items.length})` : "";
   $("lista-vacia").hidden = items.length > 0;
   if (buscador.cargado) mostrarBuscador(); // los elegidos se marcan en la grilla
@@ -2766,11 +2778,12 @@ function mostrarResultadosImagen(resultados) {
       const boton = Object.assign(document.createElement("button"), {
         type: "button", className: "resultado-imagen",
         title: item.suelta
-          ? `${item.clase} · ${item.swf} · ${que}\nEs una Pieza que ningún Item del juego trae: tocala para ponerla en una Prenda trucada.`
+          ? `${item.clase} · ${item.swf} · ${que}\nEs una Pieza que ningún Item del juego trae: tocala para recibirla (llega dentro de una Prenda que viste lo mismo).`
           : `${item.clase} · ${item.swf} · ${que}\nLlega a: ${destino.nombre}` + (item.motivo ? ` (${item.motivo})` : "")
             + (item.por_pieza ? `\nSe parece a lo que se ve puesto (${claseDeRuta(item.por_pieza)})` : ""),
       });
-      boton.setAttribute("aria-pressed", String(items.some((x) => x.ruta === item.ruta)));
+      const estaEnLaLista = () => items.some((x) => x.ruta === item.ruta || x.pieza === item.ruta);
+      boton.setAttribute("aria-pressed", String(estaEnLaLista()));
       const llega = etiqueta(destino.nombre, "destino-item");
       llega.dataset.bien = String(!item.motivo && !item.suelta);
       // Cortado: lo que se parece es una sola parte del Item (el pantalón de un traje, las mangas de una remera).
@@ -2794,8 +2807,20 @@ function mostrarResultadosImagen(resultados) {
       boton.append(marco, ...entero, etiqueta(item.clase, "nombre-item"), etiqueta(item.swf, "swf-resultado"), llega,
         ...cortado, etiqueta(`${i + 1}`, "puesto-resultado"));
       if (item.pasaporte) marcarPasaporte(boton);
-      boton.addEventListener("click", () => {
-        if (item.suelta) return trucarSoloEstaParte(item.ruta, parte); // no hay Item que recibir
+      boton.addEventListener("click", async () => {
+        if (item.suelta) {
+          const enLaLista = items.find((x) => x.pieza === item.ruta);
+          if (enLaLista) {
+            quitarItem(enLaLista.ruta);
+            avisar($("mensaje-imagen"), `Se sacó ${item.clase} de «Items a recibir».`, "exito");
+          } else {
+            const resultado = await agregarPieza(item.ruta);
+            if (!resultado.ok) return avisar($("mensaje-imagen"), resultado.error, "error");
+            avisar($("mensaje-imagen"), `Se sumó ${item.clase} a «Items a recibir»: llega al guardarropa dentro de ${resultado.item.base}, `
+              + "que al ponértelo muestra esta Pieza.", "exito");
+          }
+          return boton.setAttribute("aria-pressed", String(estaEnLaLista()));
+        }
         if (items.some((x) => x.ruta === item.ruta)) {
           quitarItem(item.ruta);
           avisar($("mensaje-imagen"), `Se sacó ${item.clase} de «Items a recibir».`, "exito");
