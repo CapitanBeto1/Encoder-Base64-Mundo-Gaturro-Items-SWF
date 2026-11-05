@@ -10,6 +10,18 @@ El programa vive en `src/mgitems/` (núcleo en Python, interfaz web en `src/mgit
 
 Las pruebas usan una sola costura: la API del núcleo (`Nucleo`). La interfaz no tiene lógica de dominio y no se prueba automáticamente.
 
+## Cómo está organizado el código
+
+Al cambiar código, mantené esta forma (el porqué de cada punto: `docs/adr/0008-estructura-del-codigo.md`):
+
+- **Archivos chicos, uno por función**: cada archivo queda por debajo de ~1000 líneas; cuando uno crece, partilo por función.
+- **Núcleo** (`src/mgitems/nucleo/`): cada método va a la parte de su función (`swfs`, `trucar`, `acciones`, `npcs`, `busqueda`…); el estado que comparten las partes se arma solo en `Nucleo.__init__`; lo que usa una sola parte vive en esa parte (`_comun.py`, solo lo que usan varias).
+- **Guardados** («Mis …»): un tipo nuevo es una entrada en `guardados.TIPOS` y otra en `PESTANA[…].guardados`.
+- **Puente** (`app.py`): expone el núcleo tal cual; lo que recibe una ruta (`ruta`, `carpeta`) lo pide la ventana con un diálogo (lo controla `tests/test_puente.py`).
+- **Interfaz**: lo que cambia de una pestaña a otra va en la tabla `PESTANA` (`ui/js/pestanas.js`), no repartido en condicionales. Los `<script>` de `ui/js/` y los estilos de `ui/css/` se cargan en el orden de `index.html`: un archivo usa al cargarse solo lo declarado en los anteriores (si registra algo de uno posterior, con una flecha: `() => entregar()`).
+- **Atributos de un Item**: van en el Encode (`inventory.addOptions`, `script.generar_script_con_atributos`); trucar el SWF es solo para Acciones y Trucar Prenda.
+- **Reusá antes de escribir**: `mostrarPaginas`, `convertir_en_npcs`, `guardados`, `dePestana`… ya existen. Lo que queda sin uso se borra en el mismo PR.
+
 ## Agent skills
 
 ### Issue tracker
