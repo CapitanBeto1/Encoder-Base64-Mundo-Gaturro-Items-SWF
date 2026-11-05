@@ -3,11 +3,10 @@
 Lo que hace un NPC lo dice su comportamiento (`behavior`): un archivo `npc/<comportamiento>.npc` del juego, en
 base64, con el guion que corre al tocarlo (el mismo lenguaje que el Encode de Lola).
 
-Cualquier Item de cualquier SWF puede ser un NPC (probado en el juego): su clase pasa a heredar de `MamboAsset`,
-que traen todos los SWF de assets, y escribe el comportamiento directamente en sus `attributes`. Al recibirlo, el
-juego manda esos atributos al servidor (`InventoryUtil.doAcquireObject`); sin `wear_*` ni `grabbable`, llega a la
-casa, y con `behavior` el juego lo trata como NPC (`GaturroRoom.createUnknownSceneObject`). No se usa
-`NpcMamboAsset` porque muchos SWF no la traen y FFDec no compila una clase que hereda de una que el SWF no tiene.
+Cualquier Item de cualquier SWF puede ser un NPC (probado en el juego): el Encode lo entrega con
+`inventory.addOptions` y el atributo `behavior` (ADR 0007). Al recibirlo, el juego manda los atributos al servidor
+(`InventoryUtil.doAcquireObject`); sin `wear_*` ni `grabbable`, llega a la casa, y con `behavior` el juego lo trata
+como NPC (`GaturroRoom.createUnknownSceneObject`).
 """
 
 import base64
@@ -18,7 +17,7 @@ import re
 from pathlib import Path
 
 from mgitems.cache_juego import comportamientos_en_cache  # noqa: F401 (la usa el núcleo)
-from mgitems.mambo import NoSePuedeConvertir, atributo_en_codigo, clase_mambo, texto  # noqa: F401 (NoSePuedeConvertir)
+from mgitems.mambo import NoSePuedeConvertir, atributo_en_codigo  # noqa: F401 (NoSePuedeConvertir: la usa el núcleo)
 
 TIENDA = "tienda"
 PORTAL = "portal"
@@ -88,19 +87,6 @@ def describir(info: dict, nombres_salas: dict[str, str] | None = None) -> str:
 def comportamiento_en_codigo(fuente: str) -> str | None:
     """El comportamiento que el código AS3 de un Item convertido escribe en sus atributos, o None."""
     return atributo_en_codigo(fuente, "behavior")
-
-
-def clase_npc(fuente: str, clase: str, comportamiento: str, cuadro: int | None = None) -> str:
-    """El código AS3 de `clase` convertida en NPC con `comportamiento`, con el mismo dibujo (`fuente`: su código).
-    `cuadro`: el que muestra al llegar (su atributo `frame`, el que lee `painting`)."""
-    if not es_comportamiento_valido(comportamiento):
-        raise NoSePuedeConvertir(f"comportamiento no válido: {comportamiento}")
-    if cuadro is not None and (isinstance(cuadro, bool) or not isinstance(cuadro, int) or cuadro < 1):
-        raise NoSePuedeConvertir(f"cuadro no válido: {cuadro}")
-    lineas = [f"attributes.behavior = {texto(comportamiento)};", "attributes.monitorAttributes = false;"]
-    if cuadro is not None:
-        lineas.append(f"attributes.frame = {cuadro};")
-    return clase_mambo(fuente, clase, lineas, sin_mambo_ok=True)
 
 
 class Comportamientos:

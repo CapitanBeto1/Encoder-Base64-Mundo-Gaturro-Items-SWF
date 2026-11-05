@@ -40,6 +40,8 @@ Lo que hace cada comportamiento se lee de su guion (`npc/<comportamiento>.npc`) 
 
 ## SWF que no traen ni siquiera `MamboAsset`
 
+> **Reemplazado** por «Atributos sin trucar» (más abajo): desde #141 los NPC y los fondos no trucan el SWF, así que esta clase de reemplazo dejó de usarse y su código se borró. Queda como registro de lo que se aprendió del juego.
+
 Unos pocos SWF son solo un envoltorio de un dibujo del gran `assets.swf` y no traen `MamboAsset` (por ejemplo `socialNetBackgrounds`, un fondo de 23 cuadros, o `YoBackgrounds`). Ahí no se puede heredar de `MamboAsset`.
 
 Pero el juego lee los atributos por «duck typing», no por tipo: `InventoryUtil.doAcquireObject` hace `if("attributes" in item) customAttributes.mergeObject(item.attributes)`. No exige `MamboAsset`; alcanza con que el Item tenga una propiedad `attributes`. Así que la clase se deja heredando de su base original (`MovieClip`…) y se le pone lo mismo que trae `MamboAsset` (que es solo eso): sus campos (`blocks`, `sizeW`, `sizeH`, `attributes = {}`, `questItem`), `process()` y el `Security.allowDomain("*")` de su constructor, sin el cual el cliente del juego no puede leer un objeto de otro SWF.

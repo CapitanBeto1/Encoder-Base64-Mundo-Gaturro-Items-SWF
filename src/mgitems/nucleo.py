@@ -50,7 +50,7 @@ from mgitems.busqueda import FALTA_ONNXRUNTIME, QUE_ES, DatosBusqueda, hay_onnxr
 from mgitems.mambo import atributo_en_codigo, clase_de_mochila
 from mgitems.npcs import (
     FONDO, MINIJUEGO, PORTAL, TIENDA, TIPOS as TIPOS_NPC, Comportamientos, ComportamientosEncontrados, NoSePuedeConvertir, clasificar,
-    comportamiento_en_codigo, comportamientos_en_cache, describir, es_comportamiento_valido, leer_npc,
+    comportamientos_en_cache, describir, es_comportamiento_valido, leer_npc,
 )
 from mgitems.prendas import (
     ACCION, EFECTO, MOCHILA, PARTES_DEL_CUERPO, PREFIJO_EFECTO, PRENDA, CacheItemsBase, ItemBase, ItemsBaseFFDec, TruqueoFallido,
@@ -1077,47 +1077,52 @@ class Nucleo:
                 "objeto": info["objetos"][0] if info.get("objetos") else None}
 
     def convertir_en_npcs(self, pedidos: list) -> dict:
-        """Varios Items convertidos en NPC en un solo Encode: cada uno (`{"base", "comportamiento", "cantidad"}`) es
-        un Item ("swf.clase", de cualquier SWF) que llega a la casa y, al tocarlo, hace lo que su comportamiento.
+        """Varios Items convertidos en NPC en un solo Encode: cada uno (`{"base", "comportamiento", "cantidad"}`, y
+        `cuadro` si es un fondo) es un Item ("swf.clase", de cualquier SWF) que llega a la casa y, al tocarlo, hace lo
+        que su comportamiento. Un fondo es un NPC con `painting` que muestra su `cuadro` (atributo `frame`).
 
-        No se truca ningún SWF: los atributos van en el Encode (`inventory.addOptions`, ADR 0007), así que sirve
-        cualquier SWF (también los que no traen `MamboAsset`) y el mismo Item puede ir varias veces con otro
-        comportamiento. Como el inventario junta los Items por nombre, el que va más de una vez lleva, en cada una,
-        su comportamiento detrás de un segundo punto ("swf.clase.brujaMesa"), que el juego ignora al cargarlo.
-        `cuadro` (opcional): el que muestra al llegar, para `painting` (atributo `frame`)."""
+        No se truca ningún SWF: los atributos van en el Encode (`inventory.addOptions`, ADR 0007), así que el mismo
+        Item puede ir varias veces, con otro comportamiento o con otro cuadro. Como el inventario junta los Items por
+        nombre (`Inventory.itemsGrouped`), cada uno lleva lo suyo detrás de un segundo punto, que el juego ignora al
+        cargarlo (`Libraries.getPackName`/`getItemName` toman `split(".")[0]` y `[1]`): un fondo, siempre su cuadro
+        ("swf.clase.cuadro2"); un NPC, su comportamiento si el mismo Item va más de una vez ("swf.clase.brujaMesa")."""
         if not isinstance(pedidos, list) or not pedidos:
             return {"ok": False, "error": "Agregá al menos uno a la lista."}
-        vistas, filas = set(), []
+        vistos, filas = set(), []
         for p in pedidos:
-            if not isinstance(p, dict) or not isinstance(p.get("base"), str) or not es_ruta_valida(p["base"])                     or not isinstance(p.get("comportamiento"), str):
+            if not (isinstance(p, dict) and isinstance(p.get("base"), str) and es_ruta_valida(p["base"])
+                    and isinstance(p.get("comportamiento"), str)):
                 return {"ok": False, "error": "La lista no tiene la forma esperada."}
-            if (p["base"], p["comportamiento"]) in vistas:
-                return {"ok": False, "error": f"{p['base']} con {p['comportamiento']} está dos veces: subí su cantidad."}
-            vistas.add((p["base"], p["comportamiento"]))
-            if (cantidad := _cantidad(p.get("cantidad", 1))) is None:
-                return {"ok": False, "error": f"La cantidad de {p['base']} tiene que ser un número entero mayor que 0."}
-            cuadro = p.get("cuadro")
+            base, comportamiento, cuadro = p["base"], p["comportamiento"], p.get("cuadro")
             if cuadro is not None and (isinstance(cuadro, bool) or not isinstance(cuadro, int) or cuadro < 1):
-                return {"ok": False, "error": f"El cuadro de {p['base']} no es válido."}
-            descripto = self.comportamiento(p["comportamiento"])
+                return {"ok": False, "error": f"El cuadro de {base} no es válido."}
+            if (base, comportamiento, cuadro) in vistos:
+                return {"ok": False, "error": f"{base} está dos veces igual: subí su cantidad."}
+            vistos.add((base, comportamiento, cuadro))
+            if (cantidad := _cantidad(p.get("cantidad", 1))) is None:
+                return {"ok": False, "error": f"La cantidad de {base} tiene que ser un número entero mayor que 0."}
+            descripto = self.comportamiento(comportamiento)
             if not descripto["ok"]:
                 return descripto
-            swf, _, clase = p["base"].rpartition(".")
+            swf, _, clase = base.rpartition(".")
             obtenido = self._categorias_de(swf)
             if not obtenido["ok"]:
-                return {"ok": False, "error": f"No se pudo usar {p['base']}: {obtenido['error']}"}
+                return {"ok": False, "error": f"No se pudo usar {base}: {obtenido['error']}"}
             item = obtenido["items"].get(clase)
             if item is None:
                 return {"ok": False, "error": f"{clase} no es un Item de {swf}."}
-            if motivo := no_sirve_de_base(p["base"], item["tipo"]):
+            if motivo := no_sirve_de_base(base, item["tipo"]):
                 return {"ok": False, "error": f"{clase} no sirve de Item base: {motivo}."}
-            filas.append((p["base"], p["comportamiento"], cantidad, cuadro))
+            if item.get("destino") == DESCARTADO:
+                return {"ok": False, "error": f"{clase} no llega al juego: {motivo_de(item) or 'el juego lo descarta'}."}
+            filas.append((base, comportamiento, cantidad, cuadro))
 
         repetidos = {b for b in (f[0] for f in filas) if sum(f[0] == b for f in filas) > 1}
         entregas = []
         for base, comportamiento, cantidad, cuadro in filas:
             atributos = {"behavior": comportamiento, "monitorAttributes": False} | ({"frame": cuadro} if cuadro else {})
-            nombre = f"{base}.{_sufijo_de_nombre(comportamiento)}" if base in repetidos else base
+            nombre = (f"{base}{SUFIJO_CUADRO}{cuadro}" if cuadro
+                      else f"{base}.{_sufijo_de_nombre(comportamiento)}" if base in repetidos else base)
             entregas.append((nombre, cantidad, atributos))
         script = generar_script_con_atributos(entregas)
         return {"ok": True, "items": [{"ruta": nombre, "cantidad": cantidad} for nombre, cantidad, _ in entregas],
@@ -1130,44 +1135,6 @@ class Nucleo:
         filas = [{"ruta": ruta, "clase": ruta.rpartition(".")[2], "swf": ruta.rpartition(".")[0], "cuadros": cuadros}
                  for ruta, cuadros in self._fondos.todos().items()]
         return {"ok": True, "fondos": sorted(filas, key=lambda f: orden_natural(f["clase"])), "comportamiento": COMPORTAMIENTO_FONDO}
-
-    def convertir_en_fondos(self, pedidos: list) -> dict:
-        """Varios fondos en un solo Encode: cada uno (`{"base", "cuadro", "cantidad"}`) es un Item ("swf.clase") que
-        llega a la casa con el comportamiento `painting` y mostrando su cuadro. No se truca ningún SWF: los atributos
-        van en el Encode (`inventory.addOptions`), así el mismo Item puede ir varias veces, con otro cuadro cada vez."""
-        if not isinstance(pedidos, list) or not pedidos:
-            return {"ok": False, "error": "Agregá al menos uno a la lista."}
-        filas, vistos = [], set()
-        for p in pedidos:
-            if not isinstance(p, dict) or not isinstance(p.get("base"), str) or not es_ruta_valida(p["base"]):
-                return {"ok": False, "error": "La lista no tiene la forma esperada."}
-            base, cuadro = p["base"], p.get("cuadro")
-            if isinstance(cuadro, bool) or not isinstance(cuadro, int) or cuadro < 1:
-                return {"ok": False, "error": f"Elegí el cuadro de {base}."}
-            if (base, cuadro) in vistos:
-                return {"ok": False, "error": f"{base} con el cuadro {cuadro} está dos veces: subí su cantidad."}
-            vistos.add((base, cuadro))
-            if (cantidad := _cantidad(p.get("cantidad", 1))) is None:
-                return {"ok": False, "error": f"La cantidad de {base} tiene que ser un número entero mayor que 0."}
-            swf, _, clase = base.rpartition(".")
-            obtenido = self._categorias_de(swf)
-            if not obtenido["ok"]:
-                return {"ok": False, "error": f"No se pudo usar {base}: {obtenido['error']}"}
-            item = obtenido["items"].get(clase)
-            if item is None:
-                return {"ok": False, "error": f"{clase} no es un Item de {swf}."}
-            if motivo := no_sirve_de_base(base, item["tipo"]):
-                return {"ok": False, "error": f"{clase} no sirve: {motivo}."}
-            if item.get("destino") == DESCARTADO:
-                return {"ok": False, "error": f"{clase} no llega al juego: {motivo_de(item) or 'el juego lo descarta'}."}
-            atributos = {"behavior": COMPORTAMIENTO_FONDO, "monitorAttributes": False, "frame": cuadro}
-            # El inventario junta los Items por su nombre (`Inventory.itemsGrouped`), así que cada cuadro lleva uno
-            # propio: el juego carga `swf.clase` e ignora lo que sigue a un segundo punto (`Libraries.getPackName` y
-            # `getItemName` toman `split(".")[0]` y `[1]`), y el mismo dibujo llega en otra casilla.
-            filas.append((f"{base}{SUFIJO_CUADRO}{cuadro}", cantidad, atributos))
-        script = generar_script_con_atributos(filas)
-        return {"ok": True, "items": [{"ruta": base, "cantidad": cantidad} for base, cantidad, _ in filas],
-                "script": script, "encode": codificar(script)}
 
     def cuadros_de_fondo(self, ruta: str) -> dict:
         """La vista previa de cada cuadro del dibujo de un Item ("swf.clase"), para elegir cuál se ve."""
