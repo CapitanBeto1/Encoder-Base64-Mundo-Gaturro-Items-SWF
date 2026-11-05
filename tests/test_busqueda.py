@@ -92,3 +92,16 @@ def test_los_pedazos_de_un_dibujo_sus_partes_separadas_y_sus_mitades():
     chico = Image.new("RGBA", (40, 40), (0, 0, 0, 0))
     chico.paste((255, 0, 0, 255), (5, 5, 35, 35))
     assert pedazos(chico) == []  # una sola parte y chico: nada que cortar
+
+
+def test_un_pedazo_vale_un_poco_menos_que_el_dibujo_entero(tmp_path):
+    # El caballo entero y un pedazo del cartel se parecen igual a la captura: gana el entero. Un pedazo gana solo
+    # si se parece claramente más (cuando lo que se ve es de verdad un pedazo).
+    huellas = Huellas(["pruebas.caballo", "otro.cartel"], np.array([[1, 0, 0], [1, 0, 0]], np.float32), {},
+                      np.array([False, True]))
+    archivo = tmp_path / "huellas.npz"
+    huellas.guardar(archivo)
+    leidas = Huellas.leer(archivo)
+
+    assert list(leidas.pedazos) == [False, True]
+    assert [r for r, _ in leidas.parecidos(np.array([[1, 0, 0]], np.float32))] == ["pruebas.caballo", "otro.cartel"]

@@ -290,7 +290,9 @@ def main() -> None:
     trozos = guardar_pedazos(imagenes, args.trabajo / "pedazos", pngs)
     rutas_t, huellas_t = huellas_de_archivos(clip, trozos, args.trabajo / "huellas_pedazos.npz", "6. huellas de los pedazos")
     # Una Pieza queda varias veces: suelta, puesta y en pedazos (con la misma ruta, así lleva a los mismos Items).
-    Huellas(rutas + rutas_p + rutas_t, np.concatenate([huellas, huellas_p, huellas_t]), prendas_de_pieza).guardar(salida / ARCHIVO_HUELLAS)
+    pedazos = np.concatenate([np.zeros(len(rutas) + len(rutas_p), bool), np.ones(len(rutas_t), bool)])
+    Huellas(rutas + rutas_p + rutas_t, np.concatenate([huellas, huellas_p, huellas_t]), prendas_de_pieza,
+            pedazos).guardar(salida / ARCHIVO_HUELLAS)
     print(f"{len(rutas_p)} Piezas dibujadas puestas, {len(rutas_t)} pedazos")
     for archivo in (modelo, salida / ARCHIVO_HUELLAS):
         print(f"{archivo.name}: {archivo.stat().st_size / 1e6:.1f} MB, sha256 {hashlib.sha256(archivo.read_bytes()).hexdigest()}")
