@@ -1,0 +1,237 @@
+/* Los colores, las letras, el fondo, el encabezado y los botones. */
+
+/*
+ * Estética de la pantalla de servidores clásica de Mundo Gaturro (~2015):
+ * fondo amarillo con estrellas y un planeta, paneles oscuros translúcidos, botones
+ * celestes con brillo que se vuelven amarillos al pasar el mouse, ventanas amarillas
+ * con borde gris, letra Cooper Black (o Fraunces, su alternativa libre). Los colores
+ * se midieron de los gráficos del juego y de un video de la época.
+ */
+
+@font-face {
+  font-family: "MG";
+  src: local("Cooper Black"), local("Cooper Std Black"), url("../fuentes/Fraunces.ttf") format("truetype");
+  font-weight: 100 900;
+}
+
+:root {
+  /* Fondo y paneles */
+  --amarillo-fondo: #f6d610;
+  --panel: rgba(48, 38, 0, 0.30);
+  --panel-hundido: rgba(30, 22, 0, 0.22);
+  --rotulo: rgba(18, 18, 18, 0.82);
+
+  /* Botón celeste (servidor) */
+  --celeste: #8bceeb;
+  --celeste-oscuro: #86cbe9;
+  --celeste-borde: #a9dcf1;
+  --celeste-contorno: #4fa9d6;
+  --celeste-sombra: rgba(20, 60, 90, 0.35);
+
+  /* Estado al pasar el mouse */
+  --amarillo: #f5d711;
+  --amarillo-oscuro: #f0cf0c;
+  --amarillo-borde: #fbe36a;
+  --amarillo-contorno: #c9a800;
+
+  /* Rojo (botones principales y cerrar) */
+  --rojo: #d70101;
+  --rojo-claro: #fc3f3d;
+  --rojo-oscuro: #a60400;
+
+  /* Ventanas */
+  --ventana: #f9d611;
+  --ventana-interior: #fadd3b;
+  --ventana-borde: #b9b9b9;
+
+  /* Otros */
+  --texto: #011422;
+  --texto-suave: #4a3b00;
+  --naranja: #fc6400;
+  --azul: #2991b9;
+  --verde: #49af4c;
+  --verde-oscuro: #2e7d32;
+  --blanco: #ffffff;
+  --radio: 14px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  background: var(--amarillo-fondo);
+  color: var(--texto);
+  font: 15px/1.4 "MG", Georgia, serif;
+  font-weight: 900;
+  /* Tamaño óptico chico: trazos parejos y gruesos, más parecidos a Cooper Black. */
+  font-variation-settings: "SOFT" 100, "WONK" 0, "opsz" 9;
+  /* Un contorno del mismo color engorda la letra (Cooper Black es muy pesada). */
+  -webkit-text-stroke: 0.3px currentColor;
+}
+
+/* --- Fondo --- */
+
+svg.fondo {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.fondo .anillo {
+  fill: none;
+  stroke: #fbe16f;
+  stroke-width: 34;
+  opacity: 0.85;
+}
+
+body > :not(svg) { position: relative; z-index: 1; }
+
+/* --- Encabezado --- */
+
+.barra {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 28px 4px;
+}
+
+.marca {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+/* Título al estilo del logo del juego: letras amarillas con contorno marrón grueso. */
+.logo {
+  margin: 0;
+  font-size: 40px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 1px;
+  white-space: nowrap;
+  text-transform: uppercase;
+  color: #ffd21f;
+  -webkit-text-stroke: 9px #8a4f12;
+  paint-order: stroke fill;
+  text-shadow: 0 4px 0 #6b3a0a;
+}
+
+.subtitulo {
+  margin: 0;
+  padding: 5px 14px;
+  border-radius: 10px;
+  background: var(--rotulo);
+  color: var(--blanco);
+  font-size: 13px;
+  white-space: nowrap;
+  text-transform: uppercase;
+}
+
+/* --- Botones --- */
+
+button {
+  position: relative;
+  padding: 8px 18px;
+  border: 3px solid var(--celeste-borde);
+  border-radius: 12px;
+  background: linear-gradient(var(--celeste), var(--celeste-oscuro));
+  box-shadow: 0 3px 0 var(--celeste-sombra);
+  color: var(--texto);
+  font: inherit;
+  font-weight: 900;
+  -webkit-text-stroke: 0.6px currentColor;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+/* Franja de brillo en la mitad de arriba. */
+button::before {
+  content: "";
+  position: absolute;
+  left: 5px;
+  right: 5px;
+  top: 3px;
+  height: 44%;
+  border-radius: 8px 8px 12px 12px / 8px 8px 5px 5px;
+  background: linear-gradient(rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.15));
+  pointer-events: none;
+}
+
+button:hover:not(:disabled),
+button:focus-visible {
+  background: linear-gradient(var(--amarillo), var(--amarillo-oscuro));
+  border-color: var(--amarillo-borde);
+  box-shadow: 0 3px 0 rgba(90, 70, 0, 0.35);
+  outline: none;
+}
+
+button:hover:not(:disabled)::before,
+button:focus-visible::before {
+  background: linear-gradient(rgba(255, 250, 200, 0.7), rgba(255, 240, 150, 0.2));
+}
+
+button:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 var(--celeste-sombra);
+}
+
+/* Deshabilitado: el mismo botón en gris claro y opaco (con transparencia se vería sucio sobre el panel). */
+button:disabled {
+  cursor: default;
+  filter: grayscale(0.9) brightness(1.2) contrast(0.8);
+  box-shadow: none;
+}
+
+/* Botón principal: rojo, con letras blancas. */
+button.primario {
+  border-color: #ff7a72;
+  background: linear-gradient(var(--rojo-claro) 0%, var(--rojo) 55%, #c40101 100%);
+  box-shadow: 0 3px 0 rgba(80, 0, 0, 0.4);
+  color: var(--blanco);
+  text-shadow: 0 2px 0 var(--rojo-oscuro);
+}
+
+button.primario:hover:not(:disabled),
+button.primario:focus-visible {
+  border-color: var(--amarillo-borde);
+  background: linear-gradient(var(--amarillo), var(--amarillo-oscuro));
+  box-shadow: 0 3px 0 rgba(90, 70, 0, 0.35);
+  color: var(--texto);
+  text-shadow: none;
+}
+
+button.primario:disabled {
+  filter: none;
+  border-color: #f2c9c6;
+  background: linear-gradient(#efc2bf, #e3aaa6);
+  color: #fff7f6;
+  text-shadow: 0 1px 0 rgba(120, 40, 35, 0.35);
+}
+
+/* Agregar al juego: el botón grande, rojo con letras amarillas. */
+button.entregar {
+  width: 100%;
+  padding: 12px;
+  font-size: 20px;
+  letter-spacing: 1px;
+  color: #ffe14d;
+}
+
+/* Botones chicos que acompañan a un título o dato. */
+button.enlace {
+  padding: 3px 12px;
+  border-width: 2px;
+  border-radius: 9px;
+  font-size: 12px;
+}
+
+button.derecha { margin-left: auto; }

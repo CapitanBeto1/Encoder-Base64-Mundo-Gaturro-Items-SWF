@@ -1,0 +1,65 @@
+/* Tiendas, Portales, Minijuegos y Fondos. */
+
+/* Tiendas y Portales: el Item que se convierte, qué hace, y la grilla de comportamientos. */
+.armado-npc { flex: none; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 0 10px; }
+.fila-npc { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; color: #fff; font-size: 12px; }
+.fila-npc .ayuda { color: #e9ffd9; }
+.comportamiento-elegido { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.comportamiento-elegido .ayuda { color: #e9ffd9; }
+#comportamiento-a-mano { flex: 1; min-width: 0; max-width: 260px; font-size: 12px; padding: 4px 8px; }
+#usar-comportamiento { font-size: 11px; padding: 3px 10px; }
+.vista-npc { flex: 1 1 0; min-height: 0; margin: 0; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: #fff; }
+.vista-npc .icono { flex: 0 1 160px; min-height: 0; height: 160px; width: auto; aspect-ratio: 1; background: rgba(255, 255, 255, 0.85); }
+.vista-npc .icono img { max-width: 85%; max-height: 85%; }
+.vista-npc .ayuda { color: #e9ffd9; }
+.aviso-npc { flex: none; margin: 0; padding: 0 12px; color: #fff3b0; font-size: 11px; text-align: center; }
+.aviso-npc:empty { display: none; }
+.cantidad-comportamientos { flex: none; color: var(--texto); font-size: 12px; }
+#filtro-comportamientos { flex: 1; font-size: 12px; padding: 4px 8px; }
+.grilla-comportamientos {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+  grid-auto-rows: 118px;
+  gap: 6px;
+  margin: 0;
+  padding: 2px;
+  overflow-y: auto;
+  list-style: none;
+}
+.casillero-npc {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto auto;
+  place-items: center;
+  gap: 1px;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--amarillo);
+  border-color: var(--amarillo-contorno);
+}
+.casillero-npc { overflow: hidden; }
+.casillero-npc .icono { width: 100%; height: 100%; min-height: 0; overflow: hidden; box-shadow: none; background: transparent; }
+.casillero-npc .icono img { width: 100%; height: 100%; max-width: 100%; max-height: 100%; object-fit: contain; }
+.icono-npc { display: grid; place-items: center; width: 100%; height: 100%; min-height: 0; font-size: 38px; line-height: 1; }
+.casillero-npc .nombre { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; color: var(--texto); }
+.casillero-npc .que-hace { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 9px; color: #5c4c00; }
+.casillero-npc[aria-pressed="true"] { background: #6fc054; border-color: #2f6421; box-shadow: inset 0 0 0 3px #2f6421; }
+#lista-trucadas .cantidad-npc { width: 44px; padding: 0 4px; font-size: 12px; }
+main.modo-npc #lista-trucadas { overflow-y: hidden; }
+
+/* Fondos: los cuadros del dibujo, más grandes, con fondo claro (muchos son paisajes). */
+main.modo-fondos .grilla-comportamientos.con-cuadros { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); grid-auto-rows: 132px; }
+.cuadro-fondo { width: 100%; height: 100%; min-height: 0; object-fit: contain; background: rgba(255, 255, 255, 0.85); border-radius: 8px; }
+.vista-npc .cuadro-fondo { flex: 0 1 220px; height: 220px; width: 100%; max-width: 360px; }
+#otros-fondos[hidden] { display: none; }
+.icono-mis-looks { display: grid; place-items: center; flex: 1; min-height: 0; padding: 30px; }
+.icono-mis-looks[hidden] { display: none; }
+.icono-mis-looks .icono { width: 220px; height: 220px; background: rgba(255, 255, 255, 0.85); }
+.casillero-look .icono { width: 70%; height: auto; aspect-ratio: 1; background: transparent; box-shadow: none; }
+.zoom-escenario[hidden] { display: none; }
+.casillero-npc .icono.sin-imagen::after { content: "…"; color: #9a8400; font-size: 18px; }
+.casillero-npc { position: relative; }
+.encontrado-npc { position: absolute; top: 3px; left: 3px; padding: 1px 5px; border-radius: 8px; background: #2f6421; color: #fff; font-size: 8px; text-transform: uppercase; }

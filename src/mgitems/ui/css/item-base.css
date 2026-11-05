@@ -1,0 +1,74 @@
+/* La ventana del Item base. */
+
+/* --- Ventana del Item base: grande, con la lista ocupando el espacio --- */
+
+dialog.dialogo-base { width: min(860px, 94vw); height: min(640px, 90vh); }
+.dialogo-base .panel { display: flex; flex-direction: column; gap: 10px; padding: 22px 26px; overflow: hidden; }
+.dialogo-base .panel > * { flex: none; }
+.fila-swf-base .etiqueta-campo { width: auto; font-weight: 900; }
+.fila-swf-base .selector-swf { flex: 1; }
+.lista-bases .swf-base { margin-left: auto; font-size: 11px; }
+/* El buscador: más bajo, redondeado y con lupa, para no confundirlo con el selector de SWF. */
+.filtro-base {
+  align-self: flex-start;
+  width: min(360px, 100%);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: #fff8d6;
+  border: 2px dashed #c9a400;
+}
+.filtro-base input {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  font-size: 13px;
+}
+.filtro-base input:focus { box-shadow: none; outline: none; }
+.filtro-base:focus-within { border-style: solid; border-color: var(--amarillo-contorno); }
+.dialogo-base .lista-bases {
+  flex: 1 1 auto;
+  min-height: 0;
+  margin: 0;
+  padding: 4px;
+  overflow-y: auto;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-auto-rows: 64px;
+  gap: 8px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.45);
+}
+.fila-base { width: 100%; height: 100%; display: flex; align-items: center; gap: 10px; justify-content: flex-start; padding: 4px 10px; text-align: left; }
+.fila-base .icono { width: 48px; height: 48px; }
+.fila-base .nombre { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+.fila-base .tipo-mochila, .fila-base .tipo-prenda { margin-left: auto; flex: none; }
+.fila-base[aria-pressed="true"] { background: var(--amarillo); border-color: var(--amarillo-contorno); }
+.dialogo-base .mensaje:empty { display: none; }
+/* Nombre arriba y tipo abajo, para que el nombre entre entero (sin las mayúsculas de los botones). */
+.fila-base { display: grid; grid-template-columns: 48px minmax(0, 1fr); grid-template-rows: auto auto; column-gap: 10px; align-content: center; text-transform: none; }
+.fila-base .icono { grid-row: 1 / span 2; }
+.fila-base .nombre { grid-column: 2; font-size: 13px; letter-spacing: 0; }
+.fila-base .tipo-mochila, .fila-base .tipo-prenda { grid-column: 2; justify-self: start; margin: 0; font-size: 10px; text-transform: uppercase; }
+
+/* Mochila (naranja) y guardarropa (azul): distintos a simple vista, en las etiquetas y en los filtros. */
+.tipo-mochila, .tipo-prenda { display: inline-block; padding: 1px 8px; border-radius: 8px; font-weight: 900; letter-spacing: 0.02em; }
+.resultados-swf li .tipo-mochila, .fila-base .tipo-mochila { background: #ff9a1f; color: #4a2300; }
+.resultados-swf li .tipo-prenda, .fila-base .tipo-prenda { background: #3d7bd9; color: #fff; }
+.filtros-base { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.filtros-base .filtro-base { align-self: auto; }
+.filtro-tipo { padding: 4px 12px; font-size: 12px; border-radius: 999px; text-transform: none; }
+.filtro-tipo .cantidad-tipo { font-size: 11px; opacity: 0.8; }
+.filtro-mochila { background: #ffe2bd; border-color: #ff9a1f; color: #4a2300; }
+.filtro-guardarropa { background: #d4e4fb; border-color: #3d7bd9; color: #14315e; }
+.filtro-mochila[aria-checked="true"] { background: #ff9a1f; border-color: #c46a00; color: #2b1400; box-shadow: 0 0 0 3px #fff; }
+.filtro-guardarropa[aria-checked="true"] { background: #3d7bd9; border-color: #1f4f99; color: #fff; box-shadow: 0 0 0 3px #fff; }
+.tipos-base { display: inline-flex; gap: 6px; }
+.filtro-ambos { background: #f1ecd8; border-color: #9a8a4a; color: #3b3210; }
+.filtro-ambos[aria-checked="true"] { background: #7a6a2a; border-color: #4f4416; color: #fff; box-shadow: 0 0 0 3px #fff; }
