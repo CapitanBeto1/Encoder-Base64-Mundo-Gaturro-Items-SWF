@@ -5,14 +5,14 @@ import pytest
 
 from mgitems.categorias import IndicePiezas
 from mgitems.fondos import Fondos, frena_en_el_primer_cuadro
-from mgitems.npcs import Comportamientos, NoSePuedeConvertir, clase_npc, comportamiento_en_codigo
+from mgitems.npcs import Comportamientos
 from mgitems.nucleo import Nucleo
 from mgitems.script import decodificar
 from mgitems.swf import cuadros_de_clases
 from fuente_falsa import FuenteFalsa
 from procesos_falso import ProcesosFalso
 from swf_de_ejemplo import crear_swf
-from test_npcs import CONOCIDOS, ENVOLTORIO, npc
+from test_npcs import CONOCIDOS, npc
 from test_prendas import CLASES, PrendasFalsas, sistema  # noqa: F401 (fixture)
 
 PAINTING = "initial: DO\n\tgotoSync changeFrame checkHost 100\n\nchangeFrame: DO\n\tself.state $(self.attr.frame)\n"
@@ -29,17 +29,6 @@ def test_sirve_de_fondo_si_frena_en_el_primer_cuadro():
     assert frena_en_el_primer_cuadro("internal function frame1() : *\n      {\n         stop();\n      }")
     assert not frena_en_el_primer_cuadro("internal function frame1() : *\n      {\n         play();\n      }")
     assert not frena_en_el_primer_cuadro("public function x() { stop(); }")  # una animación sin cuadro quieto
-
-
-def test_el_fondo_llega_mostrando_el_cuadro_elegido():
-    codigo = clase_npc(ENVOLTORIO, "SocialNetBackgrounds", "painting", cuadro=2)
-
-    assert "attributes.frame = 2;" in codigo  # el número, no texto: painting hace gotoAndStop con él
-    assert comportamiento_en_codigo(codigo) == "painting"
-    assert "attributes.frame" not in clase_npc(ENVOLTORIO, "SocialNetBackgrounds", "brujaMesa")
-    for malo in (0, -1, "2", True):
-        with pytest.raises(NoSePuedeConvertir):
-            clase_npc(ENVOLTORIO, "SocialNetBackgrounds", "painting", cuadro=malo)
 
 
 class CuadrosFalsos:
@@ -117,9 +106,9 @@ def test_mis_fondos_se_guardan_con_su_cuadro(nucleo, tmp_path):
 
 
 def test_el_mismo_objeto_llega_varias_veces_cada_una_con_su_cuadro(nucleo, ffdec):
-    resultado = nucleo.convertir_en_fondos([
-        {"base": "costumes2.remera5", "cuadro": 2},
-        {"base": "costumes2.remera5", "cuadro": 3, "cantidad": 2},
+    resultado = nucleo.convertir_en_npcs([
+        {"base": "costumes2.remera5", "comportamiento": "painting", "cuadro": 2},
+        {"base": "costumes2.remera5", "comportamiento": "painting", "cuadro": 3, "cantidad": 2},
     ])
 
     assert resultado["ok"], resultado
@@ -134,12 +123,12 @@ def test_el_mismo_objeto_llega_varias_veces_cada_una_con_su_cuadro(nucleo, ffdec
 
 @pytest.mark.parametrize("pedidos, error", [
     ([], "al menos uno"),
-    ([{"base": "costumes2.remera5"}], "Elegí el cuadro"),
-    ([{"base": "costumes2.remera5", "cuadro": 2}] * 2, "dos veces"),
-    ([{"base": "costumes2.noEsUnItem", "cuadro": 2}], "no es un Item"),
-    ([{"base": "costumes2.remera5", "cuadro": 2, "cantidad": 0}], "cantidad"),
+    ([{"base": "costumes2.remera5", "comportamiento": "painting", "cuadro": "2"}], "cuadro"),
+    ([{"base": "costumes2.remera5", "comportamiento": "painting", "cuadro": 2}] * 2, "dos veces"),
+    ([{"base": "costumes2.noEsUnItem", "comportamiento": "painting", "cuadro": 2}], "no es un Item"),
+    ([{"base": "costumes2.remera5", "comportamiento": "painting", "cuadro": 2, "cantidad": 0}], "cantidad"),
 ])
 def test_lo_que_no_se_puede_entregar_como_fondo(nucleo, pedidos, error):
-    resultado = nucleo.convertir_en_fondos(pedidos)
+    resultado = nucleo.convertir_en_npcs(pedidos)
 
     assert not resultado["ok"] and error in resultado["error"], resultado

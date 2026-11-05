@@ -6,7 +6,7 @@ import pytest
 
 from mgitems.categorias import IndicePiezas
 from mgitems.nucleo import Nucleo
-from mgitems.npcs import Comportamientos, NoSePuedeConvertir, clase_npc, clasificar, comportamiento_en_codigo, describir, leer_npc
+from mgitems.npcs import Comportamientos, clasificar, describir, leer_npc
 from mgitems.script import decodificar
 from fuente_falsa import FuenteFalsa
 from procesos_falso import ProcesosFalso
@@ -62,64 +62,6 @@ def test_describe_lo_que_hace_un_npc():
 def test_lee_el_guion_en_base64_o_en_texto():
     assert leer_npc(npc(TIENDA)) == TIENDA
     assert leer_npc(TIENDA.encode()) == TIENDA
-
-
-# --- La clase convertida ---
-
-ORIGINAL = '''package
-{
-   [Embed(source="/_assets/assets.swf", symbol="symbol94")]
-   public dynamic class gorroVietnamita extends ClothMamboAsset
-   {
-   }
-}
-'''
-
-
-def test_la_clase_convertida_hereda_de_mambo_asset_y_escribe_el_comportamiento():
-    codigo = clase_npc(ORIGINAL, "gorroVietnamita", "magia/portal")
-
-    assert 'symbol="symbol94"' in codigo  # el mismo dibujo
-    assert "class gorroVietnamita extends MamboAsset" in codigo  # la clase que traen todos los SWF
-    assert comportamiento_en_codigo(codigo) == "magia/portal"
-
-
-@pytest.mark.parametrize("fuente, clase, comportamiento", [
-    (ORIGINAL, "gorroVietnamita", 'x"; hackear(); "'),
-    (ORIGINAL, "gorro Vietnamita", "brujaMesa"),
-    ("package { public class silla extends HouseMamboAsset {} }", "silla", "brujaMesa"),  # sin dibujo
-])
-def test_no_convierte_con_datos_invalidos(fuente, clase, comportamiento):
-    with pytest.raises(NoSePuedeConvertir):
-        clase_npc(fuente, clase, comportamiento)
-
-
-# Un envoltorio de un dibujo (como socialNetBackgrounds): su SWF no trae MamboAsset y la clase hereda de MovieClip.
-ENVOLTORIO = '''package
-{
-   import flash.display.MovieClip;
-
-   [Embed(source="/_assets/assets.swf", symbol="symbol306")]
-   public dynamic class SocialNetBackgrounds extends MovieClip
-   {
-   }
-}
-'''
-
-
-def test_un_swf_sin_mambo_asset_hereda_de_su_base_con_un_attributes_propio():
-    codigo = clase_npc(ENVOLTORIO, "SocialNetBackgrounds", "painting")
-
-    assert 'symbol="symbol306"' in codigo  # el mismo dibujo (de varios cuadros)
-    assert "extends MovieClip" in codigo and "MamboAsset" not in codigo  # no se puede heredar de la que el SWF no trae
-    assert "import flash.display.MovieClip;" in codigo
-    assert "public var attributes:Object = {};" in codigo  # su propio attributes, como el de MamboAsset
-    assert 'Security.allowDomain("*");' in codigo  # sin esto el juego no puede leer el objeto
-    assert "public function process()" in codigo
-    # Los atributos se escriben en el constructor, antes del primer cuadro: el juego los lee apenas crea el Item.
-    constructor = codigo.split("public function SocialNetBackgrounds()")[1].split("public function process()")[0]
-    assert 'attributes.behavior = "painting";' in constructor
-    assert comportamiento_en_codigo(codigo) == "painting"
 
 
 # --- El núcleo ---

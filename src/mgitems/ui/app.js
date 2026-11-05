@@ -1870,11 +1870,9 @@ $("agregar-npc").addEventListener("click", () => {
 
 async function convertirNpcs() {
   const lista = lookActual.lista;
-  const resultado = esFondos()
-    // Los fondos no se trucan: sus atributos van en el Encode (y el mismo objeto puede ir con varios cuadros).
-    ? await mientras("Armando el Encode…", () => api().convertir_en_fondos(lista.map(({ base, cantidad, cuadro }) => ({ base, cantidad, cuadro }))))
-    : await mientras("Armando el Encode…",
-      () => api().convertir_en_npcs(lista.map(({ base, comportamiento, cantidad }) => ({ base, comportamiento, cantidad }))));
+  // Un fondo es un NPC con `painting` y su cuadro.
+  const resultado = await mientras("Armando el Encode…", () => api().convertir_en_npcs(
+    lista.map(({ base, comportamiento, cantidad, cuadro }) => ({ base, comportamiento, cantidad, ...(cuadro ? { cuadro } : {}) }))));
   if (!resultado.ok) return avisarLista(resultado.error, "error");
   mostrarEncode(resultado);
   avisarLista(`Listo: tocá «Agregar al juego» para recibir${lista.length === 1 ? "lo" : "los"}. ${lista.length === 1 ? "Llega" : "Llegan"} a la casa.`, "exito");
