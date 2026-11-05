@@ -57,37 +57,37 @@ def nucleo(sistema, fuente, ffdec):
 # --- Guardar, listar, editar, duplicar, borrar ---
 
 def test_ciclo_completo_de_un_look(nucleo, sistema, fuente, ffdec):
-    guardado = nucleo.guardar_look(REY)
+    guardado = nucleo.guardados.guardar("look", REY)
     assert guardado["ok"], guardado
-    id_rey = guardado["look"]["id"]
+    id_rey = guardado["documento"]["id"]
     assert id_rey
 
     # Persiste: un programa nuevo lo ve.
     otro = nuevo_nucleo(sistema, fuente, ffdec)
-    assert [l["nombre"] for l in otro.looks()["looks"]] == ["Rey"]
-    assert otro.looks()["looks"][0]["partes"] == REY["partes"]
+    assert [l["nombre"] for l in otro.guardados.lista("look")["guardados"]] == ["Rey"]
+    assert otro.guardados.lista("look")["guardados"][0]["partes"] == REY["partes"]
 
     # Editar: mismo id, se reemplaza.
     editado = dict(REY, id=id_rey, nombre="Rey Mago", partes={"hats": "costumes.coronaRey_on"})
-    assert nucleo.guardar_look(editado)["ok"]
-    assert [(l["id"], l["nombre"], l["partes"]) for l in nucleo.looks()["looks"]] == [
+    assert nucleo.guardados.guardar("look", editado)["ok"]
+    assert [(l["id"], l["nombre"], l["partes"]) for l in nucleo.guardados.lista("look")["guardados"]] == [
         (id_rey, "Rey Mago", {"hats": "costumes.coronaRey_on"}),
     ]
 
     # Duplicar: otro id y otro nombre.
-    copia = nucleo.duplicar_look(id_rey)
-    copia2 = nucleo.duplicar_look(id_rey)
-    assert copia["look"]["nombre"] == "Rey Mago (copia)"
-    assert copia2["look"]["nombre"] == "Rey Mago (copia 2)"
-    assert len({id_rey, copia["look"]["id"], copia2["look"]["id"]}) == 3
+    copia = nucleo.guardados.duplicar("look", id_rey)
+    copia2 = nucleo.guardados.duplicar("look", id_rey)
+    assert copia["documento"]["nombre"] == "Rey Mago (copia)"
+    assert copia2["documento"]["nombre"] == "Rey Mago (copia 2)"
+    assert len({id_rey, copia["documento"]["id"], copia2["documento"]["id"]}) == 3
 
     # Borrar.
-    assert nucleo.borrar_look(copia["look"]["id"])["ok"]
-    assert [l["nombre"] for l in nucleo.looks()["looks"]] == ["Rey Mago", "Rey Mago (copia 2)"]
+    assert nucleo.guardados.borrar("look", copia["documento"]["id"])["ok"]
+    assert [l["nombre"] for l in nucleo.guardados.lista("look")["guardados"]] == ["Rey Mago", "Rey Mago (copia 2)"]
 
 
 def test_sin_looks_la_lista_esta_vacia(nucleo):
-    assert nucleo.looks() == {"ok": True, "looks": []}
+    assert nucleo.guardados.lista("look") == {"ok": True, "guardados": []}
 
 
 @pytest.mark.parametrize(
@@ -101,24 +101,24 @@ def test_sin_looks_la_lista_esta_vacia(nucleo):
     ],
 )
 def test_un_look_invalido_no_se_guarda(nucleo, look, error):
-    resultado = nucleo.guardar_look(look)
+    resultado = nucleo.guardados.guardar("look", look)
 
     assert not resultado["ok"]
     assert error in resultado["error"]
-    assert nucleo.looks()["looks"] == []
+    assert nucleo.guardados.lista("look")["guardados"] == []
 
 
 def test_borrar_o_duplicar_un_look_que_no_existe_devuelve_error(nucleo):
-    assert not nucleo.borrar_look("noExiste")["ok"]
-    assert not nucleo.duplicar_look("noExiste")["ok"]
+    assert not nucleo.guardados.borrar("look", "noExiste")["ok"]
+    assert not nucleo.guardados.duplicar("look", "noExiste")["ok"]
 
 
 def test_un_look_danado_en_el_archivo_no_impide_ver_los_demas(nucleo, sistema):
-    nucleo.guardar_look(REY)
+    nucleo.guardados.guardar("look", REY)
     archivo = sistema.base / "Roaming" / "MGItems" / "looks.json"
     archivo.write_text(archivo.read_text(encoding="utf-8").replace('"looks": [', '"looks": [{"nombre": ""},', 1), encoding="utf-8")
 
-    assert [l["nombre"] for l in nucleo.looks()["looks"]] == ["Rey"]
+    assert [l["nombre"] for l in nucleo.guardados.lista("look")["guardados"]] == ["Rey"]
 
 
 def test_un_archivo_de_looks_ilegible_se_informa(nucleo, sistema):
@@ -126,10 +126,10 @@ def test_un_archivo_de_looks_ilegible_se_informa(nucleo, sistema):
     archivo.parent.mkdir(parents=True, exist_ok=True)
     archivo.write_text("{no es json", encoding="utf-8")
 
-    resultado = nucleo.looks()
+    resultado = nucleo.guardados.lista("look")
 
     assert not resultado["ok"]
-    assert "Looks" in resultado["error"]
+    assert "guardados" in resultado["error"] and "looks.json" in resultado["error"]
 
 
 # --- Aplicar ---
@@ -216,10 +216,10 @@ def test_las_partes_del_cuerpo_estan_sin_swf_abierto(sistema, ffdec):
 # --- Colores de cada Look (solo para verlo en el programa) ---
 
 def test_cada_look_guarda_sus_colores(nucleo, sistema, fuente, ffdec):
-    azul = nucleo.guardar_look(dict(REY, colores={"color1": "#3366CC", "color2": "#112244"}))["look"]
-    sin = nucleo.guardar_look(dict(REY, nombre="Normal"))["look"]
+    azul = nucleo.guardados.guardar("look", dict(REY, colores={"color1": "#3366CC", "color2": "#112244"}))["documento"]
+    sin = nucleo.guardados.guardar("look", dict(REY, nombre="Normal"))["documento"]
 
-    guardados = {l["nombre"]: l for l in nuevo_nucleo(sistema, fuente, ffdec).looks()["looks"]}
+    guardados = {l["nombre"]: l for l in nuevo_nucleo(sistema, fuente, ffdec).guardados.lista("look")["guardados"]}
 
     assert guardados["Rey"]["colores"] == {"color1": "#3366CC", "color2": "#112244"}
     assert guardados["Normal"]["colores"] == {}  # los de fábrica
@@ -228,22 +228,22 @@ def test_cada_look_guarda_sus_colores(nucleo, sistema, fuente, ffdec):
 
 def test_colores_invalidos(nucleo):
     for colores in ({"color9": "#FFFFFF"}, {"color1": "rojo"}, ["#FFFFFF"], {"color1": '"/><script>'}):
-        resultado = nucleo.guardar_look(dict(REY, colores=colores))
+        resultado = nucleo.guardados.guardar("look", dict(REY, colores=colores))
         assert not resultado["ok"]
         assert "colores" in resultado["error"]
 
 
 def test_duplicar_copia_los_colores(nucleo):
-    original = nucleo.guardar_look(dict(REY, colores={"color3": "#FF0000"}))["look"]
+    original = nucleo.guardados.guardar("look", dict(REY, colores={"color3": "#FF0000"}))["documento"]
 
-    assert nucleo.duplicar_look(original["id"])["look"]["colores"] == {"color3": "#FF0000"}
+    assert nucleo.guardados.duplicar("look", original["id"])["documento"]["colores"] == {"color3": "#FF0000"}
 
 
 def test_exportar_e_importar_conserva_los_colores(nucleo, tmp_path):
     archivo = tmp_path / "Rey.mglook"
-    nucleo.exportar_look(dict(REY, colores={"color1": "#00AA00"}), str(archivo))
+    nucleo.guardados.exportar("look", dict(REY, colores={"color1": "#00AA00"}), str(archivo))
 
-    assert nucleo.importar_look_de_archivo(str(archivo))["look"]["colores"] == {"color1": "#00AA00"}
+    assert nucleo.guardados.importar_de_archivo("look", str(archivo))["documento"]["colores"] == {"color1": "#00AA00"}
 
 
 def test_aplicar_no_depende_de_los_colores(nucleo):

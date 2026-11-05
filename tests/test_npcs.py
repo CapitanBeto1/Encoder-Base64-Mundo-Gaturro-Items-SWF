@@ -171,17 +171,17 @@ TIENDA_GUARDADA = {"nombre": "Pociones en la remera", "base": "costumes2.remera5
 
 
 def test_guardar_duplicar_y_borrar_tiendas(nucleo):
-    guardada = nucleo.guardar_npc("tienda", TIENDA_GUARDADA)
+    guardada = nucleo.guardados.guardar("tienda", TIENDA_GUARDADA)
 
     assert guardada["ok"], guardada
-    tienda = guardada["npc"]
+    tienda = guardada["documento"]
     assert tienda["id"] and tienda["comportamiento"] == "brujaMesa"
-    copia = nucleo.duplicar_npc("tienda", tienda["id"])["npc"]
+    copia = nucleo.guardados.duplicar("tienda", tienda["id"])["documento"]
     assert (copia["nombre"], copia["comportamiento"]) == ("Pociones en la remera (copia)", "brujaMesa")
-    assert [t["nombre"] for t in nucleo.npcs_guardados("tienda")["npcs"]] == ["Pociones en la remera", "Pociones en la remera (copia)"]
-    assert nucleo.npcs_guardados("portal")["npcs"] == []  # cada tipo en su archivo
-    assert nucleo.borrar_npc("tienda", tienda["id"])["ok"]
-    assert len(nucleo.npcs_guardados("tienda")["npcs"]) == 1
+    assert [t["nombre"] for t in nucleo.guardados.lista("tienda")["guardados"]] == ["Pociones en la remera", "Pociones en la remera (copia)"]
+    assert nucleo.guardados.lista("portal")["guardados"] == []  # cada tipo en su archivo
+    assert nucleo.guardados.borrar("tienda", tienda["id"])["ok"]
+    assert len(nucleo.guardados.lista("tienda")["guardados"]) == 1
 
 
 @pytest.mark.parametrize("npc_, error", [
@@ -192,39 +192,39 @@ def test_guardar_duplicar_y_borrar_tiendas(nucleo):
     (TIENDA_GUARDADA | {"partes": {"hats": "costumes.coronaRey_on"}}, "no lleva Piezas"),
 ])
 def test_una_tienda_que_no_se_puede_guardar(nucleo, npc_, error):
-    resultado = nucleo.guardar_npc("tienda", npc_)
+    resultado = nucleo.guardados.guardar("tienda", npc_)
 
     assert not resultado["ok"] and error in resultado["error"]
-    assert nucleo.npcs_guardados("tienda")["npcs"] == []
+    assert nucleo.guardados.lista("tienda")["guardados"] == []
 
 
 def test_exportar_e_importar_un_portal(nucleo, tmp_path):
     portal = {"nombre": "Al bosque", "base": "costumes2.gorra1", "comportamiento": "magia/portal"}
     archivo = tmp_path / "bosque.mgportal"
 
-    assert nucleo.exportar_npc("portal", portal, str(archivo))["ok"]
-    importado = nucleo.importar_npc_de_archivo("portal", str(archivo))
+    assert nucleo.guardados.exportar("portal", portal, str(archivo))["ok"]
+    importado = nucleo.guardados.importar_de_archivo("portal", str(archivo))
 
     assert importado["ok"], importado
-    assert {k: importado["npc"][k] for k in portal} == portal
-    assert "no es una tienda" in nucleo.importar_npc_de_archivo("tienda", str(archivo))["error"]
-    assert nucleo.importar_npc_de_archivo("portal", str(archivo))["npc"]["nombre"] == "Al bosque (2)"
-    assert not nucleo.npcs_guardados("banner")["ok"]  # solo tiendas, portales y minijuegos
+    assert {k: importado["documento"][k] for k in portal} == portal
+    assert "no es una tienda" in nucleo.guardados.importar_de_archivo("tienda", str(archivo))["error"]
+    assert nucleo.guardados.importar_de_archivo("portal", str(archivo))["documento"]["nombre"] == "Al bosque (2)"
+    assert not nucleo.guardados.lista("banner")["ok"]  # solo tiendas, portales y minijuegos
 
 
 def test_los_minijuegos_se_convierten_y_se_guardan_como_las_tiendas(nucleo, ffdec, tmp_path):
     escalada = {"nombre": "Escalar", "base": "costumes2.gorra1", "comportamiento": "escritoAMano"}
 
     convertido = nucleo.convertir_en_npcs([{"base": escalada["base"], "comportamiento": "escritoAMano"}])
-    guardado = nucleo.guardar_npc("minijuego", escalada)
+    guardado = nucleo.guardados.guardar("minijuego", escalada)
     archivo = tmp_path / "escalar.mgminijuego"
 
     assert convertido["ok"] and '{"behavior":"escritoAMano","monitorAttributes":false}' in convertido["script"]
-    assert guardado["ok"] and [m["nombre"] for m in nucleo.npcs_guardados("minijuego")["npcs"]] == ["Escalar"]
-    assert nucleo.npcs_guardados("tienda")["npcs"] == []
-    assert nucleo.exportar_npc("minijuego", escalada, str(archivo))["ok"]
-    assert "no es un portal" in nucleo.importar_npc_de_archivo("portal", str(archivo))["error"]
-    assert nucleo.importar_npc_de_archivo("minijuego", str(archivo))["npc"]["nombre"] == "Escalar (2)"
+    assert guardado["ok"] and [m["nombre"] for m in nucleo.guardados.lista("minijuego")["guardados"]] == ["Escalar"]
+    assert nucleo.guardados.lista("tienda")["guardados"] == []
+    assert nucleo.guardados.exportar("minijuego", escalada, str(archivo))["ok"]
+    assert "no es un portal" in nucleo.guardados.importar_de_archivo("portal", str(archivo))["error"]
+    assert nucleo.guardados.importar_de_archivo("minijuego", str(archivo))["documento"]["nombre"] == "Escalar (2)"
 
 
 # --- Con FFDec y el servidor del juego de verdad ---
