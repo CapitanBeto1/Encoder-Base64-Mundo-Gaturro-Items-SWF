@@ -161,7 +161,7 @@ def test_sin_onnxruntime_avisa_antes_de_bajar_nada(sistema, tmp_path, monkeypatc
     # En algunos Python (32 bits, versiones muy nuevas) no hay onnxruntime: lo demás del programa funciona igual.
     import mgitems.busqueda
     import mgitems.nucleo
-    monkeypatch.setattr(mgitems.nucleo, "hay_onnxruntime", lambda: False)
+    monkeypatch.setattr(mgitems.nucleo.busqueda, "hay_onnxruntime", lambda: False)
     monkeypatch.setitem(__import__("sys").modules, "onnxruntime", None)  # `import onnxruntime` falla
     nucleo = nucleo_con(sistema, tmp_path, DatosFalsos(listos=False))
 
