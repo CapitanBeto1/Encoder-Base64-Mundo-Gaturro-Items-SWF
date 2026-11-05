@@ -37,7 +37,7 @@ from mgitems.categorias import ARCHIVO_INDICE  # noqa: E402
 from mgitems.fuente import FuenteCDN  # noqa: E402
 from mgitems.iconos import ExportadorFFDec, IconosItems, version_de  # noqa: E402
 from mgitems.items import items_del_swf, orden_natural  # noqa: E402
-from mgitems.nucleo import _simbolos_con_imagen  # noqa: E402
+from mgitems.nucleo._comun import _simbolos_con_imagen  # noqa: E402
 from mgitems.prendas import ACCION, EFECTO, ItemsBaseFFDec  # noqa: E402
 from mgitems.swf import leer_clases, leer_simbolos  # noqa: E402
 
