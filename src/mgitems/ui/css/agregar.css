@@ -1,0 +1,107 @@
+/* Agregar Items: el buscador, los destinos y las páginas. */
+
+/* --- Agregar Items: buscador a la izquierda; a la derecha, los Items a recibir y el Encode --- */
+
+main.modo-agregar .buscador-swf { display: none; }
+.buscador-items { flex: 1; }
+.boton-todos { font-size: 11px; padding: 3px 8px; }
+.boton-todos[aria-pressed="true"] { background: var(--amarillo); border-color: var(--amarillo-contorno); }
+.categorias-items { grid-template-columns: repeat(10, minmax(0, 1fr)); }
+#filtro-items { flex: none; font-size: 12px; padding: 4px 8px; }
+.item-grilla { grid-template-rows: minmax(0, 1fr) auto auto; overflow: hidden; }
+.item-grilla .icono { overflow: hidden; }
+.nombre-item {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 9px;
+  line-height: 11px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--texto);
+}
+.pie-grilla { flex: none; display: flex; align-items: center; gap: 8px; color: #fff; font-size: 11px; }
+.pie-grilla .ayuda-grilla { flex: 1; min-width: 0; }
+#agregar-todos { font-size: 11px; padding: 3px 10px; }
+
+.items-a-recibir { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
+.items-a-recibir[hidden] { display: none; }
+.items-a-recibir .encabezado-lista { margin-top: 0; }
+main.modo-agregar #encode { flex: none; height: 64px; min-height: 0; }
+
+/* Dónde llega cada Item al juego: rojo si no llega bien. */
+.item-grilla { grid-template-rows: minmax(0, 1fr) auto auto auto; }
+.destino-item {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 8px;
+  line-height: 10px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #2f6421;
+}
+.destino-item[data-bien="false"] { color: #fff; background: #c41a1a; padding: 0 4px; border-radius: 5px; }
+.item-grilla.no-llega-bien { border-color: #c41a1a; }
+
+/* Exclusivo de pasaporte: una etiqueta dorada arriba a la izquierda. */
+.pieza-grilla { position: relative; }
+.marca-pasaporte {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  padding: 0 4px;
+  border-radius: 5px;
+  background: linear-gradient(#ffe066, #e0a800);
+  border: 1px solid #8a5a00;
+  color: #5a3a00;
+  font-size: 8px;
+  line-height: 11px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* Paginación: bajo cada flecha, un botón para saltar de a 10; abajo, los números de página (como en Google). */
+.flechas { flex: none; align-self: center; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.flecha-diez {
+  width: 34px;
+  padding: 3px 0;
+  font-size: 8px;
+  letter-spacing: 0;
+  line-height: 1.1;
+  color: #c4401a;
+  background: var(--amarillo);
+  border-color: var(--amarillo-contorno);
+  border-width: 2px;
+}
+.flecha-diez::before { display: none; }
+.paginas { flex: none; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 3px; }
+.paginas:empty { display: none; }
+.numero-de-pagina {
+  min-width: 24px;
+  padding: 2px 5px;
+  border-width: 2px;
+  border-radius: 7px;
+  font-size: 11px;
+  -webkit-text-stroke: 0;
+}
+.numero-de-pagina::before { display: none; }
+.numero-de-pagina[aria-current="page"] { background: var(--amarillo); border-color: var(--amarillo-contorno); }
+.total-paginas { margin-left: 4px; color: #fff; font-size: 11px; }
+
+/* Agregar Items: nombre, orden y destino en una fila. */
+.filtros-items { flex: none; display: flex; gap: 6px; align-items: center; }
+.filtros-items #filtro-items, .filtros-items #filtro-piezas { flex: 1; min-width: 110px; font-size: 12px; padding: 4px 8px; }
+select.filtro-lista {
+  flex: none;
+  max-width: 112px;
+  padding: 3px 4px;
+  border: 2px solid var(--celeste-borde);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--texto);
+  font: inherit;
+  font-size: 11px;
+}

@@ -1,0 +1,233 @@
+/* La pestaña Looks (y el editor que comparten las demás): el Gaturro y el inventario. */
+
+/* --- Pestaña Looks: como el inventario del juego, a pantalla completa --- */
+
+main.modo-looks { grid-template-columns: minmax(0, 1fr); }
+main.modo-looks > .panel:last-child { display: none; } /* el Encode va en la barra de abajo */
+main.modo-looks .buscador-swf { display: none; }
+.buscador-swf { display: contents; }
+#vista-looks:not([hidden]) { display: flex; flex-direction: column; gap: 8px; min-height: 0; flex: 1; overflow: hidden; }
+
+.encabezado-looks { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+.encabezado-looks .lista-looks { flex: 1 1 auto; min-width: 0; }
+.encabezado-looks .botones-encabezado { flex-wrap: wrap; gap: 4px; }
+.encabezado-looks .enlace { font-size: 11px; padding: 3px 8px; }
+
+.inventario {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+}
+
+/* Mitad izquierda: la tarjeta del Gaturro. */
+.tarjeta-gaturro {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  padding-bottom: 10px;
+  background: #4f9a3a;
+  border: 3px solid #f6d610;
+  border-radius: 16px;
+  overflow: hidden;
+}
+.tarjeta-gaturro .nombre-tarjeta {
+  flex: none;
+  width: 100%;
+  border: 0;
+  border-radius: 0;
+  padding: 8px;
+  background: #b3202a;
+  color: #fff;
+  text-align: center;
+  text-transform: uppercase;
+  font-size: 17px;
+  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.18);
+}
+.tarjeta-gaturro .nombre-tarjeta::placeholder { color: rgba(255, 255, 255, 0.7); }
+.tarjeta-gaturro .nombre-tarjeta:focus { box-shadow: inset 0 0 0 3px var(--amarillo); border: 0; }
+.se-guarda-en { flex: none; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 0 10px; color: #fff; font-size: 12px; }
+.se-guarda-en .ayuda { color: #e9ffd9; }
+.base-look { display: flex; align-items: center; gap: 4px; min-width: 0; }
+.base-look .icono { width: 26px; height: 26px; }
+.base-look .nombre { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.se-guarda-en .enlace { font-size: 10px; padding: 2px 7px; }
+
+.escena {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px;
+}
+.gaturro { margin: 0; min-height: 0; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.gaturro img { width: 100%; height: 100%; min-height: 0; object-fit: contain; }
+.gaturro img[hidden] { display: none; }
+.gaturro figcaption { flex: none; display: flex; flex-direction: column; gap: 2px; color: #fff; font-size: 10px; line-height: 1.2; text-align: center; }
+.gaturro figcaption:empty { display: none; }
+
+.casilleros { display: grid; grid-template-columns: repeat(2, 50px); align-content: center; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.casilleros li { position: relative; }
+.casillero {
+  width: 50px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 3px;
+  border-radius: 10px;
+  background: var(--amarillo);
+  border-color: var(--amarillo-contorno);
+}
+.casillero .icono { width: 30px; height: 30px; box-shadow: none; background: rgba(255, 255, 255, 0.55); }
+.casillero .nombre-casillero { max-width: 100%; overflow: hidden; text-overflow: ellipsis; font-size: 7px; line-height: 1.1; text-transform: uppercase; color: var(--texto); white-space: nowrap; }
+.casillero[aria-pressed="true"] { background: #6fc054; border-color: #2f6421; box-shadow: 0 0 0 3px #fff; }
+.casilleros .sacar-pieza { position: absolute; top: -4px; right: -4px; width: 18px; height: 18px; font-size: 10px; padding: 0; }
+/* Trucar Prenda: una Pieza en una Parte por Prenda trucada (sin casilleros), y la lista de las que se reciben juntas. */
+main.modo-trucar .casilleros { display: none; }
+.armado-trucar { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; }
+.pieza-trucar { display: inline-flex; align-items: center; gap: 6px; min-height: 28px; padding: 2px 10px; border-radius: 10px; background: rgba(0, 0, 0, 0.18); color: #fff; font-size: 13px; }
+.pieza-trucar .icono { width: 26px; height: 26px; }
+.lista-trucadas { flex: none; display: flex; align-items: center; gap: 8px; min-height: 40px; }
+#lista-trucadas { display: flex; gap: 6px; flex: 1; min-width: 0; overflow-x: auto; margin: 0; padding: 2px; list-style: none; }
+#lista-trucadas li { flex: none; display: flex; align-items: center; gap: 6px; padding: 3px 6px 3px 8px; border-radius: 10px; background: var(--celeste); color: var(--texto); font-size: 12px; white-space: nowrap; }
+#lista-trucadas .icono { width: 26px; height: 26px; }
+
+.botones-tarjeta { flex: none; display: flex; justify-content: center; gap: 8px; }
+.boton-cuadrado {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  font-size: 24px;
+  line-height: 1;
+  background: var(--amarillo);
+  border-color: var(--amarillo-contorno);
+}
+.boton-colores:hover:not(:disabled) { background: #6fc054; border-color: #2f6421; }
+.boton-guardar { color: #16801f; }
+.boton-descartar { color: #c41a1a; }
+
+/* Mitad derecha: el inventario. */
+.armario {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  background: #4f9a3a;
+  border: 3px solid #f6d610;
+  border-radius: 16px;
+}
+.fuentes { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; }
+.fuentes .etiqueta-campo { color: #fff; width: auto; }
+.lista-fuentes { display: flex; flex-wrap: wrap; gap: 4px; }
+.chip-fuente { display: inline-flex; align-items: center; gap: 4px; padding: 2px 4px 2px 8px; border-radius: 10px; background: #fff; color: var(--texto); font-size: 11px; }
+.chip-fuente .quitar { width: 16px; height: 16px; font-size: 9px; padding: 0; }
+.agregar-fuente { width: 130px; }
+.agregar-fuente input { padding: 3px 8px; font-size: 12px; }
+#todas-las-fuentes { font-size: 11px; padding: 3px 8px; }
+#todas-las-fuentes[aria-pressed="true"] { background: var(--amarillo); border-color: var(--amarillo-contorno); }
+
+.categorias { flex: none; display: grid; grid-template-columns: repeat(13, minmax(0, 1fr)); gap: 3px; }
+.categoria {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3px 1px 2px;
+  border-radius: 9px;
+  background: #3c7d2b;
+  border-color: #2f6421;
+  color: #fff;
+}
+.categoria .icono-categoria { font-size: 18px; line-height: 1.1; }
+.categoria .cantidad-categoria { font-size: 9px; line-height: 1; }
+.categoria .nombre-categoria { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.categoria[aria-selected="true"] { background: #6fc054; border-color: #f6d610; }
+
+.poniendo-en { flex: none; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 3px 8px; border-radius: 10px; background: #fff; color: var(--texto); font-size: 12px; }
+.poniendo-en[hidden] { display: none; }
+.poniendo-en .quitar { width: 20px; height: 20px; font-size: 10px; padding: 0; }
+.armario #filtro-piezas { flex: none; font-size: 12px; padding: 4px 8px; }
+
+.estante { flex: 1; min-height: 0; display: flex; align-items: stretch; gap: 6px; overflow: hidden; }
+.estante .flecha-grande { align-self: center; }
+.flecha-grande {
+  flex: none;
+  width: 34px;
+  height: 64px;
+  padding: 0;
+  font-size: 20px;
+  color: #c4401a;
+  background: var(--amarillo);
+  border-color: var(--amarillo-contorno);
+}
+.grilla {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.grilla li { min-height: 0; }
+.pieza-grilla {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  place-items: center;
+  gap: 1px;
+  padding: 4px 3px 3px;
+  border-radius: 12px;
+  background: var(--amarillo);
+  border-color: var(--amarillo-contorno);
+}
+.pieza-grilla .icono { width: 100%; height: 100%; min-height: 0; box-shadow: none; background: transparent; }
+/* Lo que es la Pieza, debajo: verde si se viste, otro color si el juego la usa para otra cosa. */
+.tipo-pieza {
+  max-width: 100%;
+  padding: 0 3px;
+  border-radius: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 8px;
+  letter-spacing: 0;
+  text-transform: none;
+  line-height: 12px;
+  color: #fff;
+  background: #2f7d24;
+}
+.tipo-pieza[data-uso="transporte"] { background: #2a6db5; }
+.tipo-pieza[data-uso="casa"] { background: #8a5a2b; }
+.tipo-pieza[data-uso="mascota"] { background: #b0418f; }
+.tipo-pieza[data-uso="accion"] { background: #c4661a; }
+.tipo-pieza[data-uso="objeto"] { background: #6d6d6d; }
+.pieza-grilla .icono img { max-width: 100%; max-height: 100%; }
+.pieza-grilla .icono.sin-imagen::after { content: "…"; color: #9a8400; font-size: 18px; }
+.pieza-grilla.en-uso { box-shadow: inset 0 0 0 3px rgba(22, 128, 31, 0.5); }
+.pieza-grilla[aria-pressed="true"] { background: #6fc054; border-color: #2f6421; box-shadow: inset 0 0 0 3px #2f6421; }
+.armario #ayuda-grilla { flex: none; margin: 0; color: #fff; font-size: 11px; text-align: center; }
+.armario #ayuda-grilla:empty { display: none; }
+.numero-pagina { flex: none; align-self: center; color: #fff; font-size: 12px; }
+
+/* Abajo: aplicar y agregar al juego. */
+.barra-look { flex: none; display: flex; align-items: center; gap: 8px; }
+.barra-look #resumen-look { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.barra-look .primario { padding: 8px 16px; font-size: 14px; }
+.barra-look .entregar { width: auto; }
+
+/* Ventanitas de la pestaña. */
+#dialogo-ver-encode .panel { width: min(520px, 90vw); }
+#texto-ver-encode { min-height: 120px; }

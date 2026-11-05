@@ -1,0 +1,267 @@
+/* Las ventanas que imitan las del juego: «Elige tus colores» y «Mis Looks». */
+
+/* --- "Elige tus colores", como en el juego --- */
+
+dialog.dialogo-colores { width: auto; max-width: 96vw; padding: 0; border: 0; background: transparent; box-shadow: none; overflow: visible; }
+.dialogo-colores::backdrop { background: rgba(10, 14, 30, 0.6); }
+.pantalla-colores { display: flex; align-items: stretch; gap: 16px; }
+.escena-colores { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 10px; }
+.escena-colores img { width: 300px; aspect-ratio: 1; }
+.acciones-colores { display: flex; gap: 10px; }
+.dialogo-colores .pastilla-colores, .dialogo-mis-looks .pastilla-colores {
+  padding: 8px 22px;
+  border-radius: 12px;
+  background: #4a5683;
+  border: 3px solid #8e9bc4;
+  color: #fff;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  box-shadow: none;
+}
+.dialogo-colores .pastilla-colores:hover:not(:disabled), .dialogo-mis-looks .pastilla-colores:hover:not(:disabled) { background: #5b689a; }
+
+.dialogo-colores .panel-colores {
+  position: relative;
+  flex: none;
+  width: 560px;
+  padding: 14px 18px 18px;
+  border-radius: 18px;
+  background: #222a45;
+  color: #fff;
+}
+.titulo-colores { position: relative; display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.titulo-colores .paleta { font-size: 34px; }
+.titulo-colores h2 { display: flex; flex-direction: column; margin: 0; padding: 0; background: none; font-size: 24px; line-height: 1; color: #fff; }
+.titulo-colores h2 .rojo { color: #ff5a5a; font-size: 20px; }
+.dialogo-colores .cerrar-redondo {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 50%;
+  background: #f04848;
+  border: 3px solid #22283f;
+  color: #22283f;
+  font-size: 18px;
+}
+.selectores-color { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 20px; }
+.selector-color { display: flex; flex-direction: column; gap: 8px; }
+.selector-color.abajo { flex-direction: column-reverse; }
+.dialogo-colores .rotulo-color {
+  white-space: nowrap;
+  align-self: stretch;
+  padding: 5px 10px;
+  border-radius: 14px;
+  background: #2f3858;
+  font-size: 12px;
+  text-align: center;
+  letter-spacing: 0.04em;
+}
+.zona-color { display: flex; gap: 10px; height: 150px; }
+.barra-tono {
+  position: relative;
+  flex: none;
+  width: 12px;
+  border-radius: 6px;
+  background: linear-gradient(to bottom, #f00 0%, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00 100%);
+  cursor: pointer;
+  touch-action: none;
+}
+.cuadro-color {
+  position: relative;
+  flex: 1;
+  border-radius: 4px;
+  background-image: linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, transparent);
+  cursor: crosshair;
+  touch-action: none;
+}
+.marca-color {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.barra-tono .marca-color { left: 50%; background: #e02020; }
+.selector-color.deshabilitado { opacity: 0.35; }
+.selector-color.deshabilitado .zona-color { cursor: not-allowed; }
+.selector-color.deshabilitado .barra-tono, .selector-color.deshabilitado .cuadro-color { cursor: not-allowed; }
+
+/* --- Mis Looks: botón de la pestaña y ventana "Guarda tu Look", como en el juego --- */
+
+.boton-mis-looks { display: inline-flex; align-items: center; gap: 6px; padding: 5px 14px; font-size: 14px; }
+.cantidad-looks { font-size: 12px; opacity: 0.8; }
+.look-abierto { font-size: 12px; }
+
+dialog.dialogo-mis-looks { position: fixed; inset: 0; margin: auto; width: fit-content; height: fit-content; max-width: 98vw; max-height: 96vh; padding: 0; border: 0; background: transparent; overflow: visible; }
+.dialogo-mis-looks::backdrop { background: rgba(10, 14, 30, 0.6); }
+.panel-mis-looks {
+  position: relative;
+  width: min(1000px, calc(98vw - 150px)); /* con lugar para el pincel de la izquierda */
+  padding: 14px 18px 18px;
+  border-radius: 18px;
+  background: #222a45;
+  color: #fff;
+}
+.titulo-mis-looks { position: relative; display: flex; align-items: center; gap: 12px; margin-bottom: 12px; padding-right: 44px; }
+.titulo-mis-looks .martillo { font-size: 28px; filter: grayscale(1) brightness(1.4); }
+.titulo-mis-looks h2 { display: flex; flex-direction: column; margin: 0; padding: 0; background: none; color: #8f9cc8; font-size: 22px; line-height: 1; }
+.titulo-mis-looks h2 .sub { color: #fff; font-size: 13px; margin-top: 3px; }
+.acciones-mis-looks { display: flex; gap: 6px; margin-left: auto; }
+.dialogo-mis-looks .pastilla-chica {
+  padding: 4px 10px;
+  border-radius: 10px;
+  background: #3a4470;
+  border: 2px solid #6d7bb0;
+  color: #fff;
+  font-size: 11px;
+  box-shadow: none;
+}
+.dialogo-mis-looks .pastilla-chica:hover:not(:disabled) { background: #4a5683; }
+.dialogo-mis-looks .cerrar-redondo {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 50%;
+  border: 3px solid #22283f;
+  font-size: 18px;
+}
+.dialogo-mis-looks .cerrar-amarillo { background: #ff6a1a; color: #ffe14d; }
+
+.cuerpo-mis-looks { display: grid; grid-template-columns: 400px minmax(0, 1fr); gap: 18px; }
+.columna-escenario { display: flex; flex-direction: column; gap: 12px; }
+.escenario-look {
+  position: relative;
+  height: 420px;
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  /* Telón y piso, como el escenario del juego. */
+  background:
+    linear-gradient(to bottom, transparent 62%, #5fa8b8 62%),
+    repeating-linear-gradient(to right, #c9707c 0 22px, #b65e6b 22px 26px, #d07b87 26px 44px);
+}
+.escenario-look img { width: 370px; height: 370px; }
+.escenario-look img[hidden] { display: none; }
+.nombre-look-elegido { margin: 0 0 10px; padding: 3px 12px; border-radius: 10px; background: rgba(34, 42, 69, 0.75); font-size: 13px; }
+.girar-look {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 8px;
+  background: rgba(60, 40, 60, 0.45);
+  border: 0;
+  color: #fff;
+  font-size: 20px;
+  box-shadow: none;
+}
+
+.grilla-looks {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-rows: 158px;
+  gap: 12px;
+  max-height: 498px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0 4px 0 0;
+  list-style: none;
+}
+.grilla-looks li { min-height: 0; }
+.casillero-vacio { border-radius: 10px; background: #2b3352; }
+.casillero-look {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 10px;
+  background: #1b2138;
+  border: 2px solid transparent;
+  color: #fff;
+  box-shadow: none;
+}
+.casillero-look:hover:not(:disabled) { background: #2b3352; }
+.casillero-look[aria-pressed="true"] { border-color: #ffd23a; background: #2b3352; }
+.casillero-look img { flex: 1; min-height: 0; width: 100%; object-fit: contain; }
+.nombre-casillero-look { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }
+.casillero-look.nuevo { background: #3a4470; color: #8f9cc8; font-size: 40px; }
+.casillero-look.nuevo:hover:not(:disabled) { background: #4a5683; color: #fff; }
+
+.pie-mis-looks { display: flex; justify-content: center; gap: 16px; }
+/* En la ventana del juego los casilleros y botones son planos: sin el brillo de los botones del programa. */
+.dialogo-mis-looks .casillero-look::before,
+.dialogo-mis-looks .girar-look::before,
+.dialogo-mis-looks .pastilla-chica::before { display: none; }
+/* El de eliminar, debajo del de girar: mismo tamaño, rojizo. */
+.dialogo-mis-looks .eliminar-look { top: 54px; background: rgba(196, 52, 52, 0.85); font-size: 17px; }
+.dialogo-mis-looks .eliminar-look:hover:not(:disabled) { background: #d84040; }
+.dialogo-mis-looks .eliminar-look:disabled { opacity: 0.4; }
+.dialogo-mis-looks .eliminar-look::before { display: none; }
+/* CANCELAR y EQUIPAR como los del juego: planos, redondeados, azul grisáceo. */
+.dialogo-mis-looks .boton-juego {
+  min-width: 160px;
+  padding: 10px 18px;
+  border: 0;
+  border-radius: 10px;
+  background: #4b5786;
+  color: #fff;
+  font-size: 15px;
+  letter-spacing: 0.03em;
+  box-shadow: 0 3px 0 #2c3456;
+}
+.dialogo-mis-looks .boton-juego::before { display: none; }
+.dialogo-mis-looks .boton-juego:hover:not(:disabled) { background: #5a67a0; }
+.dialogo-mis-looks .boton-juego:disabled { background: #343d61; color: #8c95b8; box-shadow: 0 3px 0 #262d49; }
+/* El Gaturro viene encuadrado justo (encuadrar() en js/gaturro.js): sin escalas que lo saquen de su lugar.
+   Los botones del escenario y los nombres quedan siempre por encima y en su propio espacio. */
+.casillero-look { overflow: hidden; gap: 4px; }
+.casillero-look img { flex: 1; min-height: 0; width: 100%; padding: 2px 6px 0; object-fit: contain; }
+.nombre-casillero-look { flex: none; padding: 1px 8px; border-radius: 8px; background: #11162a; }
+.escenario-look { padding: 10px 0 10px; }
+.escenario-look img { flex: 1; min-height: 0; width: 100%; height: auto; padding: 40px 24px 6px; object-fit: contain; object-position: center bottom; }
+.escenario-look .girar-look, .escenario-look .nombre-look-elegido { position: relative; z-index: 2; }
+.escenario-look .girar-look { position: absolute; }
+.nombre-look-elegido { flex: none; margin: 0; }
+
+/* Los dibujos del juego (ver `interfaz`), cuando llegan: reemplazan al emoji o al fondo de la ventana. */
+.con-dibujo > img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.titulo-mis-looks .martillo.con-dibujo { width: 30px; height: 28px; filter: none; }
+.titulo-colores .paleta.con-dibujo { width: 40px; height: 40px; }
+.dialogo-mis-looks .cerrar-amarillo.con-dibujo { background: none; border: 0; }
+.dialogo-mis-looks .girar-look.con-dibujo { display: flex; align-items: center; justify-content: center; }
+.dialogo-mis-looks .girar-look.con-dibujo > img { flex: none; width: 18px; height: 18px; padding: 0; } /* sin el lugar del Gaturro del escenario */
+.escenario-look.con-dibujo { background-repeat: no-repeat; background-size: cover; background-position: center bottom; }
+
+/* Los adornos de las ventanas del juego, en su lugar respecto del panel (medidas del juego: el panel de
+   «Guarda tu Look» mide 560×360 y el de «Elige tus colores» 434×362, que acá es 560 de ancho: ×1,29). */
+.adorno { position: absolute; pointer-events: none; }
+.adorno[hidden] { display: none; }
+.adorno > img { display: block; width: 100%; height: auto; }
+.adorno-pinceles { z-index: -1; right: -31px; top: -21px; width: 65px; } /* detrás del panel */
+.adorno-pincel { z-index: 3; left: -65px; bottom: -20px; width: 105px; } /* delante */
+.adorno-muestras { z-index: -1; left: -106px; top: -52px; width: 155px; } /* detrás del panel */
+.adorno-pintor { z-index: 0; left: 356px; top: -4px; width: 139px; }
+/* Como en el juego, el rótulo va delante del pintor: las patas quedan apoyadas en su borde. */
+.dialogo-colores .rotulo-color { position: relative; z-index: 1; }
+
+/* Barritas de zoom del Gaturro. */
+.zoom-gaturro { flex: none; display: flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 12px; background: rgba(0, 0, 0, 0.22); color: #fff; font-size: 14px; line-height: 1; }
+.zoom-gaturro input[type="range"] { width: 120px; accent-color: var(--amarillo); cursor: pointer; }
+.zoom-escenario { position: relative; z-index: 2; margin-bottom: 6px; background: rgba(34, 42, 69, 0.75); }

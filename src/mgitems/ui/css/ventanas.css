@@ -1,0 +1,202 @@
+/* Las ventanas (diálogos): configuración, agregar al juego; las barras de desplazamiento. */
+
+/* --- Ventanas (diálogos): amarillas con borde gris, como las del juego --- */
+
+dialog {
+  width: min(560px, 90vw);
+  height: min(420px, 80vh);
+  padding: 0;
+  background: none;
+  border: none;
+  overflow: visible;
+  color: var(--texto);
+}
+
+dialog::backdrop { background: rgba(40, 30, 0, 0.55); }
+dialog:focus { outline: none; }
+
+dialog .panel {
+  height: 100%;
+  background: var(--ventana);
+  border: 7px solid var(--ventana-borde);
+  border-radius: 20px;
+  box-shadow: inset 0 0 0 10px var(--ventana), inset 0 0 0 9999px var(--ventana-interior), 0 10px 26px rgba(40, 30, 0, 0.45);
+}
+
+dialog .panel .ayuda { color: var(--texto-suave); }
+
+dialog.grande {
+  width: min(720px, 92vw);
+  height: min(620px, 88vh);
+}
+
+/* El diálogo de entrega se ajusta a su contenido. */
+#dialogo-entrega {
+  height: auto;
+  max-height: 88vh;
+}
+
+#dialogo-entrega .panel {
+  height: auto;
+  max-height: 88vh;
+  overflow-y: auto;
+}
+
+/* --- Configuración (diálogo) --- */
+
+.componentes {
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: 2px;
+  list-style: none;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.componentes:focus-visible {
+  outline: 2px solid var(--amarillo-contorno);
+  outline-offset: 2px;
+}
+
+.componente {
+  display: grid;
+  grid-template-columns: 26px 1fr auto;
+  gap: 4px 10px;
+  padding: 10px 12px;
+  background: #fff8d0;
+  border: 3px solid #e2c300;
+  border-radius: 12px;
+}
+
+.componente.falta { border-color: var(--naranja); }
+
+.componente .marca {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  color: var(--blanco);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.componente.ok .marca { background: var(--verde); }
+.componente.falta .marca { background: var(--naranja); }
+
+.componente .titulo { font-weight: 900; text-transform: uppercase; }
+
+.componente .detalle,
+.componente .ruta,
+.componente ol {
+  grid-column: 2 / -1;
+  margin: 0;
+  font-size: 13px;
+  color: var(--texto-suave);
+}
+
+.componente .ruta {
+  font-family: Consolas, monospace;
+  font-weight: 400;
+  -webkit-text-stroke: 0;
+  overflow-wrap: anywhere;
+}
+
+.componente ol {
+  padding-left: 18px;
+  color: var(--texto);
+}
+
+.componente ol li + li { margin-top: 2px; }
+
+.componente .botones {
+  grid-row: 1;
+  grid-column: 3;
+  display: flex;
+  gap: 6px;
+}
+
+.componente .botones button {
+  padding: 3px 10px;
+  font-size: 12px;
+}
+
+/* --- Agregar al juego (diálogo) --- */
+
+.pasos {
+  margin: 0;
+  padding-left: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+}
+
+.pasos li { display: flex; gap: 8px; align-items: center; }
+
+.pasos .marca {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  color: var(--blanco);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.pasos .ok .marca { background: var(--verde); }
+.pasos .falla .marca { background: var(--rojo); }
+.pasos .detalle { color: var(--texto-suave); font-size: 13px; }
+
+.resultado {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #e9f7e2;
+  border: 3px solid var(--verde);
+  line-height: 1.5;
+}
+
+.resultado.error {
+  background: #ffe6e3;
+  border-color: var(--rojo);
+}
+
+.resultado[hidden] { display: none; }
+.resultado strong { display: block; margin-bottom: 4px; text-transform: uppercase; }
+
+/* --- Barras de desplazamiento --- */
+
+::-webkit-scrollbar { width: 12px; }
+::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.12); border-radius: 8px; }
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(90deg, var(--celeste), var(--celeste-oscuro));
+  border: 2px solid var(--celeste-contorno);
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--amarillo); border-color: var(--amarillo-contorno); }
+
+@media (max-width: 760px) {
+  body { height: auto; overflow: auto; }
+  .paneles { grid-template-columns: 1fr; }
+}
+
+/* Dónde queda un Item base en el juego. */
+.resultados-swf li .tipo-mochila,
+.resultados-swf li .tipo-prenda {
+  flex: none;
+  overflow: visible;
+  white-space: nowrap;
+  margin-left: auto;
+  padding: 0 8px;
+  border-radius: 10px;
+  font-size: 0.8em;
+}
+.resultados-swf li .tipo-mochila { background: #f6d610; color: #5a3d00; }
+.resultados-swf.con-iconos { overflow-x: hidden; }
+.resultados-swf.con-iconos li .nombre { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.botones-encabezado { display: flex; gap: 8px; }
