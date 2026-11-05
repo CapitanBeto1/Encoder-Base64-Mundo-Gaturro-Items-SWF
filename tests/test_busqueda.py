@@ -58,7 +58,7 @@ def test_las_huellas_se_guardan_y_ordenan_por_parecido(tmp_path):
     parecidos = leidas.parecidos(np.array([[0, 1, 0], [0.9, 0, 0]], np.float32))
 
     assert [r for r, _ in parecidos] == ["ropa.remera_on", "casa.silla", "ropa.remera"]
-    assert parecidos[0][1] == pytest.approx(1)
+    assert parecidos[0][1] == pytest.approx(1, abs=0.01)  # se guardan en int8: un poco de redondeo
     assert leidas.prendas_de_pieza == {"ropa.remera_on": ["ropa.remera"]}
 
 
@@ -72,3 +72,23 @@ def test_con_rectangulo_tambien_se_compara_mas_amplio():
     assert [e.size for e in encuadres] == [(20, 20), (30, 30), (44, 44)]  # el marcado, +25 % y +60 % por lado
     assert [e.size for e in entera] == [(100, 100)]
     assert abrir_encuadres(png(captura), (0, 0, 100, 100))[1].size == (100, 100)  # no se sale de la imagen
+
+
+def test_los_pedazos_de_un_dibujo_sus_partes_separadas_y_sus_mitades():
+    # Como pruebas.caballo: un cartel arriba y el caballo abajo, que no se tocan.
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
+    from armar_busqueda import pedazos
+
+    dibujo = Image.new("RGBA", (120, 200), (0, 0, 0, 0))
+    dibujo.paste((0, 200, 0, 255), (0, 0, 120, 50))      # el cartel
+    dibujo.paste((140, 90, 40, 255), (20, 120, 100, 200))  # el caballo
+
+    tamanos = [p.size for p in pedazos(dibujo)]
+
+    assert tamanos[:2] == [(120, 50), (80, 80)]  # las dos partes, cada una sola
+    assert len(tamanos) > 2  # y las mitades, porque es grande
+    chico = Image.new("RGBA", (40, 40), (0, 0, 0, 0))
+    chico.paste((255, 0, 0, 255), (5, 5, 35, 35))
+    assert pedazos(chico) == []  # una sola parte y chico: nada que cortar

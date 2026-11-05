@@ -20,7 +20,7 @@ from PIL import Image, ImageOps
 
 ARCHIVO_MODELO = "clip_visual_int8.onnx"
 ARCHIVO_HUELLAS = "huellas_busqueda.npz"
-VERSION_DATOS = 1  # sube si cambia la forma de las huellas o el modelo
+VERSION_DATOS = 2  # sube si cambia la forma de las huellas o el modelo. 2: en int8, con los pedazos de los dibujos
 
 # «¿Qué es?»: a qué se limita la búsqueda. La ropa, por la Parte del cuerpo donde va (cuenta la Prenda y lo que se
 # ve puesto): solo las Prendas que van únicamente ahí, porque el ícono de un disfraz es un Gaturro entero y se
@@ -179,12 +179,15 @@ class Huellas:
         with np.load(archivo, allow_pickle=False) as datos:
             if int(datos["version"]) != VERSION_DATOS:
                 raise ValueError("las huellas son de otra versión")
-            return cls([str(r) for r in datos["rutas"]], datos["huellas"].astype(np.float32),
-                       json.loads(str(datos["prendas_de_pieza"])))
+            huellas = datos["huellas"].astype(np.float32) * datos["escalas"].astype(np.float32)[:, None]
+            return cls([str(r) for r in datos["rutas"]], huellas, json.loads(str(datos["prendas_de_pieza"])))
 
     def guardar(self, archivo: Path) -> None:
+        """En int8, con una escala por fila (la mitad que en float16): para comparar parecidos alcanza y sobra."""
+        huellas = self.huellas.astype(np.float32)
+        escalas = np.maximum(np.abs(huellas).max(axis=1), 1e-8) / 127
         np.savez_compressed(archivo, version=np.array(VERSION_DATOS), rutas=np.array(self.rutas),
-                            huellas=self.huellas.astype(np.float16),
+                            huellas=np.round(huellas / escalas[:, None]).astype(np.int8), escalas=escalas.astype(np.float16),
                             prendas_de_pieza=np.array(json.dumps(self.prendas_de_pieza, ensure_ascii=False)))
 
     def de_items(self, items: set[str]) -> np.ndarray:
