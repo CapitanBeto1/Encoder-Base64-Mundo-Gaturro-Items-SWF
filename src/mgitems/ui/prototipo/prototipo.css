@@ -1,0 +1,169 @@
+/* PROTOTIPO (rama prototipo-ui, no va a main): variantes elegidas con la barra de abajo (<html data-…>). */
+
+@font-face { font-family: "Fredoka"; src: url("fuentes/Fredoka.ttf") format("truetype"); font-weight: 300 700; }
+@font-face { font-family: "Nunito"; src: url("fuentes/Nunito.ttf") format("truetype"); font-weight: 200 1000; }
+@font-face { font-family: "Baloo"; src: url("fuentes/Baloo2.ttf") format("truetype"); font-weight: 400 800; }
+
+/* ============ Barra del prototipo (no es parte del diseño) ============ */
+
+body > div.barra-prototipo {
+  position: fixed !important; z-index: 99999; left: 50%; bottom: 6px; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 6px; padding: 5px 8px; border-radius: 999px;
+  background: #111; color: #eee; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  font: 600 11px/1 system-ui, "Segoe UI", sans-serif; -webkit-text-stroke: 0; white-space: nowrap;
+}
+.barra-prototipo strong { color: #ff5fa2; letter-spacing: 1px; margin: 0 4px; }
+.barra-prototipo button {
+  all: unset; cursor: pointer; padding: 3px 7px; border-radius: 999px; background: #2a2a2a; color: #fff;
+}
+.barra-prototipo button:hover { background: #ff5fa2; }
+.grupo-prototipo { display: inline-flex; align-items: center; gap: 3px; padding: 2px; border-radius: 999px; border: 1px solid #333; cursor: pointer; }
+.grupo-prototipo.activo { border-color: #ff5fa2; }
+.grupo-prototipo > span { min-width: 118px; text-align: center; }
+.barra-prototipo, .barra-prototipo * { color: #eee !important; -webkit-text-stroke: 0 !important; text-shadow: none !important; font-family: system-ui, "Segoe UI", sans-serif !important; font-size: 11px !important; }
+.barra-prototipo strong { color: #ff5fa2 !important; }
+.barra-prototipo button::before, .barra-prototipo button::after { display: none !important; }
+
+/* ============ Letra ============ */
+
+[data-letra="fredoka"] body { font-family: "Fredoka", sans-serif; font-weight: 500; -webkit-text-stroke: 0; }
+[data-letra="fredoka"] :is(button, h2, .rotulo, [role="tab"]) { font-weight: 600; -webkit-text-stroke: 0; letter-spacing: 0.3px; }
+
+[data-letra="nunito"] body { font-family: "Nunito", sans-serif; font-weight: 700; -webkit-text-stroke: 0; }
+[data-letra="nunito"] :is(button, h2, [role="tab"], .titulo-look) { font-family: "MG", serif; font-weight: normal; -webkit-text-stroke: 0.4px currentColor; }
+
+[data-letra="baloo"] body { font-family: "Baloo", sans-serif; font-weight: 600; -webkit-text-stroke: 0; line-height: 1.25; }
+[data-letra="baloo"] :is(button, h2, [role="tab"]) { font-weight: 800; -webkit-text-stroke: 0; }
+
+/* El logo queda siempre igual. */
+:root:not([data-letra="actual"]) .barra h1 { font-family: "MG", serif; }
+:root:not([data-letra="actual"]) :is(input, select, textarea) { font-family: inherit; font-weight: 600; }
+
+/* ============ Nombres de los Items (tarjetas de las grillas) ============ */
+
+/* Legible: «Jugo durazno», más grande y en dos renglones; el técnico al pasar el mouse. */
+[data-nombres="legible"] .nombre-item {
+  white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  font-size: 11px; line-height: 12px; font-weight: 700; text-align: center; -webkit-text-stroke: 0;
+}
+[data-nombres="legible"] .tipo-pieza { font-size: 8px; padding: 0 5px; border-radius: 999px; }
+
+/* Rótulo: el nombre en una franja oscura como los rótulos del juego; el tipo pasa a un punto de color. */
+[data-nombres="rotulo"] .item-grilla { padding-bottom: 3px; }
+[data-nombres="rotulo"] .nombre-item {
+  width: calc(100% + 6px); margin: 0 -3px; padding: 2px 4px; box-sizing: border-box;
+  white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  background: rgba(18, 18, 18, 0.82); color: #fff; border-radius: 0 0 8px 8px;
+  font-size: 10px; line-height: 11px; text-align: center; -webkit-text-stroke: 0;
+}
+[data-nombres="rotulo"] .item-grilla .tipo-pieza {
+  position: absolute; top: 4px; left: 4px; width: 11px; height: 11px; padding: 0; border-radius: 50%;
+  font-size: 0; box-shadow: 0 0 0 2px #fff;
+}
+[data-nombres="rotulo"] .destino-item[data-bien="true"] { display: none; }
+[data-nombres="rotulo"] .destino-item[data-bien="false"] { position: absolute; top: 3px; right: 3px; font-size: 8px; }
+
+/* Ficha: tarjeta clara; nombre grande, debajo el técnico en gris, y el tipo y el destino como texto. */
+[data-nombres="ficha"] .item-grilla { background: #fffbe6; border-color: #e7cf55; }
+[data-nombres="ficha"] .item-grilla[aria-pressed="true"] { background: #d9f5c8; border-color: #4f9a35; }
+[data-nombres="ficha"] .nombre-item {
+  white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  font-size: 11px; line-height: 12px; font-weight: 800; text-align: center; color: #2b2100; -webkit-text-stroke: 0;
+}
+[data-nombres="ficha"] .item-grilla .tipo-pieza,
+[data-nombres="ficha"] .item-grilla .destino-item[data-bien="true"] {
+  background: none; padding: 0; font-size: 8px; line-height: 9px; color: #8a7400; -webkit-text-stroke: 0; text-transform: uppercase; letter-spacing: 0.4px;
+}
+[data-nombres="ficha"] .item-grilla .tipo-pieza::before { content: "●"; margin-right: 2px; color: var(--color-tipo, #3f9a2a); }
+[data-nombres="ficha"] .tipo-pieza[data-uso="casa"] { --color-tipo: #8a5a2b; }
+[data-nombres="ficha"] .tipo-pieza[data-uso="mochila"] { --color-tipo: #e08a00; }
+[data-nombres="ficha"] .tipo-pieza[data-uso="mascota"] { --color-tipo: #b0418f; }
+[data-nombres="ficha"] .tipo-pieza[data-uso="objeto"] { --color-tipo: #6d6d6d; }
+
+/* ============ Íconos en vez de emojis ============ */
+
+.pi { display: inline-block; width: 1.15em; height: 1.15em; vertical-align: -0.2em; line-height: 1; }
+.pi svg { display: block; width: 100%; height: 100%; }
+[data-iconos="emoji"] .pi { width: auto; height: auto; vertical-align: baseline; }
+.icono-categoria .pi { width: 22px; height: 22px; }
+[data-iconos="relleno"] .pi { color: #4a3300; filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.55)); }
+[data-iconos="trazo"] .pi { color: #3a2c05; }
+[data-iconos="duotono"] .pi { color: #3a2400; }
+[data-iconos="duotono"] .pi svg [opacity] { opacity: 1; fill: #ffcf1f; }
+[data-iconos="duotono"] .categoria[aria-selected="true"] .pi svg [opacity] { fill: #ff6b3d; }
+/* Sobre fondos rojos u oscuros, el ícono en claro. */
+:root:not([data-iconos="emoji"]) :is(.principal, .quitar, .rotulo, h2, .boton-descartar) .pi { color: #fff; filter: none; }
+
+/* ============ Cargas ============ */
+
+.con-carga { display: flex; align-items: center; justify-content: center; gap: 8px; }
+.con-carga.carga-grande {
+  grid-column: 1 / -1; flex-direction: column; min-height: 150px; text-align: center; font-size: 13px;
+}
+.animacion-carga { flex: none; display: inline-flex; align-items: center; justify-content: center; position: relative; }
+
+/* Huellitas: cinco huellas que aparecen una tras otra, como si un gato caminara. */
+.animacion-carga .huella { width: 13px; height: 13px; color: #7a4a10; opacity: 0; animation: pisar 1.6s infinite; animation-delay: calc(var(--i) * 0.22s); }
+.animacion-carga .huella:nth-child(odd) { transform: translateY(-4px) rotate(80deg); }
+.animacion-carga .huella:nth-child(even) { transform: translateY(4px) rotate(100deg); }
+.carga-grande .animacion-carga .huella { width: 30px; height: 30px; margin: 0 2px; color: #fff3b0; filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.35)); }
+.carga-grande .animacion-carga .huella:nth-child(odd) { transform: translateY(-9px) rotate(80deg); }
+.carga-grande .animacion-carga .huella:nth-child(even) { transform: translateY(9px) rotate(100deg); }
+@keyframes pisar { 0% { opacity: 0; scale: 0.6; } 15% { opacity: 1; scale: 1; } 60% { opacity: 1; } 100% { opacity: 0; } }
+
+/* Ovillo: un ovillo de lana que rueda de un lado a otro, desenrollando el hilo. */
+.animacion-carga .ovillo { width: 16px; height: 16px; animation: rodar 1.4s ease-in-out infinite alternate; }
+.animacion-carga .ovillo svg { width: 100%; height: 100%; fill: #5a1500; animation: girar 1.4s linear infinite; }
+.animacion-carga .ovillo svg [opacity] { opacity: 1; fill: #ff4d3d; }
+.animacion-carga .hilo { position: absolute; left: 0; bottom: -2px; width: 40px; height: 14px; fill: none; stroke: #ff4d3d; stroke-width: 3; stroke-linecap: round; stroke-dasharray: 130; animation: hilar 1.4s ease-in-out infinite alternate; }
+.animacion-carga .sombra-ovillo { display: none; }
+.carga-grande .animacion-carga { width: 150px; height: 70px; }
+.carga-grande .animacion-carga .ovillo { position: absolute; left: 0; top: 4px; width: 46px; height: 46px; }
+.carga-grande .animacion-carga .hilo { width: 150px; height: 40px; bottom: 6px; }
+.carga-grande .animacion-carga .sombra-ovillo { display: block; position: absolute; left: 6px; bottom: 2px; width: 36px; height: 7px; border-radius: 50%; background: rgba(0, 0, 0, 0.25); animation: rodar-sombra 1.4s ease-in-out infinite alternate; }
+.animacion-carga:not(.carga-grande *) { width: 40px; }
+@keyframes rodar { from { transform: translateX(0); } to { transform: translateX(24px); } }
+.carga-grande .ovillo { animation-name: rodar-grande !important; }
+@keyframes rodar-grande { 0% { transform: translate(0, 0); } 25% { transform: translate(26px, -12px); } 50% { transform: translate(52px, 0); } 75% { transform: translate(78px, -12px); } 100% { transform: translate(104px, 0); } }
+@keyframes rodar-sombra { 0% { transform: translateX(0) scale(1); } 25% { transform: translateX(26px) scale(0.7); } 50% { transform: translateX(52px) scale(1); } 75% { transform: translateX(78px) scale(0.7); } 100% { transform: translateX(104px) scale(1); } }
+@keyframes girar { to { transform: rotate(360deg); } }
+@keyframes hilar { from { stroke-dashoffset: 130; } to { stroke-dashoffset: 0; } }
+
+/* Esqueleto: una estrella que gira y, en las grillas, tarjetas vacías con brillo con la forma de lo que viene. */
+.animacion-carga .estrella-carga { width: 15px; height: 15px; color: #e8541e; animation: girar 1.1s linear infinite; }
+.carga-grande .animacion-carga .estrella-carga { width: 26px; height: 26px; }
+.esqueleto-grilla { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 8px; width: 100%; }
+.tarjeta-esqueleto {
+  height: 92px; border-radius: 10px; display: flex; flex-direction: column; justify-content: flex-end; gap: 4px; padding: 8px;
+  background: linear-gradient(100deg, rgba(255, 255, 255, 0.18) 30%, rgba(255, 255, 255, 0.5) 50%, rgba(255, 255, 255, 0.18) 70%) 0 0 / 300% 100%;
+  animation: brillo 1.3s linear infinite; box-sizing: border-box;
+}
+.tarjeta-esqueleto span { display: block; height: 7px; border-radius: 4px; background: rgba(255, 255, 255, 0.45); }
+.tarjeta-esqueleto span + span { width: 60%; align-self: center; }
+@keyframes brillo { from { background-position: 100% 0; } to { background-position: 0 0; } }
+[data-carga="esqueleto"] .carga-grande { justify-content: flex-start; }
+
+/* La imagen de un Item mientras llega. */
+[data-carga="esqueleto"] .icono.sin-imagen:not([title="Sin imagen"]) {
+  background: linear-gradient(100deg, #f3f3f3 30%, #ffffff 50%, #f3f3f3 70%) 0 0 / 300% 100%; animation: brillo 1.3s linear infinite;
+}
+:is([data-carga="huellitas"], [data-carga="ovillo"]) .icono.sin-imagen:not([title="Sin imagen"]) { background: rgba(255, 255, 255, 0.35); position: relative; }
+:is([data-carga="huellitas"], [data-carga="ovillo"]) .icono.sin-imagen:not([title="Sin imagen"])::after {
+  content: ""; position: absolute; inset: 30%; background: #c9a800; -webkit-mask: var(--mascara-carga) center / contain no-repeat;
+  animation: latir 1s ease-in-out infinite;
+}
+[data-carga="ovillo"] .icono.sin-imagen:not([title="Sin imagen"])::after { background: #ff4d3d; animation: girar 1.2s linear infinite; }
+@keyframes latir { 50% { transform: scale(0.75); opacity: 0.5; } }
+
+/* ============ Toques: respuestas animadas al usar el programa ============ */
+
+[data-toques="si"] .pieza-grilla { transition: transform 0.12s ease, box-shadow 0.12s ease; }
+[data-toques="si"] .pieza-grilla:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 5px 0 rgba(0, 0, 0, 0.18); }
+[data-toques="si"] .pieza-grilla:active:not(:disabled) { transform: translateY(0) scale(0.95); }
+[data-toques="si"] button:active:not(:disabled):not(.pieza-grilla) { transform: translateY(2px); box-shadow: 0 1px 0 var(--celeste-sombra); }
+[data-toques="si"] :is(#grilla-items, #grilla-piezas, .grilla-comportamientos) > li { animation: entrar 0.28s ease-out both; }
+[data-toques="si"] :is(#grilla-items, #grilla-piezas, .grilla-comportamientos) > li { animation-delay: calc(min(var(--n, 0), 20) * 15ms); }
+[data-toques="si"] .lista > li { animation: entrar 0.25s ease-out both; }
+[data-toques="si"] .mensaje:not(:empty) { animation: aparecer 0.3s ease-out; }
+@keyframes entrar { from { opacity: 0; transform: translateY(8px) scale(0.96); } }
+@keyframes aparecer { from { opacity: 0; transform: scale(0.9); } }
