@@ -438,6 +438,50 @@ const PESTANAS = ["agregar", "trucar", "looks", "acciones", "tiendas", "portales
 // Fondos: un objeto cuyo dibujo tiene varios cuadros, que muestra el elegido (comportamiento `painting`).
 const PESTANAS_NPC = { tiendas: "tienda", portales: "portal", minijuegos: "minijuego", fondos: "fondo" };
 const esFondos = () => vista === "fondos";
+
+// Lo que cambia de una pestaña a otra: sus textos, cómo empieza un documento nuevo, qué hace «Aplicar» y sus
+// guardados (Mis Looks, Mis acciones…: todos se guardan igual, con `api().guardados` y el tipo primero). Lo que una
+// pestaña no dice, es como en Looks (`dePestana`).
+const pestanaNpc = ({ tipo, el, lo, nuevo, mis, titulo, sub, nombre, tocaUno, lista, tituloBase, sinBase = "elegí cualquier Item",
+                      documentoNuevo = () => nuevoNpc() }) => ({
+  generar: "Convertir todos", aplicar: "Convertir todos", seGuarda: "Se convierte:", alAplicar: () => convertirNpcs(),
+  nombre, tocaUno, lista, tituloBase, sinBase, nuevo: documentoNuevo, guardados: { tipo, el, lo, nuevo, mis, titulo, sub },
+});
+const PESTANA = {
+  agregar: { generar: "Generar Encode" },
+  looks: {
+    generar: "Aplicar Look", aplicar: "Aplicar Look", nombre: "NOMBRE DEL LOOK", seGuarda: "Se guarda en:", tocaUno: "un Look",
+    sinBase: "se elige al aplicar", tituloBase: "¿Dónde se guarda el Look?", nuevo: () => nuevoLook(), alAplicar: () => aplicarLook(),
+    guardados: { tipo: "look", el: "el Look", lo: "lo", nuevo: "Look nuevo", mis: "Mis Looks", titulo: "GUARDA TU LOOK", sub: "GUARDA TUS LOOKS FAVORITOS" },
+  },
+  acciones: {
+    generar: "Aplicar acción", aplicar: "Aplicar acción", nombre: "NOMBRE DE LA ACCIÓN", tocaUno: "una acción", sinBase: "elegí cualquier Item",
+    tituloBase: "¿Dónde se guarda la acción?", nuevo: () => nuevaAccion(), alAplicar: () => aplicarAccion(),
+    guardados: { tipo: "accion", el: "la acción", lo: "la", nuevo: "Acción nueva", mis: "Mis acciones", titulo: "GUARDA TU ACCIÓN",
+                 sub: "GUARDA TUS ACCIONES FAVORITAS" },
+  },
+  trucar: {
+    generar: "Trucar Prenda", aplicar: "Trucar todas", nombre: "NOMBRE DE LA PRENDA TRUCADA", seGuarda: "Se trucará:",
+    tocaUno: "una Prenda trucada", sinBase: "elegí el Item base", tituloBase: "¿Qué Item se truca?", nuevo: () => nuevaPrendaATrucar(),
+    alAplicar: () => trucarPrenda(),
+    guardados: { tipo: "trucada", el: "la Prenda trucada", lo: "la", nuevo: "Prenda trucada nueva", mis: "Mis Prendas trucadas",
+                 titulo: "GUARDA TU PRENDA TRUCADA", sub: "GUARDA TUS PRENDAS TRUCADAS FAVORITAS" },
+  },
+  tiendas: pestanaNpc({ tipo: "tienda", el: "la tienda", lo: "la", nuevo: "Tienda nueva", mis: "Mis tiendas", titulo: "GUARDA TU TIENDA",
+                        sub: "GUARDA TUS TIENDAS FAVORITAS", nombre: "NOMBRE DE LA TIENDA", tocaUno: "una tienda", lista: "Tiendas",
+                        tituloBase: "¿Qué Item se convierte en tienda?" }),
+  portales: pestanaNpc({ tipo: "portal", el: "el portal", lo: "lo", nuevo: "Portal nuevo", mis: "Mis portales", titulo: "GUARDA TU PORTAL",
+                         sub: "GUARDA TUS PORTALES FAVORITOS", nombre: "NOMBRE DEL PORTAL", tocaUno: "un portal", lista: "Portales",
+                         tituloBase: "¿Qué Item se convierte en portal?" }),
+  minijuegos: pestanaNpc({ tipo: "minijuego", el: "el minijuego", lo: "lo", nuevo: "Minijuego nuevo", mis: "Mis minijuegos",
+                           titulo: "GUARDA TU MINIJUEGO", sub: "GUARDA TUS MINIJUEGOS FAVORITOS", nombre: "NOMBRE DEL MINIJUEGO",
+                           tocaUno: "un minijuego", lista: "Minijuegos", tituloBase: "¿Qué Item se convierte en minijuego?" }),
+  fondos: pestanaNpc({ tipo: "fondo", el: "el fondo", lo: "lo", nuevo: "Fondo nuevo", mis: "Mis fondos", titulo: "GUARDA TU FONDO",
+                       sub: "GUARDA TUS FONDOS FAVORITOS", nombre: "NOMBRE DEL FONDO", tocaUno: "un fondo", lista: "Fondos",
+                       tituloBase: "¿Qué objeto se convierte en fondo?", sinBase: "elegí un objeto de la derecha",
+                       documentoNuevo: () => nuevoFondo() }),
+};
+const dePestana = (pestana = vista) => ({ ...PESTANA.looks, ...PESTANA[pestana] });
 const esNpc = (pestana = vista) => pestana in PESTANAS_NPC;
 // Dónde el Item base puede ser cualquier Item (se convierte en lo que hace falta: ADR 0007).
 const cualquierItem = () => esNpc() || vista === "acciones";
@@ -463,15 +507,12 @@ function cambiarVista(nueva) {
   document.querySelector("main").classList.toggle("modo-trucar", vista === "trucar");
   document.querySelector("main").classList.toggle("modo-npc", esNpc());
   document.querySelector("main").classList.toggle("modo-fondos", esFondos());
-  $("aplicar-look").textContent = { acciones: "Aplicar acción", trucar: "Trucar todas", tiendas: "Convertir todos", portales: "Convertir todos",
-                                   minijuegos: "Convertir todos", fondos: "Convertir todos" }[vista] ?? "Aplicar Look";
-  $("texto-se-guarda").textContent = vista === "trucar" ? "Se trucará:" : esNpc() ? "Se convierte:" : "Se guarda en:";
-  $("nombre-look").placeholder = { acciones: "NOMBRE DE LA ACCIÓN", trucar: "NOMBRE DE LA PRENDA TRUCADA", tiendas: "NOMBRE DE LA TIENDA",
-                                   portales: "NOMBRE DEL PORTAL", minijuegos: "NOMBRE DEL MINIJUEGO", fondos: "NOMBRE DEL FONDO" }[vista] ?? "NOMBRE DEL LOOK";
+  $("aplicar-look").textContent = dePestana().aplicar;
+  $("texto-se-guarda").textContent = dePestana().seGuarda;
+  $("nombre-look").placeholder = dePestana().nombre;
   document.querySelector("main").classList.toggle("modo-agregar", vista === "agregar");
   $("items-a-recibir").hidden = vista !== "agregar";
-  $("generar").textContent = { agregar: "Generar Encode", trucar: "Trucar Prenda", looks: "Aplicar Look", acciones: "Aplicar acción",
-                               tiendas: "Convertir todos", portales: "Convertir todos", minijuegos: "Convertir todos", fondos: "Convertir todos" }[vista];
+  $("generar").textContent = dePestana().generar;
   avisarLista("");
   mostrarEncode(null);
   return cargarParaLaVista();
@@ -521,29 +562,11 @@ const NOMBRES_DE_OTRAS_PARTES = {
 };
 const nombreDeParte = (id) => NOMBRES_DE_OTRAS_PARTES[id] ?? partesConocidas.find((p) => p.id === id)?.nombre ?? id;
 
-// Looks, Acciones y Trucar Prenda comparten los guardados (botón, ventana, ✓ ✗ 🗑): cada pestaña con su lista y sus funciones.
-// Mis Looks, Mis acciones, Mis Prendas trucadas, Mis tiendas…: todos se guardan igual (`api().guardados`, con el
-// tipo primero); cambian el tipo y cómo se nombran en la pantalla.
-const GUARDADOS = {
-  looks: { tipo: "look", el: "el Look", lo: "lo", nuevo: "Look nuevo", mis: "Mis Looks", titulo: "GUARDA TU LOOK", sub: "GUARDA TUS LOOKS FAVORITOS" },
-  acciones: { tipo: "accion", el: "la acción", lo: "la", nuevo: "Acción nueva", mis: "Mis acciones", titulo: "GUARDA TU ACCIÓN",
-              sub: "GUARDA TUS ACCIONES FAVORITAS" },
-  trucar: { tipo: "trucada", el: "la Prenda trucada", lo: "la", nuevo: "Prenda trucada nueva", mis: "Mis Prendas trucadas",
-            titulo: "GUARDA TU PRENDA TRUCADA", sub: "GUARDA TUS PRENDAS TRUCADAS FAVORITAS" },
-  tiendas: { tipo: "tienda", el: "la tienda", lo: "la", nuevo: "Tienda nueva", mis: "Mis tiendas", titulo: "GUARDA TU TIENDA",
-             sub: "GUARDA TUS TIENDAS FAVORITAS" },
-  portales: { tipo: "portal", el: "el portal", lo: "lo", nuevo: "Portal nuevo", mis: "Mis portales", titulo: "GUARDA TU PORTAL",
-              sub: "GUARDA TUS PORTALES FAVORITOS" },
-  minijuegos: { tipo: "minijuego", el: "el minijuego", lo: "lo", nuevo: "Minijuego nuevo", mis: "Mis minijuegos",
-                titulo: "GUARDA TU MINIJUEGO", sub: "GUARDA TUS MINIJUEGOS FAVORITOS" },
-  fondos: { tipo: "fondo", el: "el fondo", lo: "lo", nuevo: "Fondo nuevo", mis: "Mis fondos", titulo: "GUARDA TU FONDO",
-            sub: "GUARDA TUS FONDOS FAVORITOS" },
-};
-const guardados = () => GUARDADOS[vista in GUARDADOS ? vista : "looks"];
+// Los guardados de la pestaña (botón, ventana, ✓ ✗ 🗑).
+const guardados = () => dePestana().guardados;
 // Una operación de los guardados de la pestaña: lista, guardar, duplicar, borrar, exportar o importar.
 const llamarGuardados = (operacion, ...args) => api().guardados[operacion](guardados().tipo, ...args);
-const documentoNuevo = (pestana = vista) => ({ acciones: nuevaAccion, trucar: nuevaPrendaATrucar, tiendas: nuevoNpc, portales: nuevoNpc,
-                                                  minijuegos: nuevoNpc, fondos: nuevoFondo }[pestana] ?? nuevoLook)();
+const documentoNuevo = (pestana = vista) => dePestana(pestana).nuevo();
 const guardadoDe = (resultado) => resultado.documento;
 // Lo que queda en el editor al abrir un guardado (o uno nuevo). En Trucar Prenda va al armado, con su Parte,
 // y la lista de las que se reciben juntas sigue como estaba.
@@ -634,7 +657,7 @@ function mostrarLookElegido() {
     mostrar(lookActual);
     return;
   }
-  $("nombre-look-elegido").textContent = look ? look.nombre : `Tocá ${{ acciones: "una acción", tiendas: "una tienda", portales: "un portal", minijuegos: "un minijuego", fondos: "un fondo" }[vista] ?? "un Look"} para verlo`;
+  $("nombre-look-elegido").textContent = look ? look.nombre : `Tocá ${dePestana().tocaUno} para verlo`;
   $("equipar-look").disabled = !look;
   mostrar(look);
 }
@@ -714,9 +737,7 @@ function mostrarLook() {
   $("base-look").replaceChildren(
     ...(base
       ? [elementoIcono(base), etiqueta(`${claseDeRuta(base)} (${swfDeRuta(base)})`, "nombre")]
-      : [etiqueta({ acciones: "elegí cualquier Item", trucar: "elegí el Item base", tiendas: "elegí cualquier Item",
-                   portales: "elegí cualquier Item", minijuegos: "elegí cualquier Item", fondos: "elegí un objeto de la derecha" }[vista]
-                   ?? "se elige al aplicar", "ayuda")])
+      : [etiqueta(dePestana().sinBase, "ayuda")])
   );
   if (vista === "acciones") $("animacion-accion").value = lookActual.animacion ?? "";
   if (vista === "trucar") mostrarArmadoTrucar();
@@ -1339,10 +1360,7 @@ async function usarBasesDe(swf) {
 $("cambiar-base").addEventListener("click", () => {
   const enAcciones = vista === "acciones";
   $("dialogo-base").classList.toggle("sin-tipos", cualquierItem());
-  $("titulo-base").textContent = { acciones: "¿Dónde se guarda la acción?", trucar: "¿Qué Item se truca?", tiendas: "¿Qué Item se convierte en tienda?",
-                                   portales: "¿Qué Item se convierte en portal?", minijuegos: "¿Qué Item se convierte en minijuego?",
-                                   fondos: "¿Qué objeto se convierte en fondo?" }[vista]
-                                   ?? "¿Dónde se guarda el Look?";
+  $("titulo-base").textContent = dePestana().tituloBase;
   $("ayuda-base").textContent = enAcciones
     ? "Cualquier Item de cualquier SWF: es lo que vas a recibir, y hace la acción cada vez que lo usás. Llega a la mochila, aunque sea una Prenda o de la casa."
     : esNpc()
@@ -1436,8 +1454,7 @@ async function aplicarLook() {
   mostrarBarraLook();
 }
 
-$("aplicar-look").addEventListener("click", () => ({ acciones: aplicarAccion, trucar: trucarPrenda, tiendas: convertirNpcs, portales: convertirNpcs,
-                                                              minijuegos: convertirNpcs, fondos: convertirNpcs }[vista] ?? aplicarLook)());
+$("aplicar-look").addEventListener("click", () => dePestana().alAplicar());
 
 // --- Trucar Prenda: un Item base que muestra una sola Pieza (cualquiera) en una Parte (cualquiera); varias juntas ---
 
@@ -1790,7 +1807,7 @@ function mostrarArmadoNpc() {
 
 function mostrarListaNpc() {
   const base = lookActual.base;
-  $("titulo-lista-trucadas").textContent = { tiendas: "Tiendas", portales: "Portales", minijuegos: "Minijuegos", fondos: "Fondos" }[vista];
+  $("titulo-lista-trucadas").textContent = dePestana().lista;
   $("cantidad-trucadas").textContent = `(${lookActual.lista.length})`;
   $("lista-trucadas").replaceChildren(
     ...lookActual.lista.map((t, i) => {
