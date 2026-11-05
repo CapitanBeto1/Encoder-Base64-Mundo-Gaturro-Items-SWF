@@ -20,7 +20,7 @@ from PIL import Image, ImageOps
 
 ARCHIVO_MODELO = "clip_visual_int8.onnx"
 ARCHIVO_HUELLAS = "huellas_busqueda.npz"
-VERSION_DATOS = 1  # sube si cambia la forma de las huellas o el modelo
+VERSION_DATOS = 2  # sube si cambia la forma de las huellas o el modelo. 2: en int8, con los pedazos de los dibujos
 
 # «¿Qué es?»: a qué se limita la búsqueda. La ropa, por la Parte del cuerpo donde va (cuenta la Prenda y lo que se
 # ve puesto): solo las Prendas que van únicamente ahí, porque el ícono de un disfraz es un Gaturro entero y se
@@ -166,26 +166,38 @@ class Modelo:
         return self._sesion.run(None, {"imagen": np.stack([preparar(i) for i in imagenes])})[0].astype(np.float32)
 
 
+# Lo que vale menos un pedazo de un dibujo que el dibujo entero: así, si se parecen igual, gana el entero, y un
+# pedazo solo gana cuando lo que se ve en la captura es de verdad un pedazo (el cartel de pruebas.caballo).
+PENALIDAD_PEDAZO = 0.02
+
+
 class Huellas:
     """Las huellas de las imágenes de referencia (`scripts/armar_busqueda.py`): `rutas` ("swf.Clase", de Items
-    y de Piezas; una Pieza puede estar dos veces: suelta y dibujada puesta en el Gaturro), `huellas` (una fila
-    cada una) y `prendas_de_pieza` (Pieza → las Prendas que la usan)."""
+    y de Piezas; una misma ruta puede estar varias veces: suelta, dibujada puesta en el Gaturro y en pedazos),
+    `huellas` (una fila cada una), `prendas_de_pieza` (Pieza → las Prendas que la usan) y `pedazos` (qué filas
+    son de un pedazo de un dibujo)."""
 
-    def __init__(self, rutas: list[str], huellas: np.ndarray, prendas_de_pieza: dict[str, list[str]]):
+    def __init__(self, rutas: list[str], huellas: np.ndarray, prendas_de_pieza: dict[str, list[str]],
+                 pedazos: np.ndarray | None = None):
         self.rutas, self.huellas, self.prendas_de_pieza = rutas, huellas, prendas_de_pieza
+        self.pedazos = np.zeros(len(rutas), bool) if pedazos is None else pedazos.astype(bool)
 
     @classmethod
     def leer(cls, archivo: Path) -> "Huellas":
         with np.load(archivo, allow_pickle=False) as datos:
             if int(datos["version"]) != VERSION_DATOS:
                 raise ValueError("las huellas son de otra versión")
-            return cls([str(r) for r in datos["rutas"]], datos["huellas"].astype(np.float32),
-                       json.loads(str(datos["prendas_de_pieza"])))
+            huellas = datos["huellas"].astype(np.float32) * datos["escalas"].astype(np.float32)[:, None]
+            return cls([str(r) for r in datos["rutas"]], huellas, json.loads(str(datos["prendas_de_pieza"])), datos["pedazos"])
 
     def guardar(self, archivo: Path) -> None:
+        """En int8, con una escala por fila (la mitad que en float16): para comparar parecidos alcanza y sobra."""
+        huellas = self.huellas.astype(np.float32)
+        escalas = np.maximum(np.abs(huellas).max(axis=1), 1e-8) / 127
         np.savez_compressed(archivo, version=np.array(VERSION_DATOS), rutas=np.array(self.rutas),
-                            huellas=self.huellas.astype(np.float16),
-                            prendas_de_pieza=np.array(json.dumps(self.prendas_de_pieza, ensure_ascii=False)))
+                            huellas=np.round(huellas / escalas[:, None]).astype(np.int8), escalas=escalas.astype(np.float16),
+                            prendas_de_pieza=np.array(json.dumps(self.prendas_de_pieza, ensure_ascii=False)),
+                            pedazos=self.pedazos)
 
     def de_items(self, items: set[str]) -> np.ndarray:
         """Las huellas de las imágenes de estos Items: la suya y las de las Piezas que visten."""
@@ -194,17 +206,17 @@ class Huellas:
 
     def parecidos(self, consultas: np.ndarray) -> list[tuple[str, float]]:
         """Todas las referencias de la más a la menos parecida a cualquiera de las `consultas` (la captura y su
-        espejo), con su parecido (de -1 a 1)."""
-        puntajes = (self.huellas @ consultas.T).max(axis=1)
+        espejo), con su parecido (de -1 a 1; un pedazo, con `PENALIDAD_PEDAZO` de menos)."""
+        puntajes = (self.huellas @ consultas.T).max(axis=1) - PENALIDAD_PEDAZO * self.pedazos
         orden = np.argsort(-puntajes)
         return [(self.rutas[i], float(puntajes[i])) for i in orden]
 
 
 # Dónde se publican los datos (el release de datos del repositorio) y cómo se reconocen.
-URL_DATOS = "https://github.com/CapitanBeto1/Encoder-Base64-Mundo-Gaturro-Items-SWF/releases/download/datos-busqueda-v2/"
+URL_DATOS = "https://github.com/CapitanBeto1/Encoder-Base64-Mundo-Gaturro-Items-SWF/releases/download/datos-busqueda-v3/"
 ARCHIVOS = {  # archivo → (tamaño, sha256)
     ARCHIVO_MODELO: (88890796, "02f827b5fa300a3013b9e077314098e5f02a2449afdf1900b3712fce22432e8a"),
-    ARCHIVO_HUELLAS: (28381004, "82a8cda85f9b4269fc035ed5c86e1eec863fd3d3906bcaa9e97a802585a1a5ed"),  # v2: 610 SWF y las Piezas puestas
+    ARCHIVO_HUELLAS: (26572869, "bb01f942c3406c8f24c6d63a94abde47b761f958522df90386641b74ebd28ae8"),  # v3: con los pedazos, en int8
 }
 
 

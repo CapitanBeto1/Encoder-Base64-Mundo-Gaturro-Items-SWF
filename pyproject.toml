@@ -17,7 +17,7 @@ dev = ["pytest>=8", "pyinstaller>=6.10"]
 # Windows en ARM): sin él, el resto del programa funciona igual.
 imagen = ["onnxruntime>=1.20"]
 indice = ["scikit-learn>=1.5"]  # para scripts/armar_indice.py
-busqueda = ["torch>=2.5", "open-clip-torch>=3.0", "onnx>=1.17", "onnxscript", "resvg-py>=0.2"]  # para scripts/armar_busqueda.py
+busqueda = ["torch>=2.5", "open-clip-torch>=3.0", "onnx>=1.17", "onnxscript", "resvg-py>=0.2", "scipy>=1.13"]  # para scripts/armar_busqueda.py
 
 [project.gui-scripts]
 mgitems = "mgitems.app:main"

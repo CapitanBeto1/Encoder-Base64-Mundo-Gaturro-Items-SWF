@@ -9,6 +9,9 @@
 5. Dibuja el Gaturro con cada Pieza que viste algún Item, una por una, puesta (el mismo dibujo que la vista previa
    de Looks, pasado a imagen con resvg), y suma la huella de la zona donde está: así se encuentra una Prenda
    cortada (una sola parte de un traje, las mangas de una remera), que no se parece a su Pieza suelta (#125).
+6. Suma la huella de pedazos de cada imagen: sus partes separadas (el cartel de `pruebas.caballo`, aparte del
+   caballo) y, en los dibujos grandes, sus mitades (la mandíbula de `virtualGoods3.ojoBionico`). Así se encuentra
+   lo que en una captura se ve solo en parte.
 
 Escribe en `<trabajo>/datos/` los dos archivos que se publican en el release de datos del repositorio
 (`clip_visual_int8.onnx` y `huellas_busqueda.npz`). Lo exportado se guarda en la carpeta de trabajo: si se corta,
@@ -120,6 +123,75 @@ def huellas_de_archivos(clip: Modelo, archivos: list[tuple[Path, str]], guardado
     return rutas, matriz
 
 
+# Pedazos (paso 6). En píxeles de las imágenes exportadas (zoom 2).
+LADO_PARA_MITADES = 100  # desde acá, un dibujo también se corta en mitades
+PARTE_MINIMA = 0.06  # una parte separada cuenta si tiene al menos esto de lo dibujado
+LADO_MINIMO = 24  # y si mide al menos esto de lado
+LLENO_MINIMO = 0.15  # una mitad cuenta si tiene al menos esto dibujado
+
+
+def pedazos(imagen: Image.Image) -> list[Image.Image]:
+    """Los pedazos de una imagen de referencia: sus partes que no se tocan (si hay dos o más que cuentan) y, si es
+    grande, sus cuatro mitades (arriba, abajo, izquierda, derecha)."""
+    import numpy as np
+    from scipy import ndimage
+
+    imagen = imagen.convert("RGBA")
+    caja = imagen.getbbox()
+    if not caja:
+        return []
+    imagen = imagen.crop(caja)
+    dibujado = np.asarray(imagen.split()[-1]) > 20
+    salida = []
+    # Con un margen, para que no se separen los trazos sueltos de un mismo dibujo.
+    etiquetas, cantidad = ndimage.label(ndimage.binary_dilation(dibujado, iterations=6))
+    if cantidad >= 2:
+        partes = []
+        for n in range(1, cantidad + 1):
+            # Lo dibujado de esta parte (sin el margen con el que se juntaron sus trazos).
+            ys, xs = np.nonzero((etiquetas == n) & dibujado)
+            if len(ys) < PARTE_MINIMA * dibujado.sum():
+                continue
+            parte = (int(xs.min()), int(ys.min()), int(xs.max()) + 1, int(ys.max()) + 1)
+            if max(parte[2] - parte[0], parte[3] - parte[1]) >= LADO_MINIMO:
+                partes.append(parte)
+        if len(partes) >= 2:
+            salida += [imagen.crop(p) for p in partes]
+    ancho, alto = imagen.size
+    if max(ancho, alto) >= LADO_PARA_MITADES:
+        for mitad in ((0, 0, ancho, alto // 2), (0, alto // 2, ancho, alto), (0, 0, ancho // 2, alto), (ancho // 2, 0, ancho, alto)):
+            pedazo = imagen.crop(mitad)
+            if (np.asarray(pedazo.split()[-1]) > 20).mean() >= LLENO_MINIMO:
+                salida.append(pedazo)
+    return salida
+
+
+def guardar_pedazos(imagenes: Path, carpeta: Path, pngs: list[Path]) -> list[tuple[Path, str]]:
+    """Guarda los pedazos de cada imagen en `carpeta` (los ya guardados de una imagen que no cambió, no se vuelven a
+    cortar) y devuelve (archivo, ruta) de cada uno, con la ruta de su imagen."""
+    hechos = []
+    for n, png in enumerate(pngs, 1):
+        relativa = png.relative_to(imagenes)
+        destino = carpeta / relativa.parent / relativa.stem
+        marca = destino / "de"
+        tamano = str(png.stat().st_size)
+        if not (marca.is_file() and marca.read_text(encoding="utf-8") == tamano):
+            if destino.exists():
+                for viejo in destino.glob("*.png"):
+                    viejo.unlink()
+            destino.mkdir(parents=True, exist_ok=True)
+            with Image.open(png) as imagen:
+                for k, pedazo in enumerate(pedazos(imagen)):
+                    pedazo.save(destino / f"{k}.png")
+            marca.write_text(tamano, encoding="utf-8")
+        ruta = "/".join(relativa.parts[:-1]) + "." + relativa.stem
+        hechos += [(p, ruta) for p in sorted(destino.glob("*.png"), key=lambda p: int(p.stem))]
+        if n % 500 == 0 or n == len(pngs):
+            print(f"\r6. pedazos: {n}/{len(pngs)} ({len(hechos)})", end="", flush=True)
+    print()
+    return hechos
+
+
 def dibujar_puestas(carpeta: Path, piezas: list[str]) -> list[tuple[Path, str]]:
     """Dibuja el Gaturro con cada Pieza puesta, sola, y guarda la zona donde está, con un margen (así se ve un poco
     del Gaturro alrededor, como en una captura) y sobre blanco. Devuelve (archivo, Pieza) de las que se dibujaron.
@@ -215,9 +287,13 @@ def main() -> None:
     prendas_de_pieza = {p: sorted(set(i), key=orden_natural) for p, i in prendas_de_pieza.items()}
     puestas = dibujar_puestas(args.trabajo / "puestas", sorted(prendas_de_pieza, key=orden_natural)[: args.puestas])
     rutas_p, huellas_p = huellas_de_archivos(clip, puestas, args.trabajo / "huellas_puestas.npz", "5. huellas de las puestas")
-    # Una Pieza queda dos veces: suelta y puesta (con la misma ruta, así lleva a los mismos Items).
-    Huellas(rutas + rutas_p, np.concatenate([huellas, huellas_p]), prendas_de_pieza).guardar(salida / ARCHIVO_HUELLAS)
-    print(f"{len(rutas_p)} Piezas dibujadas puestas")
+    trozos = guardar_pedazos(imagenes, args.trabajo / "pedazos", pngs)
+    rutas_t, huellas_t = huellas_de_archivos(clip, trozos, args.trabajo / "huellas_pedazos.npz", "6. huellas de los pedazos")
+    # Una Pieza queda varias veces: suelta, puesta y en pedazos (con la misma ruta, así lleva a los mismos Items).
+    pedazos = np.concatenate([np.zeros(len(rutas) + len(rutas_p), bool), np.ones(len(rutas_t), bool)])
+    Huellas(rutas + rutas_p + rutas_t, np.concatenate([huellas, huellas_p, huellas_t]), prendas_de_pieza,
+            pedazos).guardar(salida / ARCHIVO_HUELLAS)
+    print(f"{len(rutas_p)} Piezas dibujadas puestas, {len(rutas_t)} pedazos")
     for archivo in (modelo, salida / ARCHIVO_HUELLAS):
         print(f"{archivo.name}: {archivo.stat().st_size / 1e6:.1f} MB, sha256 {hashlib.sha256(archivo.read_bytes()).hexdigest()}")
     print(f"{len(rutas)} imágenes, {len(prendas_de_pieza)} Piezas con Prendas, {len(errores)} SWF con error, {time.time() - t:.0f} s")
