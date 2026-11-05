@@ -1,42 +1,44 @@
-// PROTOTIPO (rama prototipo-ui, no va a main): variantes de cargas, letras, nombres de Items, íconos y toques,
-// sobre el programa real. La barra de abajo cambia cada una; lo elegido queda en <html data-…>.
-
-// Todo en su propio ámbito: los <script> de la interfaz comparten el global y un nombre igual pisaría al suyo.
+// PROTOTIPO (rama prototipo-ui, no va a main): variantes de diseño sobre el programa real. La barra de abajo cambia
+// cada eje; lo elegido queda en <html data-…>. Todo en su propio ámbito: los <script> de la interfaz comparten el
+// global y un nombre igual pisaría al suyo.
 (() => {
+
+// El primero de cada eje es lo elegido hasta ahora; «actual» es como está en main.
 const EJES = [
-  { id: "carga", nombre: "Cargas", variantes: [["texto", "Texto (actual)"], ["huellitas", "Huellitas"], ["ovillo", "Ovillo"], ["esqueleto", "Esqueleto"]] },
-  { id: "letra", nombre: "Letra", variantes: [["actual", "Cooper (actual)"], ["fredoka", "Fredoka"], ["nunito", "Nunito + Cooper"], ["baloo", "Baloo"]] },
-  { id: "nombres", nombre: "Nombres", variantes: [["actual", "Técnico (actual)"], ["legible", "Legible"], ["rotulo", "Rótulo"], ["ficha", "Ficha"]] },
-  { id: "iconos", nombre: "Íconos", variantes: [["emoji", "Emojis (actual)"], ["relleno", "Relleno"], ["trazo", "Trazo"], ["duotono", "Duotono"]] },
-  { id: "toques", nombre: "Toques", variantes: [["no", "Sin (actual)"], ["si", "Animados"]] },
+  { id: "distribucion", nombre: "Distribución", variantes: [["actual", "Actual"], ["lateral", "Barra lateral"], ["dock", "Dock abajo"], ["enfoque", "Enfoque"]] },
+  { id: "textos", nombre: "Textos", variantes: [["pulido", "Pulidos"], ["actual", "Actuales"]] },
+  { id: "carga", nombre: "Cargas", variantes: [["esqueleto", "Esqueleto"], ["texto", "Texto (actual)"]] },
+  { id: "letra", nombre: "Letra", variantes: [["fredoka", "Fredoka"], ["actual", "Cooper (actual)"], ["nunito", "Nunito + Cooper"], ["baloo", "Baloo"]] },
+  { id: "nombres", nombre: "Nombres", variantes: [["ficha", "Ficha"], ["actual", "Actual"]] },
+  { id: "iconos", nombre: "Íconos", variantes: [["trazo", "Trazo"], ["emoji", "Emojis (actual)"], ["relleno", "Relleno"], ["duotono", "Duotono"]] },
+  { id: "toques", nombre: "Toques", variantes: [["si", "Animados"], ["no", "Sin (actual)"]] },
 ];
 
+const html = document.documentElement;
+const $id = (id) => document.getElementById(id);
 const elegido = (() => {
-  try { return JSON.parse(localStorage.getItem("prototipo-ui")) || {}; } catch { return {}; }
+  try { return JSON.parse(localStorage.getItem("prototipo-ui-2")) || {}; } catch { return {}; }
 })();
-let ejeActivo = "carga";
+let ejeActivo = "distribucion";
 
 function aplicarVariantes() {
-  for (const eje of EJES) document.documentElement.dataset[eje.id] = elegido[eje.id] ?? eje.variantes[0][0];
-  const dibujo = document.documentElement.dataset.carga === "ovillo" ? ICONOS_PROTOTIPO.yarn.fill : ICONOS_PROTOTIPO["paw-print"].fill;
-  document.documentElement.style.setProperty("--mascara-carga",
-    `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'>${dibujo}</svg>`)}")`);
-  try { localStorage.setItem("prototipo-ui", JSON.stringify(elegido)); } catch {}
+  for (const eje of EJES) html.dataset[eje.id] = elegido[eje.id] ?? eje.variantes[0][0];
+  try { localStorage.setItem("prototipo-ui-2", JSON.stringify(elegido)); } catch {}
   pintarBarra();
-  repintarIconos();
-  repintarNombres();
-  repintarCargas();
+  document.querySelectorAll(".pi").forEach(pintarIcono);
+  pulirTextos(document.body);
+  for (const r of regiones.values()) { r.capa?.remove(); r.capa = null; }
 }
 
 function cambiar(ejeId, paso) {
   const eje = EJES.find((e) => e.id === ejeId);
-  const actual = eje.variantes.findIndex(([v]) => v === document.documentElement.dataset[ejeId]);
-  elegido[ejeId] = eje.variantes[(actual + paso + eje.variantes.length) % eje.variantes.length][0];
+  const i = eje.variantes.findIndex(([v]) => v === html.dataset[ejeId]);
+  elegido[ejeId] = eje.variantes[(i + paso + eje.variantes.length) % eje.variantes.length][0];
   ejeActivo = ejeId;
   aplicarVariantes();
 }
 
-// --- La barra flotante ---
+// ============ La barra del prototipo ============
 
 const barra = document.createElement("div");
 barra.className = "barra-prototipo";
@@ -44,27 +46,23 @@ barra.dataset.sinIconos = "";
 document.body.append(barra);
 
 function pintarBarra() {
+  const boton = (texto, accion, titulo = "") => {
+    const b = Object.assign(document.createElement("button"), { textContent: texto, type: "button", title: titulo });
+    b.addEventListener("click", (e) => { e.stopPropagation(); accion(); });
+    return b;
+  };
   barra.replaceChildren(
+    boton(barra.classList.contains("plegada") ? "▲" : "▼", () => { barra.classList.toggle("plegada"); pintarBarra(); }, "Plegar la barra"),
     Object.assign(document.createElement("strong"), { textContent: "PROTOTIPO" }),
     ...EJES.map((eje) => {
       const grupo = document.createElement("span");
       grupo.className = "grupo-prototipo" + (eje.id === ejeActivo ? " activo" : "");
-      const valor = document.documentElement.dataset[eje.id];
-      const [, nombre] = eje.variantes.find(([v]) => v === valor);
-      const boton = (texto, paso) => {
-        const b = Object.assign(document.createElement("button"), { textContent: texto, type: "button" });
-        b.addEventListener("click", () => cambiar(eje.id, paso));
-        return b;
-      };
-      grupo.append(boton("‹", -1), Object.assign(document.createElement("span"), { textContent: `${eje.nombre}: ${nombre}` }), boton("›", 1));
+      const [, nombre] = eje.variantes.find(([v]) => v === html.dataset[eje.id]);
+      grupo.append(boton("‹", () => cambiar(eje.id, -1)), Object.assign(document.createElement("span"), { textContent: `${eje.nombre}: ${nombre}` }), boton("›", () => cambiar(eje.id, 1)));
       grupo.addEventListener("click", () => { ejeActivo = eje.id; pintarBarra(); });
       return grupo;
     }),
-    (() => {
-      const b = Object.assign(document.createElement("button"), { textContent: "Probar carga", type: "button", title: "Muestra 4 segundos una carga en la grilla" });
-      b.addEventListener("click", probarCarga);
-      return b;
-    })()
+    boton("Probar carga", probarCarga, "Muestra 4 segundos la carga de la grilla y del Gaturro")
   );
 }
 
@@ -78,7 +76,7 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
-// --- Íconos: cada emoji pasa a un <span class="pi"> que muestra el emoji o el ícono según la variante ---
+// ============ Íconos en vez de emojis ============
 
 const EMOJI_A_ICONO = {
   "✕": "x", "✗": "x", "◀": "caret-left", "▶": "caret-right", "→": "arrow-right", "✓": "check",
@@ -91,35 +89,30 @@ const EMOJI_A_ICONO = {
 };
 const PATRON_EMOJI = new RegExp(`(${Object.keys(EMOJI_A_ICONO).join("|")})️?`, "gu");
 // Las ventanas que copian las del juego quedan idénticas al juego.
-const SIN_CAMBIOS = "#dialogo-mis-looks, #dialogo-colores, [data-sin-iconos], option, select, textarea, title, script, style";
+const SIN_CAMBIOS = "#dialogo-mis-looks, #dialogo-colores, [data-sin-iconos], option, select, textarea, script, style";
 const ESTILO = { relleno: "fill", trazo: "bold", duotono: "duotone" };
 
-function iconoSvg(nombre) {
-  const estilo = ESTILO[document.documentElement.dataset.iconos];
-  if (!estilo) return "";
-  return `<svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true">${ICONOS_PROTOTIPO[nombre]?.[estilo] ?? ""}</svg>`;
-}
+const svg = (nombre, estilo = ESTILO[html.dataset.iconos] ?? "bold") =>
+  `<svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true">${ICONOS_PROTOTIPO[nombre]?.[estilo] ?? ""}</svg>`;
 
 function pintarIcono(span) {
-  const conIcono = document.documentElement.dataset.iconos !== "emoji";
-  span.innerHTML = conIcono ? iconoSvg(span.dataset.icono) : "";
-  if (!conIcono) span.textContent = span.dataset.emoji;
+  if (html.dataset.iconos === "emoji") span.textContent = span.dataset.emoji;
+  else span.innerHTML = svg(span.dataset.icono);
 }
 
 function cambiarEmojis(raiz) {
   const recorrido = document.createTreeWalker(raiz, NodeFilter.SHOW_TEXT);
   const nodos = [];
   for (let n = recorrido.nextNode(); n; n = recorrido.nextNode()) {
-    if (PATRON_EMOJI.test(n.nodeValue) && !n.parentElement?.closest(SIN_CAMBIOS) && !n.parentElement?.closest(".pi")) nodos.push(n);
     PATRON_EMOJI.lastIndex = 0;
+    if (PATRON_EMOJI.test(n.nodeValue) && !n.parentElement?.closest(SIN_CAMBIOS) && !n.parentElement?.closest(".pi")) nodos.push(n);
   }
   for (const nodo of nodos) {
     const partes = document.createDocumentFragment();
     let ultimo = 0;
     for (const m of nodo.nodeValue.matchAll(PATRON_EMOJI)) {
       partes.append(nodo.nodeValue.slice(ultimo, m.index));
-      const span = document.createElement("span");
-      span.className = "pi";
+      const span = Object.assign(document.createElement("span"), { className: "pi" });
       span.dataset.emoji = m[0];
       span.dataset.icono = EMOJI_A_ICONO[m[1]];
       pintarIcono(span);
@@ -130,109 +123,212 @@ function cambiarEmojis(raiz) {
     nodo.replaceWith(partes);
   }
 }
-const repintarIconos = () => document.querySelectorAll(".pi").forEach(pintarIcono);
 
-// --- Nombres: «jugoDurazno» → «Jugo durazno»; el nombre técnico queda debajo (Ficha) o al pasar el mouse ---
-
-function nombreLegible(clase) {
-  const limpio = clase.replace(/_/g, " ").replace(/([a-záéíóúñ])([A-ZÁÉÍÓÚÑ])/g, "$1 $2").replace(/([a-zA-Z])(\d)/g, "$1 $2")
-    .replace(/(\d)([a-zA-Z])/g, "$1 $2").replace(/\s+/g, " ").trim().toLowerCase();
-  return limpio.charAt(0).toUpperCase() + limpio.slice(1);
-}
-
-function pintarNombre(el) {
-  if (!el.dataset.tecnico) el.dataset.tecnico = el.textContent;
-  const variante = document.documentElement.dataset.nombres;
-  el.textContent = variante === "actual" ? el.dataset.tecnico : nombreLegible(el.dataset.tecnico);
-  el.title = el.dataset.tecnico;
-}
-const repintarNombres = () => document.querySelectorAll(".nombre-item").forEach(pintarNombre);
-
-// --- Cargas: los textos de «Leyendo…», «Preparando…» llevan una animación delante ---
-
-const ES_CARGA = /^(Leyendo|Preparando|Buscando|Bajando|Aplicando|Revisando|Cerrando programas)\b/;
-
-function animacionDeCarga() {
-  const caja = document.createElement("span");
-  caja.className = "animacion-carga";
+// Íconos de las pestañas (los muestran las distribuciones con barra lateral y dock).
+const ICONO_PESTANA = { agregar: "plus-circle", trucar: "magic-wand", looks: "t-shirt", acciones: "person-simple-run",
+  tiendas: "storefront", portales: "door-open", minijuegos: "game-controller", fondos: "images-square" };
+for (const [pestana, icono] of Object.entries(ICONO_PESTANA)) {
+  const b = $id(`pestana-${pestana}`);
+  if (!b) continue;
+  const caja = Object.assign(document.createElement("span"), { className: "icono-pestana", innerHTML: svg(icono, "bold") });
   caja.dataset.sinIconos = "";
-  const variante = document.documentElement.dataset.carga;
-  if (variante === "huellitas") {
-    caja.innerHTML = Array.from({ length: 5 }, (_, i) =>
-      `<svg class="huella" style="--i:${i}" viewBox="0 0 256 256" fill="currentColor">${ICONOS_PROTOTIPO["paw-print"].fill}</svg>`).join("");
-  } else if (variante === "ovillo") {
-    caja.innerHTML = `<svg class="hilo" viewBox="0 0 120 40"><path d="M2 30 C 20 10, 35 38, 55 22 S 85 8, 100 26" /></svg>
-      <span class="ovillo"><svg viewBox="0 0 256 256">${ICONOS_PROTOTIPO.yarn.duotone}</svg></span><span class="sombra-ovillo"></span>`;
-  } else if (variante === "esqueleto") {
-    caja.innerHTML = `<svg class="estrella-carga" viewBox="0 0 256 256" fill="currentColor">${ICONOS_PROTOTIPO.star.fill}</svg>`;
+  b.prepend(caja);
+}
+const engranaje = Object.assign(document.createElement("span"), { className: "icono-pestana icono-config", innerHTML: svg("gear", "bold") });
+engranaje.dataset.sinIconos = "";
+$id("abrir-entorno")?.prepend(engranaje);
+
+// ============ Textos pulidos: menos texto; el necesario, como etiquetas ============
+
+const SOBRA = [/versión anterior del juego/i];
+const CORTOS = {
+  "Tocá Items de la grilla o agregalos a mano.": "Tocá un Item de la grilla para sumarlo",
+  "Todavía no generaste ningún Encode.": "",
+};
+
+function pulirTextos(raiz) {
+  const pulido = html.dataset.textos === "pulido";
+  for (const el of (raiz.querySelectorAll ? raiz.querySelectorAll(".aviso-gaturro") : [])) el.hidden = pulido && SOBRA.some((r) => r.test(el.textContent));
+  for (const el of document.querySelectorAll("#lista-vacia, #resumen")) {
+    if (el.dataset.original === undefined || (el.textContent !== el.dataset.original && el.textContent !== CORTOS[el.dataset.original])) el.dataset.original = el.textContent;
+    const corto = CORTOS[el.dataset.original];
+    const texto = pulido && corto !== undefined ? corto : el.dataset.original;
+    if (el.textContent !== texto) el.textContent = texto;
   }
-  return caja;
+  // Los textos largos de ayuda quedan en un renglón; el resto, al pasar el mouse.
+  for (const el of document.querySelectorAll("#aviso-npc, #ayuda-base, .dialogo-imagen p.ayuda")) if (el.textContent) el.title = el.textContent;
 }
 
-function marcarCarga(el) {
-  el.querySelector(":scope > .animacion-carga")?.remove();
-  el.querySelector(":scope > .esqueleto-grilla")?.remove();
-  const variante = document.documentElement.dataset.carga;
-  el.classList.toggle("con-carga", variante !== "texto");
-  el.classList.toggle("carga-grande", Boolean(el.closest(".grilla, .grilla-comportamientos, #grilla-items, #grilla-piezas")));
-  if (variante === "texto") return;
-  el.prepend(animacionDeCarga());
-  // En una grilla, el esqueleto dibuja tarjetas vacías con brillo, con la forma de lo que viene.
-  if (variante === "esqueleto" && el.closest(".grilla, .grilla-comportamientos, #grilla-items, #grilla-piezas")) {
-    const tarjetas = document.createElement("span");
-    tarjetas.className = "esqueleto-grilla";
-    tarjetas.innerHTML = Array.from({ length: 12 }, () => '<span class="tarjeta-esqueleto"><span></span><span></span></span>').join("");
-    el.append(tarjetas);
+// ============ Cargas: un esqueleto con la forma de lo que viene, sobre todo lo que carga ============
+
+// Qué espera cada pedido al núcleo.
+const QUE_CARGA = {
+  items_de_swfs: "grilla", decoracion_de_swfs: "grilla", preparar_iconos: "grilla", items_base: "bases",
+  comportamientos: "npc", fondos: "npc", buscar_comportamientos_en_el_juego: "npc", comportamiento: "npc",
+  gaturro: "gaturro", animacion_de_accion: "gaturro",
+  generar_encode: "encode", interpretar_items: "encode", importar_encode: "lista",
+  buscar_por_imagen: "imagen", estado_entorno: "entorno",
+};
+const visible = (el) => Boolean(el) && el.offsetParent !== null && el.getBoundingClientRect().width > 0;
+const abierto = (id) => Boolean($id(id)?.open);
+// Dónde va el esqueleto de cada cosa, y con qué forma.
+const DONDE = {
+  grilla: () => abierto("dialogo-base") ? { el: $id("lista-bases"), forma: "filas" }
+    : { el: [$id("grilla-items"), $id("grilla-piezas")].find(visible), forma: "tarjetas" },
+  bases: () => ({ el: $id("lista-bases"), forma: "filas" }),
+  npc: () => ({ el: $id("grilla-comportamientos"), forma: "tarjetas" }),
+  gaturro: () => abierto("dialogo-mis-looks") ? {} : { el: $id("gaturro"), forma: "gaturro" },
+  encode: () => ({ el: $id("encode"), forma: "renglones" }),
+  lista: () => ({ el: $id("lista"), forma: "filas" }),
+  imagen: () => ({ el: $id("resultados-imagen"), forma: "tarjetas" }),
+  entorno: () => abierto("dialogo-entorno") ? { el: $id("componentes"), forma: "filas" } : {},
+};
+
+const regiones = new Map(); // clave → { buscar, el, capa, desde }
+const enCurso = new Map();
+
+function empezar(clave, buscar) {
+  enCurso.set(clave, (enCurso.get(clave) ?? 0) + 1);
+  if (!regiones.has(clave)) regiones.set(clave, { buscar, capa: null, desde: performance.now() });
+}
+function terminar(clave) {
+  const n = (enCurso.get(clave) ?? 1) - 1;
+  enCurso.set(clave, Math.max(0, n));
+  if (n > 0) return;
+  const region = regiones.get(clave);
+  if (!region) return;
+  regiones.delete(clave);
+  const capa = region.capa;
+  capa?.classList.add("saliendo");
+  setTimeout(() => capa?.remove(), 220);
+}
+
+// Cada función del núcleo avisa cuándo empieza y termina. Se envuelve en la fase de captura de «pywebviewready»,
+// antes de que la interfaz haga sus primeros pedidos.
+function envolver(objeto, adentro = false) {
+  for (const [nombre, valor] of Object.entries(objeto ?? {})) {
+    if (typeof valor === "function") {
+      const forma = QUE_CARGA[nombre];
+      if (!forma || valor.__prototipo) continue;
+      const envuelta = async (...args) => {
+        empezar(`api:${forma}`, DONDE[forma]);
+        try { return await valor.apply(objeto, args); } finally { terminar(`api:${forma}`); }
+      };
+      envuelta.__prototipo = true;
+      objeto[nombre] = envuelta;
+    } else if (valor && typeof valor === "object" && !adentro) envolver(valor, true);
+  }
+}
+window.addEventListener("pywebviewready", () => envolver(window.pywebview?.api), true);
+if (window.pywebview?.api) envolver(window.pywebview.api);
+
+// Lo que la interfaz escribe como «Leyendo…» también es una carga: en su lugar va el esqueleto.
+const ES_CARGA = /^(Leyendo|Preparando|Buscando|Bajando|Aplicando|Revisando|Cerrando programas)\b/;
+const textoPropio = (el) => [...el.childNodes].filter((n) => n.nodeType === 3).map((n) => n.nodeValue).join("").trim();
+const textosDeCarga = new Set();
+function buscarTextosDeCarga(raiz) {
+  for (const el of [raiz, ...raiz.querySelectorAll("*")]) {
+    if (textosDeCarga.has(el) || el.closest("[data-sin-iconos], .barra-prototipo") || !ES_CARGA.test(textoPropio(el))) continue;
+    textosDeCarga.add(el);
+    el.classList.add("texto-de-carga");
+    const contenedor = el.closest("#grilla-items, #grilla-piezas, #grilla-comportamientos, #lista-bases, #componentes, #resultados-imagen");
+    const delGaturro = el.id === "estado-gaturro";
+    const forma = delGaturro ? "gaturro" : !contenedor ? "linea" : contenedor.matches("#lista-bases, #componentes") ? "filas" : "tarjetas";
+    empezar(el, () => ({ el: delGaturro ? $id("gaturro") : contenedor ?? el, forma }));
+  }
+}
+function revisarTextosDeCarga() {
+  for (const el of textosDeCarga) {
+    if (el.isConnected && ES_CARGA.test(textoPropio(el))) continue;
+    textosDeCarga.delete(el);
+    el.classList.remove("texto-de-carga");
+    enCurso.set(el, 1);
+    terminar(el);
   }
 }
 
-function buscarCargas(raiz) {
-  const candidatos = raiz.nodeType === 1 ? [raiz, ...raiz.querySelectorAll("*")] : [];
-  for (const el of candidatos) {
-    if (el.closest("[data-sin-iconos]")) continue;
-    const propio = [...el.childNodes].filter((n) => n.nodeType === 3).map((n) => n.nodeValue).join("").trim();
-    const esCarga = ES_CARGA.test(propio);
-    if (esCarga && !el.querySelector(":scope > .animacion-carga")) { el.classList.add("es-carga"); marcarCarga(el); }
-    if (!esCarga && el.classList.contains("es-carga")) {
-      el.classList.remove("es-carga", "con-carga");
-      el.querySelectorAll(":scope > .animacion-carga, :scope > .esqueleto-grilla").forEach((x) => x.remove());
-    }
+// El fondo de verdad detrás de un elemento, para tapar lo que había mientras carga.
+function fondoDe(el) {
+  for (let x = el; x; x = x.parentElement) {
+    const v = (getComputedStyle(x).backgroundColor.match(/[\d.]+/g) || []).map(Number);
+    if (v.length >= 3 && (v[3] === undefined || v[3] > 0.6)) return `rgb(${v[0]}, ${v[1]}, ${v[2]})`;
   }
+  return "#4f9a3a";
 }
-const repintarCargas = () => document.querySelectorAll(".es-carga").forEach(marcarCarga);
 
-// «Probar carga»: pone 4 segundos un mensaje de carga en la grilla visible, para ver la animación sin esperar.
+function armarCapa(region, el, forma) {
+  const capa = document.createElement("div");
+  capa.className = `capa-carga forma-${forma}`;
+  capa.dataset.sinIconos = "";
+  const r = el.getBoundingClientRect();
+  if (forma === "tarjetas") {
+    // La misma grilla que la de verdad: las tarjetas vacías tienen el tamaño de las que vienen.
+    const estilo = getComputedStyle(el);
+    const esGrilla = estilo.display.includes("grid");
+    const columnas = esGrilla ? estilo.gridTemplateColumns.split(" ").length : Math.max(1, Math.floor(r.width / 90));
+    const filas = esGrilla && estilo.gridTemplateRows !== "none" ? Math.min(6, estilo.gridTemplateRows.split(" ").length) : Math.max(1, Math.floor(r.height / 110));
+    capa.style.gridTemplateColumns = `repeat(${columnas}, minmax(0, 1fr))`;
+    capa.style.gridTemplateRows = `repeat(${filas}, minmax(0, 1fr))`;
+    capa.style.gap = estilo.rowGap && estilo.rowGap !== "normal" ? `${estilo.rowGap} ${estilo.columnGap}` : "8px";
+    capa.innerHTML = Array.from({ length: columnas * filas }, (_, i) =>
+      `<span class="tarjeta-esqueleto" style="--i:${(i % columnas) + Math.floor(i / columnas)}"><span class="img"></span><span class="txt"></span><span class="txt corto"></span></span>`).join("");
+  } else if (forma === "filas") {
+    const n = Math.max(2, Math.min(10, Math.floor(r.height / 48)));
+    capa.innerHTML = Array.from({ length: n }, (_, i) => `<span class="fila-esqueleto" style="--i:${i}"><span class="img"></span><span class="txt"></span></span>`).join("");
+  } else if (forma === "renglones") {
+    capa.innerHTML = Array.from({ length: 3 }, (_, i) => `<span class="renglon-esqueleto" style="--i:${i}"></span>`).join("");
+  } else if (forma === "gaturro") {
+    capa.innerHTML = `<span class="gaturro-esqueleto"></span><span class="sombra-esqueleto"></span>`;
+  } else {
+    capa.innerHTML = `<span class="linea-esqueleto"></span>`;
+  }
+  capa.style.setProperty("--fondo-capa", fondoDe(forma === "gaturro" ? el.parentElement : el));
+  document.body.append(capa);
+  region.capa = capa;
+  region.el = el;
+}
+
+// En cada cuadro, las capas siguen a lo que tapan (si se mueve, cambia de tamaño o se esconde).
+function cuadro() {
+  revisarTextosDeCarga();
+  const conEsqueleto = html.dataset.carga === "esqueleto";
+  for (const region of regiones.values()) {
+    if (!conEsqueleto || performance.now() - region.desde < 120) continue; // lo que tarda poco no parpadea
+    const { el, forma } = region.buscar?.() ?? {};
+    if (!visible(el)) { region.capa?.remove(); region.capa = null; continue; }
+    if (!region.capa || region.el !== el) { region.capa?.remove(); armarCapa(region, el, forma); }
+    const r = el.getBoundingClientRect();
+    Object.assign(region.capa.style, { left: `${r.left}px`, top: `${r.top}px`, width: `${r.width}px`, height: `${r.height}px` });
+  }
+  requestAnimationFrame(cuadro);
+}
+requestAnimationFrame(cuadro);
+
+// «Probar carga»: 4 segundos de carga en la grilla visible y en el Gaturro, sin esperar una de verdad.
 function probarCarga() {
-  const grilla = [...document.querySelectorAll("#grilla-items, #grilla-piezas, #grilla-comportamientos")].find((g) => g.offsetParent);
-  if (!grilla) return;
-  const antes = [...grilla.childNodes];
-  const li = Object.assign(document.createElement("li"), { className: "ayuda", textContent: "Leyendo los Items de todos los SWF…" });
-  grilla.replaceChildren(li);
-  setTimeout(() => grilla.replaceChildren(...antes), 4000);
+  empezar("prueba:grilla", DONDE.grilla);
+  empezar("prueba:npc", DONDE.npc);
+  empezar("prueba:gaturro", DONDE.gaturro);
+  setTimeout(() => ["prueba:grilla", "prueba:npc", "prueba:gaturro"].forEach(terminar), 4000);
 }
 
-// --- Todo lo que la interfaz agrega después también pasa por acá ---
+// ============ Todo lo que la interfaz agrega después también pasa por acá ============
 
 new MutationObserver((cambios) => {
   for (const c of cambios) {
     for (const n of c.addedNodes) {
-      if (n.nodeType === 3) { if (n.parentElement) { cambiarEmojis(n.parentElement); buscarCargas(n.parentElement); } continue; }
-      if (n.nodeType !== 1 || n.closest?.(".barra-prototipo")) continue;
-      cambiarEmojis(n);
-      buscarCargas(n);
-      if (n.tagName === "LI" && n.parentElement) n.style.setProperty("--n", [...n.parentElement.children].indexOf(n));
-      if (n.classList?.contains("nombre-item")) pintarNombre(n);
-      n.querySelectorAll?.(".nombre-item").forEach(pintarNombre);
-    }
-    if (c.type === "characterData" && c.target.parentElement?.classList.contains("nombre-item")) {
-      const el = c.target.parentElement;
-      if (el.textContent !== nombreLegible(el.dataset.tecnico ?? "") && el.textContent !== el.dataset.tecnico) { delete el.dataset.tecnico; pintarNombre(el); }
+      const el = n.nodeType === 3 ? n.parentElement : n;
+      if (!el || el.nodeType !== 1 || el.closest(".barra-prototipo, .capa-carga")) continue;
+      cambiarEmojis(el);
+      buscarTextosDeCarga(el);
+      pulirTextos(el);
+      if (el.tagName === "LI" && el.parentElement) el.style.setProperty("--n", [...el.parentElement.children].indexOf(el));
     }
   }
-}).observe(document.body, { childList: true, subtree: true, characterData: true });
+}).observe(document.body, { childList: true, subtree: true });
 
 cambiarEmojis(document.body);
-buscarCargas(document.body);
+buscarTextosDeCarga(document.body);
 aplicarVariantes();
 window.prototipo = { elegido, aplicarVariantes, probarCarga };
 })();
