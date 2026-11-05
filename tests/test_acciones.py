@@ -159,17 +159,17 @@ MOTO = {"nombre": "Moto en la mano", "base": "bruja.pocima1", "animacion": "show
 
 
 def test_guardar_duplicar_y_borrar_acciones(nucleo):
-    guardada = nucleo.guardar_accion(MOTO)
+    guardada = nucleo.guardados.guardar("accion", MOTO)
 
     assert guardada["ok"], guardada
-    accion = guardada["accion"]
+    accion = guardada["documento"]
     assert accion["id"] and accion["animacion"] == "showObject"
-    copia = nucleo.duplicar_accion(accion["id"])["accion"]
+    copia = nucleo.guardados.duplicar("accion", accion["id"])["documento"]
     assert copia["nombre"] == "Moto en la mano (copia)" and copia["animacion"] == "showObject"
-    assert [a["nombre"] for a in nucleo.acciones()["acciones"]] == ["Moto en la mano", "Moto en la mano (copia)"]
-    assert nucleo.looks()["looks"] == []  # aparte de los Looks
-    assert nucleo.borrar_accion(accion["id"])["ok"]
-    assert [a["nombre"] for a in nucleo.acciones()["acciones"]] == ["Moto en la mano (copia)"]
+    assert [a["nombre"] for a in nucleo.guardados.lista("accion")["guardados"]] == ["Moto en la mano", "Moto en la mano (copia)"]
+    assert nucleo.guardados.lista("look")["guardados"] == []  # aparte de los Looks
+    assert nucleo.guardados.borrar("accion", accion["id"])["ok"]
+    assert [a["nombre"] for a in nucleo.guardados.lista("accion")["guardados"]] == ["Moto en la mano (copia)"]
 
 
 @pytest.mark.parametrize("accion", [
@@ -178,21 +178,21 @@ def test_guardar_duplicar_y_borrar_acciones(nucleo):
     MOTO | {"partes": {"hats": "costumes.coronaRey_on"}},  # una acción no viste
 ])
 def test_una_accion_que_no_se_puede_guardar(nucleo, accion):
-    assert not nucleo.guardar_accion(accion)["ok"]
-    assert nucleo.acciones()["acciones"] == []
+    assert not nucleo.guardados.guardar("accion", accion)["ok"]
+    assert nucleo.guardados.lista("accion")["guardados"] == []
 
 
 def test_exportar_e_importar_una_accion(nucleo, tmp_path):
     archivo = tmp_path / "moto.mgaccion"
 
-    assert nucleo.exportar_accion(MOTO, str(archivo))["ok"]
-    importada = nucleo.importar_accion_de_archivo(str(archivo))
+    assert nucleo.guardados.exportar("accion", MOTO, str(archivo))["ok"]
+    importada = nucleo.guardados.importar_de_archivo("accion", str(archivo))
 
     assert importada["ok"], importada
-    assert {k: importada["accion"][k] for k in ("nombre", "base", "animacion", "partes")} == {k: MOTO[k] for k in ("nombre", "base", "animacion", "partes")}
-    assert not nucleo.importar_look_de_archivo(str(archivo))["ok"]  # no es un Look
-    otra = nucleo.importar_accion_de_archivo(str(archivo))
-    assert otra["accion"]["nombre"] == "Moto en la mano (2)"
+    assert {k: importada["documento"][k] for k in ("nombre", "base", "animacion", "partes")} == {k: MOTO[k] for k in ("nombre", "base", "animacion", "partes")}
+    assert not nucleo.guardados.importar_de_archivo("look", str(archivo))["ok"]  # no es un Look
+    otra = nucleo.guardados.importar_de_archivo("accion", str(archivo))
+    assert otra["documento"]["nombre"] == "Moto en la mano (2)"
 
 
 def test_una_accion_puede_mostrar_un_objeto_de_la_casa(nucleo, fuente, ffdec):

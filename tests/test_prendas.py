@@ -476,18 +476,18 @@ CUCHILLO = {"nombre": "Corona en la mano", "base": "costumes2.remera5", "partes"
 
 
 def test_guardar_duplicar_y_borrar_prendas_trucadas(nucleo):
-    guardada = nucleo.guardar_trucada(CUCHILLO)
+    guardada = nucleo.guardados.guardar("trucada", CUCHILLO)
 
     assert guardada["ok"], guardada
-    trucada = guardada["trucada"]
+    trucada = guardada["documento"]
     assert trucada["id"] and (trucada["base"], trucada["partes"]) == (CUCHILLO["base"], CUCHILLO["partes"])
-    copia = nucleo.duplicar_trucada(trucada["id"])["trucada"]
+    copia = nucleo.guardados.duplicar("trucada", trucada["id"])["documento"]
     assert copia["nombre"] == "Corona en la mano (copia)" and copia["partes"] == CUCHILLO["partes"]
-    assert [t["nombre"] for t in nucleo.trucadas()["trucadas"]] == ["Corona en la mano", "Corona en la mano (copia)"]
-    assert nucleo.looks()["looks"] == [] and nucleo.acciones()["acciones"] == []  # aparte de los Looks y las acciones
-    assert nucleo.guardar_trucada(trucada | {"nombre": "Corona"})["trucada"]["id"] == trucada["id"]  # cambios de una guardada
-    assert nucleo.borrar_trucada(trucada["id"])["ok"]
-    assert [t["nombre"] for t in nucleo.trucadas()["trucadas"]] == ["Corona en la mano (copia)"]
+    assert [t["nombre"] for t in nucleo.guardados.lista("trucada")["guardados"]] == ["Corona en la mano", "Corona en la mano (copia)"]
+    assert nucleo.guardados.lista("look")["guardados"] == [] and nucleo.guardados.lista("accion")["guardados"] == []  # aparte de los Looks y las acciones
+    assert nucleo.guardados.guardar("trucada", trucada | {"nombre": "Corona"})["documento"]["id"] == trucada["id"]  # cambios de una guardada
+    assert nucleo.guardados.borrar("trucada", trucada["id"])["ok"]
+    assert [t["nombre"] for t in nucleo.guardados.lista("trucada")["guardados"]] == ["Corona en la mano (copia)"]
 
 
 @pytest.mark.parametrize("trucada, error", [
@@ -498,29 +498,29 @@ def test_guardar_duplicar_y_borrar_prendas_trucadas(nucleo):
     (CUCHILLO | {"animacion": "dance"}, "animación"),
 ])
 def test_una_prenda_trucada_que_no_se_puede_guardar(nucleo, trucada, error):
-    resultado = nucleo.guardar_trucada(trucada)
+    resultado = nucleo.guardados.guardar("trucada", trucada)
 
     assert not resultado["ok"] and error in resultado["error"]
-    assert nucleo.trucadas()["trucadas"] == []
+    assert nucleo.guardados.lista("trucada")["guardados"] == []
 
 
 def test_exportar_e_importar_una_prenda_trucada(nucleo, tmp_path):
     archivo = tmp_path / "corona.mgtrucada"
 
-    assert nucleo.exportar_trucada(CUCHILLO, str(archivo))["ok"]
-    importada = nucleo.importar_trucada_de_archivo(str(archivo))
+    assert nucleo.guardados.exportar("trucada", CUCHILLO, str(archivo))["ok"]
+    importada = nucleo.guardados.importar_de_archivo("trucada", str(archivo))
 
     assert importada["ok"], importada
-    assert {k: importada["trucada"][k] for k in ("nombre", "base", "partes")} == CUCHILLO
-    assert not nucleo.importar_look_de_archivo(str(archivo))["ok"]  # no es un Look
+    assert {k: importada["documento"][k] for k in ("nombre", "base", "partes")} == CUCHILLO
+    assert not nucleo.guardados.importar_de_archivo("look", str(archivo))["ok"]  # no es un Look
     look = tmp_path / "rey.mglook"
-    nucleo.exportar_look({"nombre": "Rey", "base": None, "partes": {"hats": "costumes.coronaRey_on"}}, str(look))
-    assert "no es una Prenda trucada" in nucleo.importar_trucada_de_archivo(str(look))["error"]
-    assert nucleo.importar_trucada_de_archivo(str(archivo))["trucada"]["nombre"] == "Corona en la mano (2)"
+    nucleo.guardados.exportar("look", {"nombre": "Rey", "base": None, "partes": {"hats": "costumes.coronaRey_on"}}, str(look))
+    assert "no es una Prenda trucada" in nucleo.guardados.importar_de_archivo("trucada", str(look))["error"]
+    assert nucleo.guardados.importar_de_archivo("trucada", str(archivo))["documento"]["nombre"] == "Corona en la mano (2)"
 
 
 def test_una_prenda_trucada_guardada_se_truca_como_las_demas(nucleo, ffdec):
-    trucada = nucleo.guardar_trucada(CUCHILLO)["trucada"]
+    trucada = nucleo.guardados.guardar("trucada", CUCHILLO)["documento"]
 
     resultado = nucleo.trucar_varias([{"base": trucada["base"], "parte": parte, "pieza": pieza} for parte, pieza in trucada["partes"].items()])
 

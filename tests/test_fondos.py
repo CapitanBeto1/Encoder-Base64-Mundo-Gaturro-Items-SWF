@@ -91,18 +91,18 @@ def test_convertir_un_fondo_con_su_cuadro(nucleo, ffdec):
 def test_mis_fondos_se_guardan_con_su_cuadro(nucleo, tmp_path):
     fondo = {"nombre": "Playa", "base": "costumes2.remera5", "comportamiento": "painting", "cuadro": 2}
 
-    guardado = nucleo.guardar_npc("fondo", fondo)
-    copia = nucleo.duplicar_npc("fondo", guardado["npc"]["id"])
+    guardado = nucleo.guardados.guardar("fondo", fondo)
+    copia = nucleo.guardados.duplicar("fondo", guardado["documento"]["id"])
     archivo = tmp_path / "playa.mgfondo"
 
-    assert guardado["ok"] and guardado["npc"]["cuadro"] == 2
-    assert copia["npc"]["cuadro"] == 2
-    assert nucleo.npcs_guardados("tienda")["npcs"] == []  # cada tipo en su archivo
-    assert "cuadro" in nucleo.guardar_npc("fondo", fondo | {"cuadro": None})["error"]
-    assert nucleo.exportar_npc("fondo", fondo, str(archivo))["ok"]
-    importado = nucleo.importar_npc_de_archivo("fondo", str(archivo))
-    assert importado["ok"] and importado["npc"]["cuadro"] == 2
-    assert "no es una tienda" in nucleo.importar_npc_de_archivo("tienda", str(archivo))["error"]
+    assert guardado["ok"] and guardado["documento"]["cuadro"] == 2
+    assert copia["documento"]["cuadro"] == 2
+    assert nucleo.guardados.lista("tienda")["guardados"] == []  # cada tipo en su archivo
+    assert "cuadro" in nucleo.guardados.guardar("fondo", fondo | {"cuadro": None})["error"]
+    assert nucleo.guardados.exportar("fondo", fondo, str(archivo))["ok"]
+    importado = nucleo.guardados.importar_de_archivo("fondo", str(archivo))
+    assert importado["ok"] and importado["documento"]["cuadro"] == 2
+    assert "no es una tienda" in nucleo.guardados.importar_de_archivo("tienda", str(archivo))["error"]
 
 
 def test_el_mismo_objeto_llega_varias_veces_cada_una_con_su_cuadro(nucleo, ffdec):

@@ -522,37 +522,29 @@ const NOMBRES_DE_OTRAS_PARTES = {
 const nombreDeParte = (id) => NOMBRES_DE_OTRAS_PARTES[id] ?? partesConocidas.find((p) => p.id === id)?.nombre ?? id;
 
 // Looks, Acciones y Trucar Prenda comparten los guardados (botón, ventana, ✓ ✗ 🗑): cada pestaña con su lista y sus funciones.
+// Mis Looks, Mis acciones, Mis Prendas trucadas, Mis tiendas…: todos se guardan igual (`api().guardados`, con el
+// tipo primero); cambian el tipo y cómo se nombran en la pantalla.
 const GUARDADOS = {
-  looks: { lista: "looks", guardar: "guardar_look", duplicar: "duplicar_look", borrar: "borrar_look", exportar: "exportar_look",
-           importar: "importar_look", el: "el Look", lo: "lo", nuevo: "Look nuevo", mis: "Mis Looks", titulo: "GUARDA TU LOOK", sub: "GUARDA TUS LOOKS FAVORITOS" },
-  acciones: { lista: "acciones", guardar: "guardar_accion", duplicar: "duplicar_accion", borrar: "borrar_accion", exportar: "exportar_accion",
-              importar: "importar_accion", el: "la acción", lo: "la", nuevo: "Acción nueva", mis: "Mis acciones", titulo: "GUARDA TU ACCIÓN", sub: "GUARDA TUS ACCIONES FAVORITAS" },
-  trucar: { lista: "trucadas", guardar: "guardar_trucada", duplicar: "duplicar_trucada", borrar: "borrar_trucada", exportar: "exportar_trucada",
-            importar: "importar_trucada", el: "la Prenda trucada", lo: "la", nuevo: "Prenda trucada nueva", mis: "Mis Prendas trucadas",
+  looks: { tipo: "look", el: "el Look", lo: "lo", nuevo: "Look nuevo", mis: "Mis Looks", titulo: "GUARDA TU LOOK", sub: "GUARDA TUS LOOKS FAVORITOS" },
+  acciones: { tipo: "accion", el: "la acción", lo: "la", nuevo: "Acción nueva", mis: "Mis acciones", titulo: "GUARDA TU ACCIÓN",
+              sub: "GUARDA TUS ACCIONES FAVORITAS" },
+  trucar: { tipo: "trucada", el: "la Prenda trucada", lo: "la", nuevo: "Prenda trucada nueva", mis: "Mis Prendas trucadas",
             titulo: "GUARDA TU PRENDA TRUCADA", sub: "GUARDA TUS PRENDAS TRUCADAS FAVORITAS" },
-  // Las de Tiendas, Portales y Minijuegos reciben el tipo primero (`tipo`) y devuelven la lista en `npcs`.
-  tiendas: { lista: "npcs_guardados", clave: "npcs", guardar: "guardar_npc", duplicar: "duplicar_npc", borrar: "borrar_npc", exportar: "exportar_npc",
-             importar: "importar_npc", tipo: "tienda", el: "la tienda", lo: "la", nuevo: "Tienda nueva", mis: "Mis tiendas",
-             titulo: "GUARDA TU TIENDA", sub: "GUARDA TUS TIENDAS FAVORITAS" },
-  portales: { lista: "npcs_guardados", clave: "npcs", guardar: "guardar_npc", duplicar: "duplicar_npc", borrar: "borrar_npc", exportar: "exportar_npc",
-              importar: "importar_npc", tipo: "portal", el: "el portal", lo: "lo", nuevo: "Portal nuevo", mis: "Mis portales",
-              titulo: "GUARDA TU PORTAL", sub: "GUARDA TUS PORTALES FAVORITOS" },
-  minijuegos: { lista: "npcs_guardados", clave: "npcs", guardar: "guardar_npc", duplicar: "duplicar_npc", borrar: "borrar_npc", exportar: "exportar_npc",
-                importar: "importar_npc", tipo: "minijuego", el: "el minijuego", lo: "lo", nuevo: "Minijuego nuevo", mis: "Mis minijuegos",
+  tiendas: { tipo: "tienda", el: "la tienda", lo: "la", nuevo: "Tienda nueva", mis: "Mis tiendas", titulo: "GUARDA TU TIENDA",
+             sub: "GUARDA TUS TIENDAS FAVORITAS" },
+  portales: { tipo: "portal", el: "el portal", lo: "lo", nuevo: "Portal nuevo", mis: "Mis portales", titulo: "GUARDA TU PORTAL",
+              sub: "GUARDA TUS PORTALES FAVORITOS" },
+  minijuegos: { tipo: "minijuego", el: "el minijuego", lo: "lo", nuevo: "Minijuego nuevo", mis: "Mis minijuegos",
                 titulo: "GUARDA TU MINIJUEGO", sub: "GUARDA TUS MINIJUEGOS FAVORITOS" },
-  fondos: { lista: "npcs_guardados", clave: "npcs", guardar: "guardar_npc", duplicar: "duplicar_npc", borrar: "borrar_npc", exportar: "exportar_npc",
-            importar: "importar_npc", tipo: "fondo", el: "el fondo", lo: "lo", nuevo: "Fondo nuevo", mis: "Mis fondos",
-            titulo: "GUARDA TU FONDO", sub: "GUARDA TUS FONDOS FAVORITOS" },
+  fondos: { tipo: "fondo", el: "el fondo", lo: "lo", nuevo: "Fondo nuevo", mis: "Mis fondos", titulo: "GUARDA TU FONDO",
+            sub: "GUARDA TUS FONDOS FAVORITOS" },
 };
 const guardados = () => GUARDADOS[vista in GUARDADOS ? vista : "looks"];
-// Llama a la función `clave` de los guardados de la pestaña (con el tipo primero, si lo tiene).
-const llamarGuardados = (clave, ...args) => {
-  const g = guardados();
-  return api()[g[clave]](...(g.tipo ? [g.tipo] : []), ...args);
-};
+// Una operación de los guardados de la pestaña: lista, guardar, duplicar, borrar, exportar o importar.
+const llamarGuardados = (operacion, ...args) => api().guardados[operacion](guardados().tipo, ...args);
 const documentoNuevo = (pestana = vista) => ({ acciones: nuevaAccion, trucar: nuevaPrendaATrucar, tiendas: nuevoNpc, portales: nuevoNpc,
                                                   minijuegos: nuevoNpc, fondos: nuevoFondo }[pestana] ?? nuevoLook)();
-const guardadoDe = (resultado) => resultado.look ?? resultado.accion ?? resultado.trucada ?? resultado.npc;
+const guardadoDe = (resultado) => resultado.documento;
 // Lo que queda en el editor al abrir un guardado (o uno nuevo). En Trucar Prenda va al armado, con su Parte,
 // y la lista de las que se reciben juntas sigue como estaba.
 const enElEditor = (documento) => vista === "trucar"
@@ -573,7 +565,7 @@ async function cargarLooks() {
   if (!partesConocidas.length) partesConocidas = (await api().partes_del_cuerpo()).partes_del_cuerpo;
   const resultado = await llamarGuardados("lista");
   if (!resultado.ok) return avisarLista(resultado.error, "error");
-  looksGuardados = resultado[guardados().clave ?? guardados().lista];
+  looksGuardados = resultado.guardados;
   $("texto-mis-looks").textContent = guardados().mis;
   $("titulo-mis-looks").textContent = guardados().titulo;
   $("sub-mis-looks").textContent = guardados().sub;

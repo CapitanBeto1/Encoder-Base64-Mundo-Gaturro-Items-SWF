@@ -5,16 +5,57 @@ from pathlib import Path
 
 import webview
 
+from mgitems.guardados import TIPOS as TIPOS_DE_GUARDADO, Guardados
 from mgitems.nucleo import Nucleo
 
 TITULO = "MG Items"
 UI = Path(__file__).parent / "ui" / "index.html"
-_TIPOS_LOOK = ("Look de MG Items (*.mglook)", "Todos los archivos (*.*)")
-_TIPOS_ACCION = ("Acción de MG Items (*.mgaccion)", "Todos los archivos (*.*)")
-_TIPOS_TRUCADA = ("Prenda trucada de MG Items (*.mgtrucada)", "Todos los archivos (*.*)")
-_TIPOS_NPC = {"tienda": ("mgtienda", "Tienda"), "portal": ("mgportal", "Portal"), "minijuego": ("mgminijuego", "Minijuego"),
-              "fondo": ("mgfondo", "Fondo")}  # tipo → (extensión, nombre)
 _NO_VALE_EN_ARCHIVOS = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
+
+
+class _GuardadosConDialogos:
+    """Mis Looks, Mis acciones, Mis Prendas trucadas, Mis tiendas…: `window.pywebview.api.guardados.<método>(tipo, …)`.
+
+    Lo de `Nucleo.guardados`, salvo exportar e importar, que piden el archivo con un diálogo: la interfaz no elige
+    rutas."""
+
+    def __init__(self, guardados: Guardados):
+        self._guardados = guardados
+
+    def lista(self, tipo: str) -> dict:
+        return self._guardados.lista(tipo)
+
+    def guardar(self, tipo: str, documento: dict) -> dict:
+        return self._guardados.guardar(tipo, documento)
+
+    def duplicar(self, tipo: str, id_documento: str) -> dict:
+        return self._guardados.duplicar(tipo, id_documento)
+
+    def borrar(self, tipo: str, id_documento: str) -> dict:
+        return self._guardados.borrar(tipo, id_documento)
+
+    def exportar(self, tipo: str, documento: dict) -> dict:
+        t = TIPOS_DE_GUARDADO.get(tipo)
+        if t is None:
+            return {"ok": False, "error": f"Tipo desconocido: {tipo}"}
+        nombre = _NO_VALE_EN_ARCHIVOS.sub("_", str(documento.get("nombre") or "").strip()) or t.nombre
+        ruta = _dialogo(webview.FileDialog.SAVE, save_filename=f"{nombre}.{t.extension}", file_types=_tipos_de_archivo(t))
+        if not ruta:
+            return {"ok": False, "cancelado": True}
+        return self._guardados.exportar(tipo, documento, ruta)
+
+    def importar(self, tipo: str) -> dict:
+        t = TIPOS_DE_GUARDADO.get(tipo)
+        if t is None:
+            return {"ok": False, "error": f"Tipo desconocido: {tipo}"}
+        ruta = _dialogo(webview.FileDialog.OPEN, file_types=_tipos_de_archivo(t))
+        if not ruta:
+            return {"ok": False, "cancelado": True}
+        return self._guardados.importar_de_archivo(tipo, ruta)
+
+
+def _tipos_de_archivo(t) -> tuple[str, str]:
+    return (f"{t.nombre} de MG Items (*.{t.extension})", "Todos los archivos (*.*)")
 
 
 class Puente:
@@ -26,6 +67,7 @@ class Puente:
 
     def __init__(self, nucleo: Nucleo):
         self._nucleo = nucleo
+        self.guardados = _GuardadosConDialogos(nucleo.guardados)
 
     def abrir_swf(self) -> dict:
         ruta = _dialogo(webview.FileDialog.OPEN, file_types=("SWF (*.swf)", "Todos los archivos (*.*)"))
@@ -63,18 +105,6 @@ class Puente:
     def partes_del_cuerpo(self) -> dict:
         return self._nucleo.partes_del_cuerpo()
 
-    def looks(self) -> dict:
-        return self._nucleo.looks()
-
-    def guardar_look(self, look: dict) -> dict:
-        return self._nucleo.guardar_look(look)
-
-    def duplicar_look(self, id_look: str) -> dict:
-        return self._nucleo.duplicar_look(id_look)
-
-    def borrar_look(self, id_look: str) -> dict:
-        return self._nucleo.borrar_look(id_look)
-
     def aplicar_look(self, look: dict) -> dict:
         return self._nucleo.aplicar_look(look)
 
@@ -90,33 +120,8 @@ class Puente:
     def animacion_de_accion(self, accion: dict, colores: dict | None = None) -> dict:
         return self._nucleo.animacion_de_accion(accion, colores)
 
-    def acciones(self) -> dict:
-        return self._nucleo.acciones()
-
     def dibujos_de_la_interfaz(self) -> dict:
         return self._nucleo.dibujos_de_la_interfaz()
-
-    def guardar_accion(self, accion: dict) -> dict:
-        return self._nucleo.guardar_accion(accion)
-
-    def duplicar_accion(self, id_accion: str) -> dict:
-        return self._nucleo.duplicar_accion(id_accion)
-
-    def borrar_accion(self, id_accion: str) -> dict:
-        return self._nucleo.borrar_accion(id_accion)
-
-    def exportar_accion(self, accion: dict) -> dict:
-        nombre = _NO_VALE_EN_ARCHIVOS.sub("_", str(accion.get("nombre") or "").strip()) or "Accion"
-        ruta = _dialogo(webview.FileDialog.SAVE, save_filename=f"{nombre}.mgaccion", file_types=_TIPOS_ACCION)
-        if not ruta:
-            return {"ok": False, "cancelado": True}
-        return self._nucleo.exportar_accion(accion, ruta)
-
-    def importar_accion(self) -> dict:
-        ruta = _dialogo(webview.FileDialog.OPEN, file_types=_TIPOS_ACCION)
-        if not ruta:
-            return {"ok": False, "cancelado": True}
-        return self._nucleo.importar_accion_de_archivo(ruta)
 
     def estado_busqueda(self) -> dict:
         return self._nucleo.estado_busqueda()
@@ -151,72 +156,6 @@ class Puente:
 
     def cuadros_de_fondo(self, ruta: str) -> dict:
         return self._nucleo.cuadros_de_fondo(ruta)
-
-    def npcs_guardados(self, tipo: str) -> dict:
-        return self._nucleo.npcs_guardados(tipo)
-
-    def guardar_npc(self, tipo: str, npc: dict) -> dict:
-        return self._nucleo.guardar_npc(tipo, npc)
-
-    def duplicar_npc(self, tipo: str, id_npc: str) -> dict:
-        return self._nucleo.duplicar_npc(tipo, id_npc)
-
-    def borrar_npc(self, tipo: str, id_npc: str) -> dict:
-        return self._nucleo.borrar_npc(tipo, id_npc)
-
-    def exportar_npc(self, tipo: str, npc: dict) -> dict:
-        extension, que = _TIPOS_NPC.get(tipo, ("mgnpc", "NPC"))
-        nombre = _NO_VALE_EN_ARCHIVOS.sub("_", str(npc.get("nombre") or "").strip()) or que
-        ruta = _dialogo(webview.FileDialog.SAVE, save_filename=f"{nombre}.{extension}",
-                        file_types=(f"{que} de MG Items (*.{extension})", "Todos los archivos (*.*)"))
-        if not ruta:
-            return {"ok": False, "cancelado": True}
-        return self._nucleo.exportar_npc(tipo, npc, ruta)
-
-    def importar_npc(self, tipo: str) -> dict:
-        extension, que = _TIPOS_NPC.get(tipo, ("mgnpc", "NPC"))
-        ruta = _dialogo(webview.FileDialog.OPEN, file_types=(f"{que} de MG Items (*.{extension})", "Todos los archivos (*.*)"))
-        if not ruta:
-            return {"ok": False, "cancelado": True}
-        return self._nucleo.importar_npc_de_archivo(tipo, ruta)
-
-    def trucadas(self) -> dict:
-        return self._nucleo.trucadas()
-
-    def guardar_trucada(self, trucada: dict) -> dict:
-        return self._nucleo.guardar_trucada(trucada)
-
-    def duplicar_trucada(self, id_trucada: str) -> dict:
-        return self._nucleo.duplicar_trucada(id_trucada)
-
-    def borrar_trucada(self, id_trucada: str) -> dict:
-        return self._nucleo.borrar_trucada(id_trucada)
-
-    def exportar_trucada(self, trucada: dict) -> dict:
-        nombre = _NO_VALE_EN_ARCHIVOS.sub("_", str(trucada.get("nombre") or "").strip()) or "Prenda trucada"
-        ruta = _dialogo(webview.FileDialog.SAVE, save_filename=f"{nombre}.mgtrucada", file_types=_TIPOS_TRUCADA)
-        if not ruta:
-            return {"ok": False, "cancelado": True}
-        return self._nucleo.exportar_trucada(trucada, ruta)
-
-    def importar_trucada(self) -> dict:
-        ruta = _dialogo(webview.FileDialog.OPEN, file_types=_TIPOS_TRUCADA)
-        if not ruta:
-            return {"ok": False, "cancelado": True}
-        return self._nucleo.importar_trucada_de_archivo(ruta)
-
-    def exportar_look(self, look: dict) -> dict:
-        nombre = _NO_VALE_EN_ARCHIVOS.sub("_", str(look.get("nombre") or "").strip()) or "Look"
-        ruta = _dialogo(webview.FileDialog.SAVE, save_filename=f"{nombre}.mglook", file_types=_TIPOS_LOOK)
-        if not ruta:
-            return {"ok": False, "cancelado": True}
-        return self._nucleo.exportar_look(look, ruta)
-
-    def importar_look(self) -> dict:
-        ruta = _dialogo(webview.FileDialog.OPEN, file_types=_TIPOS_LOOK)
-        if not ruta:
-            return {"ok": False, "cancelado": True}
-        return self._nucleo.importar_look_de_archivo(ruta)
 
     def gaturro(self, partes: dict, colores: dict | None = None) -> dict:
         return self._nucleo.gaturro(partes, colores)

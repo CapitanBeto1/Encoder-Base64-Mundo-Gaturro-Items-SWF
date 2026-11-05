@@ -28,6 +28,7 @@ from mgitems.entorno import Entorno, Sistema
 from mgitems.entrega import PUERTO_FIDDLER_POR_DEFECTO, QUE_HACER_EN_EL_JUEGO, URL_LOLA, Entrega, PasoFallido, Procesos, SwfTrucado
 from mgitems.ffdec import FFDecNoDisponible
 from mgitems.fuente import URL_ASSETS, FuenteCDN, SinConexion, SwfNoEncontrado, Version
+from mgitems.guardados import Guardados
 from mgitems.gaturro import (
     AVISO_VERSION_ANTERIOR, CLASE_CUERPO, CLASE_PLANTILLA, COLORES, CUADRO_QUIETO_DEL_VEHICULO, OBJETOS, SWF_CUERPO, SWF_PLANTILLA,
     SWF_POSES, ImagenesPiezas, componer, pose_de_transporte,
@@ -45,11 +46,11 @@ from mgitems.items import (
     separar_rutas,
 )
 from mgitems.fondos import COMPORTAMIENTO as COMPORTAMIENTO_FONDO, SUFIJO_CUADRO, CuadrosFFDec, Fondos
-from mgitems.looks import FORMATO_ACCION, FORMATO_FONDO, FORMATO_MINIJUEGO, FORMATO_PORTAL, FORMATO_TIENDA, FORMATO_TRUCADA, AlmacenLooks, Look, LookInvalido, archivo_de_look, look_de_archivo
+from mgitems.looks import Look, LookInvalido
 from mgitems.busqueda import FALTA_ONNXRUNTIME, QUE_ES, DatosBusqueda, hay_onnxruntime, abrir_encuadres, espejada, guiar
 from mgitems.mambo import atributo_en_codigo, clase_de_mochila
 from mgitems.npcs import (
-    FONDO, MINIJUEGO, PORTAL, TIENDA, TIPOS as TIPOS_NPC, Comportamientos, ComportamientosEncontrados, NoSePuedeConvertir, clasificar,
+    TIPOS as TIPOS_NPC, Comportamientos, ComportamientosEncontrados, NoSePuedeConvertir, clasificar,
     comportamientos_en_cache, describir, es_comportamiento_valido, leer_npc,
 )
 from mgitems.prendas import (
@@ -78,6 +79,9 @@ class Nucleo:
         cuadros: CuadrosFFDec | None = None,
     ):
         self._indice = indice or IndicePiezas()
+        self._entorno = Entorno(sistema or Sistema())
+        # Mis Looks, Mis acciones, Mis Prendas trucadas, Mis tiendas…: todos iguales (`mgitems.guardados`).
+        self.guardados = Guardados(self._entorno.carpeta_programa)
         self._fondos = fondos or Fondos()
         self._cuadros = cuadros
         self._comportamientos = comportamientos or Comportamientos()
@@ -98,7 +102,6 @@ class Nucleo:
         self._tamano_swf: int | None = None
         self._exportador = exportador or ExportadorFFDec()
         self._candado_iconos = threading.Lock()
-        self._entorno = Entorno(sistema or Sistema())
         self._procesos = procesos or Procesos()
         self._fuente = fuente or FuenteCDN()
         self._catalogo = cargar_catalogo() if catalogo is None else catalogo
@@ -731,44 +734,6 @@ class Nucleo:
         """Las Partes del cuerpo conocidas, con su nombre en español (no hace falta un SWF abierto)."""
         return {"ok": True, "partes_del_cuerpo": [{"id": i, "nombre": n} for i, n in PARTES_DEL_CUERPO.items()]}
 
-    def looks(self) -> dict:
-        """Los Looks guardados, por nombre."""
-        try:
-            looks = self._almacen_looks().todos()
-        except OSError as e:
-            return {"ok": False, "error": f"No se pudieron leer los Looks: {e}"}
-        return {"ok": True, "looks": [asdict(l) for l in sorted(looks, key=lambda l: orden_natural(l.nombre))]}
-
-    def guardar_look(self, look: dict) -> dict:
-        """Guarda un Look nuevo (sin id) o los cambios de uno guardado."""
-        try:
-            guardado = self._almacen_looks().guardar(Look.desde(look))
-        except LookInvalido as e:
-            return {"ok": False, "error": str(e)}
-        except OSError as e:
-            return {"ok": False, "error": f"No se pudo guardar el Look: {e}"}
-        return {"ok": True, "look": asdict(guardado)}
-
-    def duplicar_look(self, id_look: str) -> dict:
-        """Una copia de un Look guardado, con otro nombre."""
-        try:
-            almacen = self._almacen_looks()
-            original = next((l for l in almacen.todos() if l.id == id_look), None)
-            if original is None:
-                return {"ok": False, "error": "Ese Look ya no existe."}
-            nombre = _nombre_libre(f"{original.nombre} (copia)", {l.nombre for l in almacen.todos()}, "copia ")
-            copia = almacen.guardar(Look(nombre, original.base, dict(original.partes), colores=dict(original.colores)))
-        except OSError as e:
-            return {"ok": False, "error": f"No se pudo duplicar el Look: {e}"}
-        return {"ok": True, "look": asdict(copia)}
-
-    def borrar_look(self, id_look: str) -> dict:
-        try:
-            borrado = self._almacen_looks().borrar(id_look)
-        except OSError as e:
-            return {"ok": False, "error": f"No se pudo borrar el Look: {e}"}
-        return {"ok": True} if borrado else {"ok": False, "error": "Ese Look ya no existe."}
-
     def aplicar_look(self, look: dict) -> dict:
         """Genera la Prenda base modificada con todas las Piezas del Look y el Encode que la agrega.
 
@@ -808,177 +773,6 @@ class Nucleo:
             return None
         candidatas = [c for c, p in prendas.items() if p.tipo == PRENDA and not no_sirve_de_base(f"{swf}.{c}", p.tipo)]
         return f"{swf}.{min(candidatas, key=orden_natural)}" if candidatas else None
-
-    def exportar_look(self, look: dict, ruta: str) -> dict:
-        """Guarda el Look en un archivo de Look para pasárselo a otra persona."""
-        try:
-            Path(ruta).write_text(archivo_de_look(Look.desde(look)), encoding="utf-8")
-        except LookInvalido as e:
-            return {"ok": False, "error": str(e)}
-        except OSError as e:
-            return {"ok": False, "error": f"No se pudo guardar el archivo: {e.strerror or e}"}
-        return {"ok": True, "ruta": ruta}
-
-    def importar_look_de_archivo(self, ruta: str) -> dict:
-        """Agrega a los Looks guardados el de un archivo de Look (con otro nombre si ya hay uno igual)."""
-        try:
-            contenido = Path(ruta).read_text(encoding="utf-8", errors="replace")
-        except OSError as e:
-            return {"ok": False, "error": f"No se pudo abrir el archivo: {e.strerror or e}"}
-        try:
-            look = look_de_archivo(contenido)
-            almacen = self._almacen_looks()
-            look.nombre = _nombre_libre(look.nombre, {l.nombre for l in almacen.todos()})
-            guardado = almacen.guardar(look)
-        except LookInvalido as e:
-            return {"ok": False, "error": str(e)}
-        except OSError as e:
-            return {"ok": False, "error": f"No se pudo guardar el Look: {e}"}
-        return {"ok": True, "look": asdict(guardado)}
-
-    def _almacen_looks(self) -> AlmacenLooks:
-        return AlmacenLooks(self._entorno.carpeta_programa() / "looks.json")
-
-    # --- Mis acciones: se guardan como los Looks, en su propio archivo ---
-
-    def acciones(self) -> dict:
-        """Las acciones guardadas, por nombre."""
-        try:
-            guardadas = self._almacen_acciones().todos()
-        except OSError as e:
-            return {"ok": False, "error": f"No se pudieron leer las acciones: {e}"}
-        return {"ok": True, "acciones": [asdict(a) for a in sorted(guardadas, key=lambda a: orden_natural(a.nombre))]}
-
-    def guardar_accion(self, accion: dict) -> dict:
-        """Guarda una acción nueva (sin id) o los cambios de una guardada."""
-        try:
-            guardada = self._almacen_acciones().guardar(_accion_valida(accion))
-        except LookInvalido as e:
-            return {"ok": False, "error": str(e)}
-        except OSError as e:
-            return {"ok": False, "error": f"No se pudo guardar la acción: {e}"}
-        return {"ok": True, "accion": asdict(guardada)}
-
-    def duplicar_accion(self, id_accion: str) -> dict:
-        """Una copia de una acción guardada, con otro nombre."""
-        try:
-            almacen = self._almacen_acciones()
-            original = next((a for a in almacen.todos() if a.id == id_accion), None)
-            if original is None:
-                return {"ok": False, "error": "Esa acción ya no existe."}
-            nombre = _nombre_libre(f"{original.nombre} (copia)", {a.nombre for a in almacen.todos()}, "copia ")
-            copia = almacen.guardar(Look(nombre, original.base, dict(original.partes), colores=dict(original.colores),
-                                         animacion=original.animacion))
-        except OSError as e:
-            return {"ok": False, "error": f"No se pudo duplicar la acción: {e}"}
-        return {"ok": True, "accion": asdict(copia)}
-
-    def borrar_accion(self, id_accion: str) -> dict:
-        try:
-            borrada = self._almacen_acciones().borrar(id_accion)
-        except OSError as e:
-            return {"ok": False, "error": f"No se pudo borrar la acción: {e}"}
-        return {"ok": True} if borrada else {"ok": False, "error": "Esa acción ya no existe."}
-
-    def exportar_accion(self, accion: dict, ruta: str) -> dict:
-        """Guarda la acción en un archivo de acción para pasársela a otra persona."""
-        try:
-            Path(ruta).write_text(archivo_de_look(_accion_valida(accion), FORMATO_ACCION), encoding="utf-8")
-        except LookInvalido as e:
-            return {"ok": False, "error": str(e)}
-        except OSError as e:
-            return {"ok": False, "error": f"No se pudo guardar el archivo: {e.strerror or e}"}
-        return {"ok": True, "ruta": ruta}
-
-    def importar_accion_de_archivo(self, ruta: str) -> dict:
-        """Agrega a las acciones guardadas la de un archivo de acción (con otro nombre si ya hay una igual)."""
-        try:
-            contenido = Path(ruta).read_text(encoding="utf-8", errors="replace")
-        except OSError as e:
-            return {"ok": False, "error": f"No se pudo abrir el archivo: {e.strerror or e}"}
-        try:
-            accion = _accion_valida(asdict(look_de_archivo(contenido, FORMATO_ACCION)))
-            almacen = self._almacen_acciones()
-            accion.nombre = _nombre_libre(accion.nombre, {a.nombre for a in almacen.todos()})
-            guardada = almacen.guardar(accion)
-        except LookInvalido as e:
-            return {"ok": False, "error": str(e)}
-        except OSError as e:
-            return {"ok": False, "error": f"No se pudo guardar la acción: {e}"}
-        return {"ok": True, "accion": asdict(guardada)}
-
-    def _almacen_acciones(self) -> AlmacenLooks:
-        return AlmacenLooks(self._entorno.carpeta_programa() / "acciones.json", clave="acciones")
-
-    # --- Mis Prendas trucadas: cada una (Item base, Parte y Pieza) se guarda como los Looks, en su propio archivo ---
-
-    def trucadas(self) -> dict:
-        """Las Prendas trucadas guardadas, por nombre."""
-        try:
-            guardadas = self._almacen_trucadas().todos()
-        except OSError as e:
-            return {"ok": False, "error": f"No se pudieron leer las Prendas trucadas: {e}"}
-        return {"ok": True, "trucadas": [asdict(t) for t in sorted(guardadas, key=lambda t: orden_natural(t.nombre))]}
-
-    def guardar_trucada(self, trucada: dict) -> dict:
-        """Guarda una Prenda trucada nueva (sin id) o los cambios de una guardada."""
-        try:
-            guardada = self._almacen_trucadas().guardar(_trucada_valida(trucada))
-        except LookInvalido as e:
-            return {"ok": False, "error": str(e)}
-        except OSError as e:
-            return {"ok": False, "error": f"No se pudo guardar la Prenda trucada: {e}"}
-        return {"ok": True, "trucada": asdict(guardada)}
-
-    def duplicar_trucada(self, id_trucada: str) -> dict:
-        """Una copia de una Prenda trucada guardada, con otro nombre."""
-        try:
-            almacen = self._almacen_trucadas()
-            original = next((t for t in almacen.todos() if t.id == id_trucada), None)
-            if original is None:
-                return {"ok": False, "error": "Esa Prenda trucada ya no existe."}
-            nombre = _nombre_libre(f"{original.nombre} (copia)", {t.nombre for t in almacen.todos()}, "copia ")
-            copia = almacen.guardar(Look(nombre, original.base, dict(original.partes), colores=dict(original.colores)))
-        except OSError as e:
-            return {"ok": False, "error": f"No se pudo duplicar la Prenda trucada: {e}"}
-        return {"ok": True, "trucada": asdict(copia)}
-
-    def borrar_trucada(self, id_trucada: str) -> dict:
-        try:
-            borrada = self._almacen_trucadas().borrar(id_trucada)
-        except OSError as e:
-            return {"ok": False, "error": f"No se pudo borrar la Prenda trucada: {e}"}
-        return {"ok": True} if borrada else {"ok": False, "error": "Esa Prenda trucada ya no existe."}
-
-    def exportar_trucada(self, trucada: dict, ruta: str) -> dict:
-        """Guarda la Prenda trucada en un archivo para pasársela a otra persona."""
-        try:
-            Path(ruta).write_text(archivo_de_look(_trucada_valida(trucada), FORMATO_TRUCADA), encoding="utf-8")
-        except LookInvalido as e:
-            return {"ok": False, "error": str(e)}
-        except OSError as e:
-            return {"ok": False, "error": f"No se pudo guardar el archivo: {e.strerror or e}"}
-        return {"ok": True, "ruta": ruta}
-
-    def importar_trucada_de_archivo(self, ruta: str) -> dict:
-        """Agrega a las guardadas la Prenda trucada de un archivo (con otro nombre si ya hay una igual)."""
-        try:
-            contenido = Path(ruta).read_text(encoding="utf-8", errors="replace")
-        except OSError as e:
-            return {"ok": False, "error": f"No se pudo abrir el archivo: {e.strerror or e}"}
-        try:
-            trucada = _trucada_valida(asdict(look_de_archivo(contenido, FORMATO_TRUCADA)))
-            almacen = self._almacen_trucadas()
-            trucada.nombre = _nombre_libre(trucada.nombre, {t.nombre for t in almacen.todos()})
-            guardada = almacen.guardar(trucada)
-        except LookInvalido as e:
-            return {"ok": False, "error": str(e)}
-        except OSError as e:
-            return {"ok": False, "error": f"No se pudo guardar la Prenda trucada: {e}"}
-        return {"ok": True, "trucada": asdict(guardada)}
-
-    def _almacen_trucadas(self) -> AlmacenLooks:
-        return AlmacenLooks(self._entorno.carpeta_programa() / "trucadas.json", clave="trucadas")
 
     # --- Tiendas, portales y minijuegos: cualquier Item como NPC del juego ---
 
@@ -1153,90 +947,6 @@ class Nucleo:
         except (OSError, ValueError, subprocess.SubprocessError) as e:
             return {"ok": False, "error": f"No se pudieron mostrar los cuadros de {clase}: {e}"}
         return {"ok": True, "ruta": ruta, "cuadros": imagenes}
-
-    # Mis tiendas, Mis portales, Mis minijuegos y Mis fondos: se guardan como los Looks, cada tipo en su archivo.
-
-    def npcs_guardados(self, tipo: str) -> dict:
-        """Las tiendas (o los portales) guardados, por nombre."""
-        try:
-            guardados = self._almacen_npcs(tipo).todos()
-        except KeyError:
-            return {"ok": False, "error": f"Tipo de NPC desconocido: {tipo}"}
-        except OSError as e:
-            return {"ok": False, "error": f"No se pudieron leer los guardados: {e}"}
-        return {"ok": True, "npcs": [asdict(n) for n in sorted(guardados, key=lambda n: orden_natural(n.nombre))]}
-
-    def guardar_npc(self, tipo: str, npc: dict) -> dict:
-        """Guarda una tienda (o un portal) nueva (sin id) o los cambios de una guardada."""
-        try:
-            guardado = self._almacen_npcs(tipo).guardar(_npc_valido(npc, tipo))
-        except LookInvalido as e:
-            return {"ok": False, "error": str(e)}
-        except KeyError:
-            return {"ok": False, "error": f"Tipo de NPC desconocido: {tipo}"}
-        except OSError as e:
-            return {"ok": False, "error": f"No se pudo guardar: {e}"}
-        return {"ok": True, "npc": asdict(guardado)}
-
-    def duplicar_npc(self, tipo: str, id_npc: str) -> dict:
-        """Una copia de una tienda (o un portal) guardada, con otro nombre."""
-        try:
-            almacen = self._almacen_npcs(tipo)
-            original = next((n for n in almacen.todos() if n.id == id_npc), None)
-            if original is None:
-                return {"ok": False, "error": "Ya no existe."}
-            nombre = _nombre_libre(f"{original.nombre} (copia)", {n.nombre for n in almacen.todos()}, "copia ")
-            copia = almacen.guardar(Look(nombre, original.base, comportamiento=original.comportamiento, cuadro=original.cuadro))
-        except KeyError:
-            return {"ok": False, "error": f"Tipo de NPC desconocido: {tipo}"}
-        except OSError as e:
-            return {"ok": False, "error": f"No se pudo duplicar: {e}"}
-        return {"ok": True, "npc": asdict(copia)}
-
-    def borrar_npc(self, tipo: str, id_npc: str) -> dict:
-        try:
-            borrado = self._almacen_npcs(tipo).borrar(id_npc)
-        except KeyError:
-            return {"ok": False, "error": f"Tipo de NPC desconocido: {tipo}"}
-        except OSError as e:
-            return {"ok": False, "error": f"No se pudo borrar: {e}"}
-        return {"ok": True} if borrado else {"ok": False, "error": "Ya no existe."}
-
-    def exportar_npc(self, tipo: str, npc: dict, ruta: str) -> dict:
-        """Guarda la tienda (o el portal) en un archivo para pasárselo a otra persona."""
-        if tipo not in _FORMATOS_NPC:
-            return {"ok": False, "error": f"Tipo de NPC desconocido: {tipo}"}
-        try:
-            Path(ruta).write_text(archivo_de_look(_npc_valido(npc, tipo), _FORMATOS_NPC[tipo]), encoding="utf-8")
-        except LookInvalido as e:
-            return {"ok": False, "error": str(e)}
-        except OSError as e:
-            return {"ok": False, "error": f"No se pudo guardar el archivo: {e.strerror or e}"}
-        return {"ok": True, "ruta": ruta}
-
-    def importar_npc_de_archivo(self, tipo: str, ruta: str) -> dict:
-        """Agrega a los guardados la tienda (o el portal) de un archivo (con otro nombre si ya hay uno igual)."""
-        if tipo not in _FORMATOS_NPC:
-            return {"ok": False, "error": f"Tipo de NPC desconocido: {tipo}"}
-        try:
-            contenido = Path(ruta).read_text(encoding="utf-8", errors="replace")
-        except OSError as e:
-            return {"ok": False, "error": f"No se pudo abrir el archivo: {e.strerror or e}"}
-        try:
-            npc = _npc_valido(asdict(look_de_archivo(contenido, _FORMATOS_NPC[tipo])), tipo)
-            almacen = self._almacen_npcs(tipo)
-            npc.nombre = _nombre_libre(npc.nombre, {n.nombre for n in almacen.todos()})
-            guardado = almacen.guardar(npc)
-        except LookInvalido as e:
-            return {"ok": False, "error": str(e)}
-        except OSError as e:
-            return {"ok": False, "error": f"No se pudo guardar: {e}"}
-        return {"ok": True, "npc": asdict(guardado)}
-
-    def _almacen_npcs(self, tipo: str) -> AlmacenLooks:
-        """KeyError si el tipo no es uno que se guarda."""
-        clave = {TIENDA: "tiendas", PORTAL: "portales", MINIJUEGO: "minijuegos", FONDO: "fondos"}[tipo]
-        return AlmacenLooks(self._entorno.carpeta_programa() / f"{clave}.json", clave=clave)
 
     # --- Búsqueda por imagen: qué Item es una captura del juego ---
 
@@ -1884,70 +1594,10 @@ def _cantidad(valor) -> int | None:
     return valor if isinstance(valor, int) and valor > 0 else None
 
 
-def _accion_valida(datos: dict) -> Look:
-    """Una acción de la pestaña Acciones, validada: con nombre, una animación del juego y, como Partes, solo la
-    Pieza de la acción y la de la cabeza."""
-    if not isinstance(datos, dict) or not str(datos.get("nombre") or "").strip():
-        raise LookInvalido("Poné un nombre a la acción.")
-    accion = Look.desde(datos)
-    if accion.animacion not in ANIMACIONES:
-        raise LookInvalido("Elegí una animación.")
-    if set(accion.partes) - {ACCION, EFECTO}:
-        raise LookInvalido("Una acción solo lleva la Pieza de la acción y la de la cabeza.")
-    return accion
-
-
-def _trucada_valida(datos: dict) -> Look:
-    """Una Prenda trucada de la pestaña Trucar Prenda, validada: con nombre, Item base y una sola Pieza en una Parte."""
-    if not isinstance(datos, dict) or not str(datos.get("nombre") or "").strip():
-        raise LookInvalido("Poné un nombre a la Prenda trucada.")
-    trucada = Look.desde(datos)
-    if not trucada.base:
-        raise LookInvalido("Elegí el Item base de la Prenda trucada.")
-    if len(trucada.partes) != 1:
-        raise LookInvalido("Una Prenda trucada lleva una sola Pieza, en una Parte.")
-    if trucada.animacion:
-        raise LookInvalido("Una Prenda trucada no lleva animación.")
-    return trucada
-
-
-_FORMATOS_NPC = {TIENDA: FORMATO_TIENDA, PORTAL: FORMATO_PORTAL, MINIJUEGO: FORMATO_MINIJUEGO, FONDO: FORMATO_FONDO}
-_NOMBRE_NPC = {TIENDA: ("la tienda", "tienda"), PORTAL: ("el portal", "portal"), MINIJUEGO: ("el minijuego", "minijuego"),
-               FONDO: ("el fondo", "fondo")}
-
-
-def _npc_valido(datos: dict, tipo: str) -> Look:
-    """Una tienda (o un portal) de las pestañas Tiendas y Portales, validada: con nombre, Item base y comportamiento."""
-    el, que = _NOMBRE_NPC.get(tipo, ("el NPC", "NPC"))
-    if not isinstance(datos, dict) or not str(datos.get("nombre") or "").strip():
-        raise LookInvalido(f"Poné un nombre a {el}.")
-    npc = Look.desde(datos)
-    if not npc.base:
-        raise LookInvalido(f"Elegí el Item que se convierte en {que}.")
-    if not npc.comportamiento:
-        raise LookInvalido("Elegí el comportamiento.")
-    if npc.partes or npc.animacion:
-        raise LookInvalido(f"{el[0].upper()}{el[1:]} no lleva Piezas ni animación.")
-    if tipo == FONDO and (npc.comportamiento != COMPORTAMIENTO_FONDO or npc.cuadro is None):
-        raise LookInvalido("Elegí el cuadro que se ve.")
-    return npc
-
-
 def _sufijo_de_nombre(texto: str) -> str:
     """Lo que va detrás del segundo punto del nombre de un Item para que el inventario no lo junte con otro: solo
     letras y números (el juego rechaza los nombres con «_so» u «_on», y los de «_catalog» van a otro lado)."""
     return re.sub(r"[^A-Za-z0-9]", "", texto) or "npc"
-
-
-def _nombre_libre(nombre: str, usados: set[str], sufijo: str = "") -> str:
-    """`nombre`, o "nombre (2)", "nombre (3)"… (con `sufijo` dentro del paréntesis) si ya está usado."""
-    if nombre not in usados:
-        return nombre
-    raiz = nombre.removesuffix(f" ({sufijo.strip()})") if sufijo else nombre
-    n = 2
-    while f"{raiz} ({sufijo}{n})" in usados:
-        n += 1
-    return f"{raiz} ({sufijo}{n})"
 
 
 _LEEME_TRUCO = """Prenda trucada de MG Items, para usar con Fiddler a mano.

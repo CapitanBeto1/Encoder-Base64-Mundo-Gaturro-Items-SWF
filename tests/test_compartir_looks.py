@@ -38,37 +38,37 @@ def nucleo_de(tmp_path, nombre, fuente, ffdec=None):
 
 def test_exportar_e_importar_conserva_el_look(tmp_path, fuente):
     yo = nucleo_de(tmp_path, "yo", fuente)
-    guardado = yo.guardar_look(REY)["look"]
+    guardado = yo.guardados.guardar("look", REY)["documento"]
     archivo = tmp_path / "Rey.mglook"
 
-    assert yo.exportar_look(guardado, str(archivo))["ok"]
+    assert yo.guardados.exportar("look", guardado, str(archivo))["ok"]
     otro = nucleo_de(tmp_path, "otro", fuente)
-    importado = otro.importar_look_de_archivo(str(archivo))
+    importado = otro.guardados.importar_de_archivo("look", str(archivo))
 
     assert importado["ok"], importado
-    look = importado["look"]
+    look = importado["documento"]
     assert (look["nombre"], look["base"], look["partes"]) == ("Rey", REY["base"], REY["partes"])
     assert look["id"] and look["id"] != guardado["id"]  # es un Look nuevo para quien lo importa
-    assert otro.looks()["looks"] == [look]
+    assert otro.guardados.lista("look")["guardados"] == [look]
 
 
 def test_el_archivo_no_lleva_el_id_del_look(tmp_path, fuente):
     yo = nucleo_de(tmp_path, "yo", fuente)
     archivo = tmp_path / "Rey.mglook"
 
-    yo.exportar_look(yo.guardar_look(REY)["look"], str(archivo))
+    yo.guardados.exportar("look", yo.guardados.guardar("look", REY)["documento"], str(archivo))
 
     assert "id" not in json.loads(archivo.read_text(encoding="utf-8"))
 
 
 def test_importar_un_look_con_un_nombre_que_ya_existe(tmp_path, fuente):
     yo = nucleo_de(tmp_path, "yo", fuente)
-    yo.guardar_look(REY)
+    yo.guardados.guardar("look", REY)
     archivo = tmp_path / "Rey.mglook"
-    yo.exportar_look(REY, str(archivo))
+    yo.guardados.exportar("look", REY, str(archivo))
 
-    assert yo.importar_look_de_archivo(str(archivo))["look"]["nombre"] == "Rey (2)"
-    assert yo.importar_look_de_archivo(str(archivo))["look"]["nombre"] == "Rey (3)"
+    assert yo.guardados.importar_de_archivo("look", str(archivo))["documento"]["nombre"] == "Rey (2)"
+    assert yo.guardados.importar_de_archivo("look", str(archivo))["documento"]["nombre"] == "Rey (3)"
 
 
 @pytest.mark.parametrize(
@@ -87,15 +87,15 @@ def test_un_archivo_de_look_invalido_muestra_un_error_claro(tmp_path, fuente, co
     archivo = tmp_path / "malo.mglook"
     archivo.write_text(contenido, encoding="utf-8")
 
-    resultado = yo.importar_look_de_archivo(str(archivo))
+    resultado = yo.guardados.importar_de_archivo("look", str(archivo))
 
     assert not resultado["ok"]
     assert error in resultado["error"]
-    assert yo.looks()["looks"] == []
+    assert yo.guardados.lista("look")["guardados"] == []
 
 
 def test_importar_un_archivo_que_no_existe(tmp_path, fuente):
-    resultado = nucleo_de(tmp_path, "yo", fuente).importar_look_de_archivo(str(tmp_path / "no.mglook"))
+    resultado = nucleo_de(tmp_path, "yo", fuente).guardados.importar_de_archivo("look", str(tmp_path / "no.mglook"))
 
     assert not resultado["ok"]
     assert "No se pudo abrir" in resultado["error"]
@@ -103,10 +103,10 @@ def test_importar_un_archivo_que_no_existe(tmp_path, fuente):
 
 def test_aplicar_un_look_importado_descarga_los_swf_que_faltan(tmp_path, fuente):
     archivo = tmp_path / "Rey.mglook"
-    nucleo_de(tmp_path, "yo", fuente).exportar_look(REY, str(archivo))
+    nucleo_de(tmp_path, "yo", fuente).guardados.exportar("look", REY, str(archivo))
     ffdec = PrendasFalsas()
     otro = nucleo_de(tmp_path, "otro", fuente, ffdec)  # sin ningún SWF abierto ni descargado
-    look = otro.importar_look_de_archivo(str(archivo))["look"]
+    look = otro.guardados.importar_de_archivo("look", str(archivo))["documento"]
 
     resultado = otro.aplicar_look(look)
 
