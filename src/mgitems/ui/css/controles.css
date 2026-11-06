@@ -237,7 +237,6 @@ button.quitar:hover:not(:disabled) {
   margin: 0;
   min-height: 1.5em;
   font-size: 13px;
-  -webkit-text-stroke-width: 0.15px;
 }
 
 .mensaje:not(:empty) {
