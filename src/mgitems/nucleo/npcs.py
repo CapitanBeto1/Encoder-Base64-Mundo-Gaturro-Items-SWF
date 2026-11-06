@@ -173,11 +173,12 @@ class Npcs:
                  for ruta, cuadros in self._fondos.todos().items()]
         return {"ok": True, "fondos": sorted(filas, key=lambda f: orden_natural(f["clase"])), "comportamiento": COMPORTAMIENTO_FONDO}
 
-    def cuadros_de_fondo(self, ruta: str) -> dict:
-        """La vista previa de cada cuadro del dibujo de un Item ("swf.clase"), para elegir cuál se ve."""
-        if not isinstance(ruta, str) or not es_ruta_valida(ruta):
+    def cuadros_de_fondo(self, item: str) -> dict:
+        """La vista previa de cada cuadro del dibujo de un Item ("swf.clase"), para elegir cuál se ve. Recibe
+        `item`, no `ruta`: lo que recibe una ruta de archivo no llega a la interfaz (ver app.Puente)."""
+        if not isinstance(item, str) or not es_ruta_valida(item):
             return {"ok": False, "error": "El Item no es válido."}
-        swf, _, clase = ruta.rpartition(".")
+        swf, _, clase = item.rpartition(".")
         obtenido = {"ok": True, "data": self._data_swf} if swf == self._swf_abierto else self._datos_de_otro_swf(swf)
         if not obtenido["ok"]:
             return {"ok": False, "error": f"No se pudo leer {swf}: {obtenido['error']}"}
@@ -189,7 +190,7 @@ class Npcs:
             return {"ok": False, "error": f"{e}: no se pueden mostrar los cuadros."}
         except (OSError, ValueError, subprocess.SubprocessError) as e:
             return {"ok": False, "error": f"No se pudieron mostrar los cuadros de {clase}: {e}"}
-        return {"ok": True, "ruta": ruta, "cuadros": imagenes}
+        return {"ok": True, "ruta": item, "cuadros": imagenes}
 
 
 def _sufijo_de_nombre(texto: str) -> str:

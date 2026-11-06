@@ -101,10 +101,9 @@ async function dibujarAccion() {
   const img = $("imagen-gaturro");
   const pedido = (pedidosGaturro.get(img) ?? 0) + 1;
   pedidosGaturro.set(img, pedido);
-  const espera = setTimeout(() => ($("estado-gaturro").textContent = "Preparando la animación… (la primera vez tarda unos segundos)"), 400);
   const { animacion: id, partes } = lookActual;
-  const resultado = await api().animacion_de_accion({ animacion: id, pieza: partes.action ?? null, efecto: partes.effect ?? null }, coloresDe(lookActual));
-  clearTimeout(espera);
+  const resultado = await conEsqueleto($("gaturro"), "gaturro",
+    () => api().animacion_de_accion({ animacion: id, pieza: partes.action ?? null, efecto: partes.effect ?? null }, coloresDe(lookActual)));
   if (pedidosGaturro.get(img) !== pedido) return;
   if (!resultado.ok) return ($("estado-gaturro").textContent = resultado.error);
   const avisos = [...resultado.avisos, ...(resultado.aviso ? [resultado.aviso] : [])];

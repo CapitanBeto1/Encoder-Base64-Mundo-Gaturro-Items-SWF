@@ -15,7 +15,14 @@ function nuevoLook() {
 async function prepararIconosDe(swf) {
   if (iconosPreparados.has(swf)) return;
   iconosPreparados.add(swf);
-  const resultado = await api().preparar_iconos(swf);
+  preparandose.add(swf);
+  let resultado;
+  try {
+    resultado = await api().preparar_iconos(swf);
+  } finally {
+    preparandose.delete(swf);
+    document.querySelectorAll(".icono[data-ruta]").forEach(pintarIcono);
+  }
   if (!resultado.ok) return;
   for (const ruta of [...imagenes.keys()]) if (ruta.startsWith(swf + ".")) imagenes.delete(ruta);
   cargarIconos([...document.querySelectorAll(".icono[data-ruta]")].map((c) => c.dataset.ruta));

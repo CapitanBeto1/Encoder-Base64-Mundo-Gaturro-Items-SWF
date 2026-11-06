@@ -67,9 +67,7 @@ async function dibujarGaturro() {
   detenerAnimacion();
   if (esNpc()) return; // en Tiendas y Portales no hay Gaturro
   if (vista === "acciones") return dibujarAccion();
-  const espera = setTimeout(() => ($("estado-gaturro").textContent = "Preparando las imágenes…"), 400);
-  const resultado = await pedirGaturro($("imagen-gaturro"), coloresDe(lookActual));
-  clearTimeout(espera);
+  const resultado = await conEsqueleto($("gaturro"), "gaturro", () => pedirGaturro($("imagen-gaturro"), coloresDe(lookActual)));
   if (!resultado) return;
   if (!resultado.ok) {
     $("estado-gaturro").textContent = resultado.error;

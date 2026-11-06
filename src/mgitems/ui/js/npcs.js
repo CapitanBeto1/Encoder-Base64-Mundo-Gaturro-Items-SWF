@@ -32,7 +32,7 @@ function nuevoFondo() {
 
 async function cargarFondos() {
   if (!fondosConocidos) {
-    const resultado = await api().fondos();
+    const resultado = await conEsqueleto($("grilla-comportamientos"), "tarjetas", () => api().fondos());
     if (!resultado.ok) return avisarLista(resultado.error, "error");
     fondosConocidos = resultado.fondos;
     comportamientoFondo = resultado.comportamiento;
@@ -124,8 +124,7 @@ async function mostrarFondos() {
   const listos = cuadrosDeFondo.get(base);
   if (!Array.isArray(listos)) {
     $("cantidad-comportamientos").textContent = "";
-    grilla.replaceChildren(etiqueta(`Preparando los cuadros de ${claseDeRuta(base)}… (la primera vez tarda unos segundos)`, "ayuda"));
-    const cuadros = await cuadrosDe(base);
+    const cuadros = await conEsqueleto(grilla, "tarjetas", () => cuadrosDe(base));
     if (cuadros && esFondos() && lookActual.base === base) mostrarComportamientos();
     return;
   }
@@ -151,7 +150,7 @@ async function cargarNpcs() {
 }
 
 async function leerComportamientos(tipo) {
-  const resultado = await api().comportamientos(tipo);
+  const resultado = await conEsqueleto($("grilla-comportamientos"), "tarjetas", () => api().comportamientos(tipo));
   if (!resultado.ok) return avisarLista(resultado.error, "error"), false;
   comportamientosConocidos[tipo] = resultado.comportamientos;
   for (const c of resultado.comportamientos) descripciones.set(c.comportamiento, c);

@@ -1,0 +1,78 @@
+/* Las cargas (js/cargas.js): un esqueleto con la forma de lo que viene, que brilla con una ola. */
+
+:root {
+  --brillo-carga: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.75) 50%, transparent 65%) 0 0 / 250% 100%;
+  --base-carga: rgba(255, 250, 222, 0.42);
+}
+dialog { --base-carga: rgba(150, 120, 0, 0.16); }
+
+@keyframes ola { from { background-position: 120% 0, 0 0; } to { background-position: -120% 0, 0 0; } }
+@keyframes aparecer-esqueleto { from { opacity: 0; } }
+@keyframes flotar { to { transform: translateY(-5px); } }
+@keyframes respirar { to { transform: translateX(-50%) scaleX(0.82); opacity: 0.6; } }
+@keyframes girar { to { transform: rotate(360deg); } }
+
+.esqueleto { list-style: none; pointer-events: none; animation: aparecer-esqueleto 0.18s ease-out both; }
+.esqueleto :is(.img, .txt), #encode.cargando, .icono.llegando {
+  animation: ola 1.5s ease-in-out infinite;
+  animation-delay: calc(var(--i, 0) * 70ms);
+}
+.esqueleto :is(.img, .txt) { display: block; background: var(--brillo-carga), var(--base-carga); }
+
+/* Tarjetas: el tamaño de las de verdad (ocupan la misma grilla). */
+.esqueleto-tarjetas {
+  display: grid; grid-template-rows: minmax(0, 1fr) 9px 7px; justify-items: center; gap: 4px; min-height: 0; height: 100%;
+  padding: 7px; border: 3px solid rgba(255, 255, 255, 0.28); border-radius: 12px; background: rgba(255, 255, 255, 0.10);
+}
+.esqueleto-tarjetas .img { width: 72%; min-height: 0; align-self: stretch; border-radius: 10px; }
+.esqueleto-tarjetas .txt { width: 80%; border-radius: 5px; }
+.esqueleto-tarjetas .txt.corto { width: 46%; }
+
+/* Filas: una imagen chica y un renglón de largo variable. */
+.esqueleto-filas { display: flex; align-items: center; gap: 10px; height: 38px; padding: 0 10px; border-radius: 10px; background: rgba(255, 255, 255, 0.14); }
+dialog .esqueleto-filas { background: rgba(255, 255, 255, 0.5); }
+.esqueleto-filas .img { flex: none; width: 28px; height: 28px; border-radius: 8px; }
+.esqueleto-filas .txt { width: 55%; height: 10px; border-radius: 5px; }
+.esqueleto-filas:nth-child(3n) .txt { width: 40%; }
+.esqueleto-filas:nth-child(3n + 2) .txt { width: 68%; }
+
+/* El Gaturro: su silueta (orejas, cabeza, cuerpo y cola) flotando, con la sombra que respira. */
+.gaturro { position: relative; }
+.gaturro.cargando > :is(img, .zoom-gaturro, figcaption, button) { visibility: hidden; }
+.gaturro.cargando::before {
+  content: ""; position: absolute; left: 50%; top: 44%; width: min(62%, 210px); aspect-ratio: 200 / 240; translate: -50% -50%;
+  background: var(--brillo-carga), rgba(255, 250, 222, 0.55);
+  animation: ola 1.5s ease-in-out infinite, flotar 1.5s ease-in-out infinite alternate;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 240'%3E%3Cpath d='M38 78 L52 12 L92 46 Z M108 46 L148 12 L162 78 Z'/%3E%3Cellipse cx='100' cy='92' rx='78' ry='62'/%3E%3Cellipse cx='100' cy='182' rx='46' ry='46'/%3E%3Cellipse cx='76' cy='226' rx='22' ry='12'/%3E%3Cellipse cx='124' cy='226' rx='22' ry='12'/%3E%3Cpath d='M140 200 C 190 200, 192 150, 172 132 C 168 128, 160 134, 165 140 C 178 158, 170 186, 140 186 Z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.gaturro.cargando::after {
+  content: ""; position: absolute; left: 50%; bottom: 14%; width: 30%; height: 10px; border-radius: 50%; transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.16); animation: respirar 1.5s ease-in-out infinite alternate;
+}
+/* Sin imagen todavía, ni la imagen rota ni su texto. */
+#imagen-gaturro:not([src]) { visibility: hidden; }
+
+/* El Encode mientras se arma. */
+#encode.cargando { color: transparent; background: var(--brillo-carga), rgba(80, 140, 170, 0.14); }
+
+/* La imagen de un Item mientras llega (sin el «…» de cuando no tiene). */
+.icono.llegando { background: var(--brillo-carga), #f1ead0; }
+.icono.llegando::after { content: none !important; }
+
+/* Lo que hace el programa mientras trabaja («Aplicando el Look…»): con un círculo que gira y la misma ola. */
+.mensaje.progreso:not(:empty) {
+  background-image: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.18) 50%, transparent 65%);
+  background-size: 250% 100%;
+  animation: ola-mensaje 1.5s ease-in-out infinite;
+}
+.mensaje.progreso:not(:empty)::before {
+  content: ""; display: inline-block; width: 10px; height: 10px; margin-right: 8px; vertical-align: -1px;
+  border: 2px solid rgba(255, 255, 255, 0.4); border-top-color: #fff; border-radius: 50%; animation: girar 0.8s linear infinite;
+}
+@keyframes ola-mensaje { from { background-position: 120% 0; } to { background-position: -120% 0; } }
+
+/* Con «reducir movimiento» en Windows: el esqueleto quieto. */
+@media (prefers-reduced-motion: reduce) {
+  .esqueleto :is(.img, .txt), .gaturro.cargando::before, .gaturro.cargando::after, #encode.cargando,
+  .icono.llegando, .mensaje.progreso:not(:empty), .mensaje.progreso:not(:empty)::before { animation: none; }
+}

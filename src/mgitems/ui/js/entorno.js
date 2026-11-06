@@ -99,9 +99,8 @@ function mostrarEntorno(estado) {
 }
 
 async function revisarEntorno() {
-  avisar($("mensaje-entorno"), "Revisando…", "progreso");
-  mostrarEntorno(await api().estado_entorno());
   avisar($("mensaje-entorno"), "");
+  mostrarEntorno(await conEsqueleto($("componentes"), "filas", () => api().estado_entorno()));
 }
 
 async function elegirRuta(componente) {

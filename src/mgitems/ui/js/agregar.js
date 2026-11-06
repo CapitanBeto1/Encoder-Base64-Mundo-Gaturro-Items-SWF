@@ -94,8 +94,7 @@ async function cargarItemsBuscados() {
   if (!fuentesItems.todos && !fuentesItems.swfs.length) {
     buscador.items = [];
   } else {
-    const espera = fuentesItems.todos ? "Leyendo los Items de todos los SWF…" : `Leyendo los Items de ${fuentesItems.swfs.join(", ")}…`;
-    const resultado = await mientras(espera, () => api().items_de_swfs(pedido));
+    const resultado = await cargando($("grilla-items"), "tarjetas", () => api().items_de_swfs(pedido));
     if (!resultado.ok) return avisarLista(resultado.error, "error");
     buscador.items = resultado.items;
     const errores = Object.entries(resultado.errores);

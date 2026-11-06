@@ -1,5 +1,7 @@
 """Lo que la ventana le expone a la interfaz: el núcleo, salvo lo que recibe una ruta (eso lo elige un diálogo)."""
 import inspect
+import re
+from pathlib import Path
 
 import pytest
 
@@ -40,3 +42,13 @@ def test_expone_el_resto_del_nucleo(puente):
     assert {"guardados.lista", "guardados.guardar", "guardados.exportar", "guardados.importar"} <= set(nombres)
     assert "guardados.importar_de_archivo" not in nombres  # la del núcleo, con ruta
     assert "corregir_ruta" not in nombres and "elegir_ruta" in nombres  # la ruta, con un diálogo
+
+
+def test_todo_lo_que_llama_la_interfaz_esta_en_el_puente(puente):
+    """Un método del núcleo con un parámetro que se llame como una ruta (`ruta`, `carpeta`) no llega a la interfaz: si
+    la interfaz lo usa, falla recién al tocarlo. Acá, cada `api().…` de ui/js tiene que existir."""
+    interfaz = Path(__file__).parents[1] / "src" / "mgitems" / "ui" / "js"
+    llamados = {m for archivo in interfaz.glob("*.js")
+                for m in re.findall(r"api\(\)\.(\w+(?:\.\w+)?)\(", archivo.read_text(encoding="utf-8"))}
+    assert len(llamados) > 30, "no se encontraron los llamados de la interfaz"
+    assert not llamados - set(expuestos(puente)), "la interfaz llama a algo que el Puente no expone"

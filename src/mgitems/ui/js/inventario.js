@@ -90,8 +90,7 @@ async function cargarInventario() {
   if (!fuentes.todos && !fuentes.swfs.length) {
     inventario.piezas = inventario.decoracion = [];
   } else {
-    const espera = fuentes.todos ? "Leyendo las Piezas de todos los SWF…" : `Leyendo las Piezas de ${fuentes.swfs.join(", ")}…`;
-    const resultado = await mientras(espera, () => api().piezas_de_swfs(pedido));
+    const resultado = await cargando($("grilla-piezas"), "tarjetas", () => api().piezas_de_swfs(pedido));
     if (!resultado.ok) return avisarLista(resultado.error, "error");
     inventario.piezas = resultado.piezas;
     // Del mismo índice que las Piezas: ya está leído, no tarda.

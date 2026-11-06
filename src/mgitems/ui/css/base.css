@@ -105,7 +105,7 @@ body > :not(svg) { position: relative; z-index: 1; }
 /* El encabezado no es una fila: el logo y la configuración van cada uno a su lugar de la columna. */
 .barra { display: contents; }
 
-.marca {
+.barra > .marca {
   grid-area: marca;
   display: flex;
   align-items: center;
