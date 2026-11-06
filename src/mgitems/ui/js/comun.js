@@ -14,8 +14,13 @@ let swfAbierto = false;
 let swfAbiertoActual = null; // nombre del SWF abierto
 
 function avisar(elemento, texto, tipo = "") {
+  if (elemento.textContent === texto && elemento.className === "mensaje " + tipo) return;
   elemento.textContent = texto;
   elemento.className = "mensaje " + tipo;
+  // Que vuelva a aparecer con su animación (css/toques.css), aunque ya estuviera.
+  elemento.style.animation = "none";
+  void elemento.offsetWidth;
+  elemento.style.animation = "";
 }
 
 const contarItems = (n) => (n === 1 ? "1 Item" : `${n} Items`);
