@@ -124,16 +124,7 @@ function mostrarEncode(resultado) {
   } else if (resultado) {
     $("resumen").textContent = `Encode con ${contarItems(resultado.items.length)}.`;
   } else {
-    $("resumen").textContent =
-      esNpc()
-        ? lookActual.lista.length ? "Tocá «Convertir todos» para generar el Encode." : "Armá uno y agregalo a la lista."
-        : vista === "trucar"
-        ? lookActual.lista.length ? "Tocá «Trucar todas» para generar el Encode." : "Agregá Prendas trucadas a la lista."
-        : vista === "acciones"
-          ? lookActual.animacion ? "Tocá «Aplicar acción» para generar el Encode." : "Elegí la animación."
-          : vista === "looks"
-          ? Object.keys(lookActual.partes).length ? "Tocá «Aplicar Look» para generar el Encode." : "Elegí las Piezas del Look."
-          : items.length ? "Generá el Encode con los Items de la lista." : "Todavía no generaste ningún Encode.";
+    $("resumen").textContent = ""; // lo que falta hacer lo dice la guía de arriba
     avisarEncode("");
   }
   actualizarControles();

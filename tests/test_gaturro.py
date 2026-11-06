@@ -236,14 +236,14 @@ def test_partes_donde_este_gaturro_no_tiene_lugar(nucleo):
 
 # --- Versión del Gaturro ---
 
-def test_el_gaturro_publicado_es_una_version_anterior_y_se_avisa(nucleo):
+def test_el_gaturro_publicado_es_una_version_anterior(nucleo):
     resultado = nucleo.gaturro({"accesories2": "clothes1.gorra1_on"})
 
-    assert "versión anterior" in resultado["aviso"]
+    assert "aviso" not in resultado  # la vista previa no lo dice: no hay nada que hacer con ese dato
     assert resultado["sin_lugar"] == ["clothes1.gorra1_on"]  # no tiene lugar para «Accesorio 2»
 
 
-def test_con_un_gaturro_actual_no_hay_aviso_y_accesorio_2_se_ve(tmp_path, fuente):
+def test_con_un_gaturro_actual_accesorio_2_se_ve(tmp_path, fuente):
     class ConGaturroActual(ExportadorConGaturro):
         def exportar(self, swf, simbolos, destino, formato="png"):
             super().exportar(swf, simbolos, destino, formato)
@@ -257,7 +257,6 @@ def test_con_un_gaturro_actual_no_hay_aviso_y_accesorio_2_se_ve(tmp_path, fuente
     nucleo = Nucleo(SistemaFalso(tmp_path), fuente=fuente, catalogo=[], exportador=ConGaturroActual())
     resultado = nucleo.gaturro({"accesories2": "clothes1.gorra1_on"})
 
-    assert resultado["aviso"] is None
     assert puestas(resultado["svg"]) == {"accesories2": ["matrix(1.0, 0.0, 0.0, 1.0, 1.0, -6.0)"]}
 
 
@@ -414,8 +413,6 @@ def test_la_nariz_va_debajo_del_pelo_como_en_la_cabeza_del_album_2018(tmp_path, 
     # En el mismo lugar que Accesorio (las Piezas de nariz están dibujadas para ese hueco).
     assert puestas(resultado["svg"])["accesories2"] == ["matrix(1.0, 0.0, 0.0, 1.0, -4.5, 14.65)"]
     assert resultado["sin_lugar"] == []
-    # Sigue siendo la versión anterior: el hueco lo agregó el programa.
-    assert "versión anterior" in resultado["aviso"]
 
 
 def test_la_nariz_se_pinta_como_en_el_juego(tmp_path, fuente):

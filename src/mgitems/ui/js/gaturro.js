@@ -74,12 +74,12 @@ async function dibujarGaturro() {
     return;
   }
   const clases = (rutas) => rutas.map(claseDeRuta).join(", ");
-  const avisos = resultado.aviso ? [resultado.aviso] : [];
+  const avisos = [];
   if (resultado.sin_lugar.length) avisos.push(`No se dibuja: ${clases(resultado.sin_lugar)}.`);
   if (resultado.sin_imagen.length) avisos.push(`Sin imagen: ${clases(resultado.sin_imagen)}.`);
   for (const n of resultado.no_se_ven) avisos.push(`No se ve en el juego: ${claseDeRuta(n.ruta)} (${n.motivo}).`);
   if (resultado.transporte) avisos.push(`El transporte (${claseDeRuta(resultado.transporte.ruta)}) se ve en el juego, pero la vista previa no lo dibuja: ${resultado.transporte.motivo}.`);
-  $("estado-gaturro").replaceChildren(...avisos.map((a) => etiqueta(a, "aviso-gaturro")));
+  $("estado-gaturro").replaceChildren(...avisos.map((a) => Object.assign(etiqueta(a, "aviso-gaturro"), { title: a })));
 }
 
 // --- "Elige tus colores": un selector de tono + saturación y brillo por color, como en el juego ---

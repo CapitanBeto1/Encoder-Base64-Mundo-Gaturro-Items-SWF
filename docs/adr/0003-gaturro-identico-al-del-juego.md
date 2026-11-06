@@ -26,3 +26,5 @@ Las Piezas (primer cuadro de cada una, en SVG con su punto de anclaje) se ponen 
 - Se ve el Gaturro quieto, de frente, sin animación. Las Piezas de Partes del cuerpo donde el Gaturro no tiene clip se avisan como "No se dibuja".
 - `lookForHideParts` en el juego solo esconde partes del cuerpo de los Gaturros ciudadanos; el editor siempre las esconde.
 - El repositorio no contiene arte del juego: el cuerpo y las Piezas se exportan en la computadora del jugador.
+
+**Actualización (noviembre de 2026):** la vista previa ya no avisa que el Gaturro es de una versión anterior. El usuario no tiene nada que hacer con ese dato y se veía como texto de más; el iris y el lugar de «Accesorio 2» se siguen agregando igual.

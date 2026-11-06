@@ -50,7 +50,6 @@ function mostrarArmadoTrucar() {
       return li;
     })
   );
-  if (!lookActual.lista.length) $("lista-trucadas").append(etiqueta("Armá una arriba y tocá «Agregar a la lista».", "ayuda"));
   cargarIconos(lookActual.lista.map((t) => t.pieza));
 }
 

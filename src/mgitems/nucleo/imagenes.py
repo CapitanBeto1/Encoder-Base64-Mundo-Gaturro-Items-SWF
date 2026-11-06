@@ -4,8 +4,8 @@ import subprocess
 
 from mgitems.ffdec import FFDecNoDisponible
 from mgitems.gaturro import (
-    AVISO_VERSION_ANTERIOR, CLASE_CUERPO, CLASE_PLANTILLA, COLORES, CUADRO_QUIETO_DEL_VEHICULO, SWF_CUERPO,
-    SWF_PLANTILLA, SWF_POSES, ImagenesPiezas, completar_con_plantilla, componer, es_version_anterior,
+    CLASE_CUERPO, CLASE_PLANTILLA, COLORES, CUADRO_QUIETO_DEL_VEHICULO, SWF_CUERPO,
+    SWF_PLANTILLA, SWF_POSES, ImagenesPiezas, completar_con_plantilla, componer,
     pose_de_transporte, preparar_cuerpo, tiene_color_de_nariz, tiene_lugar,
 )
 from mgitems.iconos import IconosItems
@@ -119,7 +119,6 @@ class Imagenes:
             piezas[TRANSPORTE] = vehiculo
         return {"ok": True, "svg": componer(cuerpo, piezas, colores), "sin_imagen": sin_imagen, "sin_lugar": sin_lugar,
                 "no_se_ven": no_se_ven, "transporte": sin_pose,
-                "aviso": AVISO_VERSION_ANTERIOR if es_version_anterior(cuerpo) else None,
                 "colores_de_fabrica": COLORES, "color_de_nariz": tiene_color_de_nariz(cuerpo)}
 
     def _gaturro_en_vehiculo(self, ruta: str) -> tuple[tuple[str, str] | None, str | None, dict | None]:

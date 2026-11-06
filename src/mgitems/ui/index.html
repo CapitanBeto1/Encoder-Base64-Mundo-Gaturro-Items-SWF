@@ -16,6 +16,7 @@
   <link rel="stylesheet" href="css/npcs.css">
   <link rel="stylesheet" href="css/busqueda.css">
   <link rel="stylesheet" href="css/cargas.css">
+  <link rel="stylesheet" href="css/textos.css">
 </head>
 <body>
   <!-- Fondo al estilo de la pantalla de servidores clásica: estrellas, planeta y anillo. -->
@@ -311,7 +312,7 @@
           <button id="quitar-todos" class="enlace" disabled>Quitar todos</button>
         </div>
         <ul id="lista" class="lista" aria-live="polite"></ul>
-        <p id="lista-vacia" class="ayuda vacia">Tocá Items de la grilla o agregalos a mano.</p>
+        <p id="lista-vacia" class="ayuda vacia"><span data-icono="hand-pointing" class="mano-vacia"></span> Tocá un Item de la grilla para sumarlo</p>
         <form id="form-agregar" class="fila">
           <input id="manual" type="text" spellcheck="false" autocomplete="off"
                  placeholder="Agregar a mano: clothes1.remera5" disabled>
@@ -449,7 +450,7 @@
   <dialog id="dialogo-imagen" class="dialogo-imagen">
     <div class="panel">
       <h2><span data-icono="magnifying-glass"></span> Buscar por imagen</h2>
-      <p class="ayuda">Pegá una captura (Ctrl+V), arrastrala acá o elegí un archivo. <strong>Marcá el objeto, sin otros objetos alrededor; si es ropa puesta, dejá un poco del Gaturro alrededor</strong>: tocá y arrastrá sobre la imagen.</p>
+      <p class="ayuda">Pegá una captura (Ctrl+V), arrastrala o elegí un archivo, y <strong>marcá el objeto con un rectángulo</strong> (si es ropa puesta, con un poco del Gaturro).</p>
       <div class="cuerpo-imagen">
         <div id="zona-imagen" class="zona-imagen" tabindex="0" aria-label="La captura: pegala, arrastrala o elegí un archivo">
           <p id="ayuda-zona" class="ayuda-zona"><span data-icono="clipboard"></span> Pegá (Ctrl+V) o arrastrá una imagen acá</p>
