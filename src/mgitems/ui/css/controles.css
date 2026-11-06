@@ -254,9 +254,14 @@ button.quitar:hover:not(:disabled) {
 /* --- Configuración (encabezado) --- */
 
 .estado-entorno {
+  grid-area: config;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
+  margin: 6px 10px 14px 18px;
+  padding: 8px 10px;
+  font-size: 12px;
 }
 
 .indicador {
@@ -274,7 +279,11 @@ button.quitar:hover:not(:disabled) {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin: 4px 28px 0;
+  /* Encima de la pestaña, arriba de todo. */
+  grid-area: paneles;
+  align-self: start;
+  z-index: 5;
+  margin: 10px 20px 0 8px;
   padding: 8px 14px;
   border-radius: 12px;
   background: var(--naranja);

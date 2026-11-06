@@ -127,6 +127,7 @@ function mostrarEncode(resultado) {
     avisarEncode("");
   }
   actualizarControles();
+  mostrarGuia();
 }
 
 function actualizarControles() {

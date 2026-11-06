@@ -68,8 +68,12 @@ body {
   margin: 0;
   height: 100vh;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
+  /* A la izquierda, una columna con el logo, las pestañas y la configuración; a la derecha, la guía de pasos
+     y la pestaña elegida, a todo el alto. */
+  display: grid;
+  grid-template-columns: 212px minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-areas: "marca guia" "pestanas paneles" "config paneles";
   position: relative;
   background: var(--amarillo-fondo);
   color: var(--texto);
@@ -98,18 +102,15 @@ body > :not(svg) { position: relative; z-index: 1; }
 
 /* --- Encabezado --- */
 
-.barra {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  padding: 14px 28px 4px;
-}
+/* El encabezado no es una fila: el logo y la configuración van cada uno a su lugar de la columna. */
+.barra { display: contents; }
 
 .marca {
+  grid-area: marca;
   display: flex;
   align-items: center;
-  gap: 14px;
+  justify-content: center;
+  padding: 14px 4px 8px 16px;
 }
 
 /* Título al estilo del logo del juego: letras amarillas con contorno marrón grueso. */
@@ -117,7 +118,7 @@ body > :not(svg) { position: relative; z-index: 1; }
   margin: 0;
   font-family: "MG", Georgia, serif;
   font-variation-settings: "SOFT" 100, "WONK" 0, "opsz" 9;
-  font-size: 40px;
+  font-size: 30px;
   font-weight: 900;
   line-height: 1;
   letter-spacing: 1px;
@@ -127,17 +128,6 @@ body > :not(svg) { position: relative; z-index: 1; }
   -webkit-text-stroke: 9px #8a4f12;
   paint-order: stroke fill;
   text-shadow: 0 4px 0 #6b3a0a;
-}
-
-.subtitulo {
-  margin: 0;
-  padding: 5px 14px;
-  border-radius: 10px;
-  background: var(--rotulo);
-  color: var(--blanco);
-  font-size: 13px;
-  white-space: nowrap;
-  text-transform: uppercase;
 }
 
 /* --- Botones --- */

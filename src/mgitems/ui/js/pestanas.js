@@ -16,20 +16,33 @@ const esFondos = () => vista === "fondos";
 // Lo que cambia de una pestaña a otra: sus textos, cómo empieza un documento nuevo, qué hace «Aplicar» y sus
 // guardados (Mis Looks, Mis acciones…: todos se guardan igual, con `api().guardados` y el tipo primero). Lo que una
 // pestaña no dice, es como en Looks (`dePestana`).
+// Los pasos de cada pestaña (la guía de arriba): [qué hacer, si ya está hecho].
+const hayEncode = () => Boolean($("encode").value);
+const conPiezas = () => Object.keys(lookActual.partes).length > 0;
+const enLaLista = () => lookActual.lista.length > 0;
 const pestanaNpc = ({ tipo, el, lo, nuevo, mis, titulo, sub, nombre, tocaUno, lista, tituloBase, sinBase = "elegí cualquier Item",
-                      documentoNuevo = () => nuevoNpc() }) => ({
+                      documentoNuevo = () => nuevoNpc(), elegirUno = "Elegí un Item", queHace = "Elegí qué hace",
+                      hace = () => Boolean(lookActual.comportamiento) }) => ({
   generar: "Convertir todos", aplicar: "Convertir todos", seGuarda: "Se convierte:", alAplicar: () => convertirNpcs(),
+  pasos: () => [[elegirUno, Boolean(lookActual.base)], [queHace, hace()], ["Sumalo a la lista", enLaLista()],
+                ["Convertí todos", hayEncode()], ["Agregá al juego", false]],
   nombre, tocaUno, lista, tituloBase, sinBase, nuevo: documentoNuevo, guardados: { tipo, el, lo, nuevo, mis, titulo, sub },
 });
 const PESTANA = {
-  agregar: { generar: "Generar Encode" },
+  agregar: {
+    generar: "Generar Encode",
+    pasos: () => [["Elegí los Items", items.length > 0], ["Generá el Encode", hayEncode()], ["Agregá al juego", false]],
+  },
   looks: {
     generar: "Aplicar Look", aplicar: "Aplicar Look", nombre: "NOMBRE DEL LOOK", seGuarda: "Se guarda en:", tocaUno: "un Look",
+    pasos: () => [["Elegí las Piezas", conPiezas()], ["Aplicá el Look", hayEncode()], ["Agregá al juego", false]],
     sinBase: "se elige al aplicar", tituloBase: "¿Dónde se guarda el Look?", nuevo: () => nuevoLook(), alAplicar: () => aplicarLook(),
     guardados: { tipo: "look", el: "el Look", lo: "lo", nuevo: "Look nuevo", mis: "Mis Looks", titulo: "GUARDA TU LOOK", sub: "GUARDA TUS LOOKS FAVORITOS" },
   },
   acciones: {
-    generar: "Aplicar acción", aplicar: "Aplicar acción", nombre: "NOMBRE DE LA ACCIÓN", tocaUno: "una acción", sinBase: "elegí cualquier Item",
+    generar: "Aplicar acción", aplicar: "Aplicar acción",
+    pasos: () => [["Elegí la animación", Boolean(lookActual.animacion)], ["Elegí el Item", Boolean(lookActual.base)],
+                  ["Aplicá la acción", hayEncode()], ["Agregá al juego", false]], nombre: "NOMBRE DE LA ACCIÓN", tocaUno: "una acción", sinBase: "elegí cualquier Item",
     tituloBase: "¿Dónde se guarda la acción?", nuevo: () => nuevaAccion(), alAplicar: () => aplicarAccion(),
     guardados: { tipo: "accion", el: "la acción", lo: "la", nuevo: "Acción nueva", mis: "Mis acciones", titulo: "GUARDA TU ACCIÓN",
                  sub: "GUARDA TUS ACCIONES FAVORITAS" },
@@ -38,6 +51,8 @@ const PESTANA = {
     generar: "Trucar Prenda", aplicar: "Trucar todas", nombre: "NOMBRE DE LA PRENDA TRUCADA", seGuarda: "Se trucará:",
     tocaUno: "una Prenda trucada", sinBase: "elegí el Item base", tituloBase: "¿Qué Item se truca?", nuevo: () => nuevaPrendaATrucar(),
     alAplicar: () => trucarPrenda(),
+    pasos: () => [["Elegí el Item base", Boolean(lookActual.base)], ["Elegí la Pieza", conPiezas()], ["Sumala a la lista", enLaLista()],
+                  ["Trucá todas", hayEncode()], ["Agregá al juego", false]],
     guardados: { tipo: "trucada", el: "la Prenda trucada", lo: "la", nuevo: "Prenda trucada nueva", mis: "Mis Prendas trucadas",
                  titulo: "GUARDA TU PRENDA TRUCADA", sub: "GUARDA TUS PRENDAS TRUCADAS FAVORITAS" },
   },
@@ -53,7 +68,8 @@ const PESTANA = {
   fondos: pestanaNpc({ tipo: "fondo", el: "el fondo", lo: "lo", nuevo: "Fondo nuevo", mis: "Mis fondos", titulo: "GUARDA TU FONDO",
                        sub: "GUARDA TUS FONDOS FAVORITOS", nombre: "NOMBRE DEL FONDO", tocaUno: "un fondo", lista: "Fondos",
                        tituloBase: "¿Qué objeto se convierte en fondo?", sinBase: "elegí un objeto de la derecha",
-                       documentoNuevo: () => nuevoFondo() }),
+                       documentoNuevo: () => nuevoFondo(), elegirUno: "Elegí un objeto", queHace: "Elegí el fondo",
+                       hace: () => lookActual.cuadro != null }),
 };
 const dePestana = (pestana = vista) => ({ ...PESTANA.looks, ...PESTANA[pestana] });
 const esNpc = (pestana = vista) => pestana in PESTANAS_NPC;
