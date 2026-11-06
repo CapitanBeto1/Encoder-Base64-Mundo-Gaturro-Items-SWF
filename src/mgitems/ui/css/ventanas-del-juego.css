@@ -1,5 +1,13 @@
 /* Las ventanas que imitan las del juego: «Elige tus colores» y «Mis Looks». */
 
+/* Las ventanas que copian al juego, con su letra: Cooper Black (o Fraunces), gruesa y con un contorno del mismo color. */
+:is(.dialogo-mis-looks, .dialogo-colores) {
+  font: 900 15px/1.4 "MG", Georgia, serif;
+  font-variation-settings: "SOFT" 100, "WONK" 0, "opsz" 9;
+  -webkit-text-stroke: 0.3px currentColor;
+}
+:is(.dialogo-mis-looks, .dialogo-colores) button { font-weight: 900; -webkit-text-stroke: 0.6px currentColor; }
+
 /* --- "Elige tus colores", como en el juego --- */
 
 dialog.dialogo-colores { width: auto; max-width: 96vw; padding: 0; border: 0; background: transparent; box-shadow: none; overflow: visible; }

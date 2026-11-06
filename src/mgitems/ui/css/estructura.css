@@ -115,7 +115,6 @@ button.chip-look[aria-pressed="true"] {
   white-space: nowrap;
   text-align: center;
   text-transform: uppercase;
-  -webkit-text-stroke-width: 0.2px;
 }
 
 .partes li .nombre { font-size: 13px; }
@@ -166,19 +165,16 @@ button.chip-look[aria-pressed="true"] {
   background: var(--rotulo);
   color: var(--blanco);
   font-size: 15px;
-  font-weight: 900;
-  -webkit-text-stroke: 0.5px currentColor;
+  font-weight: 600;
   text-transform: uppercase;
 }
 
-.panel h2 .ayuda { color: #ffe14d; -webkit-text-stroke-width: 0.2px; }
+.panel h2 .ayuda { color: #ffe14d; }
 
-/* En los textos chicos el contorno es más fino para que no se empasten. */
 .ayuda {
   margin: 0;
   color: var(--texto-suave);
   font-size: 13px;
-  -webkit-text-stroke-width: 0.15px;
 }
 
 .panel > .ayuda,

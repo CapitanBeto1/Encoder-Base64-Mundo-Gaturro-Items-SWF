@@ -14,6 +14,13 @@
   font-weight: 100 900;
 }
 
+/* La letra de la interfaz: Fredoka (OFL), redondeada. La del juego («MG») queda para el logo y las ventanas que lo copian. */
+@font-face {
+  font-family: "Fredoka";
+  src: url("../fuentes/Fredoka.ttf") format("truetype");
+  font-weight: 300 700;
+}
+
 :root {
   /* Fondo y paneles */
   --amarillo-fondo: #f6d610;
@@ -66,12 +73,7 @@ body {
   position: relative;
   background: var(--amarillo-fondo);
   color: var(--texto);
-  font: 15px/1.4 "MG", Georgia, serif;
-  font-weight: 900;
-  /* Tamaño óptico chico: trazos parejos y gruesos, más parecidos a Cooper Black. */
-  font-variation-settings: "SOFT" 100, "WONK" 0, "opsz" 9;
-  /* Un contorno del mismo color engorda la letra (Cooper Black es muy pesada). */
-  -webkit-text-stroke: 0.3px currentColor;
+  font: 500 15px/1.4 "Fredoka", sans-serif;
 }
 
 /* --- Fondo --- */
@@ -113,6 +115,8 @@ body > :not(svg) { position: relative; z-index: 1; }
 /* Título al estilo del logo del juego: letras amarillas con contorno marrón grueso. */
 .logo {
   margin: 0;
+  font-family: "MG", Georgia, serif;
+  font-variation-settings: "SOFT" 100, "WONK" 0, "opsz" 9;
   font-size: 40px;
   font-weight: 900;
   line-height: 1;
@@ -147,8 +151,7 @@ button {
   box-shadow: 0 3px 0 var(--celeste-sombra);
   color: var(--texto);
   font: inherit;
-  font-weight: 900;
-  -webkit-text-stroke: 0.6px currentColor;
+  font-weight: 600;
   text-transform: uppercase;
   cursor: pointer;
 }
