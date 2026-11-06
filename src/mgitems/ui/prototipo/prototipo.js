@@ -5,7 +5,7 @@
 
 // El primero de cada eje es lo elegido hasta ahora; «actual» es como está en main.
 const EJES = [
-  { id: "distribucion", nombre: "Distribución", variantes: [["actual", "Actual"], ["lateral", "Barra lateral"], ["dock", "Dock abajo"], ["enfoque", "Enfoque"]] },
+  { id: "distribucion", nombre: "Distribución", variantes: [["agrupada", "Lateral agrupada"], ["riel", "Riel + carrito"], ["pasos", "Lateral con pasos"], ["lateral", "Barra lateral"], ["actual", "Actual"]] },
   { id: "textos", nombre: "Textos", variantes: [["pulido", "Pulidos"], ["actual", "Actuales"]] },
   { id: "carga", nombre: "Cargas", variantes: [["esqueleto", "Esqueleto"], ["texto", "Texto (actual)"]] },
   { id: "letra", nombre: "Letra", variantes: [["fredoka", "Fredoka"], ["actual", "Cooper (actual)"], ["nunito", "Nunito + Cooper"], ["baloo", "Baloo"]] },
@@ -142,6 +142,59 @@ html.style.setProperty("--icono-sin-imagen",
 const engranaje = Object.assign(document.createElement("span"), { className: "icono-pestana icono-config", innerHTML: svg("gear", "bold") });
 engranaje.dataset.sinIconos = "";
 $id("abrir-entorno")?.prepend(engranaje);
+
+// ============ Distribuciones: lo que agregan a la página ============
+
+// Las pestañas en grupos (barra lateral agrupada y con pasos).
+for (const [antes, titulo] of [["agregar", "Items"], ["trucar", "Ropa y Gaturro"], ["tiendas", "Para la casa"]]) {
+  const t = Object.assign(document.createElement("span"), { className: "grupo-pestanas", textContent: titulo });
+  t.dataset.sinIconos = "";
+  $id(`pestana-${antes}`)?.before(t);
+}
+
+// El carrito (riel): abre «Items a recibir» como un cajón y dice cuántos hay.
+const carrito = Object.assign(document.createElement("button"), { className: "boton-carrito", type: "button", title: "Items a recibir" });
+carrito.dataset.sinIconos = "";
+carrito.innerHTML = `<span class="icono-carrito">${svg("basket", "bold")}</span><span class="cuenta-carrito">0</span>`;
+carrito.addEventListener("click", () => { html.dataset.carrito = html.dataset.carrito === "abierto" ? "" : "abierto"; });
+document.body.append(carrito);
+
+// Los pasos de cada pestaña (lateral con pasos): hecho, el que sigue y los que faltan.
+const guia = Object.assign(document.createElement("ol"), { className: "pasos-proto" });
+guia.dataset.sinIconos = "";
+document.body.append(guia);
+function pasosDe(v) {
+  const doc = typeof lookActual === "undefined" ? {} : lookActual;
+  const hayEncode = Boolean($id("encode")?.value);
+  const piezas = Object.keys(doc.partes ?? {}).length > 0;
+  const enLista = (doc.lista ?? []).length > 0;
+  if (v === "agregar") return [["Elegí Items", (typeof items !== "undefined" ? items : []).length > 0], ["Generá el Encode", hayEncode], ["Agregá al juego", false]];
+  if (v === "looks") return [["Elegí las Piezas", piezas], ["Elegí dónde se guarda", Boolean(doc.base)], ["Aplicá el Look", hayEncode], ["Agregá al juego", false]];
+  if (v === "acciones") return [["Elegí la animación", Boolean(doc.animacion)], ["Elegí el Item", Boolean(doc.base)], ["Aplicá la acción", hayEncode], ["Agregá al juego", false]];
+  if (v === "trucar") return [["Elegí el Item base", Boolean(doc.base)], ["Elegí la Pieza", piezas], ["Sumala a la lista", enLista], ["Trucá todas", hayEncode], ["Agregá al juego", false]];
+  const fondos = v === "fondos";
+  return [[fondos ? "Elegí un objeto" : "Elegí un Item", Boolean(doc.base)], [fondos ? "Elegí el fondo" : "Elegí qué hace", fondos ? doc.cuadro != null : Boolean(doc.comportamiento)],
+          ["Sumalo a la lista", enLista], ["Convertí todos", hayEncode], ["Agregá al juego", false]];
+}
+let ultimaGuia = "";
+setInterval(() => {
+  try {
+    const n = $id("cantidad")?.textContent.replace(/\D/g, "") || "0";
+    if (carrito.lastChild.textContent !== n) { carrito.lastChild.textContent = n; carrito.classList.remove("salta"); void carrito.offsetWidth; carrito.classList.add("salta"); }
+    if (html.dataset.distribucion !== "pasos") return;
+    const pasos = pasosDe(typeof vista === "undefined" ? "agregar" : vista);
+    const actual = pasos.findIndex(([, hecho]) => !hecho);
+    const clave = JSON.stringify([pasos, actual]);
+    if (clave === ultimaGuia) return;
+    ultimaGuia = clave;
+    guia.replaceChildren(...pasos.map(([texto, hecho], i) => {
+      const li = document.createElement("li");
+      li.className = hecho && i !== actual ? "hecho" : i === actual ? "actual" : "falta";
+      li.innerHTML = `<span class="numero-paso">${hecho && i !== actual ? svg("check", "bold") : i + 1}</span><span>${texto}</span>`;
+      return li;
+    }));
+  } catch {}
+}, 250);
 
 // ============ Textos pulidos: menos texto; el necesario, como etiquetas ============
 
@@ -350,5 +403,5 @@ observador.observe(document.body, { childList: true, subtree: true });
 cambiarEmojis(document.body);
 buscarTextosDeCarga(document.body);
 aplicarVariantes();
-window.prototipo = { elegido, aplicarVariantes, probarCarga, observador };
+window.prototipo = { elegido, aplicarVariantes, probarCarga, observador, regiones, enCurso };
 })();

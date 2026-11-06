@@ -222,60 +222,120 @@ body > div.barra-prototipo {
 [data-distribucion="lateral"] main.modo-agregar { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); }
 [data-distribucion="lateral"] .inventario { grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); }
 
-/* --- Dock abajo: arriba solo el logo; las pestañas, botones grandes con ícono en un dock abajo, como la barra del juego. --- */
-[data-distribucion="dock"] .barra { padding-top: 8px; padding-bottom: 0; }
-[data-distribucion="dock"] .logo { font-size: 30px; }
-[data-distribucion="dock"] .pestanas {
-  order: 10; align-self: center; gap: 6px; margin: 0 0 4px; padding: 8px 12px; border-radius: 20px;
-  background: rgba(40, 30, 0, 0.32); box-shadow: inset 0 2px 0 rgba(0, 0, 0, 0.15);
-}
-[data-distribucion="dock"] .pestana { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 86px; padding: 5px 4px 4px; font-size: 9.5px; border-radius: 13px; }
-[data-distribucion="dock"] .pestana .icono-pestana { display: block; width: 22px; height: 22px; }
-[data-distribucion="dock"] main.modo-agregar > .panel:last-child { overflow-y: auto; }
-[data-distribucion="dock"] main.modo-agregar #items-a-recibir { flex: none; min-height: 150px; }
-[data-distribucion="dock"] .pestana[aria-selected="true"] { transform: translateY(-5px); }
-[data-distribucion="dock"] .paneles { padding-top: 6px; padding-bottom: 8px; }
-/* Agregar: la grilla manda; «Items a recibir» y el Encode, una columna angosta como un carrito. */
-[data-distribucion="dock"] main.modo-agregar { grid-template-columns: minmax(0, 1fr) 330px; }
-[data-distribucion="dock"] .inventario { grid-template-columns: 380px minmax(0, 1fr); }
+/* Lo que agregan las distribuciones: escondido salvo donde se usa. */
+.grupo-pestanas, .boton-carrito, .pasos-proto { display: none; }
 
-/* --- Enfoque: logo, configuración y pestañas en un solo renglón; en Agregar, la grilla a todo el ancho y lo elegido
-       abajo, en una bandeja. --- */
-[data-distribucion="enfoque"] body {
-  display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr);
-  grid-template-areas: "marca nav" "aviso aviso" "main main";
+/* --- Lateral agrupada y Lateral con pasos: una sola columna oscura con el logo, las pestañas en grupos y la
+       configuración abajo; el contenido usa todo el alto. --- */
+:is([data-distribucion="agrupada"], [data-distribucion="pasos"]) body {
+  display: grid; grid-template-columns: 212px minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-areas: "marca main" "nav main" "config main";
 }
-[data-distribucion="enfoque"] .barra { grid-area: marca; gap: 10px; padding: 10px 6px 4px 22px; }
-[data-distribucion="enfoque"] .logo { font-size: 28px; }
-[data-distribucion="enfoque"] #abrir-entorno { order: -1; width: 40px; height: 40px; padding: 0; font-size: 0; display: grid; place-items: center; border-radius: 50%; }
-[data-distribucion="enfoque"] #abrir-entorno .icono-pestana { display: block; width: 22px; height: 22px; }
-[data-distribucion="enfoque"] #abrir-entorno .indicador { position: absolute; top: 2px; right: 2px; }
-[data-distribucion="enfoque"] #aviso-entorno { grid-area: aviso; }
-[data-distribucion="enfoque"] .pestanas {
-  grid-area: nav; align-self: center; justify-self: start; gap: 0; margin: 8px 16px 0; padding: 4px; border-radius: 16px;
-  background: rgba(40, 30, 0, 0.28);
+[data-distribucion="pasos"] body { grid-template-rows: auto minmax(0, 1fr) auto; grid-template-areas: "marca pasos" "nav main" "config main"; }
+:is([data-distribucion="agrupada"], [data-distribucion="pasos"]) .barra { display: contents; }
+:is([data-distribucion="agrupada"], [data-distribucion="pasos"]) .marca { grid-area: marca; justify-content: center; padding: 14px 4px 8px 16px; }
+:is([data-distribucion="agrupada"], [data-distribucion="pasos"]) .logo { font-size: 30px; }
+:is([data-distribucion="agrupada"], [data-distribucion="pasos"]) #abrir-entorno {
+  grid-area: config; margin: 6px 10px 14px 18px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 12px; padding: 8px 10px;
 }
-[data-distribucion="enfoque"] .pestana { border: 0; border-radius: 12px; box-shadow: none; background: transparent; color: #fff; padding: 8px 12px; }
-[data-distribucion="enfoque"] .pestana::before { display: none; }
-[data-distribucion="enfoque"] .pestana[aria-selected="true"] { background: linear-gradient(var(--amarillo), var(--amarillo-oscuro)); color: var(--texto); box-shadow: 0 2px 0 rgba(90, 70, 0, 0.35); }
-[data-distribucion="enfoque"] .paneles { grid-area: main; }
-[data-distribucion="enfoque"] main.modo-agregar { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) 150px; }
-[data-distribucion="enfoque"] main.modo-agregar #vista-agregar > h2 { display: none; }
-[data-distribucion="enfoque"] main.modo-agregar > .panel:first-child { padding-top: 10px; padding-bottom: 8px; }
-[data-distribucion="enfoque"] main.modo-agregar #mensaje:empty { display: none; }
-[data-distribucion="enfoque"] .categorias-items { grid-template-columns: repeat(20, minmax(0, 1fr)); }
-[data-distribucion="enfoque"] .categorias-items .categoria { padding-top: 3px; padding-bottom: 3px; }
-[data-distribucion="enfoque"] main.modo-agregar > .panel:last-child {
-  display: grid; gap: 8px 14px; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) 250px; grid-template-rows: auto minmax(0, 1fr) auto;
-  grid-template-areas: "lista tit ent" "lista enc ent" "lista acc msj";
+:is([data-distribucion="agrupada"], [data-distribucion="pasos"]) #abrir-entorno .icono-pestana { display: block; }
+:is([data-distribucion="agrupada"], [data-distribucion="pasos"]) #aviso-entorno { grid-area: main; align-self: start; z-index: 5; margin: 10px 20px; }
+:is([data-distribucion="agrupada"], [data-distribucion="pasos"]) .pestanas {
+  grid-area: nav; flex-direction: column; gap: 2px; margin: 2px 10px 0 18px; padding: 6px 8px 10px; overflow-y: auto;
+  border-radius: 18px; background: rgba(40, 30, 0, 0.32); box-shadow: inset 0 2px 0 rgba(0, 0, 0, 0.12);
 }
-[data-distribucion="enfoque"] main.modo-agregar #items-a-recibir { grid-area: lista; min-height: 0; }
-[data-distribucion="enfoque"] main.modo-agregar > .panel:last-child > .encabezado-lista { grid-area: tit; }
-[data-distribucion="enfoque"] main.modo-agregar #resumen { display: none; }
-[data-distribucion="enfoque"] main.modo-agregar #encode { grid-area: enc; height: auto; }
-[data-distribucion="enfoque"] main.modo-agregar > .panel:last-child > .acciones { grid-area: acc; }
-[data-distribucion="enfoque"] main.modo-agregar #entregar { grid-area: ent; height: 100%; }
-[data-distribucion="enfoque"] main.modo-agregar #mensaje-encode { grid-area: msj; }
-[data-distribucion="enfoque"] main.modo-agregar #form-agregar { display: none; }
-/* En las del Gaturro: el Gaturro angosto a la izquierda y el inventario grande, con más tarjetas por renglón. */
-[data-distribucion="enfoque"] .inventario { grid-template-columns: minmax(300px, 0.8fr) minmax(0, 1.5fr); }
+:is([data-distribucion="agrupada"], [data-distribucion="pasos"]) .grupo-pestanas {
+  display: block; padding: 10px 10px 3px; color: #ffe98a; font-size: 10px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; -webkit-text-stroke: 0;
+}
+:is([data-distribucion="agrupada"], [data-distribucion="pasos"]) .pestana {
+  flex: none; display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 0; border-radius: 12px;
+  background: transparent; box-shadow: none; color: #fff; text-align: left; font-size: 13px;
+}
+:is([data-distribucion="agrupada"], [data-distribucion="pasos"]) .pestana::before { display: none; }
+:is([data-distribucion="agrupada"], [data-distribucion="pasos"]) .pestana:hover:not([aria-selected="true"]) { background: rgba(255, 255, 255, 0.13); }
+:is([data-distribucion="agrupada"], [data-distribucion="pasos"]) .pestana[aria-selected="true"] {
+  background: linear-gradient(var(--amarillo), var(--amarillo-oscuro)); color: var(--texto); box-shadow: 0 3px 0 rgba(90, 70, 0, 0.35);
+}
+:is([data-distribucion="agrupada"], [data-distribucion="pasos"]) .pestana .icono-pestana { display: block; }
+:is([data-distribucion="agrupada"], [data-distribucion="pasos"]) .paneles { grid-area: main; padding: 14px 18px 12px 8px; }
+/* Agregar: la grilla manda; lo elegido, una columna angosta como un carrito, con el Encode chico. */
+:is([data-distribucion="agrupada"], [data-distribucion="pasos"]) main.modo-agregar { grid-template-columns: minmax(0, 1fr) 300px; }
+:is([data-distribucion="agrupada"], [data-distribucion="pasos"]) main.modo-agregar #encode { height: 44px; }
+:is([data-distribucion="agrupada"], [data-distribucion="pasos"]) #quitar-todos { padding: 3px 8px; font-size: 10px; white-space: nowrap; }
+:is([data-distribucion="agrupada"], [data-distribucion="pasos"]) main.modo-agregar > .panel:last-child .acciones button { padding-left: 10px; padding-right: 10px; font-size: 12px; }
+:is([data-distribucion="agrupada"], [data-distribucion="pasos"]) .inventario { grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); }
+
+/* Con pasos: arriba, en qué paso estás; reemplaza la ayuda de abajo. */
+[data-distribucion="pasos"] .paneles { padding-top: 6px; }
+[data-distribucion="pasos"] .pasos-proto {
+  grid-area: pasos; display: flex; align-items: center; margin: 14px 18px 0 8px; padding: 0; list-style: none;
+}
+[data-distribucion="pasos"] .pasos-proto li {
+  display: flex; align-items: center; gap: 7px; padding: 6px 12px 6px 6px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap;
+  color: rgba(255, 255, 255, 0.75); -webkit-text-stroke: 0; transition: background 0.2s, color 0.2s;
+}
+[data-distribucion="pasos"] .pasos-proto li + li { margin-left: 22px; position: relative; }
+[data-distribucion="pasos"] .pasos-proto li + li::before { content: ""; position: absolute; left: -20px; top: 50%; width: 18px; height: 3px; margin-top: -1.5px; border-radius: 2px; background: rgba(60, 45, 0, 0.35); }
+[data-distribucion="pasos"] .pasos-proto .numero-paso {
+  display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: rgba(60, 45, 0, 0.35); color: #fff; font-size: 11px; flex: none;
+}
+[data-distribucion="pasos"] .pasos-proto .numero-paso svg { width: 13px; height: 13px; }
+[data-distribucion="pasos"] .pasos-proto li.hecho { color: #2f5d1d; }
+[data-distribucion="pasos"] .pasos-proto li.hecho .numero-paso { background: #4f9a35; }
+[data-distribucion="pasos"] .pasos-proto li.actual { background: rgba(255, 252, 235, 0.95); color: #4a3700; box-shadow: 0 2px 0 rgba(0, 0, 0, 0.15); }
+[data-distribucion="pasos"] .pasos-proto li.actual .numero-paso { background: #e8541e; animation: latido 1.6s ease-in-out infinite; }
+[data-distribucion="pasos"] .pasos-proto li.falta { color: #6b5a10; }
+@keyframes latido { 50% { transform: scale(1.15); } }
+[data-distribucion="pasos"] #resumen-look { display: none; }
+
+/* --- Riel + carrito: una columna finita de íconos y el contenido a todo el ancho; en Agregar, lo elegido se abre
+       como un cajón desde la derecha. --- */
+[data-distribucion="riel"] body {
+  display: grid; grid-template-columns: 86px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; grid-template-areas: "nav main" "config main";
+}
+[data-distribucion="riel"] .barra { display: contents; }
+[data-distribucion="riel"] .marca { display: none; }
+[data-distribucion="riel"] #aviso-entorno { grid-area: main; align-self: start; z-index: 5; margin: 10px 20px; }
+[data-distribucion="riel"] .pestanas {
+  grid-area: nav; flex-direction: column; gap: 4px; margin: 12px 0 0 12px; padding: 8px 6px; overflow-y: auto;
+  border-radius: 20px; background: rgba(40, 30, 0, 0.32);
+}
+[data-distribucion="riel"] .pestana {
+  flex: none; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 8px 2px 6px; border: 0; border-radius: 14px;
+  background: transparent; box-shadow: none; color: #fff; font-size: 9px; line-height: 1.05; white-space: normal; text-align: center;
+}
+[data-distribucion="riel"] .pestana::before { display: none; }
+[data-distribucion="riel"] .pestana:hover:not([aria-selected="true"]) { background: rgba(255, 255, 255, 0.13); }
+[data-distribucion="riel"] .pestana[aria-selected="true"] { background: linear-gradient(var(--amarillo), var(--amarillo-oscuro)); color: var(--texto); box-shadow: 0 3px 0 rgba(90, 70, 0, 0.35); }
+[data-distribucion="riel"] .pestana .icono-pestana { display: block; width: 24px; height: 24px; }
+[data-distribucion="riel"] #abrir-entorno {
+  grid-area: config; justify-self: center; width: 52px; height: 52px; margin: 8px 0 14px 12px; padding: 0; font-size: 0;
+  display: grid; place-items: center; border-radius: 50%;
+}
+[data-distribucion="riel"] #abrir-entorno .icono-pestana { display: block; width: 24px; height: 24px; }
+[data-distribucion="riel"] #abrir-entorno .indicador { position: absolute; top: 4px; right: 4px; }
+[data-distribucion="riel"] .paneles { grid-area: main; padding: 12px 18px 12px 12px; }
+/* Sin capa propia, para que el cajón quede encima de los esqueletos de la grilla. */
+[data-distribucion="riel"] .paneles { z-index: auto; }
+[data-distribucion="riel"] .inventario { grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); }
+[data-distribucion="riel"] main.modo-agregar { grid-template-columns: minmax(0, 1fr); }
+[data-distribucion="riel"] main.modo-agregar > .panel:last-child {
+  position: fixed; z-index: 60; top: 12px; right: 12px; bottom: 12px; width: 360px; overflow-y: auto;
+  background: rgba(74, 61, 6, 0.97); box-shadow: -8px 0 30px rgba(0, 0, 0, 0.35);
+  transform: translateX(calc(100% + 24px)); transition: transform 0.25s ease;
+}
+[data-distribucion="riel"][data-carrito="abierto"] main.modo-agregar > .panel:last-child { transform: none; }
+[data-distribucion="riel"]:has(main.modo-agregar) .boton-carrito { display: grid; }
+.boton-carrito {
+  position: fixed; z-index: 61; right: 22px; bottom: 22px; width: 64px; height: 64px; padding: 0; place-items: center; border-radius: 50%;
+  background: linear-gradient(var(--amarillo), var(--amarillo-oscuro)); border-color: var(--amarillo-borde); transition: right 0.25s ease;
+}
+[data-carrito="abierto"] .boton-carrito { right: 392px; }
+.icono-carrito { width: 30px; height: 30px; color: var(--texto); }
+.icono-carrito svg { width: 100%; height: 100%; }
+.cuenta-carrito {
+  position: absolute; top: -4px; right: -4px; min-width: 22px; height: 22px; padding: 0 5px; box-sizing: border-box; border-radius: 11px;
+  background: var(--rojo); color: #fff; font-size: 12px; line-height: 22px; text-align: center; -webkit-text-stroke: 0; box-shadow: 0 0 0 2px #fff;
+}
+.boton-carrito.salta { animation: saltar 0.35s ease-out; }
+@keyframes saltar { 40% { transform: scale(1.18) rotate(-6deg); } }
