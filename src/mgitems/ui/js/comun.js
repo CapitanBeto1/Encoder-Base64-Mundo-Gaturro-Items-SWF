@@ -76,7 +76,7 @@ function filaDeItem({ ruta, cantidad }) {
 
   const quitar = document.createElement("button");
   quitar.className = "quitar";
-  quitar.textContent = "✕";
+  quitar.append(icono("x"));
   quitar.title = `Quitar ${ruta}`;
   quitar.setAttribute("aria-label", `Quitar ${ruta}`);
   quitar.addEventListener("click", () => quitarItem(ruta));

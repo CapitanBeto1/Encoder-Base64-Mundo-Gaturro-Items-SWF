@@ -226,6 +226,10 @@ button.entregar {
   color: #ffe14d;
 }
 
+/* Íconos (js/iconos.js): del tamaño y el color del texto que los rodea. */
+.ic { display: inline-block; flex: none; width: 1.15em; height: 1.15em; vertical-align: -0.2em; line-height: 1; }
+.ic svg { display: block; width: 100%; height: 100%; }
+
 /* Botones chicos que acompañan a un título o dato. */
 button.enlace {
   padding: 3px 12px;

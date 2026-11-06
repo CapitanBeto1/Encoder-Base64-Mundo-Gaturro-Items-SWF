@@ -186,7 +186,7 @@ function mostrarResultadosImagen(resultados) {
       // Cortado: lo que se parece es una sola parte del Item (el pantalón de un traje, las mangas de una remera).
       const parte = item.cortado?.partes[0];
       const cortado = item.suelta ? [etiqueta("Ningún Item la trae", "cortado-resultado")]
-        : item.cortado ? [etiqueta(`✂ Solo ${nombreDeParte(parte).toLowerCase()}`, "cortado-resultado")] : [];
+        : item.cortado ? [conIcono("scissors", `Solo ${nombreDeParte(parte).toLowerCase()}`, "cortado-resultado")] : [];
       if (item.cortado && !item.suelta) boton.title += `\nSe parece a una sola parte: ${claseDeRuta(item.cortado.pieza)} (${nombreDeParte(parte)})`;
       // Si está cortado, se ve la parte que se parece (el pantalón), y el Item entero (el traje) chiquito en una esquina.
       // (La parte se dibuja puesta en un Gaturro, como en Looks: suelta no se reconoce, un pantalón es un pedazo de cadera.)
@@ -234,9 +234,10 @@ function mostrarResultadosImagen(resultados) {
       if (item.cortado) {
         // Recibir solo esa parte: Trucar Prenda con esa Pieza ya elegida (falta el Item base).
         const trucar = Object.assign(document.createElement("button"), {
-          type: "button", className: "trucar-parte", textContent: "✂ Trucar solo esta parte",
+          type: "button", className: "trucar-parte",
           title: `Abrir Trucar Prenda con ${claseDeRuta(item.cortado.pieza)} en ${nombreDeParte(parte)}`,
         });
+        trucar.append(icono("scissors"), " Trucar solo esta parte");
         trucar.addEventListener("click", (evento) => {
           evento.stopPropagation();
           trucarSoloEstaParte(item.cortado.pieza, parte);

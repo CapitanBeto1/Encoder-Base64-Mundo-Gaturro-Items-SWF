@@ -2,7 +2,7 @@
 
 // --- Tiendas y Portales: cualquier Item que, puesto en la casa, hace lo mismo que un NPC del juego ---
 
-const ICONO_NPC = { tienda: "🛒", portal: "🚪", minijuego: "🎮", fondo: "🖼️" };
+const ICONO_NPC = { tienda: "shopping-cart", portal: "door", minijuego: "game-controller", fondo: "image" };
 const comportamientosConocidos = {}; // tipo → [{comportamiento, tipo, descripcion, objeto}]
 const descripciones = new Map(); // comportamiento → su fila (también los escritos a mano)
 const tiposDeItems = new Map(); // ruta → tipo ("casa", "prenda", "mochila"…), de la ventana del Item base
@@ -170,7 +170,7 @@ async function buscarEnElJuego() {
     if (!resultado.nuevos.length) return;
     for (const tipo of new Set(resultado.nuevos.map((n) => n.tipo))) await leerComportamientos(tipo);
     mostrarComportamientos();
-    const nombres = resultado.nuevos.map((n) => `${ICONO_NPC[n.tipo]} ${n.comportamiento}`).join(", ");
+    const nombres = resultado.nuevos.map((n) => n.comportamiento).join(", ");
     avisarLista(`${resultado.nuevos.length === 1 ? "Se encontró 1 nuevo" : `Se encontraron ${resultado.nuevos.length} nuevos`} en las salas que recorriste: ${nombres}.`, "exito");
   } finally {
     buscandoEnElJuego = false;
@@ -193,10 +193,10 @@ function mostrarComportamientos() {
       });
       boton.setAttribute("aria-pressed", String(lookActual.comportamiento === c.comportamiento));
       boton.append(
-        c.objeto ? elementoIcono(c.objeto) : etiqueta(ICONO_NPC[c.tipo], "icono-npc"),
+        c.objeto ? elementoIcono(c.objeto) : icono(ICONO_NPC[c.tipo], "icono-npc"),
         etiqueta(c.comportamiento, "nombre"),
         etiqueta(c.descripcion, "que-hace"),
-        ...(c.encontrado ? [etiqueta("📍 En tus salas", "encontrado-npc")] : [])
+        ...(c.encontrado ? [conIcono("map-pin", "En tus salas", "encontrado-npc")] : [])
       );
       boton.addEventListener("click", () => elegirComportamiento(c.comportamiento));
       li.append(boton);
@@ -221,7 +221,7 @@ function mostrarArmadoFondo() {
   const cuadro = lookActual.cuadro;
   const cuadros = base && cuadrosDeFondo.get(base);
   $("comportamiento-elegido").replaceChildren(
-    cuadro ? etiqueta(`🖼️ Cuadro ${cuadro}${Array.isArray(cuadros) ? ` de ${cuadros.length}` : ""}`, "nombre")
+    cuadro ? conIcono("image", `Cuadro ${cuadro}${Array.isArray(cuadros) ? ` de ${cuadros.length}` : ""}`, "nombre")
       : etiqueta(base ? "tocá un cuadro de la derecha" : "elegí un objeto de la derecha", "ayuda")
   );
   $("vista-npc").replaceChildren(
@@ -249,7 +249,7 @@ function mostrarArmadoNpc() {
   const fila = nombre && descripciones.get(nombre);
   $("comportamiento-elegido").replaceChildren(
     ...(nombre
-      ? [etiqueta(`${ICONO_NPC[fila?.tipo] ?? "❔"} ${nombre}`, "nombre"), ...(fila ? [etiqueta(`· ${fila.descripcion}`, "ayuda")] : [])]
+      ? [conIcono(ICONO_NPC[fila?.tipo] ?? "question", nombre, "nombre"), ...(fila ? [etiqueta(`· ${fila.descripcion}`, "ayuda")] : [])]
       : [etiqueta("tocá uno de la grilla", "ayuda")])
   );
   if (nombre && !fila) leerComportamiento(nombre); // uno guardado que no está en la grilla
@@ -281,7 +281,8 @@ function mostrarListaNpc() {
         cantidad.value = t.cantidad;
         mostrarEncode(null);
       });
-      const quitar = Object.assign(document.createElement("button"), { className: "quitar", textContent: "✕", title: "Sacar de la lista" });
+      const quitar = Object.assign(document.createElement("button"), { className: "quitar", title: "Sacar de la lista" });
+      quitar.append(icono("x"));
       quitar.addEventListener("click", () => {
         lookActual.lista.splice(i, 1);
         mostrarEncode(null);
@@ -365,7 +366,7 @@ $("nuevo-look").addEventListener("click", () => {
   $("nombre-look").focus();
 });
 $("guardar-look").addEventListener("click", guardarLook);
-// ✗: vuelve a como estaba guardado (o vacío si el Look es nuevo).
+// Descartar: vuelve a como estaba guardado (o vacío si el Look es nuevo).
 $("descartar-look").addEventListener("click", () => {
   const guardado = looksGuardados.find((l) => l.id === lookActual.id);
   lookActual = enElEditor(guardado ?? documentoNuevo());

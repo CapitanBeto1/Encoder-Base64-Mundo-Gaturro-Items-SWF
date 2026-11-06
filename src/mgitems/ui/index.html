@@ -109,7 +109,7 @@
             </div>
             <button id="todas-las-fuentes-items" class="enlace boton-todos" aria-pressed="false" title="Los Items de todos los SWF del juego">Todos</button>
             <button id="abrir-archivo-items" class="enlace boton-todos" title="Un SWF de tu computadora">Archivo…</button>
-            <button id="buscar-por-imagen" class="enlace boton-todos" title="¿Viste algo y no sabés cómo se llama? Buscalo con una captura">🔍 Buscar por imagen</button>
+            <button id="buscar-por-imagen" class="enlace boton-todos" title="¿Viste algo y no sabés cómo se llama? Buscalo con una captura"><span data-icono="magnifying-glass"></span> Buscar por imagen</button>
           </div>
           <div id="categorias-items" class="categorias categorias-items" role="tablist" aria-label="Categorías de Items"></div>
           <div class="filtros-items">
@@ -134,13 +134,13 @@
           </div>
           <div class="estante">
             <div class="flechas">
-              <button id="pagina-anterior-items" class="flecha-grande" title="Página anterior" aria-label="Página anterior">◀</button>
-              <button id="diez-atras-items" class="flecha-diez" title="10 páginas atrás" aria-label="10 páginas atrás">◀◀ 10</button>
+              <button id="pagina-anterior-items" class="flecha-grande" title="Página anterior" aria-label="Página anterior"><span data-icono="caret-left"></span></button>
+              <button id="diez-atras-items" class="flecha-diez" title="10 páginas atrás" aria-label="10 páginas atrás"><span data-icono="caret-double-left"></span> 10</button>
             </div>
             <ul id="grilla-items" class="grilla" aria-label="Items para elegir"></ul>
             <div class="flechas">
-              <button id="pagina-siguiente-items" class="flecha-grande" title="Página siguiente" aria-label="Página siguiente">▶</button>
-              <button id="diez-adelante-items" class="flecha-diez" title="10 páginas adelante" aria-label="10 páginas adelante">10 ▶▶</button>
+              <button id="pagina-siguiente-items" class="flecha-grande" title="Página siguiente" aria-label="Página siguiente"><span data-icono="caret-right"></span></button>
+              <button id="diez-adelante-items" class="flecha-diez" title="10 páginas adelante" aria-label="10 páginas adelante">10 <span data-icono="caret-double-right"></span></button>
             </div>
           </div>
           <nav id="paginas-items" class="paginas" aria-label="Páginas"></nav>
@@ -155,7 +155,7 @@
       <div id="vista-looks" class="vista" role="tabpanel" hidden>
         <div class="encabezado-looks">
           <button id="abrir-mis-looks" class="boton-mis-looks guardables" title="Ver, abrir, importar y exportar tus Looks guardados">
-            <span aria-hidden="true">👕</span> <span id="texto-mis-looks">Mis Looks</span> <span id="cantidad-looks" class="cantidad-looks"></span>
+            <span data-icono="t-shirt"></span> <span id="texto-mis-looks">Mis Looks</span> <span id="cantidad-looks" class="cantidad-looks"></span>
           </button>
           <span id="look-abierto" class="ayuda look-abierto guardables"></span>
         </div>
@@ -203,7 +203,7 @@
                   <input id="zoom-gaturro" type="range" min="0.4" max="1.6" step="0.05" value="1" aria-label="Zoom del Gaturro" data-img="imagen-gaturro">
                   <span aria-hidden="true">+</span>
                 </label>
-                <button id="repetir-accion" class="enlace solo-acciones" title="Ver la animación otra vez desde el principio" hidden>↻ Repetir</button>
+                <button id="repetir-accion" class="enlace solo-acciones" title="Ver la animación otra vez desde el principio" hidden><span data-icono="arrow-clockwise"></span> Repetir</button>
                 <figcaption id="estado-gaturro" class="ayuda"></figcaption>
               </figure>
               <ul id="casilleros-cuerpo" class="casilleros" aria-label="Partes del cuerpo"></ul>
@@ -211,10 +211,10 @@
             <div class="botones-tarjeta">
               <button id="agregar-trucada" class="primario solo-trucar" title="Sumar esta Prenda trucada a la lista">Agregar a la lista</button>
               <button id="agregar-npc" class="primario solo-npc" title="Sumar este Item a la lista">Agregar a la lista</button>
-              <button id="colores-look" class="boton-cuadrado boton-colores" title="Colores del Gaturro" aria-label="Colores del Gaturro">⚙</button>
-              <button id="borrar-look" class="boton-cuadrado guardables" title="Borrar el Look" aria-label="Borrar el Look">🗑</button>
-              <button id="descartar-look" class="boton-cuadrado boton-descartar guardables" title="Descartar los cambios" aria-label="Descartar los cambios">✗</button>
-              <button id="guardar-look" class="boton-cuadrado boton-guardar guardables" title="Guardar el Look" aria-label="Guardar el Look">✓</button>
+              <button id="colores-look" class="boton-cuadrado boton-colores" title="Colores del Gaturro" aria-label="Colores del Gaturro"><span data-icono="gear"></span></button>
+              <button id="borrar-look" class="boton-cuadrado guardables" title="Borrar el Look" aria-label="Borrar el Look"><span data-icono="trash"></span></button>
+              <button id="descartar-look" class="boton-cuadrado boton-descartar guardables" title="Descartar los cambios" aria-label="Descartar los cambios"><span data-icono="x"></span></button>
+              <button id="guardar-look" class="boton-cuadrado boton-guardar guardables" title="Guardar el Look" aria-label="Guardar el Look"><span data-icono="check"></span></button>
             </div>
           </div>
 
@@ -224,7 +224,7 @@
               <input id="filtro-comportamientos" type="search" spellcheck="false" autocomplete="off"
                      placeholder="Buscar por nombre, catálogo o sala" aria-label="Buscar los comportamientos">
               <span id="cantidad-comportamientos" class="cantidad-comportamientos"></span>
-              <button id="otros-fondos" class="enlace solo-fondos" title="Volver a la lista de objetos" hidden>◀ Otros objetos</button>
+              <button id="otros-fondos" class="enlace solo-fondos" title="Volver a la lista de objetos" hidden><span data-icono="caret-left"></span> Otros objetos</button>
             </div>
             <ul id="grilla-comportamientos" class="grilla-comportamientos solo-npc" aria-label="Comportamientos para elegir"></ul>
             <nav id="paginas-fondos" class="paginas solo-npc solo-fondos" aria-label="Páginas de objetos"></nav>
@@ -243,7 +243,7 @@
             <div id="categorias" class="categorias" role="tablist" aria-label="Categorías de Piezas"></div>
             <div id="poniendo-en" class="poniendo-en" hidden>
               <span id="texto-poniendo-en"></span>
-              <button id="dejar-de-poner" class="quitar" title="Volver a poner cada Pieza en su Parte">✕</button>
+              <button id="dejar-de-poner" class="quitar" title="Volver a poner cada Pieza en su Parte"><span data-icono="x"></span></button>
             </div>
             <div class="filtros-items">
               <input id="filtro-piezas" type="text" spellcheck="false" autocomplete="off"
@@ -268,13 +268,13 @@
             </div>
             <div class="estante">
               <div class="flechas">
-                <button id="pagina-anterior" class="flecha-grande" title="Página anterior" aria-label="Página anterior">◀</button>
-                <button id="diez-atras" class="flecha-diez" title="10 páginas atrás" aria-label="10 páginas atrás">◀◀ 10</button>
+                <button id="pagina-anterior" class="flecha-grande" title="Página anterior" aria-label="Página anterior"><span data-icono="caret-left"></span></button>
+                <button id="diez-atras" class="flecha-diez" title="10 páginas atrás" aria-label="10 páginas atrás"><span data-icono="caret-double-left"></span> 10</button>
               </div>
               <ul id="grilla-piezas" class="grilla" aria-label="Piezas para elegir"></ul>
               <div class="flechas">
-                <button id="pagina-siguiente" class="flecha-grande" title="Página siguiente" aria-label="Página siguiente">▶</button>
-                <button id="diez-adelante" class="flecha-diez" title="10 páginas adelante" aria-label="10 páginas adelante">10 ▶▶</button>
+                <button id="pagina-siguiente" class="flecha-grande" title="Página siguiente" aria-label="Página siguiente"><span data-icono="caret-right"></span></button>
+                <button id="diez-adelante" class="flecha-diez" title="10 páginas adelante" aria-label="10 páginas adelante">10 <span data-icono="caret-double-right"></span></button>
               </div>
             </div>
             <p id="ayuda-grilla" class="ayuda"></p>
@@ -382,13 +382,13 @@
       </div>
       <div class="filtros-base">
         <label class="filtro-base">
-          <span aria-hidden="true">🔍</span>
+          <span data-icono="magnifying-glass"></span>
           <input id="filtro-base" type="search" spellcheck="false" autocomplete="off" placeholder="Buscar por nombre" aria-label="Buscar los Items base por nombre">
         </label>
         <span class="tipos-base" role="radiogroup" aria-label="Qué Items mostrar">
           <button type="button" id="tipo-ambos" class="filtro-tipo filtro-ambos" role="radio" aria-checked="true" data-tipo="ambos" title="Mostrar los de mochila y los de guardarropa">Ambos <span class="cantidad-tipo"></span></button>
-          <button type="button" id="solo-mochila" class="filtro-tipo filtro-mochila" role="radio" aria-checked="false" data-tipo="mochila" title="Mostrar solo los Items de mochila (consumibles)">🎒 Mochila <span class="cantidad-tipo"></span></button>
-          <button type="button" id="solo-guardarropa" class="filtro-tipo filtro-guardarropa" role="radio" aria-checked="false" data-tipo="prenda" title="Mostrar solo las Prendas (guardarropa)">👕 Guardarropa <span class="cantidad-tipo"></span></button>
+          <button type="button" id="solo-mochila" class="filtro-tipo filtro-mochila" role="radio" aria-checked="false" data-tipo="mochila" title="Mostrar solo los Items de mochila (consumibles)"><span data-icono="backpack"></span> Mochila <span class="cantidad-tipo"></span></button>
+          <button type="button" id="solo-guardarropa" class="filtro-tipo filtro-guardarropa" role="radio" aria-checked="false" data-tipo="prenda" title="Mostrar solo las Prendas (guardarropa)"><span data-icono="t-shirt"></span> Guardarropa <span class="cantidad-tipo"></span></button>
         </span>
       </div>
       <ul id="lista-bases" class="lista-bases"></ul>
@@ -441,11 +441,11 @@
 
   <dialog id="dialogo-imagen" class="dialogo-imagen">
     <div class="panel">
-      <h2>🔍 Buscar por imagen</h2>
+      <h2><span data-icono="magnifying-glass"></span> Buscar por imagen</h2>
       <p class="ayuda">Pegá una captura (Ctrl+V), arrastrala acá o elegí un archivo. <strong>Marcá el objeto, sin otros objetos alrededor; si es ropa puesta, dejá un poco del Gaturro alrededor</strong>: tocá y arrastrá sobre la imagen.</p>
       <div class="cuerpo-imagen">
         <div id="zona-imagen" class="zona-imagen" tabindex="0" aria-label="La captura: pegala, arrastrala o elegí un archivo">
-          <p id="ayuda-zona" class="ayuda-zona">📋 Pegá (Ctrl+V) o arrastrá una imagen acá</p>
+          <p id="ayuda-zona" class="ayuda-zona"><span data-icono="clipboard"></span> Pegá (Ctrl+V) o arrastrá una imagen acá</p>
           <div id="lienzo-imagen" class="lienzo-imagen" hidden>
             <img id="imagen-captura" alt="La captura" draggable="false">
             <div id="rectangulo-imagen" class="rectangulo-imagen" hidden></div>
@@ -527,6 +527,7 @@
 
   <!-- La interfaz, en partes que comparten el ámbito global: cada una usa lo de las anteriores (por eso van en
        este orden). No son módulos de ES porque la página se abre desde un archivo local. -->
+  <script src="js/iconos.js"></script>
   <script src="js/comun.js"></script>
   <script src="js/pestanas.js"></script>
   <script src="js/looks.js"></script>

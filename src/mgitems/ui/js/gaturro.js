@@ -187,11 +187,11 @@ $("reiniciar-colores").addEventListener("click", () => {
   mostrarSelectoresColor();
   pedirGaturro($("gaturro-colores"), coloresEnEdicion);
 });
-// GUARDAR: los colores pasan a ser del Look abierto (se guardan con ✓, como cualquier cambio del Look).
+// GUARDAR: los colores pasan a ser del Look abierto (se guardan con «Guardar el Look», como cualquier cambio).
 $("guardar-colores").addEventListener("click", () => {
   lookActual.colores = Object.fromEntries(CLAVES_COLOR.map((c) => [c, coloresEnEdicion[c]]));
   $("dialogo-colores").close();
   dibujarGaturro();
-  avisarLista(lookActual.id ? "Colores cambiados: tocá ✓ para guardarlos en el Look." : "Colores cambiados.", "exito");
+  avisarLista(lookActual.id ? "Colores cambiados: guardá el Look para conservarlos." : "Colores cambiados.", "exito");
 });
 $("cerrar-colores").addEventListener("click", () => $("dialogo-colores").close());

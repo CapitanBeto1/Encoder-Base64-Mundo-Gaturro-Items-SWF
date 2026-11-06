@@ -30,7 +30,7 @@ const NOMBRES_DE_OTRAS_PARTES = {
 };
 const nombreDeParte = (id) => NOMBRES_DE_OTRAS_PARTES[id] ?? partesConocidas.find((p) => p.id === id)?.nombre ?? id;
 
-// Los guardados de la pestaña (botón, ventana, ✓ ✗ 🗑).
+// Los guardados de la pestaña (botón, ventana, guardar, descartar y borrar).
 const guardados = () => dePestana().guardados;
 // Una operación de los guardados de la pestaña: lista, guardar, duplicar, borrar, exportar o importar.
 const llamarGuardados = (operacion, ...args) => api().guardados[operacion](guardados().tipo, ...args);
@@ -99,7 +99,7 @@ function mostrarGrillaLooks() {
 }
 
 // El escenario muestra el Look puesto (el que se está editando, con sus cambios sin guardar) hasta que
-// se toca otro de la grilla; ↻ vuelve a mostrar el puesto.
+// se toca otro de la grilla; «Volver al Look que tenés puesto» lo muestra de nuevo.
 let mostrandoPuesto = true;
 
 function mostrarLookElegido() {
@@ -237,7 +237,8 @@ function casillero(id) {
   });
   li.append(boton);
   if (ruta) {
-    const quitar = Object.assign(document.createElement("button"), { className: "quitar sacar-pieza", textContent: "✕", title: `Sacar la Pieza de ${nombreDeParte(id)}` });
+    const quitar = Object.assign(document.createElement("button"), { className: "quitar sacar-pieza", title: `Sacar la Pieza de ${nombreDeParte(id)}` });
+    quitar.append(icono("x"));
     quitar.addEventListener("click", () => {
       delete lookActual.partes[id];
       mostrarLook();

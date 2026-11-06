@@ -43,7 +43,8 @@
 .casillero-npc { overflow: hidden; }
 .casillero-npc .icono { width: 100%; height: 100%; min-height: 0; overflow: hidden; box-shadow: none; background: transparent; }
 .casillero-npc .icono img { width: 100%; height: 100%; max-width: 100%; max-height: 100%; object-fit: contain; }
-.icono-npc { display: grid; place-items: center; width: 100%; height: 100%; min-height: 0; font-size: 38px; line-height: 1; }
+.icono-npc { display: grid; place-items: center; width: 100%; height: 100%; min-height: 0; color: #6b5a10; }
+.icono-npc svg { width: 40px; height: 40px; }
 .casillero-npc .nombre { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; color: var(--texto); }
 .casillero-npc .que-hace { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 9px; color: #5c4c00; }
 .casillero-npc[aria-pressed="true"] { background: #6fc054; border-color: #2f6421; box-shadow: inset 0 0 0 3px #2f6421; }

@@ -5,17 +5,17 @@
 // Las Prendas van en la categoría de su casillero (las Mangas de una remera no cuentan aparte); las
 // que ocupan varios, en Disfraces. Los demás tipos, cada uno en la suya.
 const CATEGORIAS_ITEMS = [
-  { id: "todos", nombre: "Todos", icono: "🔎" },
+  { id: "todos", nombre: "Todos", icono: "magnifying-glass" },
   ...CATEGORIAS.filter((c) => c.que && c.id !== "transport"),
-  { id: "disfraces", nombre: "Disfraces", que: "Disfraz", icono: "🦸" },
-  { id: "mochila", nombre: "Mochila", que: "Mochila", icono: "🧪" },
-  { id: "transporte", nombre: "Transportes", que: "Transporte", icono: "🛹" },
-  { id: "casa", nombre: "Decoración", que: "Decoración", icono: "🛋️" },
-  { id: "mascota", nombre: "Mascotas", que: "Mascota", icono: "🐶" },
-  { id: "ropa_mascota", nombre: "Ropa de mascota", que: "Ropa de mascota", icono: "🎀" },
-  { id: "comida_mascota", nombre: "Comida, juguetes y cuidado de mascota", que: "Comida de mascota", icono: "🦴",
+  { id: "disfraces", nombre: "Disfraces", que: "Disfraz", icono: "mask-happy" },
+  { id: "mochila", nombre: "Mochila", que: "Mochila", icono: "flask" },
+  { id: "transporte", nombre: "Transportes", que: "Transporte", icono: "scooter" },
+  { id: "casa", nombre: "Decoración", que: "Decoración", icono: "couch" },
+  { id: "mascota", nombre: "Mascotas", que: "Mascota", icono: "dog" },
+  { id: "ropa_mascota", nombre: "Ropa de mascota", que: "Ropa de mascota", icono: "gift" },
+  { id: "comida_mascota", nombre: "Comida, juguetes y cuidado de mascota", que: "Comida de mascota", icono: "bone",
     tipos: ["comida_mascota", "juguete_mascota", "cuidado_mascota"] },
-  { id: "otros", nombre: "Otros", que: "Otro", icono: "✨" },
+  { id: "otros", nombre: "Otros", que: "Otro", icono: "sparkle" },
 ];
 
 const buscador = {
@@ -113,7 +113,8 @@ function mostrarFuentesItems() {
       ? [etiqueta("todos los SWF del juego", "chip-fuente")]
       : fuentesItems.swfs.map((swf) => {
           const chip = etiqueta(swf, "chip-fuente");
-          const quitar = Object.assign(document.createElement("button"), { className: "quitar", textContent: "✕", title: `Sacar ${swf} de las fuentes` });
+          const quitar = Object.assign(document.createElement("button"), { className: "quitar", title: `Sacar ${swf} de las fuentes` });
+        quitar.append(icono("x"));
           quitar.addEventListener("click", () => {
             fuentesItems.swfs = fuentesItems.swfs.filter((s) => s !== swf);
             guardarFuentesItems();
@@ -134,7 +135,7 @@ function mostrarBuscador() {
       const pestana = Object.assign(document.createElement("button"), { className: "categoria", title: `${c.nombre} (${cantidad})` });
       pestana.setAttribute("role", "tab");
       pestana.setAttribute("aria-selected", String(c === categoria));
-      pestana.append(etiqueta(c.icono, "icono-categoria"), etiqueta(String(cantidad), "cantidad-categoria"), etiqueta(c.nombre, "nombre-categoria"));
+      pestana.append(icono(c.icono, "icono-categoria"), etiqueta(String(cantidad), "cantidad-categoria"), etiqueta(c.nombre, "nombre-categoria"));
       pestana.addEventListener("click", () => {
         buscador.categoria = c.id;
         buscador.pagina = 0;
