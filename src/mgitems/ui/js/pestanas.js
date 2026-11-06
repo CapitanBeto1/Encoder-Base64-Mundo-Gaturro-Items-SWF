@@ -101,6 +101,7 @@ const filaConImagen = (o) => [elementoIcono(o.ruta), etiqueta(o.clase, "nombre")
 const filaDeBase = (o) => [
   ...filaConImagen(o),
   ...(basesDeTodos ? [etiqueta(swfDeRuta(o.ruta), "ayuda swf-base")] : []),
-  etiqueta({ mochila: "🎒 mochila", prenda: "👕 guardarropa", casa: "🏠 casa" }[o.tipo] ?? `📦 ${o.tipo}`,
+  conIcono({ mochila: "backpack", prenda: "t-shirt", casa: "house" }[o.tipo] ?? "package",
+           { mochila: "mochila", prenda: "guardarropa", casa: "casa" }[o.tipo] ?? o.tipo,
            `ayuda tipo-${o.tipo === "mochila" ? "mochila" : "prenda"}`),
 ];

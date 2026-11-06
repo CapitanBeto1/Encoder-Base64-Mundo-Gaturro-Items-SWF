@@ -5,21 +5,21 @@
 // Cada categoría junta las Piezas que el juego usa en esas Partes; tocar una la pone en `parte`.
 // `que` es lo que se lee debajo de cada Pieza: el casillero del Gaturro donde va.
 const CATEGORIAS = [
-  { id: "hats", nombre: "Sombreros", que: "Sombrero", icono: "🎩", partes: ["hats"] },
-  { id: "hairs", nombre: "Pelos", que: "Pelo", icono: "💇", partes: ["hairs"] },
-  { id: "mouths", nombre: "Bocas", que: "Boca", icono: "👄", partes: ["mouths"] },
-  { id: "accesories", nombre: "Accesorios", que: "Accesorio", icono: "👓", partes: ["accesories", "accesories2"] },
-  { id: "neck", nombre: "Cuello", que: "Cuello", icono: "🧣", partes: ["neck"] },
-  { id: "cloth", nombre: "Torso", que: "Torso", icono: "👕", partes: ["cloth", "clothFront"] },
-  { id: "arm", nombre: "Mangas", que: "Brazos", icono: "💪", partes: ["arm", "armFore", "armBack"] },
-  { id: "clothBack", nombre: "Espalda", que: "Espalda", icono: "🎒", partes: ["clothBack"] },
-  { id: "grip", nombre: "Mano", que: "Mano", icono: "✋", partes: ["grip", "gripFore", "gripBack", "glove", "gloveFore", "gloveBack"] },
-  { id: "leg", nombre: "Piernas", que: "Piernas", icono: "👖", partes: ["leg"] },
-  { id: "foot", nombre: "Pies", que: "Pies", icono: "👟", partes: ["foot"] },
-  { id: "transport", nombre: "Transportes", que: "Transporte", icono: "🛹", partes: ["transport"] },
-  { id: "otros", nombre: "Otros", icono: "✨", partes: [] },
+  { id: "hats", nombre: "Sombreros", que: "Sombrero", icono: "baseball-cap", partes: ["hats"] },
+  { id: "hairs", nombre: "Pelos", que: "Pelo", icono: "hair-dryer", partes: ["hairs"] },
+  { id: "mouths", nombre: "Bocas", que: "Boca", icono: "smiley", partes: ["mouths"] },
+  { id: "accesories", nombre: "Accesorios", que: "Accesorio", icono: "eyeglasses", partes: ["accesories", "accesories2"] },
+  { id: "neck", nombre: "Cuello", que: "Cuello", icono: "coat-hanger", partes: ["neck"] },
+  { id: "cloth", nombre: "Torso", que: "Torso", icono: "t-shirt", partes: ["cloth", "clothFront"] },
+  { id: "arm", nombre: "Mangas", que: "Brazos", icono: "hand-fist", partes: ["arm", "armFore", "armBack"] },
+  { id: "clothBack", nombre: "Espalda", que: "Espalda", icono: "backpack", partes: ["clothBack"] },
+  { id: "grip", nombre: "Mano", que: "Mano", icono: "hand", partes: ["grip", "gripFore", "gripBack", "glove", "gloveFore", "gloveBack"] },
+  { id: "leg", nombre: "Piernas", que: "Piernas", icono: "pants", partes: ["leg"] },
+  { id: "foot", nombre: "Pies", que: "Pies", icono: "sneaker", partes: ["foot"] },
+  { id: "transport", nombre: "Transportes", que: "Transporte", icono: "scooter", partes: ["transport"] },
+  { id: "otros", nombre: "Otros", icono: "sparkle", partes: [] },
   // Los objetos de la casa: solo los muestra una acción (no visten al Gaturro).
-  { id: "decoracion", nombre: "Decoración", icono: "🛋️", partes: [], solo: "acciones" },
+  { id: "decoracion", nombre: "Decoración", icono: "couch", partes: [], solo: "acciones" },
 ];
 const categoriasDeLaVista = () => CATEGORIAS.filter((c) => !c.solo || c.solo === vista);
 // Para qué usa el juego una Pieza que no viste al Gaturro (sin uso conocido: "Objeto").
@@ -112,7 +112,8 @@ function mostrarFuentes() {
       ? [etiqueta("todos los SWF del juego", "chip-fuente")]
       : fuentes.swfs.map((swf) => {
           const chip = etiqueta(swf, "chip-fuente");
-          const quitar = Object.assign(document.createElement("button"), { className: "quitar", textContent: "✕", title: `Sacar ${swf} de las fuentes` });
+          const quitar = Object.assign(document.createElement("button"), { className: "quitar", title: `Sacar ${swf} de las fuentes` });
+          quitar.append(icono("x"));
           quitar.addEventListener("click", () => {
             fuentes.swfs = fuentes.swfs.filter((s) => s !== swf);
             guardarFuentes();
@@ -137,7 +138,7 @@ function mostrarInventario() {
       const pestana = Object.assign(document.createElement("button"), { className: "categoria", title: `${c.nombre} (${cantidad})` });
       pestana.setAttribute("role", "tab");
       pestana.setAttribute("aria-selected", String(c === categoria));
-      pestana.append(etiqueta(c.icono, "icono-categoria"), etiqueta(String(cantidad), "cantidad-categoria"), etiqueta(c.nombre, "nombre-categoria"));
+      pestana.append(icono(c.icono, "icono-categoria"), etiqueta(String(cantidad), "cantidad-categoria"), etiqueta(c.nombre, "nombre-categoria"));
       pestana.addEventListener("click", () => {
         inventario.categoria = c.id;
         inventario.pagina = 0;

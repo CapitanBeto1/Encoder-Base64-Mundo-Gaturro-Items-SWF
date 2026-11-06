@@ -38,7 +38,8 @@ function mostrarArmadoTrucar() {
     ...lookActual.lista.map((t, i) => {
       const li = document.createElement("li");
       li.title = `${t.pieza} en ${nombreDeParte(t.parte)}, en el Item ${t.base}`;
-      const quitar = Object.assign(document.createElement("button"), { className: "quitar", textContent: "✕", title: "Sacar de la lista" });
+      const quitar = Object.assign(document.createElement("button"), { className: "quitar", title: "Sacar de la lista" });
+      quitar.append(icono("x"));
       quitar.addEventListener("click", () => {
         lookActual.lista.splice(i, 1);
         mostrarEncode(null);

@@ -47,7 +47,7 @@ function tarjetaDeComponente(c) {
 
   const marca = document.createElement("span");
   marca.className = "marca";
-  marca.textContent = c.ok ? "✓" : "✗";
+  marca.append(icono(c.ok ? "check" : "x"));
   marca.setAttribute("aria-label", c.ok ? "Listo" : "Falta");
 
   const titulo = document.createElement("span");
@@ -150,7 +150,8 @@ function mostrarPasos(pasos) {
     ...pasos.map((p) => {
       const fila = document.createElement("li");
       fila.className = p.ok ? "ok" : "falla";
-      const marca = Object.assign(document.createElement("span"), { className: "marca", textContent: p.ok ? "✓" : "✗" });
+      const marca = Object.assign(document.createElement("span"), { className: "marca" });
+      marca.append(icono(p.ok ? "check" : "x"));
       const nombre = Object.assign(document.createElement("span"), { textContent: p.nombre });
       fila.append(marca, nombre);
       if (p.detalle) fila.append(Object.assign(document.createElement("span"), { className: "detalle", textContent: p.detalle }));
