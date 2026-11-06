@@ -161,17 +161,9 @@ function mostrarBarraLook() {
   const listo = conectado && !ocupado;
   $("aplicar-look").disabled = !listo || !n;
   $("entregar-look").disabled = $("ver-encode").disabled = !listo || !$("encode").value;
-  $("resumen-look").textContent = $("encode").value
-    ? $("resumen").textContent
-    : vista === "acciones"
-      ? n ? "Tocá «Aplicar acción» para generar el Encode." : "Elegí la animación y el Item donde se guarda."
-      : esFondos()
-      ? n ? "Tocá «Convertir todos» para generar el Encode." : "Elegí un objeto y su fondo, y agregalo a la lista."
-      : esNpc()
-      ? n ? "Tocá «Convertir todos» para generar el Encode." : "Elegí un Item y qué hace, y agregalo a la lista."
-      : vista === "trucar"
-      ? n ? "Tocá «Trucar todas» para generar el Encode." : "Armá una Prenda trucada y agregala a la lista."
-      : n ? "Tocá «Aplicar Look» para generar el Encode." : "Elegí las Piezas del Look.";
+  // Lo que falta hacer lo dice la guía de arriba; acá, lo que trae el Encode.
+  $("resumen-look").textContent = $("encode").value ? $("resumen").textContent : "";
+  mostrarGuia();
 }
 
 async function aplicarLook() {

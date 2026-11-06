@@ -222,6 +222,9 @@ main.modo-trucar .casilleros { display: none; }
 .armario #ayuda-grilla:empty { display: none; }
 .numero-pagina { flex: none; align-self: center; color: #fff; font-size: 12px; }
 
+/* «Agregar a la lista», en un renglón aunque la tarjeta sea angosta. */
+#agregar-trucada, #agregar-npc { white-space: nowrap; padding-left: 14px; padding-right: 14px; }
+
 /* Abajo: aplicar y agregar al juego. */
 .barra-look { flex: none; display: flex; align-items: center; gap: 8px; }
 .barra-look #resumen-look { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

@@ -56,9 +56,9 @@
   <header class="barra">
     <div class="marca">
       <h1 class="logo">MG Items</h1>
-      <p class="subtitulo">Agregá Items a tu inventario de Mundo Gaturro</p>
     </div>
     <button id="abrir-entorno" class="estado-entorno" disabled>
+      <span data-icono="gear"></span>
       <span id="indicador-entorno" class="indicador" aria-hidden="true"></span>
       Configuración
     </button>
@@ -70,15 +70,21 @@
   </div>
 
   <nav class="pestanas" role="tablist">
-    <button id="pestana-agregar" class="pestana" role="tab" aria-selected="true" aria-controls="vista-agregar">Agregar Items</button>
-    <button id="pestana-trucar" class="pestana" role="tab" aria-selected="false" aria-controls="vista-looks">Trucar Prenda</button>
-    <button id="pestana-looks" class="pestana" role="tab" aria-selected="false" aria-controls="vista-looks">Looks</button>
-    <button id="pestana-acciones" class="pestana" role="tab" aria-selected="false" aria-controls="vista-looks">Acciones</button>
-    <button id="pestana-tiendas" class="pestana" role="tab" aria-selected="false" aria-controls="vista-looks">Tiendas</button>
-    <button id="pestana-portales" class="pestana" role="tab" aria-selected="false" aria-controls="vista-looks">Portales</button>
-    <button id="pestana-minijuegos" class="pestana" role="tab" aria-selected="false" aria-controls="vista-looks">Minijuegos</button>
-    <button id="pestana-fondos" class="pestana" role="tab" aria-selected="false" aria-controls="vista-looks">Fondos</button>
+    <span class="grupo-pestanas" role="presentation">Items</span>
+    <button id="pestana-agregar" class="pestana" role="tab" aria-selected="true" aria-controls="vista-agregar"><span data-icono="plus-circle"></span> Agregar Items</button>
+    <span class="grupo-pestanas" role="presentation">Ropa y Gaturro</span>
+    <button id="pestana-trucar" class="pestana" role="tab" aria-selected="false" aria-controls="vista-looks"><span data-icono="magic-wand"></span> Trucar Prenda</button>
+    <button id="pestana-looks" class="pestana" role="tab" aria-selected="false" aria-controls="vista-looks"><span data-icono="t-shirt"></span> Looks</button>
+    <button id="pestana-acciones" class="pestana" role="tab" aria-selected="false" aria-controls="vista-looks"><span data-icono="person-simple-run"></span> Acciones</button>
+    <span class="grupo-pestanas" role="presentation">Para la casa</span>
+    <button id="pestana-tiendas" class="pestana" role="tab" aria-selected="false" aria-controls="vista-looks"><span data-icono="storefront"></span> Tiendas</button>
+    <button id="pestana-portales" class="pestana" role="tab" aria-selected="false" aria-controls="vista-looks"><span data-icono="door-open"></span> Portales</button>
+    <button id="pestana-minijuegos" class="pestana" role="tab" aria-selected="false" aria-controls="vista-looks"><span data-icono="game-controller"></span> Minijuegos</button>
+    <button id="pestana-fondos" class="pestana" role="tab" aria-selected="false" aria-controls="vista-looks"><span data-icono="images-square"></span> Fondos</button>
   </nav>
+
+  <!-- En qué paso de la pestaña estás (los pasos de cada una, en PESTANA). -->
+  <ol id="guia" class="guia" aria-label="Pasos"></ol>
 
   <main class="paneles modo-agregar">
     <section class="panel">
@@ -534,6 +540,7 @@
   <script src="js/inventario.js"></script>
   <script src="js/gaturro.js"></script>
   <script src="js/editor.js"></script>
+  <script src="js/guia.js"></script>
   <script src="js/trucar.js"></script>
   <script src="js/npcs.js"></script>
   <script src="js/acciones.js"></script>
