@@ -22,6 +22,14 @@ Al cambiar código, mantené esta forma (el porqué de cada punto: `docs/adr/000
 - **Atributos de un Item**: van en el Encode (`inventory.addOptions`, `script.generar_script_con_atributos`); trucar el SWF es solo para Acciones y Trucar Prenda.
 - **Reusá antes de escribir**: `mostrarPaginas`, `convertir_en_npcs`, `guardados`, `dePestana`… ya existen. Lo que queda sin uso se borra en el mismo PR.
 
+## Interfaz y experiencia
+
+Al cambiar la interfaz, seguí estos criterios (de las skills `principle-experience-first` y `principle-redesign-from-first-principles` de cursor/plugins):
+
+- **La experiencia primero**: cuando lo cómodo de programar choca con lo mejor para el usuario, gana el usuario. Cada botón, opción y texto se justifica o se va. Pocas cosas bien terminadas antes que muchas a medio hacer: transiciones, alineación, espacios, respuesta a cada acción, estados de carga y de error.
+- **Prototipo antes que producción**: las decisiones de diseño se prueban en la rama `prototipo-ui` (variantes sobre el programa real, con una barra para cambiarlas) y el usuario elige. A `main` va solo lo elegido, reescrito con las reglas de arriba.
+- **Rediseñar desde cero, entregar de a partes**: lo nuevo no se pega encima de lo que hay. Pensá cómo sería el diseño si se escribiera hoy sabiendo lo nuevo, llevalo a todo lo que toca (código, `GLOSSARY.md`, ADR) y entregalo en PRs chicos.
+
 ## Agent skills
 
 ### Issue tracker
