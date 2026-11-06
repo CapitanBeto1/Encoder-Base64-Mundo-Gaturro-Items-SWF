@@ -387,17 +387,27 @@ const observador = new MutationObserver((cambios) => {
     window.__ronda = cambios.slice(0, 8).map((c) => `${c.target.id || c.target.className || c.target.tagName} +${[...c.addedNodes].map((n) => n.nodeType === 3 ? JSON.stringify(n.nodeValue.slice(0, 30)) : (n.className || n.tagName)).join(",")} -${c.removedNodes.length}`);
     return;
   }
+  // Una tanda puede traer miles de filas («Agregar todos»): lo de cada fila tiene que costar poco y no depender de
+  // cuántas hay; lo de toda la página, una vez por tanda.
+  let hubo = false;
   for (const c of cambios) {
     for (const n of c.addedNodes) {
       const el = n.nodeType === 3 ? n.parentElement : n;
       if (!el || el.nodeType !== 1 || el.closest(".barra-prototipo, .capa-carga")) continue;
+      hubo = true;
       cambiarEmojis(el);
       buscarTextosDeCarga(el);
-      pulirTextos(el);
-      if (el.tagName === "LI" && el.parentElement) el.style.setProperty("--n", [...el.parentElement.children].indexOf(el));
+      if (el.tagName === "LI") el.style.setProperty("--n", posicionHasta20(el));
     }
   }
+  if (hubo) pulirTextos(document.body);
 });
+// La animación de entrada solo escalona las primeras 20: más atrás no hace falta mirar.
+function posicionHasta20(el) {
+  let i = 0;
+  for (let x = el.previousElementSibling; x && i < 20; x = x.previousElementSibling) i++;
+  return i;
+}
 observador.observe(document.body, { childList: true, subtree: true });
 
 cambiarEmojis(document.body);

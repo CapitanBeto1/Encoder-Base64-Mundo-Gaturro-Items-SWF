@@ -195,7 +195,7 @@ body > div.barra-prototipo {
 [data-toques="si"] .pieza-grilla:active:not(:disabled) { transform: translateY(0) scale(0.95); }
 [data-toques="si"] button:active:not(:disabled):not(.pieza-grilla) { transform: translateY(2px); }
 [data-toques="si"] :is(#grilla-items, #grilla-piezas, .grilla-comportamientos) > li,
-[data-toques="si"] .lista > li { animation: entrar 0.28s ease-out both; animation-delay: calc(min(var(--n, 0), 20) * 15ms); }
+[data-toques="si"] .lista > li:nth-child(-n + 30) { animation: entrar 0.28s ease-out both; animation-delay: calc(min(var(--n, 0), 20) * 15ms); }
 [data-toques="si"] .mensaje:not(:empty) { animation: aparecer 0.3s ease-out; }
 [data-toques="si"] .vista:not([hidden]) { animation: aparecer-vista 0.22s ease-out; }
 @keyframes entrar { from { opacity: 0; transform: translateY(8px) scale(0.96); } }
