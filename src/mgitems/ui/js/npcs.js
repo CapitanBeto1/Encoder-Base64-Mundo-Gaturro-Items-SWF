@@ -232,8 +232,7 @@ function mostrarArmadoFondo() {
   );
   if (base && !Array.isArray(cuadros)) cuadrosDe(base).then((c) => c && esFondos() && lookActual.base === base && mostrarArmadoNpc());
   $("aviso-npc").textContent = base
-    ? "Llega a la casa mostrando ese fondo, y así lo ven todos. Si lo tocás en tu casa, pasa al siguiente. "
-      + "Podés agregar el mismo objeto con otros cuadros: cada uno llega como un objeto aparte."
+    ? "Lo ven todos en tu casa; al tocarlo, pasa al cuadro siguiente. Cada cuadro que sumes llega aparte."
     : "";
   $("agregar-npc").disabled = !conectado || ocupado || !base || !cuadro;
 }
@@ -292,9 +291,6 @@ function mostrarListaNpc() {
       return li;
     })
   );
-  if (!lookActual.lista.length) {
-    $("lista-trucadas").append(etiqueta(esFondos() ? "Elegí un objeto y su fondo, y tocá «Agregar a la lista»." : "Elegí un Item y qué hace, y tocá «Agregar a la lista».", "ayuda"));
-  }
   cargarIconos([...(base ? [base] : []), ...lookActual.lista.map((t) => t.base)]);
 }
 

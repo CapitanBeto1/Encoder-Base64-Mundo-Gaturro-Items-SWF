@@ -107,7 +107,7 @@ async function dibujarAccion() {
   if (pedidosGaturro.get(img) !== pedido) return;
   if (!resultado.ok) return ($("estado-gaturro").textContent = resultado.error);
   const avisos = [...resultado.avisos, ...(resultado.aviso ? [resultado.aviso] : [])];
-  $("estado-gaturro").replaceChildren(...avisos.map((a) => etiqueta(a, "aviso-gaturro")));
+  $("estado-gaturro").replaceChildren(...avisos.map((a) => Object.assign(etiqueta(a, "aviso-gaturro"), { title: a })));
   if (!resultado.imagenes.length) {
     // Sin la animación, el Gaturro quieto con lo de la cabeza (lo que el juego muestra antes de usar el Item).
     await pedirGaturro(img, coloresDe(lookActual), partes.effect ? { effect: partes.effect } : {});

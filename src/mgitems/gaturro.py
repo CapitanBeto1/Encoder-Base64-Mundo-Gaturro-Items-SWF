@@ -26,7 +26,7 @@ from mgitems.iconos import IconosItems
 
 CLASE_CUERPO = "assets.GaturroMC"
 # SWF de assets del juego que traen `assets.GaturroMC` sin cifrar (el mismo dibujo en los dos).
-# Son una versión anterior a la del cliente actual (ver `es_version_anterior`).
+# Son una versión anterior a la del cliente actual: sin lugar para «Accesorio 2» (se agrega como en el juego).
 SWF_CUERPO = ("fashion_nuevo", "superHeroesTrajes")
 
 # Un maniquí de 2025 armado con la plantilla del Gaturro (sus huecos coinciden con los del Gaturro al
@@ -53,12 +53,8 @@ def pose_de_transporte(tipo: str) -> str:
     """El cuadro del Gaturro con un vehículo de ese tipo (`Gaturro.transportLabel`)."""
     return f"transportStand_{tipo}" if tipo else "transportStand"
 
-# La versión actual no está publicada sin cifrar.
-AVISO_VERSION_ANTERIOR = ("Gaturro de una versión anterior del juego: el iris y el lugar de «Accesorio 2» se agregan como "
-                          "están en el juego actual.")
 _MARCA_NARIZ = 'data-mgitems="nariz"'
 _RELLENO_DE_LA_NARIZ = "#FB8CBB"  # el color de nariz de fábrica del juego (COLOR4_DEFAULT)
-_MARCA_ACCESORIO_2 = 'data-mgitems="como-accesories"'
 
 # Colores de fábrica del juego (ColorPickerModal): pelaje, panza y ojos.
 COLORES = {"color1": "#FFF200", "color2": "#DDB42D", "color3": "#FFFFFF", "color4": "#FB8CBB"}
@@ -137,12 +133,6 @@ def tiene_color_de_nariz(cuerpo: str) -> bool:
     return any(nombre not in _CLIP_DE_COLOR for nombre in re.findall(r'\bid="(color[A-Za-z0-9]*)"', cuerpo))
 
 
-def es_version_anterior(cuerpo: str) -> bool:
-    """El Gaturro del juego actual tiene un lugar para «Accesorio 2»; el de las copias publicadas, no
-    (el que agrega `accesorio_2_como_accesorio` no cuenta)."""
-    return not tiene_lugar(cuerpo, "accesories2") or _MARCA_ACCESORIO_2 in cuerpo
-
-
 def sin_sombra(cuerpo: str) -> str:
     """El cuerpo sin la sombra que trae `GaturroMC` en su primera capa (una forma sin nombre, antes de
     `transport`). En el juego la sombra queda centrada debajo de los pies; con este cuerpo queda corrida,
@@ -171,7 +161,7 @@ def accesorio_2_como_accesorio(cuerpo: str) -> str:
     accesorio = _hueco("accesories").search(cuerpo)
     if not accesorio:
         return cuerpo
-    segundo = accesorio.group(0).replace('id="accesories"', f'id="accesories2" {_MARCA_ACCESORIO_2}', 1)
+    segundo = accesorio.group(0).replace('id="accesories"', 'id="accesories2"', 1)
     return cuerpo.replace(accesorio.group(0), accesorio.group(0) + segundo, 1)
 
 
