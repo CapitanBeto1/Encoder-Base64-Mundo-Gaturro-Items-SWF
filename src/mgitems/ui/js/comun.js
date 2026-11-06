@@ -24,16 +24,26 @@ const avisarLista = (texto, tipo) => avisar($("mensaje"), texto, tipo);
 const avisarEncode = (texto, tipo) => avisar($("mensaje-encode"), texto, tipo);
 
 // Mientras el núcleo trabaja se bloquean los botones y se muestra qué está pasando.
-async function mientras(texto, tarea) {
+async function trabando(tarea) {
   ocupado++;
   actualizarControles();
-  avisarLista(texto, "progreso");
   try {
     return await tarea();
   } finally {
     ocupado--;
     actualizarControles();
   }
+}
+
+// Una acción dice qué está haciendo («Aplicando el Look…»).
+function mientras(texto, tarea) {
+  avisarLista(texto, "progreso");
+  return trabando(tarea);
+}
+
+// Una carga muestra su esqueleto en el lugar de lo que viene (js/cargas.js).
+function cargando(lugar, forma, tarea) {
+  return trabando(() => conEsqueleto(lugar, forma, tarea));
 }
 
 // Agrega rutas nuevas con cantidad 1; las que ya están en la lista no cambian.
@@ -154,6 +164,7 @@ function actualizarControles() {
 // --- Imágenes de los Items ---
 
 const imagenes = new Map(); // ruta del Item → data URL, o null si no tiene
+const preparandose = new Set(); // SWF cuyas imágenes se están preparando: las que faltan, todavía llegan
 
 function elementoIcono(ruta) {
   const caja = document.createElement("span");
@@ -167,12 +178,15 @@ function pintarIcono(caja) {
   const src = imagenes.get(caja.dataset.ruta);
   if (src) {
     caja.replaceChildren(Object.assign(document.createElement("img"), { src, alt: "" }));
-    caja.classList.remove("sin-imagen");
+    caja.classList.remove("sin-imagen", "llegando");
     caja.title = "";
   } else {
+    // Todavía no se pidió, o su SWF se está preparando: va a llegar (js/cargas.js le pone el brillo de carga).
+    const llegando = !imagenes.has(caja.dataset.ruta) || preparandose.has(swfDeRuta(caja.dataset.ruta));
     caja.replaceChildren();
     caja.classList.add("sin-imagen");
-    caja.title = imagenes.has(caja.dataset.ruta) ? "Sin imagen" : "";
+    caja.classList.toggle("llegando", llegando);
+    caja.title = llegando ? "" : "Sin imagen";
   }
 }
 
@@ -402,7 +416,7 @@ async function generar() {
   if (vista === "trucar") return trucarPrenda();
   if (vista === "looks") return aplicarLook();
   if (vista === "acciones") return aplicarAccion();
-  const resultado = await api().generar_encode(items);
+  const resultado = await conEsqueleto($("encode"), "encode", () => api().generar_encode(items));
   if (!resultado.ok) return avisarEncode(resultado.error, "error");
   mostrarEncode(resultado);
   if (!resultado.avisos.length) return avisarEncode("Encode generado.", "exito");

@@ -56,8 +56,8 @@ async function usarBasesDeTodos() {
   $("swf-base").value = "";
   basesDelSwf = [];
   mostrarBases();
-  avisar($("mensaje-base"), "Leyendo los Items base de todos los SWF…");
-  const resultado = await api().items_de_swfs(null);
+  avisar($("mensaje-base"), "");
+  const resultado = await conEsqueleto($("lista-bases"), "filas", () => api().items_de_swfs(null));
   if (pedido !== pedidoBases) return;
   if (!resultado.ok) return avisar($("mensaje-base"), resultado.error, "error");
   basesDelSwf = resultado.items.filter((i) => (cualquierItem() || i.tipo === "prenda" || i.tipo === "mochila") && i.destino !== "descartado" && !i.no_sirve_de_base);
@@ -74,9 +74,9 @@ async function usarBasesDe(swf) {
   $("swf-base").value = swf;
   basesDelSwf = [];
   mostrarBases();
-  avisar($("mensaje-base"), `Leyendo los Items base de ${swf}… (la primera vez tarda unos segundos)`);
+  avisar($("mensaje-base"), "");
   // En Acciones, Tiendas, Portales y Minijuegos sirve cualquier Item (del índice, sin los que el juego descarta).
-  const resultado = cualquierItem() ? await api().items_de_swfs([swf]) : await api().items_base(swf);
+  const resultado = await conEsqueleto($("lista-bases"), "filas", () => (cualquierItem() ? api().items_de_swfs([swf]) : api().items_base(swf)));
   if (pedido !== pedidoBases) return;
   if (!resultado.ok) return avisar($("mensaje-base"), resultado.error, "error");
   if (cualquierItem() && resultado.errores?.[swf]) return avisar($("mensaje-base"), resultado.errores[swf], "error");

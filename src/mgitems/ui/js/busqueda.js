@@ -149,10 +149,10 @@ async function buscarCaptura() {
   if (!busqueda.imagen || !busqueda.listos || busqueda.buscando) return;
   busqueda.buscando = true;
   mostrarBusqueda();
-  avisar($("mensaje-imagen"), "Buscando…", "progreso");
+  avisar($("mensaje-imagen"), "");
   try {
-    const resultado = await api().buscar_por_imagen(busqueda.imagen, busqueda.recorte, busqueda.que || null,
-      busqueda.se_parece, busqueda.descartados);
+    const resultado = await conEsqueleto($("resultados-imagen"), "tarjetas", () => api().buscar_por_imagen(
+      busqueda.imagen, busqueda.recorte, busqueda.que || null, busqueda.se_parece, busqueda.descartados));
     if (!resultado.ok) return avisar($("mensaje-imagen"), resultado.error, "error");
     busqueda.resultados = resultado.resultados;
     mostrarResultadosImagen(resultado.resultados);
