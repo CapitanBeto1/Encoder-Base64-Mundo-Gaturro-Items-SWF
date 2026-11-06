@@ -1,0 +1,46 @@
+/* Los toques: el programa responde a lo que hacés con movimientos cortos. */
+
+/* Las tarjetas de las grillas suben al pasar el mouse y se hunden al tocarlas. */
+.pieza-grilla { transition: transform 0.12s ease, box-shadow 0.12s ease; }
+.pieza-grilla:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 5px 0 rgba(0, 0, 0, 0.18); }
+.pieza-grilla:active:not(:disabled) { transform: translateY(0) scale(0.95); }
+
+/* Los botones se hunden al apretarlos. */
+button:active:not(:disabled):not(.pieza-grilla) { transform: translateY(2px); }
+
+/* Lo que entra a una grilla o a «Items a recibir» aparece de abajo, de a uno (las primeras 20 tarjetas). */
+:is(#grilla-items, #grilla-piezas, #grilla-comportamientos) > li:not(.esqueleto),
+.lista > li:nth-child(-n + 30) { animation: entrar 0.28s ease-out both; }
+:is(#grilla-items, #grilla-piezas, #grilla-comportamientos) > li:nth-child(1) { animation-delay: 0ms; }
+:is(#grilla-items, #grilla-piezas, #grilla-comportamientos) > li:nth-child(2) { animation-delay: 15ms; }
+:is(#grilla-items, #grilla-piezas, #grilla-comportamientos) > li:nth-child(3) { animation-delay: 30ms; }
+:is(#grilla-items, #grilla-piezas, #grilla-comportamientos) > li:nth-child(4) { animation-delay: 45ms; }
+:is(#grilla-items, #grilla-piezas, #grilla-comportamientos) > li:nth-child(5) { animation-delay: 60ms; }
+:is(#grilla-items, #grilla-piezas, #grilla-comportamientos) > li:nth-child(6) { animation-delay: 75ms; }
+:is(#grilla-items, #grilla-piezas, #grilla-comportamientos) > li:nth-child(7) { animation-delay: 90ms; }
+:is(#grilla-items, #grilla-piezas, #grilla-comportamientos) > li:nth-child(8) { animation-delay: 105ms; }
+:is(#grilla-items, #grilla-piezas, #grilla-comportamientos) > li:nth-child(9) { animation-delay: 120ms; }
+:is(#grilla-items, #grilla-piezas, #grilla-comportamientos) > li:nth-child(10) { animation-delay: 135ms; }
+:is(#grilla-items, #grilla-piezas, #grilla-comportamientos) > li:nth-child(11) { animation-delay: 150ms; }
+:is(#grilla-items, #grilla-piezas, #grilla-comportamientos) > li:nth-child(12) { animation-delay: 165ms; }
+:is(#grilla-items, #grilla-piezas, #grilla-comportamientos) > li:nth-child(13) { animation-delay: 180ms; }
+:is(#grilla-items, #grilla-piezas, #grilla-comportamientos) > li:nth-child(14) { animation-delay: 195ms; }
+:is(#grilla-items, #grilla-piezas, #grilla-comportamientos) > li:nth-child(15) { animation-delay: 210ms; }
+:is(#grilla-items, #grilla-piezas, #grilla-comportamientos) > li:nth-child(16) { animation-delay: 225ms; }
+:is(#grilla-items, #grilla-piezas, #grilla-comportamientos) > li:nth-child(17) { animation-delay: 240ms; }
+:is(#grilla-items, #grilla-piezas, #grilla-comportamientos) > li:nth-child(18) { animation-delay: 255ms; }
+:is(#grilla-items, #grilla-piezas, #grilla-comportamientos) > li:nth-child(19) { animation-delay: 270ms; }
+:is(#grilla-items, #grilla-piezas, #grilla-comportamientos) > li:nth-child(20) { animation-delay: 285ms; }
+
+/* Un mensaje nuevo y la pestaña que se abre aparecen, en vez de estar de golpe. */
+.mensaje:not(:empty) { animation: aparecer 0.3s ease-out; }
+.vista:not([hidden]) { animation: aparecer-vista 0.22s ease-out; }
+
+@keyframes entrar { from { opacity: 0; transform: translateY(8px) scale(0.96); } }
+@keyframes aparecer { from { opacity: 0; transform: scale(0.9); } }
+@keyframes aparecer-vista { from { opacity: 0; transform: translateY(6px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .pieza-grilla, .pieza-grilla:hover:not(:disabled), .pieza-grilla:active:not(:disabled), button:active:not(:disabled) { transition: none; transform: none; }
+  :is(#grilla-items, #grilla-piezas, #grilla-comportamientos) > li, .lista > li, .mensaje:not(:empty), .vista:not([hidden]) { animation: none; }
+}
