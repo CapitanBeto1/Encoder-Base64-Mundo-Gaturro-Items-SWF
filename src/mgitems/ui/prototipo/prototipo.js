@@ -27,7 +27,8 @@ function aplicarVariantes() {
   pintarBarra();
   document.querySelectorAll(".pi").forEach(pintarIcono);
   pulirTextos(document.body);
-  for (const r of regiones.values()) { r.capa?.remove(); r.capa = null; }
+  for (const r of regiones.values()) { r.capa?.remove(); r.capa = null; r.el?.classList.remove("bajo-esqueleto"); }
+  if (html.dataset.carga !== "esqueleto") document.querySelectorAll(".bajo-esqueleto").forEach((x) => x.classList.remove("bajo-esqueleto"));
 }
 
 function cambiar(ejeId, paso) {
@@ -88,6 +89,8 @@ const EMOJI_A_ICONO = {
   "🎨": "palette", "📋": "clipboard",
 };
 const PATRON_EMOJI = new RegExp(`(${Object.keys(EMOJI_A_ICONO).join("|")})️?`, "gu");
+// Para saber si hay alguno: sin «g», que guarda dónde quedó la última búsqueda y haría saltear emojis.
+const HAY_EMOJI = new RegExp(PATRON_EMOJI.source, "u");
 // Las ventanas que copian las del juego quedan idénticas al juego.
 const SIN_CAMBIOS = "#dialogo-mis-looks, #dialogo-colores, [data-sin-iconos], option, select, textarea, script, style";
 const ESTILO = { relleno: "fill", trazo: "bold", duotono: "duotone" };
@@ -104,8 +107,7 @@ function cambiarEmojis(raiz) {
   const recorrido = document.createTreeWalker(raiz, NodeFilter.SHOW_TEXT);
   const nodos = [];
   for (let n = recorrido.nextNode(); n; n = recorrido.nextNode()) {
-    PATRON_EMOJI.lastIndex = 0;
-    if (PATRON_EMOJI.test(n.nodeValue) && !n.parentElement?.closest(SIN_CAMBIOS) && !n.parentElement?.closest(".pi")) nodos.push(n);
+    if (HAY_EMOJI.test(n.nodeValue) && !n.parentElement?.closest(SIN_CAMBIOS) && !n.parentElement?.closest(".pi")) nodos.push(n);
   }
   for (const nodo of nodos) {
     const partes = document.createDocumentFragment();
@@ -134,6 +136,9 @@ for (const [pestana, icono] of Object.entries(ICONO_PESTANA)) {
   caja.dataset.sinIconos = "";
   b.prepend(caja);
 }
+// El dibujo de «sin imagen», como máscara para el CSS.
+html.style.setProperty("--icono-sin-imagen",
+  `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'>${ICONOS_PROTOTIPO["image"].bold}</svg>`)}")`);
 const engranaje = Object.assign(document.createElement("span"), { className: "icono-pestana icono-config", innerHTML: svg("gear", "bold") });
 engranaje.dataset.sinIconos = "";
 $id("abrir-entorno")?.prepend(engranaje);
@@ -148,7 +153,7 @@ const CORTOS = {
 
 function pulirTextos(raiz) {
   const pulido = html.dataset.textos === "pulido";
-  for (const el of (raiz.querySelectorAll ? raiz.querySelectorAll(".aviso-gaturro") : [])) el.hidden = pulido && SOBRA.some((r) => r.test(el.textContent));
+  for (const el of document.querySelectorAll(".aviso-gaturro")) el.hidden = pulido && SOBRA.some((r) => r.test(el.textContent));
   for (const el of document.querySelectorAll("#lista-vacia, #resumen")) {
     if (el.dataset.original === undefined || (el.textContent !== el.dataset.original && el.textContent !== CORTOS[el.dataset.original])) el.dataset.original = el.textContent;
     const corto = CORTOS[el.dataset.original];
@@ -163,7 +168,8 @@ function pulirTextos(raiz) {
 
 // Qué espera cada pedido al núcleo.
 const QUE_CARGA = {
-  items_de_swfs: "grilla", decoracion_de_swfs: "grilla", preparar_iconos: "grilla", items_base: "bases",
+  // (Las imágenes de cada Item tienen su propio brillo: no tapan la grilla.)
+  items_de_swfs: "grilla", decoracion_de_swfs: "grilla", items_base: "bases",
   comportamientos: "npc", fondos: "npc", buscar_comportamientos_en_el_juego: "npc", comportamiento: "npc",
   gaturro: "gaturro", animacion_de_accion: "gaturro",
   generar_encode: "encode", interpretar_items: "encode", importar_encode: "lista",
@@ -199,6 +205,7 @@ function terminar(clave) {
   if (!region) return;
   regiones.delete(clave);
   const capa = region.capa;
+  region.el?.classList.remove("bajo-esqueleto");
   capa?.classList.add("saliendo");
   setTimeout(() => capa?.remove(), 220);
 }
@@ -208,9 +215,11 @@ function terminar(clave) {
 function envolver(objeto, adentro = false) {
   for (const [nombre, valor] of Object.entries(objeto ?? {})) {
     if (typeof valor === "function") {
-      const forma = QUE_CARGA[nombre];
-      if (!forma || valor.__prototipo) continue;
+      if (valor.__prototipo || !(QUE_CARGA[nombre] || nombre === "preparar_iconos")) continue;
       const envuelta = async (...args) => {
+        // preparar_iconos(swf) lista las Piezas de un SWF (la grilla); sin SWF solo prepara imágenes, que tienen su brillo.
+        const forma = nombre === "preparar_iconos" ? (args[0] ? "grilla" : null) : QUE_CARGA[nombre];
+        if (!forma) return valor.apply(objeto, args);
         empezar(`api:${forma}`, DONDE[forma]);
         try { return await valor.apply(objeto, args); } finally { terminar(`api:${forma}`); }
       };
@@ -260,7 +269,8 @@ function armarCapa(region, el, forma) {
   const capa = document.createElement("div");
   capa.className = `capa-carga forma-${forma}`;
   capa.dataset.sinIconos = "";
-  const r = el.getBoundingClientRect();
+  const r0 = el.getBoundingClientRect();
+  const r = r0.height >= 60 || !el.parentElement ? r0 : { width: r0.width, height: Math.max(60, el.parentElement.getBoundingClientRect().bottom - r0.top - 10) };
   if (forma === "tarjetas") {
     // La misma grilla que la de verdad: las tarjetas vacías tienen el tamaño de las que vienen.
     const estilo = getComputedStyle(el);
@@ -296,9 +306,11 @@ function cuadro() {
     if (!conEsqueleto || performance.now() - region.desde < 120) continue; // lo que tarda poco no parpadea
     const { el, forma } = region.buscar?.() ?? {};
     if (!visible(el)) { region.capa?.remove(); region.capa = null; continue; }
-    if (!region.capa || region.el !== el) { region.capa?.remove(); armarCapa(region, el, forma); }
+    if (!region.capa || region.el !== el) { region.capa?.remove(); region.el?.classList.remove("bajo-esqueleto"); armarCapa(region, el, forma); }
+    el.classList.add("bajo-esqueleto");
     const r = el.getBoundingClientRect();
-    Object.assign(region.capa.style, { left: `${r.left}px`, top: `${r.top}px`, width: `${r.width}px`, height: `${r.height}px` });
+    const alto = r.height >= 60 || !el.parentElement ? r.height : Math.max(60, el.parentElement.getBoundingClientRect().bottom - r.top - 10);
+    Object.assign(region.capa.style, { left: `${r.left}px`, top: `${r.top}px`, width: `${r.width}px`, height: `${alto}px` });
   }
   requestAnimationFrame(cuadro);
 }
@@ -314,7 +326,14 @@ function probarCarga() {
 
 // ============ Todo lo que la interfaz agrega después también pasa por acá ============
 
-new MutationObserver((cambios) => {
+let vueltas = 0;
+setInterval(() => { vueltas = 0; }, 1000);
+const observador = new MutationObserver((cambios) => {
+  if (++vueltas > 2000) {
+    observador.disconnect();
+    window.__ronda = cambios.slice(0, 8).map((c) => `${c.target.id || c.target.className || c.target.tagName} +${[...c.addedNodes].map((n) => n.nodeType === 3 ? JSON.stringify(n.nodeValue.slice(0, 30)) : (n.className || n.tagName)).join(",")} -${c.removedNodes.length}`);
+    return;
+  }
   for (const c of cambios) {
     for (const n of c.addedNodes) {
       const el = n.nodeType === 3 ? n.parentElement : n;
@@ -325,10 +344,11 @@ new MutationObserver((cambios) => {
       if (el.tagName === "LI" && el.parentElement) el.style.setProperty("--n", [...el.parentElement.children].indexOf(el));
     }
   }
-}).observe(document.body, { childList: true, subtree: true });
+});
+observador.observe(document.body, { childList: true, subtree: true });
 
 cambiarEmojis(document.body);
 buscarTextosDeCarga(document.body);
 aplicarVariantes();
-window.prototipo = { elegido, aplicarVariantes, probarCarga };
+window.prototipo = { elegido, aplicarVariantes, probarCarga, observador };
 })();
