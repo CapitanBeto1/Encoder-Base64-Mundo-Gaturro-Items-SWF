@@ -202,12 +202,13 @@ button.primario:focus-visible {
   text-shadow: none;
 }
 
+/* Deshabilitado, el principal también queda gris claro (pasado a gris, el rojo quedaría oscuro y parecería activo). */
 button.primario:disabled {
   filter: none;
-  border-color: #f2c9c6;
-  background: linear-gradient(#efc2bf, #e3aaa6);
-  color: #fff7f6;
-  text-shadow: 0 1px 0 rgba(120, 40, 35, 0.35);
+  border-color: #dcd6c4;
+  background: linear-gradient(#ece8dc, #d9d3c2);
+  color: #8f8873;
+  text-shadow: none;
 }
 
 /* Agregar al juego: el botón grande, rojo con letras amarillas. */
