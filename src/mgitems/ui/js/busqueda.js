@@ -201,7 +201,7 @@ function mostrarResultadosImagen(resultados) {
       entero.forEach((e) => e.classList.add("icono-entero"));
       const marco = item.cortado ? Object.assign(document.createElement("span"), { className: "marco-gaturro" }) : imagen;
       if (item.cortado) marco.append(imagen);
-      boton.append(marco, ...entero, etiqueta(item.clase, "nombre-item"), etiqueta(item.swf, "swf-resultado"), llega,
+      boton.append(marco, ...entero, etiqueta(nombreConCortes(item.clase), "nombre-item"), etiqueta(item.swf, "swf-resultado"), llega,
         ...cortado, etiqueta(`${i + 1}`, "puesto-resultado"));
       if (item.pasaporte) marcarPasaporte(boton);
       boton.addEventListener("click", () => {

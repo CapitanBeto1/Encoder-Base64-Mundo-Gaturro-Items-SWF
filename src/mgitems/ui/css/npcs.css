@@ -15,7 +15,7 @@
 .aviso-npc { flex: none; margin: 0; padding: 0 12px; color: #fff3b0; font-size: 11px; text-align: center; }
 .aviso-npc:empty { display: none; }
 .cantidad-comportamientos { flex: none; color: var(--texto); font-size: 12px; }
-#filtro-comportamientos { flex: 1; font-size: 12px; padding: 4px 8px; }
+#filtro-comportamientos { flex: 1; min-height: 30px; font-size: 12px; padding: 4px 8px; }
 .grilla-comportamientos {
   flex: 1;
   min-height: 0;
@@ -46,7 +46,7 @@
 .icono-npc { display: grid; place-items: center; width: 100%; height: 100%; min-height: 0; color: #6b5a10; }
 .icono-npc svg { width: 40px; height: 40px; }
 .casillero-npc .nombre { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; color: var(--texto); }
-.casillero-npc .que-hace { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 9px; color: #5c4c00; }
+.casillero-npc .que-hace { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; color: #5c4c00; }
 .casillero-npc[aria-pressed="true"] { background: #6fc054; border-color: #2f6421; box-shadow: inset 0 0 0 3px #2f6421; }
 #lista-trucadas .cantidad-npc { width: 44px; padding: 0 4px; font-size: 12px; }
 main.modo-npc #lista-trucadas { overflow-y: hidden; }

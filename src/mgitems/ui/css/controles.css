@@ -16,6 +16,7 @@ textarea {
 input[type="text"] {
   flex: 1;
   min-width: 0;
+  min-height: 30px;
   padding: 8px 12px;
   font-weight: 900;
 }

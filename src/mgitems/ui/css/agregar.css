@@ -32,7 +32,7 @@ main.modo-agregar .buscador-swf { display: none; }
 main.paneles.modo-agregar { grid-template-columns: minmax(0, 1fr) 300px; }
 main.modo-agregar #encode { flex: none; height: 44px; min-height: 0; }
 main.modo-agregar .acciones button { padding-left: 10px; padding-right: 10px; font-size: 12px; }
-#quitar-todos { padding: 3px 8px; font-size: 10px; white-space: nowrap; }
+#quitar-todos { padding: 3px 8px; font-size: 11px; white-space: nowrap; }
 
 /* Dónde llega cada Item al juego: rojo si no llega bien. */
 .item-grilla { grid-template-rows: minmax(0, 1fr) auto auto auto; }
@@ -70,9 +70,10 @@ main.modo-agregar .acciones button { padding-left: 10px; padding-right: 10px; fo
 /* Paginación: bajo cada flecha, un botón para saltar de a 10; abajo, los números de página (como en Google). */
 .flechas { flex: none; align-self: center; display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .flecha-diez {
-  width: 34px;
+  width: 40px;
+  min-height: 28px;
   padding: 3px 0;
-  font-size: 8px;
+  font-size: 11px;
   letter-spacing: 0;
   line-height: 1.1;
   color: #c4401a;
@@ -84,7 +85,8 @@ main.modo-agregar .acciones button { padding-left: 10px; padding-right: 10px; fo
 .paginas { flex: none; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 3px; }
 .paginas:empty { display: none; }
 .numero-de-pagina {
-  min-width: 24px;
+  min-width: 30px;
+  min-height: 30px;
   padding: 2px 5px;
   border-width: 2px;
   border-radius: 7px;
@@ -101,6 +103,7 @@ main.modo-agregar .acciones button { padding-left: 10px; padding-right: 10px; fo
 select.filtro-lista {
   flex: none;
   max-width: 112px;
+  min-height: 30px;
   padding: 3px 4px;
   border: 2px solid var(--celeste-borde);
   border-radius: 8px;

@@ -170,7 +170,7 @@ function mostrarBuscador() {
       tipo.dataset.uso = item.tipo === "prenda" ? "ropa" : item.tipo === "otro" ? "objeto" : item.tipo.endsWith("mascota") ? "mascota" : item.tipo;
       const llega = etiqueta(destino.nombre, "destino-item");
       llega.dataset.bien = String(!item.motivo);
-      boton.append(elementoIcono(item.ruta), etiqueta(item.clase, "nombre-item"), tipo, llega);
+      boton.append(elementoIcono(item.ruta), etiqueta(nombreConCortes(item.clase), "nombre-item"), tipo, llega);
       if (item.pasaporte) marcarPasaporte(boton);
       const li = document.createElement("li");
       li.append(boton);
