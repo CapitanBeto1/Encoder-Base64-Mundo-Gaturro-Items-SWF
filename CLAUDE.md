@@ -24,7 +24,7 @@ Al cambiar código, mantené esta forma (el porqué de cada punto: `docs/adr/000
 
 ## Interfaz y experiencia
 
-Al cambiar la interfaz, seguí estos criterios (de las skills `principle-experience-first` y `principle-redesign-from-first-principles` de cursor/plugins):
+Al cambiar la interfaz, seguí estos criterios (resumen de las skills `principle-experience-first` y `principle-redesign-from-first-principles`, instaladas en `.claude/skills/`; solo se cargan al pedirlas, por eso el resumen va acá):
 
 - **La experiencia primero**: cuando lo cómodo de programar choca con lo mejor para el usuario, gana el usuario. Cada botón, opción y texto se justifica o se va. Pocas cosas bien terminadas antes que muchas a medio hacer: transiciones, alineación, espacios, respuesta a cada acción, estados de carga y de error.
 - **Prototipo antes que producción**: las decisiones de diseño se prueban en la rama `prototipo-ui` (variantes sobre el programa real, con una barra para cambiarlas) y el usuario elige. A `main` va solo lo elegido, reescrito con las reglas de arriba.
