@@ -128,7 +128,8 @@ def main() -> None:
         js_api=Puente(Nucleo()),
         width=1100,
         height=720,
-        min_size=(720, 520),
+        # Más chica, la grilla y el Gaturro no entran (la barra lateral ya se achica a íconos: css/estructura.css).
+        min_size=(960, 640),
         background_color="#f6d610",
     )
     webview.start()
