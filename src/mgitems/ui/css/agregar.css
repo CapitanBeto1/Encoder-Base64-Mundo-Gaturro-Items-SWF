@@ -33,6 +33,7 @@ main.paneles.modo-agregar { grid-template-columns: minmax(0, 1fr) 300px; }
 main.modo-agregar #encode { flex: none; height: 44px; min-height: 0; }
 main.modo-agregar .acciones button { padding-left: 10px; padding-right: 10px; font-size: 12px; }
 #quitar-todos { padding: 3px 8px; font-size: 11px; white-space: nowrap; }
+.resto-de-la-lista { display: flex; justify-content: center; padding: 4px; list-style: none; }
 
 /* Dónde llega cada Item al juego: rojo si no llega bien. */
 .item-grilla { grid-template-rows: minmax(0, 1fr) auto auto auto; }

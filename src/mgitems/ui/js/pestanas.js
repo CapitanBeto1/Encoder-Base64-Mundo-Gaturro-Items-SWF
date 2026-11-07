@@ -31,7 +31,7 @@ const pestanaNpc = ({ tipo, el, lo, nuevo, mis, titulo, sub, nombre, tocaUno, li
 const PESTANA = {
   agregar: {
     generar: "Generar Encode",
-    pasos: () => [["Elegí los Items", items.length > 0], ["Generá el Encode", hayEncode()], ["Agregá al juego", false]],
+    pasos: () => [["Elegí los Items", items.length > 0], ["Agregá al juego", false]], // el Encode se genera al agregar
   },
   looks: {
     generar: "Aplicar Look", aplicar: "Aplicar Look", nombre: "NOMBRE DEL LOOK", seGuarda: "Se guarda en:", tocaUno: "un Look",
