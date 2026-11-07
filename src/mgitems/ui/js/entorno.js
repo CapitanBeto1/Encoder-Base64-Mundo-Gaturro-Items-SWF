@@ -209,7 +209,13 @@ async function entregar() {
   }
 }
 
-$("entregar").addEventListener("click", entregar);
+// En Agregar Items, un solo paso: si todavía no se generó el Encode, se genera y se agrega.
+async function generarYEntregar() {
+  if (!$("encode").value) await generar();
+  if ($("encode").value) await entregar();
+}
+
+$("entregar").addEventListener("click", generarYEntregar);
 $("cerrar-entrega").addEventListener("click", () => $("dialogo-entrega").close());
 // Mientras se entrega no se puede cerrar el diálogo con Escape.
 $("dialogo-entrega").addEventListener("cancel", (e) => {

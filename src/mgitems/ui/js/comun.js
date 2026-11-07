@@ -54,6 +54,17 @@ function cargando(lugar, forma, tarea) {
   return trabando(() => conEsqueleto(lugar, forma, tarea));
 }
 
+function filaDelResto(resto) {
+  const fila = Object.assign(document.createElement("li"), { className: "resto-de-la-lista" });
+  const ver = Object.assign(document.createElement("button"), { type: "button", className: "enlace", textContent: `y ${resto} más · Mostrar todos` });
+  ver.addEventListener("click", () => {
+    listaEntera = true;
+    mostrarLista();
+  });
+  fila.append(ver);
+  return fila;
+}
+
 // Agrega rutas nuevas con cantidad 1; las que ya están en la lista no cambian.
 function agregarItems(rutas) {
   const nuevas = rutas.filter((ruta) => !items.some((i) => i.ruta === ruta));
@@ -103,9 +114,17 @@ function filaDeItem({ ruta, cantidad }) {
   return fila;
 }
 
+// Con muchos Items («Agregar todos» suma miles), la lista muestra los primeros y una fila para ver el resto: dibujar
+// todas las filas de una vez trababa la ventana unos segundos.
+const FILAS_A_LA_VISTA = 100;
+let listaEntera = false;
+
 function mostrarLista() {
-  $("lista").replaceChildren(...items.map(filaDeItem));
-  cargarIconos(items.map((i) => i.ruta));
+  if (items.length <= FILAS_A_LA_VISTA) listaEntera = false;
+  const aLaVista = listaEntera ? items : items.slice(0, FILAS_A_LA_VISTA);
+  const resto = items.length - aLaVista.length;
+  $("lista").replaceChildren(...aLaVista.map(filaDeItem), ...(resto ? [filaDelResto(resto)] : []));
+  cargarIconos(aLaVista.map((i) => i.ruta));
   $("cantidad").textContent = items.length ? `(${items.length})` : "";
   $("lista-vacia").hidden = items.length > 0;
   if (buscador.cargado) mostrarBuscador(); // los elegidos se marcan en la grilla
@@ -157,7 +176,8 @@ function actualizarControles() {
   mostrarBarraLook();
   for (const nombre of PESTANAS) $(`pestana-${nombre}`).disabled = !conectado || ocupado;
   $("usar-comportamiento").disabled = $("comportamiento-a-mano").disabled = !listo;
-  $("copiar").disabled = $("guardar").disabled = $("entregar").disabled = !listo || !$("encode").value;
+  $("copiar").disabled = $("guardar").disabled = !listo || !$("encode").value;
+  $("entregar").disabled = !listo || !items.length; // si falta el Encode, lo genera al tocarlo
 }
 
 // --- Imágenes de los Items ---
