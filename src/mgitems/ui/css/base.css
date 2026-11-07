@@ -223,8 +223,9 @@ button.entregar {
 .ic { display: inline-block; flex: none; width: 1.15em; height: 1.15em; vertical-align: -0.2em; line-height: 1; }
 .ic svg { display: block; width: 100%; height: 100%; }
 
-/* Botones chicos que acompañan a un título o dato. */
+/* Botones chicos que acompañan a un título o dato (con 30 px de alto, para el mouse). */
 button.enlace {
+  min-height: 30px;
   padding: 3px 12px;
   border-width: 2px;
   border-radius: 9px;

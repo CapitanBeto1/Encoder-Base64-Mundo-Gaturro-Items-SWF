@@ -193,7 +193,7 @@ function mostrarInventario() {
       tipo.dataset.uso = que.uso;
       boton.title += ` · ${que.texto}`;
       boton.classList.add("item-grilla");
-      boton.append(elementoIcono(pieza.ruta), etiqueta(pieza.clase, "nombre-item"), tipo);
+      boton.append(elementoIcono(pieza.ruta), etiqueta(nombreConCortes(pieza.clase), "nombre-item"), tipo);
       if (motivo) {
         const noSeVe = etiqueta("No se ve", "destino-item");
         noSeVe.dataset.bien = "false";

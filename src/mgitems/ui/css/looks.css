@@ -54,7 +54,7 @@ main.modo-looks .buscador-swf { display: none; }
 .base-look { display: flex; align-items: center; gap: 4px; min-width: 0; }
 .base-look .icono { width: 26px; height: 26px; }
 .base-look .nombre { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.se-guarda-en .enlace { font-size: 10px; padding: 2px 7px; }
+.se-guarda-en .enlace { font-size: 11px; padding: 2px 8px; }
 
 .escena {
   flex: 1;
@@ -72,10 +72,10 @@ main.modo-looks .buscador-swf { display: none; }
 .gaturro figcaption { flex: none; display: flex; flex-direction: column; gap: 2px; color: #fff; font-size: 10px; line-height: 1.2; text-align: center; }
 .gaturro figcaption:empty { display: none; }
 
-.casilleros { display: grid; grid-template-columns: repeat(2, 50px); align-content: center; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.casilleros { display: grid; grid-template-columns: repeat(2, 54px); align-content: center; gap: 4px; margin: 0; padding: 0; list-style: none; }
 .casilleros li { position: relative; }
 .casillero {
-  width: 50px;
+  width: 54px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -86,9 +86,9 @@ main.modo-looks .buscador-swf { display: none; }
   border-color: var(--amarillo-contorno);
 }
 .casillero .icono { width: 30px; height: 30px; box-shadow: none; background: rgba(255, 255, 255, 0.55); }
-.casillero .nombre-casillero { max-width: 100%; overflow: hidden; text-overflow: ellipsis; font-size: 7px; line-height: 1.1; text-transform: uppercase; color: var(--texto); white-space: nowrap; }
+.casillero .nombre-casillero { max-width: 100%; overflow: hidden; text-overflow: ellipsis; font-size: 9px; line-height: 1.1; text-transform: uppercase; color: var(--texto); white-space: nowrap; }
 .casillero[aria-pressed="true"] { background: #6fc054; border-color: #2f6421; box-shadow: 0 0 0 3px #fff; }
-.casilleros .sacar-pieza { position: absolute; top: -4px; right: -4px; width: 18px; height: 18px; font-size: 10px; padding: 0; }
+.casilleros .sacar-pieza { position: absolute; top: -4px; right: -4px; width: 22px; height: 22px; font-size: 12px; padding: 0; }
 /* Trucar Prenda: una Pieza en una Parte por Prenda trucada (sin casilleros), y la lista de las que se reciben juntas. */
 main.modo-trucar .casilleros { display: none; }
 .armado-trucar { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; }
@@ -128,7 +128,7 @@ main.modo-trucar .casilleros { display: none; }
 .fuentes .etiqueta-campo { color: #fff; width: auto; }
 .lista-fuentes { display: flex; flex-wrap: wrap; gap: 4px; }
 .chip-fuente { display: inline-flex; align-items: center; gap: 4px; padding: 2px 4px 2px 8px; border-radius: 10px; background: #fff; color: var(--texto); font-size: 11px; }
-.chip-fuente .quitar { width: 16px; height: 16px; font-size: 9px; padding: 0; }
+.chip-fuente .quitar { width: 22px; height: 22px; font-size: 11px; padding: 0; }
 .agregar-fuente { width: 130px; }
 .agregar-fuente input { padding: 3px 8px; font-size: 12px; }
 #todas-las-fuentes { font-size: 11px; padding: 3px 8px; }
@@ -147,7 +147,7 @@ main.modo-trucar .casilleros { display: none; }
   color: #fff;
 }
 .categoria .icono-categoria { width: 20px; height: 20px; justify-self: center; }
-.categoria .cantidad-categoria { font-size: 9px; line-height: 1; }
+.categoria .cantidad-categoria { font-size: 10px; line-height: 1; }
 .categoria .nombre-categoria { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 .categoria[aria-selected="true"] { background: #6fc054; border-color: #f6d610; }
 

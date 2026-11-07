@@ -24,6 +24,9 @@ function avisar(elemento, texto, tipo = "") {
 }
 
 const contarItems = (n) => (n === 1 ? "1 Item" : `${n} Items`);
+// El nombre técnico de una tarjeta, para que se corte donde termina una palabra («jugo|Durazno», «gorrita1_|on»)
+// y no en cualquier letra: un espacio invisible antes de cada mayúscula y después de cada «_».
+const nombreConCortes = (clase) => clase.replace(/([a-z0-9])([A-Z])/g, "$1\u200b$2").replace(/_/g, "_\u200b");
 
 const avisarLista = (texto, tipo) => avisar($("mensaje"), texto, tipo);
 const avisarEncode = (texto, tipo) => avisar($("mensaje-encode"), texto, tipo);
