@@ -49,6 +49,23 @@
   box-shadow: 0 3px 0 rgba(90, 70, 0, 0.35);
 }
 
+/* Con poco ancho, la barra lateral queda solo con los íconos (el nombre de cada pestaña, al pasar el mouse). */
+@media (max-width: 1080px) {
+  body { grid-template-columns: 76px minmax(0, 1fr); }
+  .marca { padding: 12px 0 6px 12px; }
+  .logo { font-size: 0; }
+  .logo::first-letter { font-size: 28px; }
+  .pestanas { margin: 2px 6px 0 12px; padding: 6px 4px; }
+  .grupo-pestanas { padding: 8px 0 2px; text-align: center; font-size: 0; }
+  .grupo-pestanas::before { content: ""; display: block; height: 2px; margin: 0 8px; border-radius: 1px; background: rgba(255, 233, 138, 0.45); }
+  .grupo-pestanas:first-child::before { display: none; }
+  .pestana { justify-content: center; padding: 9px 0; font-size: 0; }
+  .pestana .ic { width: 22px; height: 22px; }
+  .estado-entorno { margin: 6px 6px 12px 12px; padding: 8px 0; gap: 4px; }
+  .estado-entorno .texto-config { display: none; }
+  .estado-entorno .ic { width: 20px; height: 20px; }
+}
+
 /* --- La guía: en qué paso de la pestaña estás (lo hecho en verde, el que sigue resaltado) --- */
 
 .guia {
