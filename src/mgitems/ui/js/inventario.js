@@ -32,6 +32,9 @@ const inventario = {
   piezas: [], // [{ruta, clase, swf, partes}] de las fuentes
   decoracion: [], // los objetos de la casa de las fuentes, con la forma de las Piezas (solo para las acciones)
   categoria: "hats",
+  // Mientras la categoría la elige el programa, si queda vacía pasa a la primera con Piezas; la que elige el usuario
+  // se respeta aunque esté vacía.
+  categoriaAMano: false,
   pagina: 0,
 };
 
@@ -128,9 +131,13 @@ function mostrarInventario() {
   mostrarFuentes();
   const texto = $("filtro-piezas").value.trim();
   const categorias = categoriasDeLaVista();
-  if (!categorias.some((c) => c.id === inventario.categoria)) inventario.categoria = categorias[0].id;
-  const categoria = categorias.find((c) => c.id === inventario.categoria);
   const todas = vista === "acciones" ? [...inventario.piezas, ...inventario.decoracion] : inventario.piezas;
+  const conPiezas = (c) => todas.some((p) => enCategoria(p, c));
+  if (!categorias.some((c) => c.id === inventario.categoria)) inventario.categoria = categorias[0].id;
+  if (!inventario.categoriaAMano && todas.length && !conPiezas(categorias.find((c) => c.id === inventario.categoria))) {
+    inventario.categoria = (categorias.find(conPiezas) ?? categorias[0]).id;
+  }
+  const categoria = categorias.find((c) => c.id === inventario.categoria);
   $("categorias").replaceChildren(
     ...categorias.map((c) => {
       const cantidad = todas.filter((p) => enCategoria(p, c)).length;
@@ -140,6 +147,7 @@ function mostrarInventario() {
       pestana.append(icono(c.icono, "icono-categoria"), etiqueta(String(cantidad), "cantidad-categoria"), etiqueta(c.nombre, "nombre-categoria"));
       pestana.addEventListener("click", () => {
         inventario.categoria = c.id;
+        inventario.categoriaAMano = true;
         inventario.pagina = 0;
         mostrarInventario();
       });

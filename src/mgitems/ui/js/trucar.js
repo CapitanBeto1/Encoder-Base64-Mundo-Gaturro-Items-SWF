@@ -17,7 +17,8 @@ async function cargarTrucar() {
   );
   if (!trucarVisitada) {
     trucarVisitada = true;
-    inventario.categoria = "otros"; // lo que se truca suele ser un «Otro»
+    inventario.categoria = "otros"; // lo que se truca suele ser un «Otro» (si las fuentes no tienen, la primera con Piezas)
+    inventario.categoriaAMano = false;
     inventario.pagina = 0;
   }
   await cargarLooks(); // las Prendas trucadas guardadas, el editor y el inventario
