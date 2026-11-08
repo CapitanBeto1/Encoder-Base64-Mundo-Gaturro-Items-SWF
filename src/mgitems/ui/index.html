@@ -319,6 +319,15 @@
           <button id="terminator-cargar">Cargar desde el juego</button>
           <button id="terminator-aplicar" class="primario" disabled>Aplicar al juego</button>
         </div>
+
+        <h2>Restricciones de ítems</h2>
+        <p class="ayuda">Ítems que el juego fuerza a un slot específico (vehículos al slot transporte, sombreros al slot sombrero, etc.) o que tienen comportamiento especial bloqueado. Quitando la restricción podés usarlos en cualquier parte del cuerpo.</p>
+        <div id="gameplay-estado" class="mensaje" role="status" aria-live="polite"></div>
+        <div id="gameplay-lista" class="terminator-lista" hidden></div>
+        <div class="acciones">
+          <button id="gameplay-cargar">Cargar desde el juego</button>
+          <button id="gameplay-aplicar" class="primario" disabled>Aplicar al juego</button>
+        </div>
       </div>
 
       <p id="mensaje" class="mensaje" role="status" aria-live="polite"></p>
@@ -570,6 +579,7 @@
   <script src="js/agregar.js"></script>
   <script src="js/busqueda.js"></script>
   <script src="js/terminator.js"></script>
+  <script src="js/gameplay.js"></script>
   <script src="js/inicio.js"></script>
 </body>
 </html>

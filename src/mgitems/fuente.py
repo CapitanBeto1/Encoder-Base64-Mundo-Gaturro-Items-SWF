@@ -9,6 +9,7 @@ from dataclasses import dataclass
 URL_JUEGO = "https://cdn-ar.mundogaturro.com/juego/"
 URL_ASSETS = URL_JUEGO + "assets/"
 URL_SETTINGS = URL_JUEGO + "cfgs/settings.json"
+URL_GAMEPLAY = URL_JUEGO + "cfgs/gameplay.json"
 
 
 class SwfNoEncontrado(Exception):
