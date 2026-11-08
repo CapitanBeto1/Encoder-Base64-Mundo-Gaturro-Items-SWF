@@ -8,6 +8,7 @@ from dataclasses import dataclass
 
 URL_JUEGO = "https://cdn-ar.mundogaturro.com/juego/"
 URL_ASSETS = URL_JUEGO + "assets/"
+URL_SETTINGS = URL_JUEGO + "cfgs/settings.json"
 
 
 class SwfNoEncontrado(Exception):
@@ -42,6 +43,11 @@ class FuenteCDN:
 
     def descargar(self, nombre: str, carpeta: str = "assets") -> bytes:
         with self._pedir(nombre, "GET", carpeta) as respuesta:
+            return respuesta.read()
+
+    def descargar_url(self, url: str) -> bytes:
+        """Un archivo arbitrario del CDN por URL completa."""
+        with self._abrir(url, url.rsplit("/", 1)[-1], "GET") as respuesta:
             return respuesta.read()
 
     def npc(self, comportamiento: str) -> bytes:
