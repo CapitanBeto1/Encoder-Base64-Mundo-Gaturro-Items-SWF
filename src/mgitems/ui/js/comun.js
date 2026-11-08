@@ -148,6 +148,8 @@ function mostrarEncode(resultado) {
   } else if (resultado?.prenda) {
     const n = Object.keys(resultado.prenda.partes).length;
     $("resumen").textContent = `Prenda trucada: ${resultado.prenda.ruta} con ${n === 1 ? "1 Pieza" : `${n} Piezas`}.` + (resultado.prenda.tipo === "mochila" ? " Está en la mochila: usalo para vestirte." : "");
+  } else if (resultado?.colores) {
+    $("resumen").textContent = "Colores del Gaturro: recibí el Encode en el juego para aplicarlos.";
   } else if (resultado) {
     $("resumen").textContent = `Encode con ${contarItems(resultado.items.length)}.`;
   } else {

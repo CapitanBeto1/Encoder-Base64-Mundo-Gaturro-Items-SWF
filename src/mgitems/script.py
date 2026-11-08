@@ -90,6 +90,19 @@ def leer_script(script: str) -> tuple[list[tuple[str, int]], bool]:
     return list(pedidos.items()), otros_comandos
 
 
+def generar_script_colores(colores: dict) -> str:
+    """Script que setea los colores del Gaturro via `user.attr` (`color1`–`color4`).
+
+    Los colores del avatar se guardan en el perfil del usuario en el servidor;
+    no dependen de un Item y persisten permanentemente (ADR 0003, ADR 0005).
+    """
+    lineas = ["INICIO: DO", f"{INDENTACION}on activate A1", INDENTACION, "A1: DO"]
+    for clave, valor in colores.items():
+        lineas.append(f"{INDENTACION}user.attr {clave} {valor}")
+    lineas.append(f"{INDENTACION}after 1 INICIO")
+    return "\n".join(lineas) + "\n\n"
+
+
 def codificar(script: str) -> str:
     return base64.b64encode(script.encode("utf-8")).decode("ascii")
 
