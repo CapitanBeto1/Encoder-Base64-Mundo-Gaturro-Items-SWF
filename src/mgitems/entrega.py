@@ -215,6 +215,18 @@ class Entrega:
         self._paso("Abrir Fiddler", self._abrir_fiddler)
         self._paso("Abrir Mundo Gaturro", self._abrir_juego)
 
+    def entregar_json(self, url: str, data: bytes, nombre: str) -> None:
+        """Sirve `data` en lugar del pedido que coincide con `url`, con el mismo flujo que `entregar`."""
+        self._paso("Cerrar Mundo Gaturro", self._cerrar_juego)
+        self._paso("Cerrar Fiddler", self._cerrar_fiddler)
+        destino = self.carpeta_entregas / nombre
+        self._paso(f"Guardar {nombre}", lambda: self._guardar_swf(destino, data))
+        self._paso("Respaldar las reglas de Fiddler", self._respaldar)
+        self._paso("Escribir la regla de la config", lambda: self._escribir([(f"EXACT:{url}", destino)]))
+        self._paso("Borrar el caché del juego", self._vaciar_cache)
+        self._paso("Abrir Fiddler", self._abrir_fiddler)
+        self._paso("Abrir Mundo Gaturro", self._abrir_juego)
+
     def desactivar(self) -> int:
         """Quita las reglas del programa. Devuelve cuántas había."""
         estaba_abierto = self.procesos.corriendo(self.fiddler)
