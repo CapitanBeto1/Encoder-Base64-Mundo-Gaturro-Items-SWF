@@ -7,7 +7,7 @@ from mgitems.items import es_ruta_valida, piezas_del_swf
 from mgitems.prendas import (
     EFECTO, MOCHILA, PREFIJO_EFECTO, ItemBase, TruqueoFallido, no_sirve_de_base, reescribir_partes,
 )
-from mgitems.script import codificar, generar_script
+from mgitems.script import codificar, generar_script, generar_script_con_atributos
 from mgitems.swf import leer_simbolos
 
 
@@ -65,6 +65,46 @@ class Trucar:
         encode = codificar(script)
         self._trucos[encode] = trucados
         return {"ok": True, "trucadas": resumen, "items": [{"ruta": r, "cantidad": 1} for r in rutas],
+                "script": script, "encode": encode}
+
+    def trucar_varias_via_encode(self, trucadas: list) -> dict:
+        """Como `trucar_varias` pero via `inventory.addOptions`: el Encode guarda los `wear_*` en el servidor,
+        por lo que la Prenda persiste después del relog aunque Fiddler esté apagado. No truca el SWF."""
+        if not isinstance(trucadas, list) or not trucadas:
+            return {"ok": False, "error": "Agregá al menos una Prenda trucada a la lista."}
+        for t in trucadas:
+            if not isinstance(t, dict) or not all(isinstance(t.get(k), str) for k in ("base", "parte", "pieza")) \
+                    or not es_ruta_valida(t["base"]) or not es_ruta_valida(t["pieza"]):
+                return {"ok": False, "error": "Las Prendas trucadas no tienen la forma esperada."}
+
+        pedidos, resumen = [], []
+        for t in trucadas:
+            swf, _, clase = t["base"].rpartition(".")
+            obtenido = {"ok": True, "data": self._data_swf} if swf == self._swf_abierto else self._datos_de_otro_swf(swf)
+            if not obtenido["ok"]:
+                return {"ok": False, "error": f"No se pudo usar {t['base']}: {obtenido['error']}"}
+            data = obtenido["data"]
+            try:
+                prendas = self._prendas_de(swf, data)
+            except FFDecNoDisponible as e:
+                return {"ok": False, "error": f"{e}: no se pueden leer las Prendas."}
+            except (OSError, subprocess.SubprocessError) as e:
+                return {"ok": False, "error": f"No se pudieron leer las Prendas: {e}"}
+            item = prendas.get(clase)
+            if item is None:
+                return {"ok": False, "error": f"{clase} no es una Prenda ni un Item de mochila de {swf}."}
+            if motivo := no_sirve_de_base(t["base"], item.tipo):
+                return {"ok": False, "error": f"{clase} no sirve de Item base: {motivo}."}
+            piezas_propias = set(piezas_del_swf([cls for _, cls in leer_simbolos(data)]))
+            valor, error = self._valor_de_pieza(swf, piezas_propias, t["pieza"], con_swf=True)
+            if error:
+                return {"ok": False, "error": error}
+            pedidos.append((t["base"], 1, {f"wear_{t['parte']}": valor}))
+            resumen.append({"ruta": t["base"], "tipo": item.tipo, "partes": {t["parte"]: valor}})
+
+        script = generar_script_con_atributos(pedidos)
+        encode = codificar(script)
+        return {"ok": True, "trucadas": resumen, "items": [{"ruta": t["base"], "cantidad": 1} for t in trucadas],
                 "script": script, "encode": encode}
 
     def trucar_prenda(self, base: str, parte: str, pieza: str) -> dict:
