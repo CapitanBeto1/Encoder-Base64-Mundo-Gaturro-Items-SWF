@@ -228,6 +228,15 @@ button.chip-look[aria-pressed="true"] {
   font-size: 12px;
 }
 
+/* En la pestaña Desbloquear el panel de la derecha (Encode) no aplica: se oculta y el izquierdo ocupa todo. */
+main.modo-terminator {
+  grid-template-columns: minmax(0, 1fr);
+}
+main.modo-terminator > section.panel:last-child,
+main.modo-terminator .buscador-swf {
+  display: none;
+}
+
 /* --- Paneles --- */
 
 .paneles {
