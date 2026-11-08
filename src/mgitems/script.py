@@ -13,12 +13,15 @@ INDENTACION = "    "
 
 # Líneas que forman parte de un Script que solo agrega Items.
 _LINEA_INVENTORY_ADD = re.compile(r"^inventory\.add\s+(\d+)\s+(\S+)$")
+_LINEA_INVENTORY_ADD_OPTIONS = re.compile(r"^inventory\.addOptions\s+(\S+)\s+(\d+)\s+\S+.*$")
 _LINEAS_DE_AGREGAR_ITEMS = (
     re.compile(r"^\S+: DO$"),
     re.compile(r"^on activate \S+$"),
     re.compile(r"^user\.state get$"),
     re.compile(r"^after \d+ \S+$"),
+    re.compile(r"^user\.attr \S+ \S+$"),
     _LINEA_INVENTORY_ADD,
+    _LINEA_INVENTORY_ADD_OPTIONS,
 )
 
 
@@ -85,6 +88,9 @@ def leer_script(script: str) -> tuple[list[tuple[str, int]], bool]:
         if agregado := _LINEA_INVENTORY_ADD.match(linea):
             ruta = agregado.group(2)
             pedidos[ruta] = pedidos.get(ruta, 0) + int(agregado.group(1))
+        elif con_attrs := _LINEA_INVENTORY_ADD_OPTIONS.match(linea):
+            ruta = con_attrs.group(1)
+            pedidos[ruta] = pedidos.get(ruta, 0) + int(con_attrs.group(2))
         elif not any(p.match(linea) for p in _LINEAS_DE_AGREGAR_ITEMS):
             otros_comandos = True
     return list(pedidos.items()), otros_comandos
