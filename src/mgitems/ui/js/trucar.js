@@ -77,7 +77,13 @@ $("agregar-trucada").addEventListener("click", () => {
 
 async function trucarPrenda() {
   const lista = lookActual.lista;
-  const resultado = await mientras(`Trucando ${lista.length === 1 ? "la Prenda" : `${lista.length} Prendas`}… (tarda unos segundos)`, () => api().trucar_varias(lista));
+  const persistir = $("check-persistir-trucado").checked;
+  const llamada = persistir
+    ? () => api().trucar_varias_via_encode(lista)
+    : () => api().trucar_varias(lista);
+  const msg = persistir ? `Trucando ${lista.length === 1 ? "la Prenda" : `${lista.length} Prendas`}…`
+                        : `Trucando ${lista.length === 1 ? "la Prenda" : `${lista.length} Prendas`}… (tarda unos segundos)`;
+  const resultado = await mientras(msg, llamada);
   if (!resultado.ok) return avisarLista(resultado.error, "error");
   mostrarEncode(resultado);
   avisarLista(`${lista.length === 1 ? "Prenda trucada" : "Prendas trucadas"}: tocá «Agregar al juego» para recibirlas.`, "exito");
