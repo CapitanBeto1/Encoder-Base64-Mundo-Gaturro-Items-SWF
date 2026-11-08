@@ -18,6 +18,7 @@
   <link rel="stylesheet" href="css/cargas.css">
   <link rel="stylesheet" href="css/textos.css">
   <link rel="stylesheet" href="css/toques.css">
+  <link rel="stylesheet" href="css/terminator.css">
 </head>
 <body>
   <!-- Fondo al estilo de la pantalla de servidores clásica: estrellas, planeta y anillo. -->
@@ -84,6 +85,8 @@
     <button id="pestana-portales" class="pestana" role="tab" aria-selected="false" aria-controls="vista-looks" title="Portales"><span data-icono="door-open"></span> Portales</button>
     <button id="pestana-minijuegos" class="pestana" role="tab" aria-selected="false" aria-controls="vista-looks" title="Minijuegos"><span data-icono="game-controller"></span> Minijuegos</button>
     <button id="pestana-fondos" class="pestana" role="tab" aria-selected="false" aria-controls="vista-looks" title="Fondos"><span data-icono="images-square"></span> Fondos</button>
+    <span class="grupo-pestanas" role="presentation">Juego</span>
+    <button id="pestana-terminator" class="pestana" role="tab" aria-selected="false" aria-controls="vista-terminator" title="Desbloquear objetos del juego"><span data-icono="lock-open"></span> Desbloquear</button>
   </nav>
 
   <!-- En qué paso de la pestaña estás (los pasos de cada una, en PESTANA). -->
@@ -303,6 +306,17 @@
           <button id="entregar-look" class="primario entregar">Agregar al juego</button>
         </div>
       </div>
+      <div id="vista-terminator" class="vista" role="tabpanel" hidden>
+        <h2>Objetos bloqueados</h2>
+        <p class="ayuda">El juego los esconde por defecto. Podés desbloquear los que quieras; los que tienen un <strong>servidor detrás</strong> (como los premios Arcor) van a seguir sin funcionar aunque los desbloquees acá.</p>
+        <div id="terminator-estado" class="mensaje" role="status" aria-live="polite"></div>
+        <div id="terminator-lista" class="terminator-lista" hidden></div>
+        <div class="acciones">
+          <button id="terminator-cargar">Cargar desde el juego</button>
+          <button id="terminator-aplicar" class="primario" disabled>Aplicar al juego</button>
+        </div>
+      </div>
+
       <p id="mensaje" class="mensaje" role="status" aria-live="polite"></p>
     </section>
 
@@ -551,6 +565,7 @@
   <script src="js/entorno.js"></script>
   <script src="js/agregar.js"></script>
   <script src="js/busqueda.js"></script>
+  <script src="js/terminator.js"></script>
   <script src="js/inicio.js"></script>
 </body>
 </html>
