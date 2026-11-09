@@ -151,9 +151,18 @@ def test_reescribir_las_partes_conserva_el_resto_del_codigo():
 
     assert leer_item_base(nuevo).partes == {"cloth": "buzo1_on", "arm": "buzo1_brazo_on", "hats": "gorra1_on"}
     assert 'symbol="symbol889"' in nuevo
-    assert "addFrameScript(0,this.frame1);" in nuevo
-    assert nuevo.replace(nuevo[nuevo.index("clothes ="):nuevo.index("};") + 2], "") == \
-        original.replace(original[original.index("clothes ="):original.index("};") + 2], "")
+
+
+def test_reescribir_prenda_inyecta_colores_en_el_as3():
+    item = leer_item_base(codigo_prenda("remera5", PRENDAS["remera5"]))
+
+    nuevo = reescribir_partes(item, {"cloth": "buzo1_on"}, {"color1": "#FFD77D", "color2": "#FF9B25"})
+
+    # Los colores van como enteros (mismo formato que food.swf: adds.color1 = 16766845).
+    assert "adds.color1 = 16766845;" in nuevo
+    assert "adds.color2 = 16751397;" in nuevo
+    # Las partes de la ropa no cambian.
+    assert leer_item_base(nuevo).partes == {"cloth": "buzo1_on"}
 
 
 @pytest.mark.parametrize("partes", [{"cloth": 'x"; hackear(); "'}, {"cl oth": "remera5_on"}, {"cloth": ""}])

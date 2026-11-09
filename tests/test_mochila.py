@@ -112,6 +112,15 @@ def test_reescribir_un_usable_no_le_agrega_usos():
     assert "uses" not in nuevo
 
 
+def test_reescribir_mochila_inyecta_colores_en_el_as3():
+    nuevo = reescribir_partes(leer_item_base(POCIMA), {"hats": "costumes.coronaRey_on"}, {"color1": "#FFD77D"})
+
+    # El color va como entero (mismo formato que food.swf: adds.color1 = 16766845).
+    assert "adds.color1 = 16766845;" in nuevo
+    # Las partes no incluyen el color (se lee como string quoted, el int no matchea).
+    assert leer_item_base(nuevo).partes == {"hats": "costumes.coronaRey_on"}
+
+
 # --- En el núcleo ---
 
 def test_los_items_de_mochila_se_ofrecen_como_base(nucleo):

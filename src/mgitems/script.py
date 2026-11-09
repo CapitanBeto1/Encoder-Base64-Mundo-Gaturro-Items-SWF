@@ -29,6 +29,15 @@ class EncodeInvalido(Exception):
     """El texto no es un Encode."""
 
 
+def _lineas_colores(colores: dict) -> list[str]:
+    """Líneas `user.attr colorN <entero>` para aplicar colores al avatar.
+
+    Convierte el color de hex (#RRGGBB) a entero porque el juego lo espera así
+    (el mismo formato que usa `adds.color1` en los AS3 de los items).
+    """
+    return [f"{INDENTACION}user.attr {c} {int(v.lstrip('#'), 16)}" for c, v in colores.items()]
+
+
 def generar_script(pedidos: list[tuple[str, int]]) -> str:
     """Script que agrega cada Item en su cantidad, encadenando un bloque `A<n>` por Item.
 
@@ -119,8 +128,7 @@ def generar_script_colores(colores: dict) -> str:
     no dependen de un Item y persisten permanentemente (ADR 0003, ADR 0005).
     """
     lineas = ["INICIO: DO", f"{INDENTACION}on activate A1", INDENTACION, "A1: DO"]
-    for clave, valor in colores.items():
-        lineas.append(f"{INDENTACION}user.attr {clave} {valor}")
+    lineas += _lineas_colores(colores)
     lineas.append(f"{INDENTACION}after 1 INICIO")
     return "\n".join(lineas) + "\n\n"
 

@@ -112,8 +112,12 @@ def leer_item_base(fuente: str) -> ItemBase | None:
     )
 
 
-def reescribir_partes(item: ItemBase, partes: dict[str, str]) -> str:
-    """El código AS3 del Item base mostrando `partes` (Parte del cuerpo → Pieza)."""
+def reescribir_partes(item: ItemBase, partes: dict[str, str], colores: dict | None = None) -> str:
+    """El código AS3 del Item base mostrando `partes` (Parte del cuerpo → Pieza).
+
+    Si se pasan `colores` ({"color1": "#RRGGBB", …}), se inyectan como `adds.colorN = <entero>`
+    en el AS3 del item, igual que en los food.swf que cambian la piel al recibirlos.
+    """
     for parte, pieza in partes.items():
         if parte == EFECTO:
             pieza = pieza.removeprefix(PREFIJO_EFECTO) if pieza.startswith(PREFIJO_EFECTO) and "." in pieza[len(PREFIJO_EFECTO):] else ""
@@ -127,23 +131,38 @@ def reescribir_partes(item: ItemBase, partes: dict[str, str]) -> str:
     if item.tipo == PRENDA and ACCION in partes:
         raise ValueError("Una Prenda no hace acciones: solo un Item de mochila")
     if item.tipo == PRENDA:
-        return _reescribir_clothes(item.fuente, partes)
-    return _reescribir_adds(item, partes)
+        return _reescribir_clothes(item.fuente, partes, colores)
+    return _reescribir_adds(item, partes, colores)
 
 
-def _reescribir_clothes(fuente: str, partes: dict[str, str]) -> str:
+_ADDS_COLOR = re.compile(r"^[ \t]*adds\.color[1-4]\s*=\s*\d+\s*;[ \t]*\r?\n", re.M)
+
+
+def _lineas_color(colores: dict) -> str:
+    """Líneas `adds.colorN = <entero>;` para inyectar en el AS3 del item."""
+    return "".join(f"         adds.{c} = {int(v.lstrip('#'), 16)};\n" for c, v in colores.items())
+
+
+def _reescribir_clothes(fuente: str, partes: dict[str, str], colores: dict | None = None) -> str:
     pares = ",\n".join(f'            "{parte}":"{pieza}"' for parte, pieza in partes.items())
     literal = "clothes = {\n" + pares + "\n         };" if partes else "clothes = {};"
+    if colores:
+        # Los colores van como adds.colorN después del bloque clothes (como en food.swf: adds.color1 = int).
+        literal += "\n" + _lineas_color(colores).rstrip("\n")
     if not _CLOTHES.search(fuente):
         raise TruqueoFallido("La Prenda no declara sus Piezas de la forma esperada")
-    return _CLOTHES.sub(lambda _: literal, fuente, count=1)
+    # Limpia colores de un truco anterior antes de inyectar los nuevos.
+    return _CLOTHES.sub(lambda _: literal, _ADDS_COLOR.sub("", fuente), count=1)
 
 
-def _reescribir_adds(item: ItemBase, partes: dict[str, str]) -> str:
+def _reescribir_adds(item: ItemBase, partes: dict[str, str], colores: dict | None = None) -> str:
     """Item de mochila: solo te viste al usarlo (sin su animación ni su efecto), con usos
     ilimitados si es consumible y sin `session` (para que no dure solo la sesión)."""
     fuente = _SESION.sub("", _USOS.sub("", _ADDS_LINEA.sub("", _ADDS_OBJETO.sub("", item.fuente))))
     lineas = [f'         adds.{parte} = "{pieza}";\n' for parte, pieza in partes.items()]
+    if colores:
+        # Los colores van como enteros (mismo formato que food.swf), no como strings.
+        lineas.append(_lineas_color(colores))
     if item.consumible:
         lineas.append(f"         uses = {USOS_ILIMITADOS};\n")
     insercion = "".join(lineas)
