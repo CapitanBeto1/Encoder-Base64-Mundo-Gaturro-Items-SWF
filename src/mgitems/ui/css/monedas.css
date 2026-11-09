@@ -1,199 +1,19 @@
-/* Pestaña Monedas: barra de prototipo y 5 variantes de color. */
-
-/* --- Barra de prototipo (solo para elegir, no es parte del diseño final) --- */
-
-.barra-prototipo {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
-  margin-bottom: 16px;
-  background: repeating-linear-gradient(
-    -45deg,
-    transparent, transparent 5px,
-    rgba(255, 200, 0, 0.12) 5px, rgba(255, 200, 0, 0.12) 10px
-  );
-  border: 1px dashed rgba(0, 0, 0, 0.3);
-  border-radius: 10px;
-  font-size: 12px;
-  color: var(--texto-suave);
-}
-
-.label-proto {
-  font-weight: 600;
-  margin-right: 2px;
-}
-
-.btn-estilo {
-  padding: 3px 10px;
-  border-radius: 10px;
-  font-size: 12px;
-  border: 1px solid rgba(0, 0, 0, 0.25);
-  background: rgba(255, 255, 255, 0.4);
-  color: var(--texto-suave);
-  cursor: pointer;
-  font-family: inherit;
-  transition: background 0.1s, color 0.1s;
-}
-
-.btn-estilo:hover {
-  background: rgba(255, 255, 255, 0.7);
-  color: var(--texto);
-}
-
-.btn-estilo.activo {
-  background: var(--rotulo);
-  color: var(--blanco);
-  border-color: transparent;
-}
+/* Pestaña Monedas */
 
 /* ============================================================
    Variables de color (--m-*): definen la paleta del panel.
-   Se sobreescriben por variante de color en #vista-monedas.
    ============================================================ */
 
 #vista-monedas {
-  /* Color 1: Negro/Oscuro (default) */
-  --m-panel:              rgba(10, 10, 10, 0.72);
-  --m-num:                #ffffff;
-  --m-label:              rgba(255, 255, 255, 0.5);
-  --m-chip-bg:            rgba(255, 255, 255, 0.14);
-  --m-chip-border:        rgba(255, 255, 255, 0.22);
-  --m-chip-activo-bg:     rgba(255, 255, 255, 0.92);
-  --m-chip-activo-txt:    #111111;
-  --m-chip-activo-border: rgba(255, 255, 255, 0.95);
-  --m-chip-activo-shadow: rgba(0, 0, 0, 0.3);
-  --m-chip-hover-bg:      rgba(255, 255, 255, 0.26);
-  --m-chip-hover-border:  rgba(255, 255, 255, 0.4);
-  --m-sep:                rgba(255, 255, 255, 0.18);
-  --m-sep-txt:            rgba(255, 255, 255, 0.4);
-  --m-input-bg:           rgba(255, 255, 255, 0.14);
-  --m-input-border:       rgba(255, 255, 255, 0.22);
-  --m-input-focus:        rgba(255, 255, 255, 0.4);
-  --m-input-txt:          #ffffff;
-}
-
-/* ============================================================
-   Estilos de chips (data-chips="N")
-   Cada estilo sobreescribe la apariencia de .chip-moneda.
-   El panel siempre usa data-color="1" (Negro).
-   ============================================================ */
-
-/* -- 1: Neón -- panel oscuro, brillo rojo al seleccionar -- */
-#vista-monedas[data-chips="1"] .chip-moneda {
-  background: rgba(255, 255, 255, 0.07);
-  border: 1.5px solid rgba(255, 255, 255, 0.18);
-  color: rgba(255, 255, 255, 0.72);
-  border-radius: 20px;
-}
-#vista-monedas[data-chips="1"] .chip-moneda:hover {
-  background: rgba(255, 255, 255, 0.14);
-  border-color: rgba(255, 255, 255, 0.35);
-  color: #fff;
-  transform: translateY(-1px);
-}
-#vista-monedas[data-chips="1"] .chip-moneda.activo {
-  background: rgba(215, 1, 1, 0.22);
-  border-color: #d70101;
-  color: #fff;
-  box-shadow: 0 0 16px rgba(215, 1, 1, 0.5), inset 0 0 10px rgba(215, 1, 1, 0.15);
-}
-
-/* -- 2: Colores -- cada chip con su propio color -- */
-#vista-monedas[data-chips="2"] .chip-moneda {
-  background: transparent;
-  border-radius: 10px;
-  font-weight: 700;
-}
-#vista-monedas[data-chips="2"] .chip-moneda:nth-child(1) { border-color: #f9d611; color: #f9d611; }
-#vista-monedas[data-chips="2"] .chip-moneda:nth-child(2) { border-color: #fc6400; color: #fc6400; }
-#vista-monedas[data-chips="2"] .chip-moneda:nth-child(3) { border-color: #49af4c; color: #49af4c; }
-#vista-monedas[data-chips="2"] .chip-moneda:nth-child(4) { border-color: #2991b9; color: #2991b9; }
-#vista-monedas[data-chips="2"] .chip-moneda:nth-child(5) { border-color: #d70101; color: #d70101; }
-#vista-monedas[data-chips="2"] .chip-moneda:hover { opacity: 0.8; transform: translateY(-1px); }
-#vista-monedas[data-chips="2"] .chip-moneda.activo:nth-child(1) { background: #f9d611; color: #111; box-shadow: 0 2px 10px rgba(249,214,17,0.4); }
-#vista-monedas[data-chips="2"] .chip-moneda.activo:nth-child(2) { background: #fc6400; color: #fff; box-shadow: 0 2px 10px rgba(252,100,0,0.4); }
-#vista-monedas[data-chips="2"] .chip-moneda.activo:nth-child(3) { background: #49af4c; color: #fff; box-shadow: 0 2px 10px rgba(73,175,76,0.4); }
-#vista-monedas[data-chips="2"] .chip-moneda.activo:nth-child(4) { background: #2991b9; color: #fff; box-shadow: 0 2px 10px rgba(41,145,185,0.4); }
-#vista-monedas[data-chips="2"] .chip-moneda.activo:nth-child(5) { background: #d70101; color: #fff; box-shadow: 0 2px 10px rgba(215,1,1,0.4); }
-
-/* -- 3: Dorado -- chips con gradiente metálico dorado -- */
-#vista-monedas[data-chips="3"] .chip-moneda {
-  background: linear-gradient(to bottom, #f9d611 0%, #c09000 100%);
-  border-color: #a07800;
-  color: #3a2600;
-  border-radius: 8px;
-  font-weight: 700;
-  text-shadow: 0 1px 0 rgba(255,255,255,0.3);
-}
-#vista-monedas[data-chips="3"] .chip-moneda:hover {
-  background: linear-gradient(to bottom, #fbe96a 0%, #d4aa00 100%);
-  border-color: #c9a000;
-  color: #3a2600;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-}
-#vista-monedas[data-chips="3"] .chip-moneda.activo {
-  background: linear-gradient(to bottom, #fc3f3d 0%, #a60400 100%);
-  border-color: #a60400;
-  color: #fff;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.4);
-  box-shadow: 0 2px 12px rgba(215,1,1,0.45);
-}
-
-/* -- 4: Outline -- transparentes con borde fino, se rellenan al seleccionar -- */
-#vista-monedas[data-chips="4"] .chip-moneda {
-  background: transparent;
-  border: 1.5px solid rgba(255, 255, 255, 0.35);
-  color: rgba(255, 255, 255, 0.65);
-  border-radius: 6px;
-}
-#vista-monedas[data-chips="4"] .chip-moneda:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.65);
-  color: #fff;
-  transform: translateY(-1px);
-}
-#vista-monedas[data-chips="4"] .chip-moneda.activo {
-  background: rgba(255, 255, 255, 0.92);
-  border-color: transparent;
-  color: #111;
-  font-weight: 700;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
-}
-
-/* -- 5: Tarjetas -- chips más altos con subtítulo "monedas" -- */
-#vista-monedas[data-chips="5"] .chip-moneda {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  padding: 12px 8px;
-  background: rgba(255, 255, 255, 0.09);
-  border-color: rgba(255, 255, 255, 0.16);
-  color: #fff;
-  border-radius: 10px;
-}
-#vista-monedas[data-chips="5"] .chip-moneda::after {
-  content: "monedas";
-  font-size: 10px;
-  font-weight: 400;
-  color: rgba(255, 255, 255, 0.45);
-  letter-spacing: 0.3px;
-}
-#vista-monedas[data-chips="5"] .chip-moneda:hover {
-  background: rgba(255, 255, 255, 0.17);
-  border-color: rgba(255, 255, 255, 0.3);
-  transform: translateY(-1px);
-}
-#vista-monedas[data-chips="5"] .chip-moneda.activo {
-  background: rgba(215, 1, 1, 0.3);
-  border-color: #d70101;
-  color: #fff;
-  box-shadow: 0 0 14px rgba(215,1,1,0.4);
-}
-#vista-monedas[data-chips="5"] .chip-moneda.activo::after {
-  color: rgba(255, 255, 255, 0.6);
+  --m-panel:        rgba(10, 10, 10, 0.72);
+  --m-num:          #ffffff;
+  --m-label:        rgba(255, 255, 255, 0.5);
+  --m-sep:          rgba(255, 255, 255, 0.18);
+  --m-sep-txt:      rgba(255, 255, 255, 0.4);
+  --m-input-bg:     rgba(255, 255, 255, 0.14);
+  --m-input-border: rgba(255, 255, 255, 0.22);
+  --m-input-focus:  rgba(255, 255, 255, 0.4);
+  --m-input-txt:    #ffffff;
 }
 
 /* ============================================================
@@ -253,22 +73,24 @@
   flex: 1;
   min-width: 70px;
   padding: 10px 12px;
-  border-radius: 12px;
-  border: 2px solid var(--m-chip-border);
-  background: var(--m-chip-bg);
-  color: var(--m-num);
+  border-radius: 8px;
+  border: 2px solid #a07800;
+  background: linear-gradient(to bottom, #f9d611 0%, #c09000 100%);
+  color: #3a2600;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
   font-family: inherit;
   cursor: pointer;
-  transition: background 0.12s, border-color 0.12s, color 0.12s, transform 0.08s;
   text-align: center;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3);
+  transition: background 0.12s, border-color 0.12s, box-shadow 0.12s, transform 0.08s;
 }
 
 .chip-moneda:hover {
-  background: var(--m-chip-hover-bg);
-  border-color: var(--m-chip-hover-border);
+  background: linear-gradient(to bottom, #fbe96a 0%, #d4aa00 100%);
+  border-color: #c9a000;
   transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
 }
 
 .chip-moneda:active {
@@ -276,10 +98,11 @@
 }
 
 .chip-moneda.activo {
-  background: var(--m-chip-activo-bg);
-  border-color: var(--m-chip-activo-border);
-  color: var(--m-chip-activo-txt);
-  box-shadow: 0 2px 8px var(--m-chip-activo-shadow);
+  background: linear-gradient(to bottom, #fc3f3d 0%, #a60400 100%);
+  border-color: #a60400;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 2px 12px rgba(215, 1, 1, 0.45);
 }
 
 /* ============================================================

@@ -43,19 +43,3 @@ actualizarPantalla($("cantidad-monedas").value);
 const chipInicial = document.querySelector(`.chip-moneda[data-cantidad="${$("cantidad-monedas").value}"]`);
 if (chipInicial) chipInicial.classList.add("activo");
 
-// --- Barra de prototipo: 5 estilos de chips ---
-
-function setChips(n) {
-  $("vista-monedas").dataset.chips = n;
-  for (const btn of document.querySelectorAll(".btn-estilo")) {
-    btn.classList.toggle("activo", btn.dataset.chips === n);
-  }
-  try { localStorage.setItem("proto-monedas-chips", n); } catch {}
-}
-
-for (const btn of document.querySelectorAll(".btn-estilo")) {
-  btn.addEventListener("click", () => setChips(btn.dataset.chips));
-}
-
-// Restaurar estilo guardado
-try { setChips(localStorage.getItem("proto-monedas-chips") || "1"); } catch { setChips("1"); }
