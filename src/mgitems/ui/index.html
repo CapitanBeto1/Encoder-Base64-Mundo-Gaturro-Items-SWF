@@ -212,6 +212,7 @@
               <ul id="casilleros-cabeza" class="casilleros" aria-label="Partes de la cabeza"></ul>
               <figure id="gaturro" class="gaturro">
                 <img id="imagen-gaturro" data-zoom="1" alt="Tu Gaturro con las Piezas del Look, como se ve en el juego">
+                <span id="emote-preview" class="emote-preview" aria-hidden="true"></span>
                 <label class="zoom-gaturro" title="Acercar o alejar el Gaturro">
                   <span aria-hidden="true">−</span>
                   <input id="zoom-gaturro" type="range" min="0.4" max="1.6" step="0.05" value="1" aria-label="Zoom del Gaturro" data-img="imagen-gaturro">
@@ -225,15 +226,15 @@
             <div class="botones-tarjeta">
               <button id="agregar-trucada" class="primario solo-trucar" title="Sumar esta Prenda trucada a la lista">Agregar a la lista</button>
               <button id="agregar-npc" class="primario solo-npc" title="Sumar este Item a la lista">Agregar a la lista</button>
-              <select id="emote-look" class="select-emote solo-looks solo-trucar" title="Emoción del Gaturro" aria-label="Emoción del Gaturro">
-                <option value="">Sin emoción</option>
-                <option value="angry">Enojado</option>
-                <option value="boring">Aburrido</option>
-                <option value="good">Contento</option>
-                <option value="smile">Sonriente</option>
-                <option value="love">Enamorado</option>
-                <option value="money">Con plata</option>
-              </select>
+              <div id="emotes-look" class="emotes-look solo-looks" role="group" aria-label="Emoción del Gaturro">
+                <button type="button" class="emote-btn" data-emote="" title="Sin emoción" aria-pressed="true">😶</button>
+                <button type="button" class="emote-btn" data-emote="angry" title="Enojado" aria-pressed="false">😠</button>
+                <button type="button" class="emote-btn" data-emote="boring" title="Aburrido" aria-pressed="false">😑</button>
+                <button type="button" class="emote-btn" data-emote="good" title="Contento" aria-pressed="false">😊</button>
+                <button type="button" class="emote-btn" data-emote="smile" title="Sonriente" aria-pressed="false">😆</button>
+                <button type="button" class="emote-btn" data-emote="love" title="Enamorado" aria-pressed="false">😍</button>
+                <button type="button" class="emote-btn" data-emote="money" title="Con plata" aria-pressed="false">🤑</button>
+              </div>
               <button id="colores-look" class="boton-cuadrado boton-colores" title="Colores del Gaturro" aria-label="Colores del Gaturro"><span data-icono="gear"></span></button>
               <button id="borrar-look" class="boton-cuadrado guardables" title="Borrar el Look" aria-label="Borrar el Look"><span data-icono="trash"></span></button>
               <button id="descartar-look" class="boton-cuadrado boton-descartar guardables" title="Descartar los cambios" aria-label="Descartar los cambios"><span data-icono="x"></span></button>

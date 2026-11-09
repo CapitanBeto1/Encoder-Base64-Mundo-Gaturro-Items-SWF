@@ -208,7 +208,12 @@ function abrirLook(look) {
 
 function mostrarLook() {
   $("nombre-look").value = lookActual.nombre;
-  $("emote-look").value = lookActual.emote ?? "";
+  const emoteActual = lookActual.emote ?? "";
+  document.querySelectorAll(".emote-btn").forEach(btn => {
+    btn.setAttribute("aria-pressed", btn.dataset.emote === emoteActual ? "true" : "false");
+  });
+  const EMOTE_EMOJI = { angry: "😠", boring: "😑", good: "😊", smile: "😆", love: "😍", money: "🤑" };
+  $("emote-preview").textContent = lookActual.emote ? (EMOTE_EMOJI[lookActual.emote] ?? "") : "";
   const base = lookActual.base;
   $("base-look").replaceChildren(
     ...(base
@@ -276,7 +281,10 @@ $("dejar-de-poner").addEventListener("click", () => {
   mostrarLook();
 });
 
-$("emote-look").addEventListener("change", () => {
-  lookActual.emote = $("emote-look").value || null;
-  mostrarBarraLook();
+document.querySelectorAll(".emote-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    lookActual.emote = btn.dataset.emote || null;
+    mostrarLook();
+    mostrarBarraLook();
+  });
 });
