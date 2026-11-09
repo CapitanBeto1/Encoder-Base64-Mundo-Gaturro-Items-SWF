@@ -4,9 +4,9 @@ import subprocess
 
 from mgitems.ffdec import FFDecNoDisponible
 from mgitems.gaturro import (
-    CLASE_CARA, CLASE_CUERPO, CLASE_PLANTILLA, COLORES, CUADRO_QUIETO_DEL_VEHICULO, SWF_CUERPO,
-    SWF_CUERPO_COMPLETO, SWF_PLANTILLA, SWF_POSES, ImagenesPiezas, completar_con_plantilla, componer,
-    pose_de_transporte, preparar_cuerpo, tiene_color_de_nariz, tiene_lugar,
+    CLASE_CARA, CLASE_CUERPO, CLASE_PLANTILLA, COLORES, CUADRO_QUIETO_DEL_VEHICULO, EMOTE_SUBCLIPS,
+    SWF_CUERPO, SWF_CUERPO_COMPLETO, SWF_PLANTILLA, SWF_POSES, ImagenesPiezas, completar_con_plantilla,
+    componer, pose_de_transporte, preparar_cuerpo, tiene_color_de_nariz, tiene_lugar,
 )
 from mgitems.iconos import IconosItems
 from mgitems.items import es_ruta_valida, filtrar_por_prefijos, piezas_del_swf
@@ -205,6 +205,8 @@ class Imagenes:
         try:
             data = congelado_en(data, CLASE_CUERPO, "standBy")
             data = congelado_en(data, CLASE_CARA, emote)
+            for clase, rotulo in EMOTE_SUBCLIPS.get(emote, {}).items():
+                data = congelado_en(data, clase, rotulo)
         except (OSError, SwfInvalido, subprocess.SubprocessError):
             return None
         imagenes = ImagenesPiezas(self._entorno.carpeta_cache() / "gaturro-emotes", self._exportador)

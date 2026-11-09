@@ -37,6 +37,16 @@ SWF_PLANTILLA, CLASE_PLANTILLA = "fashion2025", "maniqui_so"
 # Head_12 tiene los 7 rótulos de emote; se usa con congelado_en encadenado.
 SWF_CUERPO_COMPLETO = "main"
 CLASE_CARA = "avatar_fla.Head_12"
+# Sub-clips de la cara (eye1/eye2 y mouth1/mouth2 de Head_12) que requieren congelado_en extra.
+# Derivado del frame script de Head_12 en main.swf (eyes() y mouth() de cada emote).
+# normal y good no necesitan entradas: solo usan el frame 1 de los sub-clips.
+EMOTE_SUBCLIPS: dict[str, dict[str, str]] = {
+    "angry": {"avatar_fla.eye_17": "angry", "avatar_fla.eye2_20": "angry", "avatar_fla.mouth_15": "angry"},
+    "boring": {"avatar_fla.eye_17": "halfClosed", "avatar_fla.eye2_20": "halfClosed", "avatar_fla.mouth_15": "boring"},
+    "smile": {"avatar_fla.mouth_15": "laugh"},
+    "love": {"avatar_fla.eye_17": "love", "avatar_fla.eye2_20": "love", "avatar_fla.mouth_15": "love"},
+    "money": {"avatar_fla.eye_17": "money", "avatar_fla.eye2_20": "money"},
+}
 
 # Las Partes del cuerpo en el orden en que el juego las pone (AvatarBodyEnum.getList): si dos van
 # al mismo clip, queda la última (por ejemplo, `gripFore` gana sobre `grip` en el clip `gripFore`).
