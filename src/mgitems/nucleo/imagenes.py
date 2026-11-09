@@ -170,9 +170,9 @@ class Imagenes:
             return motivo_sin_efecto(donde)
         if "no_se_ve" in donde:
             return donde["no_se_ve"]
-        if "solo_en" in donde and donde["solo_en"] != parte:
+        if "solo_en" in donde and donde["solo_en"] != parte and donde.get("solo_en") != TRANSPORTE:
             return f"solo se ve en {PARTES_DEL_CUERPO.get(donde['solo_en'], donde['solo_en'])}"
-        if parte == TRANSPORTE and donde.get("solo_en") != TRANSPORTE:
+        if parte == TRANSPORTE and donde.get("solo_en") != TRANSPORTE and not donde.get("vehiculo"):
             return "en Transporte solo se ven los vehículos"
         return None
 
