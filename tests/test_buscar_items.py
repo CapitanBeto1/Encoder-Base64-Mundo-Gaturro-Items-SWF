@@ -37,11 +37,11 @@ def test_abre_swf_sin_comprimir_y_comprimidos(nucleo, tmp_path, compresion):
 
     resultado = nucleo.abrir_swf(str(ruta))
 
-    assert (resultado["ok"], resultado["swf"], resultado["cantidad_items"]) == (True, "clothes1", 6)
+    assert (resultado["ok"], resultado["swf"], resultado["cantidad_items"]) == (True, "clothes1", 7)
     assert nucleo.buscar_items("r")["items"] == ["clothes1.remera5", "clothes1.Remera6", "clothes1.remera_onda"]
 
 
-def test_los_resultados_excluyen_piezas_objetos_de_escenario_y_clases_internas(nucleo, clothes1):
+def test_los_resultados_excluyen_piezas_y_clases_internas_pero_no_so(nucleo, clothes1):
     nucleo.abrir_swf(str(clothes1))
 
     resultado = nucleo.buscar_items("remera, gorra, traje, zapato, silla, clothes1, assets, Gaturro")
@@ -51,6 +51,7 @@ def test_los_resultados_excluyen_piezas_objetos_de_escenario_y_clases_internas(n
         "clothes1.remera5",
         "clothes1.Remera6",
         "clothes1.remera_onda",
+        "clothes1.silla_so",
         "clothes1.traje_Lucha",
         "clothes1.zapatoPop",
     ]

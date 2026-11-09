@@ -78,7 +78,7 @@ def test_se_exportan_las_imagenes_de_los_items_y_las_piezas(nucleo, exportador):
     assert nucleo.preparar_iconos() == {"ok": True, "swf": "clothes1"}
 
     assert len(exportador.llamadas) == 1
-    assert sorted(exportador.llamadas[0].values()) == ["Remera6", "gorra1", "remera5", "remera5_brazo_on", "remera5_on"]
+    assert sorted(exportador.llamadas[0].values()) == ["Remera6", "gorra1", "remera5", "remera5_brazo_on", "remera5_on", "silla_so"]
 
 
 def test_cada_item_encontrado_tiene_su_imagen(nucleo):
@@ -142,7 +142,7 @@ def test_las_imagenes_quedan_en_la_carpeta_del_programa_y_no_hay_temporales(nucl
 
     carpeta = sistema.base / "Local" / "MGItems" / "iconos" / "clothes1"
     assert sorted(p.name for p in carpeta.iterdir()) == [
-        "Remera6.png", "gorra1.png", "remera5.png", "remera5_brazo_on.png", "remera5_on.png", "version",
+        "Remera6.png", "gorra1.png", "remera5.png", "remera5_brazo_on.png", "remera5_on.png", "silla_so.png", "version",
     ]
 
 
