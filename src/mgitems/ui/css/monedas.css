@@ -1,0 +1,278 @@
+/* Pestaña Monedas: barra de prototipo y 3 variantes de diseño. */
+
+/* --- Barra de prototipo (solo para elegir, no es parte del diseño final) --- */
+
+.barra-prototipo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  margin-bottom: 16px;
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent, transparent 5px,
+    rgba(255, 200, 0, 0.12) 5px, rgba(255, 200, 0, 0.12) 10px
+  );
+  border: 1px dashed rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+  font-size: 12px;
+  color: var(--texto-suave);
+}
+
+.label-proto {
+  font-weight: 600;
+  margin-right: 2px;
+}
+
+.btn-prototipo {
+  padding: 3px 10px;
+  border-radius: 10px;
+  font-size: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  background: rgba(255, 255, 255, 0.4);
+  color: var(--texto-suave);
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.1s, color 0.1s;
+}
+
+.btn-prototipo:hover {
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--texto);
+}
+
+.btn-prototipo.activo {
+  background: var(--rotulo);
+  color: var(--blanco);
+  border-color: transparent;
+}
+
+/* --- Selector de variante activa --- */
+
+#vista-monedas .var-monedas { display: none; }
+#vista-monedas[data-variante="a"] .var-monedas[data-var="a"],
+#vista-monedas[data-variante="b"] .var-monedas[data-var="b"],
+#vista-monedas[data-variante="c"] .var-monedas[data-var="c"] { display: block; }
+
+/* ============================================================
+   Variante A: chips rápidos + input custom
+   ============================================================ */
+
+.chips-monedas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.chip-moneda {
+  padding: 7px 16px;
+  border-radius: 20px;
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  background: rgba(255, 255, 255, 0.35);
+  color: var(--texto);
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.1s, border-color 0.1s, color 0.1s;
+}
+
+.chip-moneda:hover {
+  background: var(--amarillo);
+  border-color: var(--amarillo-contorno);
+}
+
+.chip-moneda.activo {
+  background: var(--celeste);
+  border-color: var(--celeste-contorno);
+  color: var(--texto);
+}
+
+/* ============================================================
+   Variante B: cartas grandes, click directo
+   ============================================================ */
+
+.cartas-monedas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  list-style: none;
+  padding: 0;
+  margin: 10px 0 0;
+}
+
+.carta-moneda {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 14px 10px;
+  border-radius: var(--radio);
+  border: 2px solid rgba(0, 0, 0, 0.18);
+  background: rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, transform 0.1s;
+  font-family: inherit;
+  color: var(--texto);
+  width: 100%;
+  text-align: center;
+}
+
+.carta-moneda:hover {
+  background: var(--amarillo);
+  border-color: var(--amarillo-contorno);
+  transform: translateY(-1px);
+}
+
+.carta-moneda:active {
+  transform: translateY(0);
+}
+
+.carta-icono {
+  font-size: 20px;
+  line-height: 1;
+  display: block;
+}
+
+.carta-num {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.carta-sub {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--texto-suave);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.carta-max .carta-num {
+  font-size: 24px;
+  color: var(--naranja);
+}
+
+/* Carta custom: input + botón */
+.carta-custom {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 12px;
+  cursor: default;
+}
+
+.carta-custom:hover {
+  transform: none;
+}
+
+.carta-custom input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  font: 500 14px/1 "Fredoka", sans-serif;
+  color: var(--texto);
+  outline: none;
+  text-align: center;
+}
+
+.carta-custom input::placeholder {
+  color: var(--texto-suave);
+  font-size: 13px;
+}
+
+.btn-generar-b {
+  padding: 4px 10px;
+  border-radius: 10px;
+  border: none;
+  background: var(--rojo);
+  color: var(--blanco);
+  font: 600 15px/1 "Fredoka", sans-serif;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.btn-generar-b:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* ============================================================
+   Variante C: número grande centrado
+   ============================================================ */
+
+.var-monedas[data-var="c"] {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 8px;
+}
+
+.presets-c {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 20px;
+  color: var(--texto-suave);
+  font-size: 13px;
+}
+
+.preset-c {
+  background: none;
+  border: none;
+  font: 500 13px/1 "Fredoka", sans-serif;
+  color: var(--texto-suave);
+  cursor: pointer;
+  padding: 4px 7px;
+  border-radius: 8px;
+  transition: background 0.1s, color 0.1s;
+}
+
+.preset-c:hover {
+  background: rgba(255, 255, 255, 0.5);
+  color: var(--texto);
+}
+
+.preset-c.activo {
+  font-weight: 700;
+  color: var(--azul);
+  background: rgba(41, 145, 185, 0.12);
+}
+
+.numero-c {
+  margin-bottom: 20px;
+  width: 100%;
+  text-align: center;
+}
+
+.numero-c input {
+  font: 700 38px/1 "Fredoka", sans-serif;
+  color: var(--texto);
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid rgba(0, 0, 0, 0.2);
+  padding: 6px 12px;
+  width: 100%;
+  text-align: center;
+  transition: border-color 0.15s;
+  /* Ocultar flechas del input number */
+  -moz-appearance: textfield;
+}
+
+.numero-c input::-webkit-inner-spin-button,
+.numero-c input::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+.numero-c input:focus {
+  outline: none;
+  border-bottom-color: var(--azul);
+}
+
+.btn-gen-c {
+  width: 100%;
+  max-width: 260px;
+  padding: 12px 20px;
+  font-size: 16px;
+}
