@@ -52,7 +52,7 @@ class Trucar:
                 return {"ok": False, "error": error}
             try:
                 # Sobre lo ya trucado de ese SWF: así quedan todas las suyas.
-                trucados[swf] = self._trucado(trucados.get(swf, data), item, valores)
+                trucados[swf] = self._trucado(trucados.get(swf, data), item, valores, colores=colores or None)
             except TruqueoFallido as e:
                 return {"ok": False, "error": f"No se pudo trucar {t['base']}: {e}."}
             except FFDecNoDisponible as e:
@@ -62,7 +62,7 @@ class Trucar:
             resumen.append({"ruta": t["base"], "tipo": item.tipo, "partes": dict(valores)})
 
         rutas = [t["base"] for t in trucadas]
-        script = generar_script([(ruta, 1) for ruta in rutas], colores=colores or None)
+        script = generar_script([(ruta, 1) for ruta in rutas])
         encode = codificar(script)
         self._trucos[encode] = trucados
         return {"ok": True, "trucadas": resumen, "items": [{"ruta": r, "cantidad": 1} for r in rutas],
@@ -104,7 +104,11 @@ class Trucar:
             pedidos.append((t["base"], 1, {f"wear_{t['parte']}": valor}))
             resumen.append({"ruta": t["base"], "tipo": item.tipo, "partes": {t["parte"]: valor}})
 
-        script = generar_script_con_atributos(pedidos, colores=colores or None)
+        if colores:
+            # Para via-encode, los colores van en los attrs de cada item (como en food.swf: adds.colorN = int).
+            int_colores = {c: int(v.lstrip("#"), 16) for c, v in colores.items()}
+            pedidos = [(ruta, qty, {**attrs, **int_colores}) for ruta, qty, attrs in pedidos]
+        script = generar_script_con_atributos(pedidos)
         encode = codificar(script)
         return {"ok": True, "trucadas": resumen, "items": [{"ruta": t["base"], "cantidad": 1} for t in trucadas],
                 "script": script, "encode": encode}
@@ -157,16 +161,17 @@ class Trucar:
             valores[parte] = PREFIJO_EFECTO + valor if parte == EFECTO else valor
         return valores, None
 
-    def _trucado(self, data: bytes, item: ItemBase, valores: dict[str, str]) -> bytes:
-        """El SWF `data` con `item` mostrando `valores` (puede lanzar TruqueoFallido, FFDecNoDisponible, OSError…)."""
-        return self._prendas_ffdec.trucar(data, item.clase, reescribir_partes(item, valores), dict(valores))
+    def _trucado(self, data: bytes, item: ItemBase, valores: dict[str, str], colores: dict | None = None) -> bytes:
+        """El SWF `data` con `item` mostrando `valores` (puede lanzar TruqueoFallido, FFDecNoDisponible, OSError…).
+        Si se pasan `colores`, se inyectan como `adds.colorN = <int>` en el AS3 del item."""
+        return self._prendas_ffdec.trucar(data, item.clase, reescribir_partes(item, valores, colores), dict(valores))
 
     def _trucar_item(self, swf: str, data: bytes, item: ItemBase, valores: dict[str, str],
                      colores: dict | None = None) -> dict:
         """Truca `item` del SWF `swf` con `valores` (Parte → cómo se escribe) y arma el Encode que lo agrega."""
         base = item.clase
         try:
-            trucado = self._trucado(data, item, valores)
+            trucado = self._trucado(data, item, valores, colores=colores or None)
         except TruqueoFallido as e:
             return {"ok": False, "error": f"No se pudo trucar la Prenda: {e}."}
         except FFDecNoDisponible as e:
@@ -175,7 +180,7 @@ class Trucar:
             return {"ok": False, "error": f"No se pudo trucar la Prenda: {e}"}
 
         ruta = f"{swf}.{base}"
-        script = generar_script([(ruta, 1)], colores=colores or None)
+        script = generar_script([(ruta, 1)])
         encode = codificar(script)
         self._trucos[encode] = {swf: trucado}
         return {

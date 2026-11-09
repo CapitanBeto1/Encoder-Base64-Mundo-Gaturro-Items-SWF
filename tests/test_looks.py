@@ -246,9 +246,8 @@ def test_exportar_e_importar_conserva_los_colores(nucleo, tmp_path):
     assert nucleo.guardados.importar_de_archivo("look", str(archivo))["documento"]["colores"] == {"color1": "#00AA00"}
 
 
-def test_aplicar_incluye_colores_en_el_encode(nucleo):
-    con = nucleo.aplicar_look(dict(REY, colores={"color1": "#00AA00"}))
-    sin = nucleo.aplicar_look(REY)
+def test_aplicar_look_con_colores_no_falla(nucleo):
+    """Los colores van en el AS3 del SWF trucado (como food.swf: adds.colorN = int), no en el script NPC."""
+    resultado = nucleo.aplicar_look(dict(REY, colores={"color1": "#00AA00"}))
 
-    assert con["ok"] and sin["ok"]
-    assert con["encode"] != sin["encode"]  # los colores cambian el Encode entregado al juego
+    assert resultado["ok"]

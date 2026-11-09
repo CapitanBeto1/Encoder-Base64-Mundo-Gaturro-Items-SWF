@@ -38,13 +38,11 @@ def _lineas_colores(colores: dict) -> list[str]:
     return [f"{INDENTACION}user.attr {c} {int(v.lstrip('#'), 16)}" for c, v in colores.items()]
 
 
-def generar_script(pedidos: list[tuple[str, int]], colores: dict | None = None) -> str:
+def generar_script(pedidos: list[tuple[str, int]]) -> str:
     """Script que agrega cada Item en su cantidad, encadenando un bloque `A<n>` por Item.
 
     El formato (incluida la línea de 4 espacios tras `on activate` y los dos saltos
     finales) reproduce el de los Encodes que ya se sabe que funcionan en el juego.
-    Si se pasan `colores` ({"color1": "#RRGGBB", …}), se aplican en el último bloque
-    con `user.attr`, antes del `after`.
     """
     lineas = ["INICIO: DO", f"{INDENTACION}on activate A1", INDENTACION]
     for n, (ruta, cantidad) in enumerate(pedidos, start=1):
@@ -53,24 +51,21 @@ def generar_script(pedidos: list[tuple[str, int]], colores: dict | None = None) 
             f"A{n}: DO",
             f"{INDENTACION}user.state get",
             f"{INDENTACION}inventory.add {cantidad} {ruta}",
+            f"{INDENTACION}after 1 {siguiente}",
         ]
-        if n == len(pedidos) and colores:
-            lineas += _lineas_colores(colores)
-        lineas.append(f"{INDENTACION}after 1 {siguiente}")
         if n < len(pedidos):
             lineas.append("")
     return "\n".join(lineas) + "\n\n"
 
 
-def generar_script_con_atributos(pedidos: list[tuple[str, int, dict]], colores: dict | None = None) -> str:
+def generar_script_con_atributos(pedidos: list[tuple[str, int, dict]]) -> str:
     """Como `generar_script`, pero cada Item llega con atributos propios (`inventory.addOptions`).
 
     `inventory.addOptions <Item> <cantidad> <catálogo> <atributos>` del juego (`NpcActionRunner.addItemWithOptions`)
     los suma a los del Item al recibirlo (`mergeAttrs` en `InventoryUtil.doAcquireObject`), y el servidor los guarda
     en ese objeto: el mismo Item puede llegar varias veces, cada una con otros atributos, sin trucar su SWF. Los
     atributos van como JSON sin espacios, porque el guion separa los argumentos por espacios (y no deja comillas
-    dentro de un argumento entre comillas). Sin catálogo: `null`.
-    Si se pasan `colores`, se aplican con `user.attr` en el último bloque."""
+    dentro de un argumento entre comillas). Sin catálogo: `null`."""
     lineas = ["INICIO: DO", f"{INDENTACION}on activate A1", INDENTACION]
     for n, (ruta, cantidad, atributos) in enumerate(pedidos, start=1):
         texto = json.dumps(atributos, separators=(",", ":"), ensure_ascii=True)
@@ -81,10 +76,8 @@ def generar_script_con_atributos(pedidos: list[tuple[str, int, dict]], colores: 
             f"A{n}: DO",
             f"{INDENTACION}user.state get",
             f"{INDENTACION}inventory.addOptions {ruta} {cantidad} null {texto}",
+            f"{INDENTACION}after 1 {siguiente}",
         ]
-        if n == len(pedidos) and colores:
-            lineas += _lineas_colores(colores)
-        lineas.append(f"{INDENTACION}after 1 {siguiente}")
         if n < len(pedidos):
             lineas.append("")
     return "\n".join(lineas) + "\n\n"
