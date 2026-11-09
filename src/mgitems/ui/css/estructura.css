@@ -228,6 +228,10 @@ button.chip-look[aria-pressed="true"] {
   font-size: 12px;
 }
 
+main.modo-monedas .buscador-swf {
+  display: none;
+}
+
 /* En la pestaña Desbloquear el panel de la derecha (Encode) no aplica: se oculta y el izquierdo ocupa todo. */
 main.modo-terminator {
   grid-template-columns: minmax(0, 1fr);
