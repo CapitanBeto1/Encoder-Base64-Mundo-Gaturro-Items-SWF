@@ -19,6 +19,7 @@
   <link rel="stylesheet" href="css/textos.css">
   <link rel="stylesheet" href="css/toques.css">
   <link rel="stylesheet" href="css/terminator.css">
+  <link rel="stylesheet" href="css/monedas.css">
 </head>
 <body>
   <!-- Fondo al estilo de la pantalla de servidores clásica: estrellas, planeta y anillo. -->
@@ -312,13 +313,23 @@
         </div>
       </div>
       <div id="vista-monedas" class="vista" role="tabpanel" hidden>
-        <h2>Monedas</h2>
-        <p class="ayuda">Generá un Encode para recibir monedas en el juego.</p>
-        <div class="fila acciones">
-          <label for="cantidad-monedas" class="etiqueta-campo">Cantidad:</label>
-          <input id="cantidad-monedas" type="number" min="1" max="999999999" value="999999999" class="campo-chico">
-          <button id="generar-monedas" class="primario" disabled>Generar Encode</button>
+
+        <div class="monedas-pantalla">
+          <span data-icono="coin" class="pantalla-icono"></span>
+          <span class="pantalla-numero" id="pantalla-numero">999.999.999</span>
+          <span class="pantalla-label">monedas</span>
         </div>
+        <div class="chips-monedas">
+          <button class="chip-moneda" data-cantidad="1000">1.000</button>
+          <button class="chip-moneda" data-cantidad="10000">10.000</button>
+          <button class="chip-moneda" data-cantidad="100000">100.000</button>
+          <button class="chip-moneda" data-cantidad="1000000">1.000.000</button>
+          <button class="chip-moneda" data-cantidad="999999999">Máximo</button>
+        </div>
+        <div class="separador-custom"><span>o escribí otra cantidad</span></div>
+        <input id="cantidad-monedas" type="number" min="1" max="999999999" value="999999999" class="input-monedas-custom">
+        <button id="generar-monedas" class="primario btn-generar-a" disabled>Generar Encode</button>
+
         <p id="mensaje-monedas" class="mensaje" role="status" aria-live="polite"></p>
       </div>
 
