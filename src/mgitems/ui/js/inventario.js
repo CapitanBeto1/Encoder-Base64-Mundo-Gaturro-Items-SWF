@@ -83,8 +83,8 @@ function motivoNoSeVe(pieza, parte) {
     if (pieza.grande) return "el efecto de cabeza no dibuja lo de 150×150 o más";
     return null;
   }
-  if (pieza.solo_en && pieza.solo_en !== parte) return `solo se ve en ${nombreDeParte(pieza.solo_en)}`;
-  if (parte === "transport" && pieza.solo_en !== "transport") return "en Transporte solo se ven los vehículos";
+  if (pieza.solo_en && pieza.solo_en !== parte && pieza.solo_en !== "transport") return `solo se ve en ${nombreDeParte(pieza.solo_en)}`;
+  if (parte === "transport" && pieza.solo_en !== "transport" && !pieza.vehiculo) return "en Transporte solo se ven los vehículos";
   return null;
 }
 
