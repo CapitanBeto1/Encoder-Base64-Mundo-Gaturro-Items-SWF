@@ -13,12 +13,15 @@ INDENTACION = "    "
 
 # Líneas que forman parte de un Script que solo agrega Items.
 _LINEA_INVENTORY_ADD = re.compile(r"^inventory\.add\s+(\d+)\s+(\S+)$")
+_LINEA_INVENTORY_ADD_OPTIONS = re.compile(r"^inventory\.addOptions\s+(\S+)\s+(\d+)\s+\S+.*$")
 _LINEAS_DE_AGREGAR_ITEMS = (
     re.compile(r"^\S+: DO$"),
     re.compile(r"^on activate \S+$"),
     re.compile(r"^user\.state get$"),
     re.compile(r"^after \d+ \S+$"),
+    re.compile(r"^user\.attr \S+ \S+$"),
     _LINEA_INVENTORY_ADD,
+    _LINEA_INVENTORY_ADD_OPTIONS,
 )
 
 
@@ -85,9 +88,41 @@ def leer_script(script: str) -> tuple[list[tuple[str, int]], bool]:
         if agregado := _LINEA_INVENTORY_ADD.match(linea):
             ruta = agregado.group(2)
             pedidos[ruta] = pedidos.get(ruta, 0) + int(agregado.group(1))
+        elif con_attrs := _LINEA_INVENTORY_ADD_OPTIONS.match(linea):
+            ruta = con_attrs.group(1)
+            pedidos[ruta] = pedidos.get(ruta, 0) + int(con_attrs.group(2))
         elif not any(p.match(linea) for p in _LINEAS_DE_AGREGAR_ITEMS):
             otros_comandos = True
     return list(pedidos.items()), otros_comandos
+
+
+def generar_script_monedas(cantidad: int) -> str:
+    """Script que da `cantidad` monedas al jugador via `reward.coin`."""
+    cant = str(cantidad)
+    return (
+        f"initial: DO\n"
+        f"{INDENTACION}on activate Ghoster\n"
+        f"\n"
+        f"Ghoster: DO\n"
+        f"{INDENTACION}user.state get\n"
+        f'{INDENTACION}modal.show "{cant}" "dailyBonus/props.moneda"\n'
+        f"{INDENTACION}    inventory.add 1 monedas.sss\n"
+        f"{INDENTACION}reward.coin {cant}\n"
+        f"{INDENTACION}    goto initial\n"
+    )
+
+
+def generar_script_colores(colores: dict) -> str:
+    """Script que setea los colores del Gaturro via `user.attr` (`color1`–`color4`).
+
+    Los colores del avatar se guardan en el perfil del usuario en el servidor;
+    no dependen de un Item y persisten permanentemente (ADR 0003, ADR 0005).
+    """
+    lineas = ["INICIO: DO", f"{INDENTACION}on activate A1", INDENTACION, "A1: DO"]
+    for clave, valor in colores.items():
+        lineas.append(f"{INDENTACION}user.attr {clave} {valor}")
+    lineas.append(f"{INDENTACION}after 1 INICIO")
+    return "\n".join(lineas) + "\n\n"
 
 
 def codificar(script: str) -> str:

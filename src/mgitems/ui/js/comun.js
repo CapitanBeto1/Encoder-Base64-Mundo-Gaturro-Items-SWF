@@ -148,6 +148,10 @@ function mostrarEncode(resultado) {
   } else if (resultado?.prenda) {
     const n = Object.keys(resultado.prenda.partes).length;
     $("resumen").textContent = `Prenda trucada: ${resultado.prenda.ruta} con ${n === 1 ? "1 Pieza" : `${n} Piezas`}.` + (resultado.prenda.tipo === "mochila" ? " Está en la mochila: usalo para vestirte." : "");
+  } else if (resultado?.monedas) {
+    $("resumen").textContent = `Encode para recibir ${resultado.monedas.toLocaleString("es")} monedas.`;
+  } else if (resultado?.colores) {
+    $("resumen").textContent = "Colores del Gaturro: recibí el Encode en el juego para aplicarlos.";
   } else if (resultado) {
     $("resumen").textContent = `Encode con ${contarItems(resultado.items.length)}.`;
   } else {
@@ -177,7 +181,9 @@ function actualizarControles() {
   for (const nombre of PESTANAS) $(`pestana-${nombre}`).disabled = !conectado || ocupado;
   $("usar-comportamiento").disabled = $("comportamiento-a-mano").disabled = !listo;
   $("copiar").disabled = $("guardar").disabled = !listo || !$("encode").value;
-  $("entregar").disabled = !listo || !items.length; // si falta el Encode, lo genera al tocarlo
+  $("entregar").disabled = !listo || (vista === "monedas" ? !$("encode").value : !items.length);
+  $("generar-monedas").disabled = !listo;
+  $("cantidad-todos").disabled = $("aplicar-cantidad-todos").disabled = !listo || items.length === 0;
 }
 
 // --- Imágenes de los Items ---
@@ -461,3 +467,12 @@ async function guardar() {
   if (resultado.ok) avisarEncode(`Guardado en ${resultado.ruta}`, "exito");
   else if (!resultado.cancelado) avisarEncode(resultado.error, "error");
 }
+
+$("form-cantidad-todos").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const valor = parseInt($("cantidad-todos").value, 10);
+  if (valor >= 1) {
+    items = items.map((i) => ({ ...i, cantidad: valor }));
+    mostrarLista();
+  }
+});

@@ -19,6 +19,7 @@ from mgitems.iconos import ExportadorFFDec
 from mgitems.npcs import Comportamientos
 from mgitems.nucleo.acciones import Acciones
 from mgitems.nucleo.busqueda import Busqueda
+from mgitems.nucleo.colores import Colores
 from mgitems.nucleo.configuracion import Configuracion
 from mgitems.nucleo.encodes import Encodes
 from mgitems.nucleo.entrega import Entregar
@@ -30,7 +31,7 @@ from mgitems.nucleo.trucar import Trucar
 from mgitems.prendas import ItemBase, ItemsBaseFFDec
 
 
-class Nucleo(Entregar, Swfs, Trucar, Acciones, Looks, Npcs, Busqueda, Imagenes, Encodes, Configuracion):
+class Nucleo(Entregar, Swfs, Trucar, Acciones, Looks, Npcs, Busqueda, Imagenes, Encodes, Configuracion, Colores):
     """Todo lo que hace el programa, para la interfaz (por `app.Puente`) y las pruebas. Cada parte vive en su módulo;
     acá se arma el estado que comparten (el SWF abierto, los SWF trucados de cada Encode, el entorno…)."""
 

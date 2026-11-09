@@ -86,6 +86,7 @@
     <button id="pestana-minijuegos" class="pestana" role="tab" aria-selected="false" aria-controls="vista-looks" title="Minijuegos"><span data-icono="game-controller"></span> Minijuegos</button>
     <button id="pestana-fondos" class="pestana" role="tab" aria-selected="false" aria-controls="vista-looks" title="Fondos"><span data-icono="images-square"></span> Fondos</button>
     <span class="grupo-pestanas" role="presentation">Juego</span>
+    <button id="pestana-monedas" class="pestana" role="tab" aria-selected="false" aria-controls="vista-monedas" title="Recibir monedas"><span data-icono="coin"></span> Monedas</button>
     <button id="pestana-terminator" class="pestana" role="tab" aria-selected="false" aria-controls="vista-terminator" title="Desbloquear objetos del juego"><span data-icono="lock-open"></span> Desbloquear</button>
   </nav>
 
@@ -310,6 +311,17 @@
           <button id="entregar-look" class="primario entregar">Agregar al juego</button>
         </div>
       </div>
+      <div id="vista-monedas" class="vista" role="tabpanel" hidden>
+        <h2>Monedas</h2>
+        <p class="ayuda">Generá un Encode para recibir monedas en el juego.</p>
+        <div class="fila acciones">
+          <label for="cantidad-monedas" class="etiqueta-campo">Cantidad:</label>
+          <input id="cantidad-monedas" type="number" min="1" max="999999999" value="999999999" class="campo-chico">
+          <button id="generar-monedas" class="primario" disabled>Generar Encode</button>
+        </div>
+        <p id="mensaje-monedas" class="mensaje" role="status" aria-live="polite"></p>
+      </div>
+
       <div id="vista-terminator" class="vista" role="tabpanel" hidden>
         <h2>Objetos bloqueados</h2>
         <p class="ayuda">El juego los esconde por defecto. Podés desbloquear los que quieras; los que tienen un <strong>servidor detrás</strong> (como los premios Arcor) van a seguir sin funcionar aunque los desbloquees acá.</p>
@@ -332,6 +344,11 @@
         </div>
         <ul id="lista" class="lista" aria-live="polite"></ul>
         <p id="lista-vacia" class="ayuda vacia"><span data-icono="hand-pointing" class="mano-vacia"></span> Tocá un Item de la grilla para sumarlo</p>
+        <form id="form-cantidad-todos" class="fila">
+          <label for="cantidad-todos" class="etiqueta-campo">Todos:</label>
+          <input id="cantidad-todos" type="number" min="1" step="1" placeholder="Cantidad" class="campo-chico" disabled>
+          <button id="aplicar-cantidad-todos" disabled>Aplicar</button>
+        </form>
         <form id="form-agregar" class="fila">
           <input id="manual" type="text" spellcheck="false" autocomplete="off"
                  placeholder="Agregar a mano: clothes1.remera5" disabled>
@@ -446,6 +463,7 @@
         <div class="acciones-colores">
           <button type="button" id="reiniciar-colores" class="pastilla-colores" title="Volver a los colores de fábrica del juego">REINICIAR</button>
           <button type="button" id="guardar-colores" class="pastilla-colores">GUARDAR</button>
+          <button type="button" id="aplicar-colores" class="pastilla-colores" title="Genera un Encode para aplicar estos colores al juego de forma permanente">APLICAR AL JUEGO</button>
         </div>
       </div>
       <div class="panel-colores">
@@ -567,6 +585,7 @@
   <script src="js/npcs.js"></script>
   <script src="js/acciones.js"></script>
   <script src="js/entorno.js"></script>
+  <script src="js/monedas.js"></script>
   <script src="js/agregar.js"></script>
   <script src="js/busqueda.js"></script>
   <script src="js/terminator.js"></script>
