@@ -1,4 +1,4 @@
-/* Pestaña Monedas: barra de prototipo y 3 variantes de diseño. */
+/* Pestaña Monedas: barra de prototipo y 5 variantes de color. */
 
 /* --- Barra de prototipo (solo para elegir, no es parte del diseño final) --- */
 
@@ -24,7 +24,10 @@
   margin-right: 2px;
 }
 
-.btn-prototipo {
+.btn-color {
+  display: flex;
+  align-items: center;
+  gap: 5px;
   padding: 3px 10px;
   border-radius: 10px;
   font-size: 12px;
@@ -36,29 +39,125 @@
   transition: background 0.1s, color 0.1s;
 }
 
-.btn-prototipo:hover {
+.btn-color:hover {
   background: rgba(255, 255, 255, 0.7);
   color: var(--texto);
 }
 
-.btn-prototipo.activo {
+.btn-color.activo {
   background: var(--rotulo);
   color: var(--blanco);
   border-color: transparent;
 }
 
-/* --- Selector de variante activa --- */
+/* Puntitos de color en cada botón */
+.dot-color {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
 
-#vista-monedas .var-monedas { display: none; }
-#vista-monedas[data-variante="a"] .var-monedas[data-var="a"],
-#vista-monedas[data-variante="b"] .var-monedas[data-var="b"],
-#vista-monedas[data-variante="c"] .var-monedas[data-var="c"] { display: block; }
+[data-color="1"] ~ * .dot-color,
+.btn-color[data-color="1"] .dot-color { background: #111; }
+.btn-color[data-color="2"] .dot-color { background: #2991b9; }
+.btn-color[data-color="3"] .dot-color { background: #2e7d32; }
+.btn-color[data-color="4"] .dot-color { background: #fc6400; }
+.btn-color[data-color="5"] .dot-color { background: #7c3aed; }
 
 /* ============================================================
-   Variante A: display de cantidad + chips + input custom
+   Variables de color (--m-*): definen la paleta del panel.
+   Se sobreescriben por variante de color en #vista-monedas.
    ============================================================ */
 
-/* Panel que muestra la cantidad elegida */
+#vista-monedas {
+  /* Color 1: Negro/Oscuro (default) */
+  --m-panel:              rgba(10, 10, 10, 0.72);
+  --m-num:                #ffffff;
+  --m-label:              rgba(255, 255, 255, 0.5);
+  --m-chip-bg:            rgba(255, 255, 255, 0.14);
+  --m-chip-border:        rgba(255, 255, 255, 0.22);
+  --m-chip-activo-bg:     rgba(255, 255, 255, 0.92);
+  --m-chip-activo-txt:    #111111;
+  --m-chip-activo-border: rgba(255, 255, 255, 0.95);
+  --m-chip-activo-shadow: rgba(0, 0, 0, 0.3);
+  --m-chip-hover-bg:      rgba(255, 255, 255, 0.26);
+  --m-chip-hover-border:  rgba(255, 255, 255, 0.4);
+  --m-sep:                rgba(255, 255, 255, 0.18);
+  --m-sep-txt:            rgba(255, 255, 255, 0.4);
+  --m-input-bg:           rgba(255, 255, 255, 0.14);
+  --m-input-border:       rgba(255, 255, 255, 0.22);
+  --m-input-focus:        rgba(255, 255, 255, 0.4);
+  --m-input-txt:          #ffffff;
+}
+
+/* Color 2: Azul/Mar */
+#vista-monedas[data-color="2"] {
+  --m-panel:              rgba(0, 25, 75, 0.78);
+  --m-num:                #ffffff;
+  --m-chip-activo-bg:     #8bceeb;
+  --m-chip-activo-txt:    #001830;
+  --m-chip-activo-border: #4fa9d6;
+  --m-chip-activo-shadow: rgba(79, 169, 214, 0.4);
+  --m-chip-hover-bg:      rgba(139, 206, 235, 0.2);
+  --m-chip-hover-border:  rgba(139, 206, 235, 0.4);
+  --m-sep:                rgba(139, 206, 235, 0.25);
+  --m-sep-txt:            rgba(139, 206, 235, 0.6);
+  --m-input-focus:        #4fa9d6;
+}
+
+/* Color 3: Verde/Selva */
+#vista-monedas[data-color="3"] {
+  --m-panel:              rgba(0, 50, 15, 0.78);
+  --m-num:                #f9d611;
+  --m-label:              rgba(249, 214, 17, 0.6);
+  --m-chip-activo-bg:     #49af4c;
+  --m-chip-activo-txt:    #fff;
+  --m-chip-activo-border: #2e7d32;
+  --m-chip-activo-shadow: rgba(46, 125, 50, 0.4);
+  --m-chip-hover-bg:      rgba(73, 175, 76, 0.2);
+  --m-chip-hover-border:  rgba(73, 175, 76, 0.4);
+  --m-sep:                rgba(73, 175, 76, 0.25);
+  --m-sep-txt:            rgba(73, 175, 76, 0.65);
+  --m-input-focus:        #49af4c;
+}
+
+/* Color 4: Naranja/Cálido */
+#vista-monedas[data-color="4"] {
+  --m-panel:              rgba(65, 20, 0, 0.78);
+  --m-num:                #ffffff;
+  --m-chip-activo-bg:     #fc6400;
+  --m-chip-activo-txt:    #fff;
+  --m-chip-activo-border: #d45500;
+  --m-chip-activo-shadow: rgba(252, 100, 0, 0.4);
+  --m-chip-hover-bg:      rgba(252, 100, 0, 0.18);
+  --m-chip-hover-border:  rgba(252, 100, 0, 0.4);
+  --m-sep:                rgba(252, 100, 0, 0.25);
+  --m-sep-txt:            rgba(252, 100, 0, 0.65);
+  --m-input-focus:        #fc6400;
+}
+
+/* Color 5: Morado/Noche */
+#vista-monedas[data-color="5"] {
+  --m-panel:              rgba(35, 0, 75, 0.78);
+  --m-num:                #e8d4ff;
+  --m-label:              rgba(232, 212, 255, 0.5);
+  --m-chip-activo-bg:     #7c3aed;
+  --m-chip-activo-txt:    #fff;
+  --m-chip-activo-border: #5b21b6;
+  --m-chip-activo-shadow: rgba(91, 33, 182, 0.4);
+  --m-chip-hover-bg:      rgba(124, 58, 237, 0.18);
+  --m-chip-hover-border:  rgba(124, 58, 237, 0.4);
+  --m-sep:                rgba(124, 58, 237, 0.25);
+  --m-sep-txt:            rgba(167, 139, 250, 0.65);
+  --m-input-focus:        #7c3aed;
+}
+
+/* ============================================================
+   Panel de cantidad (usa variables --m-*)
+   ============================================================ */
+
 .monedas-pantalla {
   display: flex;
   align-items: center;
@@ -66,36 +165,41 @@
   gap: 12px;
   padding: 20px 24px;
   margin-bottom: 20px;
-  background: var(--panel);
+  background: var(--m-panel);
   border-radius: var(--radio);
   min-height: 90px;
+  transition: background 0.25s;
 }
 
 .pantalla-icono {
   font-size: 36px;
   flex-shrink: 0;
   line-height: 1;
+  color: var(--m-num);
 }
 
 .pantalla-numero {
   font-size: 36px;
   font-weight: 700;
-  color: var(--amarillo-fondo);
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+  color: var(--m-num);
   line-height: 1;
   letter-spacing: -0.5px;
-  transition: color 0.15s;
+  transition: color 0.25s;
 }
 
 .pantalla-label {
   font-size: 14px;
-  color: rgba(255, 255, 255, 0.65);
+  color: var(--m-label);
   align-self: flex-end;
   padding-bottom: 4px;
   font-weight: 500;
+  transition: color 0.25s;
 }
 
-/* Chips */
+/* ============================================================
+   Chips
+   ============================================================ */
+
 .chips-monedas {
   display: flex;
   flex-wrap: wrap;
@@ -108,20 +212,20 @@
   min-width: 70px;
   padding: 10px 12px;
   border-radius: 12px;
-  border: 2px solid rgba(0, 0, 0, 0.18);
-  background: rgba(255, 255, 255, 0.4);
-  color: var(--texto);
+  border: 2px solid var(--m-chip-border);
+  background: var(--m-chip-bg);
+  color: var(--m-num);
   font-size: 14px;
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
-  transition: background 0.1s, border-color 0.1s, transform 0.08s;
+  transition: background 0.12s, border-color 0.12s, color 0.12s, transform 0.08s;
   text-align: center;
 }
 
 .chip-moneda:hover {
-  background: var(--amarillo);
-  border-color: var(--amarillo-contorno);
+  background: var(--m-chip-hover-bg);
+  border-color: var(--m-chip-hover-border);
   transform: translateY(-1px);
 }
 
@@ -130,21 +234,25 @@
 }
 
 .chip-moneda.activo {
-  background: var(--celeste);
-  border-color: var(--celeste-contorno);
-  color: var(--texto);
-  box-shadow: 0 2px 6px var(--celeste-sombra);
+  background: var(--m-chip-activo-bg);
+  border-color: var(--m-chip-activo-border);
+  color: var(--m-chip-activo-txt);
+  box-shadow: 0 2px 8px var(--m-chip-activo-shadow);
 }
 
-/* Separador "o escribí otra cantidad" */
+/* ============================================================
+   Separador y campo personalizado
+   ============================================================ */
+
 .separador-custom {
   display: flex;
   align-items: center;
   gap: 10px;
   margin-bottom: 10px;
-  color: var(--texto-suave);
+  color: var(--m-sep-txt);
   font-size: 12px;
   font-weight: 500;
+  transition: color 0.25s;
 }
 
 .separador-custom::before,
@@ -152,20 +260,20 @@
   content: "";
   flex: 1;
   height: 1px;
-  background: rgba(0, 0, 0, 0.15);
+  background: var(--m-sep);
+  transition: background 0.25s;
 }
 
-/* Input custom */
 .input-monedas-custom {
   display: block;
   width: 100%;
   padding: 10px 14px;
   margin-bottom: 14px;
   border-radius: 12px;
-  border: 2px solid rgba(0, 0, 0, 0.18);
-  background: rgba(255, 255, 255, 0.5);
+  border: 2px solid var(--m-input-border);
+  background: var(--m-input-bg);
   font: 600 16px/1 "Fredoka", sans-serif;
-  color: var(--texto);
+  color: var(--m-input-txt);
   text-align: center;
   transition: border-color 0.15s, background 0.15s;
   -moz-appearance: textfield;
@@ -176,202 +284,18 @@
 
 .input-monedas-custom:focus {
   outline: none;
-  border-color: var(--celeste-contorno);
-  background: rgba(255, 255, 255, 0.7);
+  border-color: var(--m-input-focus);
 }
 
-/* Botón generar (variante A) */
+.input-monedas-custom::placeholder { color: var(--m-label); }
+
+/* ============================================================
+   Botón Generar Encode
+   ============================================================ */
+
 .btn-generar-a {
   display: block;
   width: 100%;
   padding: 13px;
-  font-size: 16px;
-}
-
-/* ============================================================
-   Variante B: cartas grandes, click directo
-   ============================================================ */
-
-.cartas-monedas {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  list-style: none;
-  padding: 0;
-  margin: 10px 0 0;
-}
-
-.carta-moneda {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  padding: 14px 10px;
-  border-radius: var(--radio);
-  border: 2px solid rgba(0, 0, 0, 0.18);
-  background: rgba(255, 255, 255, 0.35);
-  cursor: pointer;
-  transition: background 0.12s, border-color 0.12s, transform 0.1s;
-  font-family: inherit;
-  color: var(--texto);
-  width: 100%;
-  text-align: center;
-}
-
-.carta-moneda:hover {
-  background: var(--amarillo);
-  border-color: var(--amarillo-contorno);
-  transform: translateY(-1px);
-}
-
-.carta-moneda:active {
-  transform: translateY(0);
-}
-
-.carta-icono {
-  font-size: 20px;
-  line-height: 1;
-  display: block;
-}
-
-.carta-num {
-  font-size: 18px;
-  font-weight: 700;
-  line-height: 1.2;
-}
-
-.carta-sub {
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--texto-suave);
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-}
-
-.carta-max .carta-num {
-  font-size: 24px;
-  color: var(--naranja);
-}
-
-/* Carta custom: input + botón */
-.carta-custom {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 12px;
-  cursor: default;
-}
-
-.carta-custom:hover {
-  transform: none;
-}
-
-.carta-custom input {
-  flex: 1;
-  min-width: 0;
-  border: none;
-  background: transparent;
-  font: 500 14px/1 "Fredoka", sans-serif;
-  color: var(--texto);
-  outline: none;
-  text-align: center;
-}
-
-.carta-custom input::placeholder {
-  color: var(--texto-suave);
-  font-size: 13px;
-}
-
-.btn-generar-b {
-  padding: 4px 10px;
-  border-radius: 10px;
-  border: none;
-  background: var(--rojo);
-  color: var(--blanco);
-  font: 600 15px/1 "Fredoka", sans-serif;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
-.btn-generar-b:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-
-/* ============================================================
-   Variante C: número grande centrado
-   ============================================================ */
-
-.var-monedas[data-var="c"] {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding-top: 8px;
-}
-
-.presets-c {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  margin-bottom: 20px;
-  color: var(--texto-suave);
-  font-size: 13px;
-}
-
-.preset-c {
-  background: none;
-  border: none;
-  font: 500 13px/1 "Fredoka", sans-serif;
-  color: var(--texto-suave);
-  cursor: pointer;
-  padding: 4px 7px;
-  border-radius: 8px;
-  transition: background 0.1s, color 0.1s;
-}
-
-.preset-c:hover {
-  background: rgba(255, 255, 255, 0.5);
-  color: var(--texto);
-}
-
-.preset-c.activo {
-  font-weight: 700;
-  color: var(--azul);
-  background: rgba(41, 145, 185, 0.12);
-}
-
-.numero-c {
-  margin-bottom: 20px;
-  width: 100%;
-  text-align: center;
-}
-
-.numero-c input {
-  font: 700 38px/1 "Fredoka", sans-serif;
-  color: var(--texto);
-  background: transparent;
-  border: none;
-  border-bottom: 3px solid rgba(0, 0, 0, 0.2);
-  padding: 6px 12px;
-  width: 100%;
-  text-align: center;
-  transition: border-color 0.15s;
-  /* Ocultar flechas del input number */
-  -moz-appearance: textfield;
-}
-
-.numero-c input::-webkit-inner-spin-button,
-.numero-c input::-webkit-outer-spin-button { -webkit-appearance: none; }
-
-.numero-c input:focus {
-  outline: none;
-  border-bottom-color: var(--azul);
-}
-
-.btn-gen-c {
-  width: 100%;
-  max-width: 260px;
-  padding: 12px 20px;
   font-size: 16px;
 }

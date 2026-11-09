@@ -1,6 +1,6 @@
 // Monedas: generar un Encode que da monedas al jugador.
 
-// --- Lógica compartida ---
+// --- Generar ---
 
 async function generarMonedas(cantidad) {
   if (!cantidad || cantidad < 1) {
@@ -12,7 +12,7 @@ async function generarMonedas(cantidad) {
   avisar($("mensaje-monedas"), "");
 }
 
-// --- Variante A: chips rápidos ---
+// --- Chips ---
 
 function actualizarPantalla(valor) {
   const num = parseInt(valor, 10);
@@ -34,89 +34,28 @@ $("cantidad-monedas").addEventListener("input", () => {
   actualizarPantalla($("cantidad-monedas").value);
 });
 
+$("generar-monedas").addEventListener("click", () => {
+  generarMonedas(parseInt($("cantidad-monedas").value, 10));
+});
+
 // Inicializar display y chip activo con el valor por defecto
 actualizarPantalla($("cantidad-monedas").value);
 const chipInicial = document.querySelector(`.chip-moneda[data-cantidad="${$("cantidad-monedas").value}"]`);
 if (chipInicial) chipInicial.classList.add("activo");
 
-$("generar-monedas").addEventListener("click", () => {
-  generarMonedas(parseInt($("cantidad-monedas").value, 10));
-});
+// --- Barra de prototipo: 5 colores ---
 
-// --- Variante B: cartas ---
-
-for (const btn of document.querySelectorAll(".carta-moneda[data-cantidad]")) {
-  btn.addEventListener("click", () => {
-    $("cantidad-monedas").value = btn.dataset.cantidad;
-    generarMonedas(parseInt(btn.dataset.cantidad, 10));
-  });
-}
-
-const inputB = $("cantidad-b");
-const btnB = document.querySelector(".btn-generar-b");
-
-function syncBtnB() {
-  btnB.disabled = $("generar-monedas").disabled || !inputB.value;
-}
-
-inputB.addEventListener("input", syncBtnB);
-
-btnB.addEventListener("click", () => {
-  const v = parseInt(inputB.value, 10);
-  $("cantidad-monedas").value = v;
-  generarMonedas(v);
-});
-
-// --- Variante C: número grande ---
-
-const inputC = $("cantidad-c");
-const btnGenC = document.querySelector(".btn-gen-c");
-
-for (const btn of document.querySelectorAll(".preset-c")) {
-  btn.addEventListener("click", () => {
-    inputC.value = btn.dataset.cantidad;
-    $("cantidad-monedas").value = btn.dataset.cantidad;
-    for (const p of document.querySelectorAll(".preset-c")) p.classList.toggle("activo", p === btn);
-  });
-}
-
-inputC.addEventListener("input", () => {
-  $("cantidad-monedas").value = inputC.value;
-  for (const p of document.querySelectorAll(".preset-c")) {
-    p.classList.toggle("activo", p.dataset.cantidad === inputC.value);
+function setColor(c) {
+  $("vista-monedas").dataset.color = c;
+  for (const btn of document.querySelectorAll(".btn-color")) {
+    btn.classList.toggle("activo", btn.dataset.color === c);
   }
-});
-
-btnGenC.addEventListener("click", () => {
-  generarMonedas(parseInt(inputC.value, 10));
-});
-
-// Sincroniza disabled de los botones de B y C con el botón principal (#generar-monedas,
-// que es el que actualizarControles maneja).
-function syncBotonesMonedas() {
-  const dis = $("generar-monedas").disabled;
-  syncBtnB();
-  btnGenC.disabled = dis;
+  try { localStorage.setItem("proto-monedas-color", c); } catch {}
 }
 
-new MutationObserver(syncBotonesMonedas).observe($("generar-monedas"), {
-  attributes: true,
-  attributeFilter: ["disabled"],
-});
-
-// --- Barra de prototipo ---
-
-function setVariante(v) {
-  $("vista-monedas").dataset.variante = v;
-  for (const btn of document.querySelectorAll(".btn-prototipo")) {
-    btn.classList.toggle("activo", btn.dataset.variante === v);
-  }
-  try { localStorage.setItem("proto-monedas", v); } catch {}
+for (const btn of document.querySelectorAll(".btn-color")) {
+  btn.addEventListener("click", () => setColor(btn.dataset.color));
 }
 
-for (const btn of document.querySelectorAll(".btn-prototipo")) {
-  btn.addEventListener("click", () => setVariante(btn.dataset.variante));
-}
-
-// Restaurar variante guardada (con "a" como fallback).
-try { setVariante(localStorage.getItem("proto-monedas") || "a"); } catch { setVariante("a"); }
+// Restaurar color guardado
+try { setColor(localStorage.getItem("proto-monedas-color") || "1"); } catch { setColor("1"); }
