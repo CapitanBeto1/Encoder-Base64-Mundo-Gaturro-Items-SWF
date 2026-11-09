@@ -96,6 +96,22 @@ def leer_script(script: str) -> tuple[list[tuple[str, int]], bool]:
     return list(pedidos.items()), otros_comandos
 
 
+def generar_script_monedas(cantidad: int) -> str:
+    """Script que da `cantidad` monedas al jugador via `reward.coin`."""
+    cant = str(cantidad)
+    return (
+        f"initial: DO\n"
+        f"{INDENTACION}on activate Ghoster\n"
+        f"\n"
+        f"Ghoster: DO\n"
+        f"{INDENTACION}user.state get\n"
+        f'{INDENTACION}modal.show "{cant}" "dailyBonus/props.moneda"\n'
+        f"{INDENTACION}    inventory.add 1 monedas.sss\n"
+        f"{INDENTACION}reward.coin {cant}\n"
+        f"{INDENTACION}    goto initial\n"
+    )
+
+
 def generar_script_colores(colores: dict) -> str:
     """Script que setea los colores del Gaturro via `user.attr` (`color1`–`color4`).
 

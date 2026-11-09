@@ -5,7 +5,7 @@ from pathlib import Path
 from mgitems.destinos import DESCARTADO, descarte_por_nombre
 from mgitems.items import es_ruta_valida, filtrar_por_prefijos, separar_prefijos, separar_rutas
 from mgitems.nucleo._comun import _cantidad
-from mgitems.script import EncodeInvalido, codificar, decodificar, generar_script, leer_script
+from mgitems.script import EncodeInvalido, codificar, decodificar, generar_script, generar_script_monedas, leer_script
 
 
 class Encodes:
@@ -106,6 +106,13 @@ class Encodes:
         except OSError as e:
             return {"ok": False, "error": f"No se pudo abrir el archivo: {e.strerror or e}"}
         return self.importar_encode(contenido)
+
+    def dar_monedas(self, cantidad: int) -> dict:
+        """Encode que da `cantidad` monedas al jugador (`reward.coin`)."""
+        if not isinstance(cantidad, int) or isinstance(cantidad, bool) or cantidad < 1:
+            return {"ok": False, "error": "La cantidad tiene que ser un número entero mayor que 0."}
+        script = generar_script_monedas(cantidad)
+        return {"ok": True, "monedas": cantidad, "script": script, "encode": codificar(script)}
 
     def guardar_encode(self, encode: str, ruta: str) -> dict:
         try:
