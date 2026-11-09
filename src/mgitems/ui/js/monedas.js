@@ -14,10 +14,16 @@ async function generarMonedas(cantidad) {
 
 // --- Variante A: chips rápidos ---
 
+function actualizarPantalla(valor) {
+  const num = parseInt(valor, 10);
+  $("pantalla-numero").textContent = isNaN(num) || num < 1 ? "—" : num.toLocaleString("es");
+}
+
 for (const btn of document.querySelectorAll(".chip-moneda")) {
   btn.addEventListener("click", () => {
     $("cantidad-monedas").value = btn.dataset.cantidad;
     for (const c of document.querySelectorAll(".chip-moneda")) c.classList.toggle("activo", c === btn);
+    actualizarPantalla(btn.dataset.cantidad);
   });
 }
 
@@ -25,7 +31,13 @@ $("cantidad-monedas").addEventListener("input", () => {
   for (const c of document.querySelectorAll(".chip-moneda")) {
     c.classList.toggle("activo", c.dataset.cantidad === $("cantidad-monedas").value);
   }
+  actualizarPantalla($("cantidad-monedas").value);
 });
+
+// Inicializar display y chip activo con el valor por defecto
+actualizarPantalla($("cantidad-monedas").value);
+const chipInicial = document.querySelector(`.chip-moneda[data-cantidad="${$("cantidad-monedas").value}"]`);
+if (chipInicial) chipInicial.classList.add("activo");
 
 $("generar-monedas").addEventListener("click", () => {
   generarMonedas(parseInt($("cantidad-monedas").value, 10));
