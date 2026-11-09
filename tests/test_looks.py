@@ -251,3 +251,28 @@ def test_aplicar_look_con_colores_no_falla(nucleo):
     resultado = nucleo.aplicar_look(dict(REY, colores={"color1": "#00AA00"}))
 
     assert resultado["ok"]
+
+
+def test_cada_look_guarda_su_emote(nucleo, sistema, fuente, ffdec):
+    with_emote = nucleo.guardados.guardar("look", dict(REY, emote="angry"))["documento"]
+    sin_emote = nucleo.guardados.guardar("look", dict(REY, nombre="Normal"))["documento"]
+
+    guardados = {l["nombre"]: l for l in nuevo_nucleo(sistema, fuente, ffdec).guardados.lista("look")["guardados"]}
+
+    assert guardados["Rey"]["emote"] == "angry"
+    assert guardados["Normal"]["emote"] is None
+    assert with_emote["id"] != sin_emote["id"]
+
+
+@pytest.mark.parametrize("emote", ["shrug", "happy", "ANGRY", "normal2", ["angry"]])
+def test_emote_invalido(nucleo, emote):
+    resultado = nucleo.guardados.guardar("look", dict(REY, emote=emote))
+
+    assert not resultado["ok"]
+    assert "emoción" in resultado["error"] or "emote" in resultado["error"]
+
+
+def test_aplicar_look_con_emote_no_falla(nucleo):
+    resultado = nucleo.aplicar_look(dict(REY, emote="smile"))
+
+    assert resultado["ok"]

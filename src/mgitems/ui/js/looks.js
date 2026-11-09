@@ -9,7 +9,7 @@ let partesConocidas = []; // [{id, nombre}]
 let iconosPreparados = new Set(); // SWF cuyas imágenes ya se pidieron preparar
 
 function nuevoLook() {
-  return { id: "", nombre: "", base: null, partes: {}, colores: {} };
+  return { id: "", nombre: "", base: null, partes: {}, colores: {}, emote: null };
 }
 
 async function prepararIconosDe(swf) {
@@ -208,6 +208,13 @@ function abrirLook(look) {
 
 function mostrarLook() {
   $("nombre-look").value = lookActual.nombre;
+  const emoteActual = lookActual.emote ?? "";
+  const icono = $("icono-emote-actual");
+  icono.src = `img/emotes/${emoteActual || "normal"}.png`;
+  icono.alt = emoteActual || "Sin emoción";
+  document.querySelectorAll(".emote-btn").forEach(btn => {
+    btn.setAttribute("aria-pressed", btn.dataset.emote === emoteActual ? "true" : "false");
+  });
   const base = lookActual.base;
   $("base-look").replaceChildren(
     ...(base
@@ -273,4 +280,32 @@ function mostrarCasilleros() {
 $("dejar-de-poner").addEventListener("click", () => {
   casilleroMarcado = null;
   mostrarLook();
+});
+
+function cerrarPanelEmotes() {
+  $("panel-emotes").hidden = true;
+  $("emote-look").setAttribute("aria-expanded", "false");
+}
+
+$("emote-look").addEventListener("click", (e) => {
+  e.stopPropagation();
+  const abierto = !$("panel-emotes").hidden;
+  if (abierto) {
+    cerrarPanelEmotes();
+  } else {
+    $("panel-emotes").hidden = false;
+    $("emote-look").setAttribute("aria-expanded", "true");
+  }
+});
+
+document.addEventListener("click", cerrarPanelEmotes);
+
+document.querySelectorAll(".emote-btn").forEach(btn => {
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    lookActual.emote = btn.dataset.emote || null;
+    cerrarPanelEmotes();
+    mostrarLook();
+    mostrarBarraLook();
+  });
 });

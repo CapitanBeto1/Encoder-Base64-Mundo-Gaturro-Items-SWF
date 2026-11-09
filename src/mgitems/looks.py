@@ -20,6 +20,8 @@ _PARTE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 _COMPORTAMIENTO = re.compile(r"^[A-Za-z0-9_\-]+(?:/[A-Za-z0-9_\-]+)*$")
 _COLOR = re.compile(r"^#[0-9a-fA-F]{6}$")
 _CLAVES_COLOR = {"color1", "color2", "color3", "color4"}
+# Emociones del Gaturro. Fuente: `EmoticonsGuiModal.EMOTES` (assets/main.swf).
+EMOTES = ("normal", "angry", "boring", "good", "smile", "love", "money")
 
 
 class LookInvalido(ValueError):
@@ -35,6 +37,7 @@ class Look:
     # Colores del Gaturro del Look (cara, cuerpo, ojos, nariz: "#RRGGBB"). Se usan tanto en la vista
     # previa como en el Encode entregado al juego (como `user.attr colorN <entero>`).
     colores: dict[str, str] = field(default_factory=dict)
+    emote: str | None = None  # emoción del Gaturro al usar el Look ("angry", "love"…; None = "normal")
     animacion: str | None = None  # solo las acciones: la animación del juego ("showObject", "dance"…)
     comportamiento: str | None = None  # solo tiendas, portales y minijuegos: el del NPC ("brujaMesa", "magia/portal"…)
     cuadro: int | None = None  # solo fondos: el cuadro del dibujo que se ve (1 es el primero)
@@ -60,6 +63,9 @@ class Look:
         if not isinstance(colores, dict) or any(c not in _CLAVES_COLOR or not isinstance(v, str) or not _COLOR.match(v)
                                                 for c, v in colores.items()):
             raise LookInvalido("Los colores del Look no tienen la forma esperada.")
+        emote = datos.get("emote") or None
+        if emote is not None and emote not in EMOTES:
+            raise LookInvalido(f"La emoción no es válida: {emote}")
         animacion = datos.get("animacion") or None
         if animacion is not None and not _PARTE.match(str(animacion)):
             raise LookInvalido(f"La animación no es válida: {animacion}")
@@ -70,7 +76,7 @@ class Look:
         if cuadro is not None and (isinstance(cuadro, bool) or not isinstance(cuadro, int) or not 1 <= cuadro <= 9999):
             raise LookInvalido(f"El cuadro no es válido: {cuadro}")
         return cls(nombre, base, {str(p): str(v) for p, v in partes.items()}, str(datos.get("id") or ""), dict(colores),
-                   animacion and str(animacion), comportamiento and str(comportamiento), cuadro)
+                   emote and str(emote), animacion and str(animacion), comportamiento and str(comportamiento), cuadro)
 
 
 FORMATO = "mgitems-look"
@@ -92,6 +98,8 @@ def archivo_de_look(look: Look, formato: str = FORMATO) -> str:
     """El contenido de un archivo de Look (o de acción, o de Prenda trucada): sin su id, que es de cada jugador."""
     datos = {"formato": formato, "version": VERSION_FORMATO, "nombre": look.nombre, "base": look.base, "partes": look.partes,
              "colores": look.colores}
+    if look.emote:
+        datos["emote"] = look.emote
     if look.animacion:
         datos["animacion"] = look.animacion
     if look.comportamiento:
@@ -112,7 +120,7 @@ def look_de_archivo(contenido: str, formato: str = FORMATO) -> Look:
         raise LookInvalido(f"Este archivo no es {uno} de MG Items.")
     if not isinstance(datos.get("version"), int) or datos["version"] > VERSION_FORMATO:
         raise LookInvalido(f"{este_es} de una versión más nueva de MG Items: actualizá el programa.")
-    look = Look.desde({k: datos.get(k) for k in ("nombre", "base", "partes", "colores", "animacion", "comportamiento", "cuadro")})
+    look = Look.desde({k: datos.get(k) for k in ("nombre", "base", "partes", "colores", "emote", "animacion", "comportamiento", "cuadro")})
     if formato == FORMATO and not look.partes:
         raise LookInvalido("El Look del archivo no tiene Piezas.")
     if formato == FORMATO_ACCION and not look.animacion:

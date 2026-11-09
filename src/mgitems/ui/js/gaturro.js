@@ -48,10 +48,10 @@ function mostrarGaturroEn(img) {
   if (svg) img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(encuadrar(svg, Number(img.dataset.zoom) || 1));
 }
 
-async function pedirGaturro(img, colores, partes = lookActual.partes) {
+async function pedirGaturro(img, colores, partes = lookActual.partes, emote = null) {
   const pedido = (pedidosGaturro.get(img) ?? 0) + 1;
   pedidosGaturro.set(img, pedido);
-  const resultado = await api().gaturro({ ...partes }, colores);
+  const resultado = await api().gaturro({ ...partes }, colores, emote);
   if (pedidosGaturro.get(img) !== pedido) return null;
   img.hidden = !resultado.ok; // sin el Gaturro original no se muestra ninguno
   if (resultado.ok) {
@@ -67,7 +67,7 @@ async function dibujarGaturro() {
   detenerAnimacion();
   if (esNpc()) return; // en Tiendas y Portales no hay Gaturro
   if (vista === "acciones") return dibujarAccion();
-  const resultado = await conEsqueleto($("gaturro"), "gaturro", () => pedirGaturro($("imagen-gaturro"), coloresDe(lookActual)));
+  const resultado = await conEsqueleto($("gaturro"), "gaturro", () => pedirGaturro($("imagen-gaturro"), coloresDe(lookActual), lookActual.partes, lookActual.emote ?? null));
   if (!resultado) return;
   if (!resultado.ok) {
     $("estado-gaturro").textContent = resultado.error;

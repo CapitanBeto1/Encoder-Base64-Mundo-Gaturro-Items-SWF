@@ -71,7 +71,7 @@ class Looks:
             if not obtenido["ok"]:
                 return {"ok": False, "error": f"No se pudo usar la Prenda base: {obtenido['error']}"}
             data = obtenido["data"]
-        resultado = self._trucar(swf, data, clase, look.partes, colores=look.colores or None)
+        resultado = self._trucar(swf, data, clase, look.partes, colores=look.colores or None, emote=look.emote or None)
         if resultado["ok"]:
             resultado["look"] = {"nombre": look.nombre, "base": base, "base_propuesta": look.base is None}
         return resultado

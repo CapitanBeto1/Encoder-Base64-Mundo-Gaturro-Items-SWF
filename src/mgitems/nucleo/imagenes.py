@@ -4,9 +4,9 @@ import subprocess
 
 from mgitems.ffdec import FFDecNoDisponible
 from mgitems.gaturro import (
-    CLASE_CUERPO, CLASE_PLANTILLA, COLORES, CUADRO_QUIETO_DEL_VEHICULO, SWF_CUERPO,
-    SWF_PLANTILLA, SWF_POSES, ImagenesPiezas, completar_con_plantilla, componer,
-    pose_de_transporte, preparar_cuerpo, tiene_color_de_nariz, tiene_lugar,
+    CLASE_CARA, CLASE_CUERPO, CLASE_PLANTILLA, COLORES, CUADRO_QUIETO_DEL_VEHICULO, EMOTE_SUBCLIPS,
+    SWF_CUERPO, SWF_CUERPO_COMPLETO, SWF_PLANTILLA, SWF_POSES, ImagenesPiezas, completar_con_plantilla,
+    componer, pose_de_transporte, preparar_cuerpo, tiene_color_de_nariz, tiene_lugar,
 )
 from mgitems.iconos import IconosItems
 from mgitems.items import es_ruta_valida, filtrar_por_prefijos, piezas_del_swf
@@ -67,7 +67,7 @@ class Imagenes:
             "total": len(rutas),
         }
 
-    def gaturro(self, partes: dict, colores: dict | None = None) -> dict:
+    def gaturro(self, partes: dict, colores: dict | None = None, emote: str | None = None) -> dict:
         """El Gaturro original del juego (SVG) con una Pieza de cualquier SWF en cada Parte del cuerpo de `partes`.
 
         `colores`: los del jugador (`color1` pelaje, `color2` panza, `color3` ojos, como "#RRGGBB");
@@ -89,7 +89,7 @@ class Imagenes:
             vehiculo, cuerpo, sin_pose = None, None, None
             if transporte:
                 vehiculo, cuerpo, sin_pose = self._gaturro_en_vehiculo(transporte)
-            cuerpo = cuerpo or self._cuerpo_gaturro()
+            cuerpo = cuerpo or self._cuerpo_gaturro(emote)
         except FFDecNoDisponible as e:
             return {"ok": False, "sin_exportador": True, "error": f"{e}: no se puede dibujar al Gaturro."}
         if cuerpo is None:
@@ -176,9 +176,12 @@ class Imagenes:
             return "en Transporte solo se ven los vehículos"
         return None
 
-    def _cuerpo_gaturro(self) -> str | None:
-        """El SVG de `assets.GaturroMC` del primer SWF del juego que lo traiga, con los huecos del torso
-        de la plantilla de 2025 que le faltan (si se consigue)."""
+    def _cuerpo_gaturro(self, emote: str | None = None) -> str | None:
+        """El SVG de `assets.GaturroMC` con los huecos del torso de la plantilla de 2025.
+
+        Si `emote` no es None, usa main.swf para mostrar la expresión facial correcta."""
+        if emote:
+            return self._cuerpo_gaturro_con_emote(emote)
         imagenes = ImagenesPiezas(self._entorno.carpeta_cache() / "gaturro", self._exportador)
         for swf in SWF_CUERPO:
             if self._preparar_svg(imagenes, swf, lambda clases: {CLASE_CUERPO} & set(clases)):
@@ -186,6 +189,35 @@ class Imagenes:
                 if cuerpo:
                     break
         else:
+            return None
+        if self._preparar_svg(imagenes, SWF_PLANTILLA, lambda clases: {CLASE_PLANTILLA} & set(clases)):
+            plantilla = imagenes.svg(SWF_PLANTILLA, CLASE_PLANTILLA)
+            if plantilla:
+                cuerpo = completar_con_plantilla(cuerpo, plantilla)
+        return preparar_cuerpo(cuerpo)
+
+    def _cuerpo_gaturro_con_emote(self, emote: str) -> str | None:
+        """GaturroMC de main.swf congelado en standBy con la expresión facial `emote`."""
+        obtenido = self._datos_de_otro_swf(SWF_CUERPO_COMPLETO)
+        if not obtenido["ok"]:
+            return None
+        data = obtenido["data"]
+        try:
+            data = congelado_en(data, CLASE_CUERPO, "standBy")
+            data = congelado_en(data, CLASE_CARA, emote)
+            for clase, rotulo in EMOTE_SUBCLIPS.get(emote, {}).items():
+                data = congelado_en(data, clase, rotulo)
+        except (OSError, SwfInvalido, subprocess.SubprocessError):
+            return None
+        imagenes = ImagenesPiezas(self._entorno.carpeta_cache() / "gaturro-emotes", self._exportador)
+        ids = {i: c for i, c in leer_simbolos(data) if c == CLASE_CUERPO}
+        try:
+            with self._candado_iconos:
+                imagenes.preparar(f"main-{emote}", data, ids)
+        except (OSError, SwfInvalido, subprocess.SubprocessError):
+            return None
+        cuerpo = imagenes.svg(f"main-{emote}", CLASE_CUERPO)
+        if not cuerpo:
             return None
         if self._preparar_svg(imagenes, SWF_PLANTILLA, lambda clases: {CLASE_PLANTILLA} & set(clases)):
             plantilla = imagenes.svg(SWF_PLANTILLA, CLASE_PLANTILLA)

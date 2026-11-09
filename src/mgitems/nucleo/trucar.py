@@ -14,11 +14,11 @@ from mgitems.swf import leer_simbolos
 class Trucar:
     """Una parte de `Nucleo`: usa el estado que arma `Nucleo.__init__`."""
 
-    def trucar_varias(self, trucadas: list, colores: dict | None = None) -> dict:
+    def trucar_varias(self, trucadas: list, colores: dict | None = None, emote: str | None = None) -> dict:
         """Varias Prendas trucadas en un solo Encode: cada una (`{"base", "parte", "pieza"}`) es un Item base
         ("swf.clase", de cualquier SWF) que muestra solo `pieza` (de cualquier SWF) en `parte`. Cada Item base va
         una sola vez (si no, sería el mismo Item con dos cosas). Las de un mismo SWF van en el mismo SWF trucado.
-        Si se pasan `colores` ({"color1": "#RRGGBB", …}), se incluyen en el Encode como `user.attr`."""
+        Si se pasan `colores` ({"color1": "#RRGGBB", …}) o `emote`, se incluyen en el AS3 del SWF trucado."""
         if not isinstance(trucadas, list) or not trucadas:
             return {"ok": False, "error": "Agregá al menos una Prenda trucada a la lista."}
         vistas = set()
@@ -52,7 +52,8 @@ class Trucar:
                 return {"ok": False, "error": error}
             try:
                 # Sobre lo ya trucado de ese SWF: así quedan todas las suyas.
-                trucados[swf] = self._trucado(trucados.get(swf, data), item, valores, colores=colores or None)
+                trucados[swf] = self._trucado(trucados.get(swf, data), item, valores, colores=colores or None,
+                                              emote=emote or None)
             except TruqueoFallido as e:
                 return {"ok": False, "error": f"No se pudo trucar {t['base']}: {e}."}
             except FFDecNoDisponible as e:
@@ -68,10 +69,10 @@ class Trucar:
         return {"ok": True, "trucadas": resumen, "items": [{"ruta": r, "cantidad": 1} for r in rutas],
                 "script": script, "encode": encode}
 
-    def trucar_varias_via_encode(self, trucadas: list, colores: dict | None = None) -> dict:
+    def trucar_varias_via_encode(self, trucadas: list, colores: dict | None = None, emote: str | None = None) -> dict:
         """Como `trucar_varias` pero via `inventory.addOptions`: el Encode guarda los `wear_*` en el servidor,
         por lo que la Prenda persiste después del relog aunque Fiddler esté apagado. No truca el SWF.
-        Si se pasan `colores`, se incluyen en el Encode como `user.attr`."""
+        Si se pasan `colores` o `emote`, se incluyen en los attrs de cada item."""
         if not isinstance(trucadas, list) or not trucadas:
             return {"ok": False, "error": "Agregá al menos una Prenda trucada a la lista."}
         for t in trucadas:
@@ -105,20 +106,22 @@ class Trucar:
             resumen.append({"ruta": t["base"], "tipo": item.tipo, "partes": {t["parte"]: valor}})
 
         if colores:
-            # Para via-encode, los colores van en los attrs de cada item (como en food.swf: adds.colorN = int).
             int_colores = {c: int(v.lstrip("#"), 16) for c, v in colores.items()}
             pedidos = [(ruta, qty, {**attrs, **int_colores}) for ruta, qty, attrs in pedidos]
+        if emote:
+            pedidos = [(ruta, qty, {**attrs, "emote": emote}) for ruta, qty, attrs in pedidos]
         script = generar_script_con_atributos(pedidos)
         encode = codificar(script)
         return {"ok": True, "trucadas": resumen, "items": [{"ruta": t["base"], "cantidad": 1} for t in trucadas],
                 "script": script, "encode": encode}
 
-    def trucar_prenda(self, base: str, parte: str, pieza: str, colores: dict | None = None) -> dict:
+    def trucar_prenda(self, base: str, parte: str, pieza: str, colores: dict | None = None,
+                     emote: str | None = None) -> dict:
         """Genera la Prenda trucada: `base` (un Item base del SWF abierto) mostrando solo `pieza` en `parte`.
 
         `pieza` es una Pieza del SWF abierto o de otro (`costumes.coronaRey_on`).
         Devuelve el Encode que la agrega; al entregarlo se entrega también el SWF trucado.
-        Si se pasan `colores`, se incluyen en el Encode como `user.attr`.
+        Si se pasan `colores` o `emote`, se inyectan en el AS3 del SWF trucado.
         """
         resultado = self.prendas()
         if not resultado["ok"]:
@@ -126,9 +129,10 @@ class Trucar:
         partes_validas = {p["id"] for p in resultado["partes_del_cuerpo"]}
         if parte not in partes_validas:
             return {"ok": False, "error": f"{parte} no es una Parte del cuerpo."}
-        return self._trucar(self._swf_abierto, self._data_swf, base, {parte: pieza}, colores=colores)
+        return self._trucar(self._swf_abierto, self._data_swf, base, {parte: pieza}, colores=colores, emote=emote)
 
-    def _trucar(self, swf: str, data: bytes, base: str, partes: dict[str, str], colores: dict | None = None) -> dict:
+    def _trucar(self, swf: str, data: bytes, base: str, partes: dict[str, str], colores: dict | None = None,
+                emote: str | None = None) -> dict:
         """Truca el Item base `base` del SWF `swf` para que muestre `partes` (Parte del cuerpo → Pieza de cualquier SWF)."""
         try:
             prendas = self._prendas_de(swf, data)
@@ -147,7 +151,7 @@ class Trucar:
         valores, error = self._valores_de_piezas(swf, data, item, partes)
         if error:
             return {"ok": False, "error": error}
-        return self._trucar_item(swf, data, item, valores, colores=colores)
+        return self._trucar_item(swf, data, item, valores, colores=colores, emote=emote)
 
     def _valores_de_piezas(self, swf: str, data: bytes, item: ItemBase, partes: dict[str, str]) -> tuple[dict, str | None]:
         """(Parte → cómo se escribe su Pieza en `item` del SWF `swf`, error)."""
@@ -161,17 +165,18 @@ class Trucar:
             valores[parte] = PREFIJO_EFECTO + valor if parte == EFECTO else valor
         return valores, None
 
-    def _trucado(self, data: bytes, item: ItemBase, valores: dict[str, str], colores: dict | None = None) -> bytes:
+    def _trucado(self, data: bytes, item: ItemBase, valores: dict[str, str], colores: dict | None = None,
+                 emote: str | None = None) -> bytes:
         """El SWF `data` con `item` mostrando `valores` (puede lanzar TruqueoFallido, FFDecNoDisponible, OSError…).
-        Si se pasan `colores`, se inyectan como `adds.colorN = <int>` en el AS3 del item."""
-        return self._prendas_ffdec.trucar(data, item.clase, reescribir_partes(item, valores, colores), dict(valores))
+        Si se pasan `colores` o `emote`, se inyectan en el AS3 del item."""
+        return self._prendas_ffdec.trucar(data, item.clase, reescribir_partes(item, valores, colores, emote), dict(valores))
 
     def _trucar_item(self, swf: str, data: bytes, item: ItemBase, valores: dict[str, str],
-                     colores: dict | None = None) -> dict:
+                     colores: dict | None = None, emote: str | None = None) -> dict:
         """Truca `item` del SWF `swf` con `valores` (Parte → cómo se escribe) y arma el Encode que lo agrega."""
         base = item.clase
         try:
-            trucado = self._trucado(data, item, valores, colores=colores or None)
+            trucado = self._trucado(data, item, valores, colores=colores or None, emote=emote or None)
         except TruqueoFallido as e:
             return {"ok": False, "error": f"No se pudo trucar la Prenda: {e}."}
         except FFDecNoDisponible as e:
