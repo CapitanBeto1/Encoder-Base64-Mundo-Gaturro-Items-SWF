@@ -41,11 +41,28 @@ CLASE_CARA = "avatar_fla.Head_12"
 # Derivado del frame script de Head_12 en main.swf (eyes() y mouth() de cada emote).
 # normal y good no necesitan entradas: solo usan el frame 1 de los sub-clips.
 EMOTE_SUBCLIPS: dict[str, dict[str, str]] = {
-    "angry": {"avatar_fla.eye_17": "angry", "avatar_fla.eye2_20": "angry", "avatar_fla.mouth_15": "angry"},
-    "boring": {"avatar_fla.eye_17": "halfClosed", "avatar_fla.eye2_20": "halfClosed", "avatar_fla.mouth_15": "boring"},
-    "smile": {"avatar_fla.mouth_15": "laugh"},
-    "love": {"avatar_fla.eye_17": "love", "avatar_fla.eye2_20": "love", "avatar_fla.mouth_15": "love"},
-    "money": {"avatar_fla.eye_17": "money", "avatar_fla.eye2_20": "money"},
+    "angry": {
+        "avatar_fla.eye_17": "angry", "avatar_fla.eye2_20": "angry",
+        "avatar_fla.eye_color_18": "angry",
+        "avatar_fla.mouth_15": "angry", "avatar_fla.mouthColor_16": "angry",
+    },
+    "boring": {
+        "avatar_fla.eye_17": "halfClosed", "avatar_fla.eye2_20": "halfClosed",
+        "avatar_fla.eye_color_18": "half",
+        "avatar_fla.mouth_15": "boring", "avatar_fla.mouthColor_16": "boring",
+    },
+    "smile": {
+        "avatar_fla.mouth_15": "laugh", "avatar_fla.mouthColor_16": "laugh",
+    },
+    "love": {
+        "avatar_fla.eye_17": "love", "avatar_fla.eye2_20": "love",
+        "avatar_fla.eye_color_18": "closed",
+        "avatar_fla.mouth_15": "love", "avatar_fla.mouthColor_16": "loved",
+    },
+    "money": {
+        "avatar_fla.eye_17": "money", "avatar_fla.eye2_20": "money",
+        "avatar_fla.eye_color_18": "half",
+    },
 }
 
 # Las Partes del cuerpo en el orden en que el juego las pone (AvatarBodyEnum.getList): si dos van
