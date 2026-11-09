@@ -29,11 +29,22 @@ class EncodeInvalido(Exception):
     """El texto no es un Encode."""
 
 
-def generar_script(pedidos: list[tuple[str, int]]) -> str:
+def _lineas_colores(colores: dict) -> list[str]:
+    """Líneas `user.attr colorN <entero>` para aplicar colores al avatar.
+
+    Convierte el color de hex (#RRGGBB) a entero porque el juego lo espera así
+    (el mismo formato que usa `adds.color1` en los AS3 de los items).
+    """
+    return [f"{INDENTACION}user.attr {c} {int(v.lstrip('#'), 16)}" for c, v in colores.items()]
+
+
+def generar_script(pedidos: list[tuple[str, int]], colores: dict | None = None) -> str:
     """Script que agrega cada Item en su cantidad, encadenando un bloque `A<n>` por Item.
 
     El formato (incluida la línea de 4 espacios tras `on activate` y los dos saltos
     finales) reproduce el de los Encodes que ya se sabe que funcionan en el juego.
+    Si se pasan `colores` ({"color1": "#RRGGBB", …}), se aplican en el último bloque
+    con `user.attr`, antes del `after`.
     """
     lineas = ["INICIO: DO", f"{INDENTACION}on activate A1", INDENTACION]
     for n, (ruta, cantidad) in enumerate(pedidos, start=1):
@@ -42,21 +53,24 @@ def generar_script(pedidos: list[tuple[str, int]]) -> str:
             f"A{n}: DO",
             f"{INDENTACION}user.state get",
             f"{INDENTACION}inventory.add {cantidad} {ruta}",
-            f"{INDENTACION}after 1 {siguiente}",
         ]
+        if n == len(pedidos) and colores:
+            lineas += _lineas_colores(colores)
+        lineas.append(f"{INDENTACION}after 1 {siguiente}")
         if n < len(pedidos):
             lineas.append("")
     return "\n".join(lineas) + "\n\n"
 
 
-def generar_script_con_atributos(pedidos: list[tuple[str, int, dict]]) -> str:
+def generar_script_con_atributos(pedidos: list[tuple[str, int, dict]], colores: dict | None = None) -> str:
     """Como `generar_script`, pero cada Item llega con atributos propios (`inventory.addOptions`).
 
     `inventory.addOptions <Item> <cantidad> <catálogo> <atributos>` del juego (`NpcActionRunner.addItemWithOptions`)
     los suma a los del Item al recibirlo (`mergeAttrs` en `InventoryUtil.doAcquireObject`), y el servidor los guarda
     en ese objeto: el mismo Item puede llegar varias veces, cada una con otros atributos, sin trucar su SWF. Los
     atributos van como JSON sin espacios, porque el guion separa los argumentos por espacios (y no deja comillas
-    dentro de un argumento entre comillas). Sin catálogo: `null`."""
+    dentro de un argumento entre comillas). Sin catálogo: `null`.
+    Si se pasan `colores`, se aplican con `user.attr` en el último bloque."""
     lineas = ["INICIO: DO", f"{INDENTACION}on activate A1", INDENTACION]
     for n, (ruta, cantidad, atributos) in enumerate(pedidos, start=1):
         texto = json.dumps(atributos, separators=(",", ":"), ensure_ascii=True)
@@ -67,8 +81,10 @@ def generar_script_con_atributos(pedidos: list[tuple[str, int, dict]]) -> str:
             f"A{n}: DO",
             f"{INDENTACION}user.state get",
             f"{INDENTACION}inventory.addOptions {ruta} {cantidad} null {texto}",
-            f"{INDENTACION}after 1 {siguiente}",
         ]
+        if n == len(pedidos) and colores:
+            lineas += _lineas_colores(colores)
+        lineas.append(f"{INDENTACION}after 1 {siguiente}")
         if n < len(pedidos):
             lineas.append("")
     return "\n".join(lineas) + "\n\n"
@@ -119,8 +135,7 @@ def generar_script_colores(colores: dict) -> str:
     no dependen de un Item y persisten permanentemente (ADR 0003, ADR 0005).
     """
     lineas = ["INICIO: DO", f"{INDENTACION}on activate A1", INDENTACION, "A1: DO"]
-    for clave, valor in colores.items():
-        lineas.append(f"{INDENTACION}user.attr {clave} {valor}")
+    lineas += _lineas_colores(colores)
     lineas.append(f"{INDENTACION}after 1 INICIO")
     return "\n".join(lineas) + "\n\n"
 

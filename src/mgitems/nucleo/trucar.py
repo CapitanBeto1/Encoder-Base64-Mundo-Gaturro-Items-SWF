@@ -14,10 +14,11 @@ from mgitems.swf import leer_simbolos
 class Trucar:
     """Una parte de `Nucleo`: usa el estado que arma `Nucleo.__init__`."""
 
-    def trucar_varias(self, trucadas: list) -> dict:
+    def trucar_varias(self, trucadas: list, colores: dict | None = None) -> dict:
         """Varias Prendas trucadas en un solo Encode: cada una (`{"base", "parte", "pieza"}`) es un Item base
         ("swf.clase", de cualquier SWF) que muestra solo `pieza` (de cualquier SWF) en `parte`. Cada Item base va
-        una sola vez (si no, sería el mismo Item con dos cosas). Las de un mismo SWF van en el mismo SWF trucado."""
+        una sola vez (si no, sería el mismo Item con dos cosas). Las de un mismo SWF van en el mismo SWF trucado.
+        Si se pasan `colores` ({"color1": "#RRGGBB", …}), se incluyen en el Encode como `user.attr`."""
         if not isinstance(trucadas, list) or not trucadas:
             return {"ok": False, "error": "Agregá al menos una Prenda trucada a la lista."}
         vistas = set()
@@ -61,15 +62,16 @@ class Trucar:
             resumen.append({"ruta": t["base"], "tipo": item.tipo, "partes": dict(valores)})
 
         rutas = [t["base"] for t in trucadas]
-        script = generar_script([(ruta, 1) for ruta in rutas])
+        script = generar_script([(ruta, 1) for ruta in rutas], colores=colores or None)
         encode = codificar(script)
         self._trucos[encode] = trucados
         return {"ok": True, "trucadas": resumen, "items": [{"ruta": r, "cantidad": 1} for r in rutas],
                 "script": script, "encode": encode}
 
-    def trucar_varias_via_encode(self, trucadas: list) -> dict:
+    def trucar_varias_via_encode(self, trucadas: list, colores: dict | None = None) -> dict:
         """Como `trucar_varias` pero via `inventory.addOptions`: el Encode guarda los `wear_*` en el servidor,
-        por lo que la Prenda persiste después del relog aunque Fiddler esté apagado. No truca el SWF."""
+        por lo que la Prenda persiste después del relog aunque Fiddler esté apagado. No truca el SWF.
+        Si se pasan `colores`, se incluyen en el Encode como `user.attr`."""
         if not isinstance(trucadas, list) or not trucadas:
             return {"ok": False, "error": "Agregá al menos una Prenda trucada a la lista."}
         for t in trucadas:
@@ -102,16 +104,17 @@ class Trucar:
             pedidos.append((t["base"], 1, {f"wear_{t['parte']}": valor}))
             resumen.append({"ruta": t["base"], "tipo": item.tipo, "partes": {t["parte"]: valor}})
 
-        script = generar_script_con_atributos(pedidos)
+        script = generar_script_con_atributos(pedidos, colores=colores or None)
         encode = codificar(script)
         return {"ok": True, "trucadas": resumen, "items": [{"ruta": t["base"], "cantidad": 1} for t in trucadas],
                 "script": script, "encode": encode}
 
-    def trucar_prenda(self, base: str, parte: str, pieza: str) -> dict:
+    def trucar_prenda(self, base: str, parte: str, pieza: str, colores: dict | None = None) -> dict:
         """Genera la Prenda trucada: `base` (un Item base del SWF abierto) mostrando solo `pieza` en `parte`.
 
         `pieza` es una Pieza del SWF abierto o de otro (`costumes.coronaRey_on`).
         Devuelve el Encode que la agrega; al entregarlo se entrega también el SWF trucado.
+        Si se pasan `colores`, se incluyen en el Encode como `user.attr`.
         """
         resultado = self.prendas()
         if not resultado["ok"]:
@@ -119,9 +122,9 @@ class Trucar:
         partes_validas = {p["id"] for p in resultado["partes_del_cuerpo"]}
         if parte not in partes_validas:
             return {"ok": False, "error": f"{parte} no es una Parte del cuerpo."}
-        return self._trucar(self._swf_abierto, self._data_swf, base, {parte: pieza})
+        return self._trucar(self._swf_abierto, self._data_swf, base, {parte: pieza}, colores=colores)
 
-    def _trucar(self, swf: str, data: bytes, base: str, partes: dict[str, str]) -> dict:
+    def _trucar(self, swf: str, data: bytes, base: str, partes: dict[str, str], colores: dict | None = None) -> dict:
         """Truca el Item base `base` del SWF `swf` para que muestre `partes` (Parte del cuerpo → Pieza de cualquier SWF)."""
         try:
             prendas = self._prendas_de(swf, data)
@@ -140,7 +143,7 @@ class Trucar:
         valores, error = self._valores_de_piezas(swf, data, item, partes)
         if error:
             return {"ok": False, "error": error}
-        return self._trucar_item(swf, data, item, valores)
+        return self._trucar_item(swf, data, item, valores, colores=colores)
 
     def _valores_de_piezas(self, swf: str, data: bytes, item: ItemBase, partes: dict[str, str]) -> tuple[dict, str | None]:
         """(Parte → cómo se escribe su Pieza en `item` del SWF `swf`, error)."""
@@ -158,7 +161,8 @@ class Trucar:
         """El SWF `data` con `item` mostrando `valores` (puede lanzar TruqueoFallido, FFDecNoDisponible, OSError…)."""
         return self._prendas_ffdec.trucar(data, item.clase, reescribir_partes(item, valores), dict(valores))
 
-    def _trucar_item(self, swf: str, data: bytes, item: ItemBase, valores: dict[str, str]) -> dict:
+    def _trucar_item(self, swf: str, data: bytes, item: ItemBase, valores: dict[str, str],
+                     colores: dict | None = None) -> dict:
         """Truca `item` del SWF `swf` con `valores` (Parte → cómo se escribe) y arma el Encode que lo agrega."""
         base = item.clase
         try:
@@ -171,7 +175,7 @@ class Trucar:
             return {"ok": False, "error": f"No se pudo trucar la Prenda: {e}"}
 
         ruta = f"{swf}.{base}"
-        script = generar_script([(ruta, 1)])
+        script = generar_script([(ruta, 1)], colores=colores or None)
         encode = codificar(script)
         self._trucos[encode] = {swf: trucado}
         return {

@@ -32,8 +32,8 @@ class Look:
     base: str | None  # ruta de la Prenda base: "clothes1.remera5"; None si todavía no se eligió
     partes: dict[str, str] = field(default_factory=dict)  # Parte del cuerpo → ruta de la Pieza
     id: str = ""
-    # Colores del Gaturro con los que se ve el Look en el programa (cara, cuerpo, ojos: "#RRGGBB");
-    # los que falten, los de fábrica. Solo para la vista previa: no cambian lo que se entrega al juego.
+    # Colores del Gaturro del Look (cara, cuerpo, ojos, nariz: "#RRGGBB"). Se usan tanto en la vista
+    # previa como en el Encode entregado al juego (como `user.attr colorN <entero>`).
     colores: dict[str, str] = field(default_factory=dict)
     animacion: str | None = None  # solo las acciones: la animación del juego ("showObject", "dance"…)
     comportamiento: str | None = None  # solo tiendas, portales y minijuegos: el del NPC ("brujaMesa", "magia/portal"…)
