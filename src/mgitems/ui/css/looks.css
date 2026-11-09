@@ -110,6 +110,7 @@ main.modo-trucar .casilleros { display: none; }
   border-color: var(--amarillo-contorno);
 }
 .boton-colores:hover:not(:disabled) { background: #6fc054; border-color: #2f6421; }
+.select-emote { height: 44px; padding: 0 6px; font-size: 13px; }
 .boton-guardar { color: #16801f; }
 .boton-descartar { color: #c41a1a; }
 

@@ -121,6 +121,13 @@ def test_reescribir_mochila_inyecta_colores_en_el_as3():
     assert leer_item_base(nuevo).partes == {"hats": "costumes.coronaRey_on"}
 
 
+def test_reescribir_mochila_inyecta_emote_en_el_as3():
+    nuevo = reescribir_partes(leer_item_base(POCIMA), {"hats": "costumes.coronaRey_on"}, emote="money")
+
+    assert 'adds.emote = "money";' in nuevo
+    assert leer_item_base(nuevo).partes == {"hats": "costumes.coronaRey_on"}
+
+
 # --- En el núcleo ---
 
 def test_los_items_de_mochila_se_ofrecen_como_base(nucleo):

@@ -9,7 +9,7 @@ let partesConocidas = []; // [{id, nombre}]
 let iconosPreparados = new Set(); // SWF cuyas imágenes ya se pidieron preparar
 
 function nuevoLook() {
-  return { id: "", nombre: "", base: null, partes: {}, colores: {} };
+  return { id: "", nombre: "", base: null, partes: {}, colores: {}, emote: null };
 }
 
 async function prepararIconosDe(swf) {
@@ -208,6 +208,7 @@ function abrirLook(look) {
 
 function mostrarLook() {
   $("nombre-look").value = lookActual.nombre;
+  $("emote-look").value = lookActual.emote ?? "";
   const base = lookActual.base;
   $("base-look").replaceChildren(
     ...(base
@@ -273,4 +274,9 @@ function mostrarCasilleros() {
 $("dejar-de-poner").addEventListener("click", () => {
   casilleroMarcado = null;
   mostrarLook();
+});
+
+$("emote-look").addEventListener("change", () => {
+  lookActual.emote = $("emote-look").value || null;
+  mostrarBarraLook();
 });

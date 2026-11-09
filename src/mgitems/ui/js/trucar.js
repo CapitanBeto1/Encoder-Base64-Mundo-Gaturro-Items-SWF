@@ -78,10 +78,11 @@ $("agregar-trucada").addEventListener("click", () => {
 async function trucarPrenda() {
   const lista = lookActual.lista;
   const colores = Object.keys(lookActual.colores ?? {}).length ? lookActual.colores : null;
+  const emote = lookActual.emote ?? null;
   const persistir = $("check-persistir-trucado").checked;
   const llamada = persistir
-    ? () => api().trucar_varias_via_encode(lista, colores)
-    : () => api().trucar_varias(lista, colores);
+    ? () => api().trucar_varias_via_encode(lista, colores, emote)
+    : () => api().trucar_varias(lista, colores, emote);
   const msg = persistir ? `Trucando ${lista.length === 1 ? "la Prenda" : `${lista.length} Prendas`}…`
                         : `Trucando ${lista.length === 1 ? "la Prenda" : `${lista.length} Prendas`}… (tarda unos segundos)`;
   const resultado = await mientras(msg, llamada);

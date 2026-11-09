@@ -105,18 +105,21 @@ def leer_item_base(fuente: str) -> ItemBase | None:
         return ItemBase(nombre, partes, fuente)
     usos = _USOS.search(fuente)
     objeto = _ADDS_OBJETO.search(fuente)
-    partes = (dict(_PAR.findall(objeto.group("cuerpo"))) if objeto else {}) | dict(_ADDS_PUNTO.findall(fuente))
+    partes = {k: v for k, v in (
+        (dict(_PAR.findall(objeto.group("cuerpo"))) if objeto else {}) | dict(_ADDS_PUNTO.findall(fuente))
+    ).items() if k not in _NO_SON_PARTES}
     return ItemBase(
         nombre, partes, fuente, MOCHILA,
         consumible=padre == "ConsumableMamboAsset", usos=int(usos.group(1)) if usos else None,
     )
 
 
-def reescribir_partes(item: ItemBase, partes: dict[str, str], colores: dict | None = None) -> str:
+def reescribir_partes(item: ItemBase, partes: dict[str, str], colores: dict | None = None,
+                     emote: str | None = None) -> str:
     """El código AS3 del Item base mostrando `partes` (Parte del cuerpo → Pieza).
 
-    Si se pasan `colores` ({"color1": "#RRGGBB", …}), se inyectan como `adds.colorN = <entero>`
-    en el AS3 del item, igual que en los food.swf que cambian la piel al recibirlos.
+    Si se pasan `colores` ({"color1": "#RRGGBB", …}), se inyectan como `adds.colorN = <entero>`.
+    Si se pasa `emote` ("angry", "love"…), se inyecta como `adds.emote = "value"`.
     """
     for parte, pieza in partes.items():
         if parte == EFECTO:
@@ -131,11 +134,14 @@ def reescribir_partes(item: ItemBase, partes: dict[str, str], colores: dict | No
     if item.tipo == PRENDA and ACCION in partes:
         raise ValueError("Una Prenda no hace acciones: solo un Item de mochila")
     if item.tipo == PRENDA:
-        return _reescribir_clothes(item.fuente, partes, colores)
-    return _reescribir_adds(item, partes, colores)
+        return _reescribir_clothes(item.fuente, partes, colores, emote)
+    return _reescribir_adds(item, partes, colores, emote)
 
 
 _ADDS_COLOR = re.compile(r"^[ \t]*adds\.color[1-4]\s*=\s*\d+\s*;[ \t]*\r?\n", re.M)
+_ADDS_EMOTE = re.compile(r'^[ \t]*adds\.emote\s*=\s*"[^"]*"\s*;[ \t]*\r?\n', re.M)
+# Atributos del AS3 que no son Partes del cuerpo (se ignoran al leer partes del item).
+_NO_SON_PARTES = frozenset({"emote"})
 
 
 def _lineas_color(colores: dict) -> str:
@@ -143,26 +149,30 @@ def _lineas_color(colores: dict) -> str:
     return "".join(f"         adds.{c} = {int(v.lstrip('#'), 16)};\n" for c, v in colores.items())
 
 
-def _reescribir_clothes(fuente: str, partes: dict[str, str], colores: dict | None = None) -> str:
+def _reescribir_clothes(fuente: str, partes: dict[str, str], colores: dict | None = None,
+                        emote: str | None = None) -> str:
     pares = ",\n".join(f'            "{parte}":"{pieza}"' for parte, pieza in partes.items())
     literal = "clothes = {\n" + pares + "\n         };" if partes else "clothes = {};"
     if colores:
-        # Los colores van como adds.colorN después del bloque clothes (como en food.swf: adds.color1 = int).
         literal += "\n" + _lineas_color(colores).rstrip("\n")
+    if emote:
+        literal += f'\n         adds.emote = "{emote}";'
     if not _CLOTHES.search(fuente):
         raise TruqueoFallido("La Prenda no declara sus Piezas de la forma esperada")
-    # Limpia colores de un truco anterior antes de inyectar los nuevos.
-    return _CLOTHES.sub(lambda _: literal, _ADDS_COLOR.sub("", fuente), count=1)
+    # Limpia colores y emote de un truco anterior antes de inyectar los nuevos.
+    return _CLOTHES.sub(lambda _: literal, _ADDS_EMOTE.sub("", _ADDS_COLOR.sub("", fuente)), count=1)
 
 
-def _reescribir_adds(item: ItemBase, partes: dict[str, str], colores: dict | None = None) -> str:
+def _reescribir_adds(item: ItemBase, partes: dict[str, str], colores: dict | None = None,
+                     emote: str | None = None) -> str:
     """Item de mochila: solo te viste al usarlo (sin su animación ni su efecto), con usos
     ilimitados si es consumible y sin `session` (para que no dure solo la sesión)."""
     fuente = _SESION.sub("", _USOS.sub("", _ADDS_LINEA.sub("", _ADDS_OBJETO.sub("", item.fuente))))
     lineas = [f'         adds.{parte} = "{pieza}";\n' for parte, pieza in partes.items()]
     if colores:
-        # Los colores van como enteros (mismo formato que food.swf), no como strings.
         lineas.append(_lineas_color(colores))
+    if emote:
+        lineas.append(f'         adds.emote = "{emote}";\n')
     if item.consumible:
         lineas.append(f"         uses = {USOS_ILIMITADOS};\n")
     insercion = "".join(lineas)

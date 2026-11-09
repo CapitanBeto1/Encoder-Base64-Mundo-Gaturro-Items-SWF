@@ -165,6 +165,24 @@ def test_reescribir_prenda_inyecta_colores_en_el_as3():
     assert leer_item_base(nuevo).partes == {"cloth": "buzo1_on"}
 
 
+def test_reescribir_prenda_inyecta_emote_en_el_as3():
+    item = leer_item_base(codigo_prenda("remera5", PRENDAS["remera5"]))
+
+    nuevo = reescribir_partes(item, {"cloth": "buzo1_on"}, emote="love")
+
+    assert 'adds.emote = "love";' in nuevo
+    assert leer_item_base(nuevo).partes == {"cloth": "buzo1_on"}
+
+
+def test_reescribir_prenda_limpia_emote_anterior():
+    item = leer_item_base(codigo_prenda("remera5", PRENDAS["remera5"]))
+    con_emote = reescribir_partes(item, {"cloth": "buzo1_on"}, emote="love")
+
+    sin_emote = reescribir_partes(leer_item_base(con_emote), {"cloth": "remera5_on"})
+
+    assert 'adds.emote' not in sin_emote
+
+
 @pytest.mark.parametrize("partes", [{"cloth": 'x"; hackear(); "'}, {"cl oth": "remera5_on"}, {"cloth": ""}])
 def test_reescribir_rechaza_nombres_que_no_son_identificadores(partes):
     with pytest.raises(ValueError):
