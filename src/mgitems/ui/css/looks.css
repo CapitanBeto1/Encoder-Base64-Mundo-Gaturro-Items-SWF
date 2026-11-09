@@ -110,7 +110,26 @@ main.modo-trucar .casilleros { display: none; }
   border-color: var(--amarillo-contorno);
 }
 .boton-colores:hover:not(:disabled) { background: #6fc054; border-color: #2f6421; }
-.emotes-look { display: flex; gap: 4px; }
+.desplegable-emote { position: relative; }
+.boton-emote { padding: 2px; }
+.boton-emote img { width: 36px; height: auto; image-rendering: pixelated; }
+.boton-emote:hover:not(:disabled) { background: #6fc054; border-color: #2f6421; }
+.boton-emote[aria-expanded="true"] { background: #6fc054; border-color: #2f6421; }
+.panel-emotes {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 4px;
+  padding: 6px;
+  background: var(--amarillo);
+  border: 2px solid var(--amarillo-contorno);
+  border-radius: 12px;
+  z-index: 10;
+  white-space: nowrap;
+}
+.panel-emotes[hidden] { display: none; }
 .emote-btn {
   width: 44px;
   height: 44px;
