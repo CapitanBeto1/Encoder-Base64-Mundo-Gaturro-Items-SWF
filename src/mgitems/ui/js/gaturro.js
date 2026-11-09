@@ -192,4 +192,14 @@ $("guardar-colores").addEventListener("click", () => {
   dibujarGaturro();
   avisarLista(lookActual.id ? "Colores cambiados: guardá el Look para conservarlos." : "Colores cambiados.", "exito");
 });
+$("aplicar-colores").addEventListener("click", async () => {
+  const colores = Object.fromEntries(CLAVES_COLOR.map((c) => [c, coloresEnEdicion[c]]).filter(([, v]) => v));
+  const resultado = await mientras("Generando Encode de colores…", () => api().aplicar_colores(colores));
+  if (!resultado.ok) return avisarLista(resultado.error, "error");
+  lookActual.colores = Object.fromEntries(CLAVES_COLOR.map((c) => [c, coloresEnEdicion[c]]));
+  $("dialogo-colores").close();
+  dibujarGaturro();
+  mostrarEncode(resultado);
+  avisarLista("Colores generados: recibí el Encode en el juego para aplicarlos.", "exito");
+});
 $("cerrar-colores").addEventListener("click", () => $("dialogo-colores").close());
