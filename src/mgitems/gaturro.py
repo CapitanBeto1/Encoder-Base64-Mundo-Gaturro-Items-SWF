@@ -33,6 +33,10 @@ SWF_CUERPO = ("fashion_nuevo", "superHeroesTrajes")
 # decimal), con un torso más nuevo: trae los clips `clothBack` (Espalda) y `clothFront`, que el
 # Gaturro publicado no tiene. De ahí se toman su posición y su capa.
 SWF_PLANTILLA, CLASE_PLANTILLA = "fashion2025", "maniqui_so"
+# main.swf (el cliente del juego) tiene GaturroMC con sub-clips de expresión facial.
+# Head_12 tiene los 7 rótulos de emote; se usa con congelado_en encadenado.
+SWF_CUERPO_COMPLETO = "main"
+CLASE_CARA = "avatar_fla.Head_12"
 
 # Las Partes del cuerpo en el orden en que el juego las pone (AvatarBodyEnum.getList): si dos van
 # al mismo clip, queda la última (por ejemplo, `gripFore` gana sobre `grip` en el clip `gripFore`).

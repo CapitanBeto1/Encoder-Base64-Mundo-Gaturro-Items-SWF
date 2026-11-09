@@ -215,9 +215,6 @@ function mostrarLook() {
   document.querySelectorAll(".emote-btn").forEach(btn => {
     btn.setAttribute("aria-pressed", btn.dataset.emote === emoteActual ? "true" : "false");
   });
-  $("emote-preview").innerHTML = lookActual.emote
-    ? `<img src="img/emotes/${lookActual.emote}.png" alt="${lookActual.emote}">`
-    : "";
   const base = lookActual.base;
   $("base-look").replaceChildren(
     ...(base
