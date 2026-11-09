@@ -97,7 +97,7 @@ def se_ve_en(ruta: str, parte: str, limites: tuple | None = None, es_vehiculo: b
     donde = donde_se_ve(ruta, limites, es_vehiculo)
     if "no_se_ve" in donde:
         return donde["no_se_ve"]
-    if "solo_en" in donde and donde["solo_en"] != parte:
+    if "solo_en" in donde and donde["solo_en"] != parte and donde["solo_en"] != TRANSPORTE:
         return f"solo se ve en la Parte «{donde['solo_en']}»"
     if parte == TRANSPORTE and not es_vehiculo and donde.get("solo_en") != TRANSPORTE:
         return "en Transporte solo se ven los vehículos"
