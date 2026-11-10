@@ -148,6 +148,8 @@ function mostrarEncode(resultado) {
   } else if (resultado?.prenda) {
     const n = Object.keys(resultado.prenda.partes).length;
     $("resumen").textContent = `Prenda trucada: ${resultado.prenda.ruta} con ${n === 1 ? "1 Pieza" : `${n} Piezas`}.` + (resultado.prenda.tipo === "mochila" ? " Está en la mochila: usalo para vestirte." : "");
+  } else if (resultado?.mapa) {
+    $("resumen").textContent = `Mapa «${resultado.mapa.nombre}»: llega a la casa como una computadora invisible.`;
   } else if (resultado?.monedas) {
     $("resumen").textContent = `Encode para recibir ${resultado.monedas.toLocaleString("es")} monedas.`;
   } else if (resultado?.colores) {
@@ -181,7 +183,7 @@ function actualizarControles() {
   for (const nombre of PESTANAS) $(`pestana-${nombre}`).disabled = !conectado || ocupado;
   $("usar-comportamiento").disabled = $("comportamiento-a-mano").disabled = !listo;
   $("copiar").disabled = $("guardar").disabled = !listo || !$("encode").value;
-  $("entregar").disabled = !listo || (vista === "monedas" ? !$("encode").value : !items.length);
+  $("entregar").disabled = !listo || (vista === "monedas" || vista === "mapas" ? !$("encode").value : !items.length);
   $("generar-monedas").disabled = !listo;
   $("cantidad-todos").disabled = $("aplicar-cantidad-todos").disabled = !listo || items.length === 0;
 }
@@ -259,6 +261,7 @@ async function cargarParaLaVista() {
   if (vista === "acciones") await cargarAcciones();
   if (esNpc()) await cargarNpcs();
   if (vista === "agregar" && !buscador.cargado) await cargarItemsBuscados();
+  if (vista === "mapas") await cargarMapas();
 }
 
 async function abrirArchivo() {

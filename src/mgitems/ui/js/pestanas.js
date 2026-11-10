@@ -7,7 +7,7 @@ let vista = "agregar";
 // Looks, Acciones y Trucar Prenda usan la misma pantalla (el Gaturro, los casilleros y el inventario), cada una
 // con su documento: lo que se está editando en una queda guardado mientras se está en otra.
 const PESTANAS_DEL_EDITOR = ["looks", "acciones", "trucar", "tiendas", "portales", "minijuegos", "fondos"];
-const PESTANAS = ["agregar", "trucar", "looks", "acciones", "tiendas", "portales", "minijuegos", "fondos", "monedas", "terminator"];
+const PESTANAS = ["agregar", "trucar", "looks", "acciones", "tiendas", "portales", "minijuegos", "fondos", "mapas", "monedas", "terminator"];
 // Tiendas, Portales y Minijuegos: cualquier Item que, puesto en la casa, hace lo mismo que un NPC del juego.
 // Fondos: un objeto cuyo dibujo tiene varios cuadros, que muestra el elegido (comportamiento `painting`).
 const PESTANAS_NPC = { tiendas: "tienda", portales: "portal", minijuegos: "minijuego", fondos: "fondo" };
@@ -70,6 +70,9 @@ const PESTANA = {
                        tituloBase: "¿Qué objeto se convierte en fondo?", sinBase: "elegí un objeto de la derecha",
                        documentoNuevo: () => nuevoFondo(), elegirUno: "Elegí un objeto", queHace: "Elegí el fondo",
                        hace: () => lookActual.cuadro != null }),
+  mapas: {
+    pasos: () => [["Elegí el mapa", hayEncode()], ["Agregalo al juego", false]],
+  },
   monedas: {
     pasos: () => [["Generá el Encode", hayEncode()], ["Agregá al juego", false]],
   },
@@ -100,7 +103,7 @@ function cambiarVista(nueva) {
   detenerAnimacion();
   vista = nueva;
   const pantalla = PESTANAS_DEL_EDITOR.includes(vista) ? "looks" : vista;
-  for (const nombre of ["agregar", "looks", "monedas", "terminator"]) $(`vista-${nombre}`).hidden = nombre !== pantalla;
+  for (const nombre of ["agregar", "looks", "mapas", "monedas", "terminator"]) $(`vista-${nombre}`).hidden = nombre !== pantalla;
   for (const nombre of PESTANAS) $(`pestana-${nombre}`).setAttribute("aria-selected", String(nombre === vista));
   document.querySelector("main").classList.toggle("modo-looks", pantalla === "looks");
   document.querySelector("main").classList.toggle("modo-acciones", vista === "acciones");
@@ -108,6 +111,7 @@ function cambiarVista(nueva) {
   document.querySelector("main").classList.toggle("modo-npc", esNpc());
   document.querySelector("main").classList.toggle("modo-fondos", esFondos());
   document.querySelector("main").classList.toggle("modo-monedas", vista === "monedas");
+  document.querySelector("main").classList.toggle("modo-mapas", vista === "mapas");
   document.querySelector("main").classList.toggle("modo-terminator", vista === "terminator");
   $("aplicar-look").textContent = dePestana().aplicar;
   $("texto-se-guarda").textContent = dePestana().seGuarda;

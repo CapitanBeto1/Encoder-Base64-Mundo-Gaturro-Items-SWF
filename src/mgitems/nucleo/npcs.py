@@ -173,6 +173,25 @@ class Npcs:
                  for ruta, cuadros in self._fondos.todos().items()]
         return {"ok": True, "fondos": sorted(filas, key=lambda f: orden_natural(f["clase"])), "comportamiento": COMPORTAMIENTO_FONDO}
 
+    def mapas(self) -> dict:
+        """Los mapas interactivos disponibles para poner en la casa."""
+        return {"ok": True, "mapas": [
+            {"id": "latincat", "nombre": "LATINcat", "descripcion": "Mapa interactivo de LATINcat"},
+            {"id": "geocat", "nombre": "GeoCat", "descripcion": "Quiz de geografía: países, banderas, monumentos, animales"},
+        ]}
+
+    def generar_encode_mapa(self, mapa: str) -> dict:
+        """Encode que pone el mapa `mapa` en la casa (item invisible, sin popup al hacer click).
+
+        Usa `computer.mueblePc` como wrapper con el atributo `targetSwf` que indica qué SWF cargar.
+        Requiere que `computer.swf` esté interceptado por el ASAR patch (`scripts/parchear_electron.py`).
+        """
+        nombres = {m["id"]: m["nombre"] for m in self.mapas()["mapas"]}
+        if mapa not in nombres:
+            return {"ok": False, "error": f"Mapa desconocido: {mapa}. Opciones: {', '.join(sorted(nombres))}"}
+        script = generar_script_con_atributos([("computer.mueblePc", 1, {"targetSwf": mapa})])
+        return {"ok": True, "mapa": {"id": mapa, "nombre": nombres[mapa]}, "script": script, "encode": codificar(script)}
+
     def cuadros_de_fondo(self, item: str) -> dict:
         """La vista previa de cada cuadro del dibujo de un Item ("swf.clase"), para elegir cuál se ve. Recibe
         `item`, no `ruta`: lo que recibe una ruta de archivo no llega a la interfaz (ver app.Puente)."""
