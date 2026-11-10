@@ -103,7 +103,7 @@ function iniciarPlayer() {
     player.style.width = "100%";
     player.style.height = "100%";
     host.appendChild(player);
-    await player.load({ url: "/preview.swf", allowScriptAccess: true, autoplay: "on", unmuteOverlay: "hidden", splashScreen: false, letterbox: "on", wmode: "transparent" });
+    await player.load({ url: "/preview.swf?v=" + Date.now(), allowScriptAccess: true, autoplay: "on", unmuteOverlay: "hidden", splashScreen: false, letterbox: "on", wmode: "transparent" });
     for (let i = 0; i < 120 && typeof player.changeAttr !== "function"; i++) await new Promise((r) => setTimeout(r, 80));
     if (typeof player.changeAttr !== "function") throw new Error("el preview no expuso changeAttr");
     rufflePlayer = player;
@@ -120,13 +120,15 @@ async function vestirRuffle() {
     await iniciarPlayer();
     if (gen !== generacionVestir) return;
     const attrs = atributosDelLook(lookActual.partes);
-    // changeAttr carga los packs que haga falta por su cuenta (GaturroLibraries); no uso searchAssets
-    // (eso es para las miniaturas y deja visible la pantalla de render).
-    // changeAttr alterna la visibilidad del avatar en cada llamada: hay que terminar siempre «puesto».
-    const json = JSON.stringify(attrs);
-    if (ruffleVestido) rufflePlayer.changeAttr(json); // apaga el estado anterior
-    rufflePlayer.changeAttr(json); // prende y aplica
-    ruffleVestido = true;
+    if (!Object.keys(attrs).length) { msgRuffle("Agregá una Pieza para verla puesta."); return; }
+    // Misma secuencia que el spike (una sola vista): sembrar los packs con searchAssets y UN solo changeAttr.
+    const packs = new Set(Object.values(attrs).map((v) => v.split(".")[0]));
+    let sembro = false;
+    for (const p of packs) {
+      if (!packsCargados.has(p)) { packsCargados.add(p); sembro = true; try { rufflePlayer.searchAssets(p); } catch {} }
+    }
+    if (sembro) { await new Promise((r) => setTimeout(r, 800)); if (gen !== generacionVestir) return; }
+    rufflePlayer.changeAttr(JSON.stringify(attrs));
     msgRuffle("");
   } catch (e) {
     msgRuffle("No se pudo abrir la vista nueva.");
