@@ -70,15 +70,13 @@ main.modo-looks .buscador-swf { display: none; }
 .gaturro img { width: 100%; height: 100%; min-height: 0; object-fit: contain; }
 .gaturro img[hidden] { display: none; }
 
-/* PROTOTIPO: vista previa con Ruffle (modelo nuevo) y toggle viejo/nuevo */
-.gaturro-ruffle { width: 100%; height: 100%; min-height: 0; }
+/* Vista previa del Gaturro con Ruffle (modelo actual del juego, en vivo) */
+.gaturro-ruffle { width: 100%; height: 100%; min-height: 0; transform-origin: center center; }
 .gaturro-ruffle[hidden] { display: none; }
 .gaturro-ruffle ruffle-player, .gaturro-ruffle ruffle-embed { width: 100% !important; height: 100% !important; }
+.gaturro-ruffle canvas { object-fit: contain; }
 .gaturro-ruffle-msg { position: absolute; top: 50%; left: 0; right: 0; transform: translateY(-50%); margin: 0; text-align: center; color: #fff; font-size: 12px; pointer-events: none; }
 .gaturro-ruffle-msg[hidden] { display: none; }
-.toggle-modelo { position: absolute; top: 4px; right: 4px; z-index: 2; display: flex; gap: 2px; background: rgba(0,0,0,.35); border-radius: 999px; padding: 2px; }
-.toggle-modelo button { border: none; background: transparent; color: #fff; font-family: inherit; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 999px; cursor: pointer; opacity: .7; }
-.toggle-modelo button.activo { background: #f6d610; color: #5a3b00; opacity: 1; }
 .gaturro figcaption { flex: none; display: flex; flex-direction: column; gap: 2px; color: #fff; font-size: 10px; line-height: 1.2; text-align: center; }
 .gaturro figcaption:empty { display: none; }
 

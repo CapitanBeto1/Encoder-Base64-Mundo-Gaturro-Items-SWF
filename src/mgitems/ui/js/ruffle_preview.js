@@ -63,7 +63,7 @@ function atributosDelLook(partes) {
 let rufflePromesa = null;
 let rufflePlayer = null;
 let ruffleListo = false;
-let modeloNuevo = false;
+let ruffleVestido = false;
 const packsCargados = new Set();
 
 function cargarRuffle() {
@@ -89,73 +89,64 @@ function msgRuffle(texto) {
   el.hidden = !texto;
 }
 
-async function iniciarPlayer() {
-  if (ruffleListo) return true;
-  msgRuffle("Cargando el Gaturro…");
-  await cargarRuffle();
-  if (!window.RufflePlayer?.newest) throw new Error("Ruffle no quedó disponible");
-  const host = $("gaturro-ruffle");
-  host.innerHTML = "";
-  const player = window.RufflePlayer.newest().createPlayer();
-  player.style.width = "100%";
-  player.style.height = "100%";
-  host.appendChild(player);
-  rufflePlayer = player;
-  await player.load({ url: "/preview.swf", allowScriptAccess: true, autoplay: "on", unmuteOverlay: "hidden", splashScreen: false, letterbox: "on", wmode: "transparent" });
-  for (let i = 0; i < 120 && typeof player.changeAttr !== "function"; i++) await new Promise((r) => setTimeout(r, 80));
-  ruffleListo = typeof player.changeAttr === "function";
-  if (!ruffleListo) throw new Error("el preview no expuso changeAttr");
-  return true;
+let playerPromesa = null;
+function iniciarPlayer() {
+  // Una sola instancia de Ruffle aunque se llame varias veces seguidas (si no, aparecen dos Gaturros).
+  if (playerPromesa) return playerPromesa;
+  playerPromesa = (async () => {
+    msgRuffle("Cargando el Gaturro…");
+    await cargarRuffle();
+    if (!window.RufflePlayer?.newest) throw new Error("Ruffle no quedó disponible");
+    const host = $("gaturro-ruffle");
+    host.innerHTML = "";
+    const player = window.RufflePlayer.newest().createPlayer();
+    player.style.width = "100%";
+    player.style.height = "100%";
+    host.appendChild(player);
+    await player.load({ url: "/preview.swf", allowScriptAccess: true, autoplay: "on", unmuteOverlay: "hidden", splashScreen: false, letterbox: "on", wmode: "transparent" });
+    for (let i = 0; i < 120 && typeof player.changeAttr !== "function"; i++) await new Promise((r) => setTimeout(r, 80));
+    if (typeof player.changeAttr !== "function") throw new Error("el preview no expuso changeAttr");
+    rufflePlayer = player;
+    ruffleListo = true;
+  })();
+  return playerPromesa;
 }
 
 let generacionVestir = 0;
 async function vestirRuffle() {
-  if (!modeloNuevo) return;
+  if (vista !== "looks") return; // solo en la pestaña Looks
   const gen = ++generacionVestir;
   try {
     await iniciarPlayer();
     if (gen !== generacionVestir) return;
     const attrs = atributosDelLook(lookActual.partes);
-    const packs = new Set(Object.values(attrs).map((v) => v.split(".")[0]));
-    let sembroAlguno = false;
-    for (const p of packs) {
-      if (!packsCargados.has(p)) {
-        packsCargados.add(p);
-        sembroAlguno = true;
-        try { rufflePlayer.searchAssets(p); } catch {}
-      }
-    }
-    if (sembroAlguno) {
-      await new Promise((r) => setTimeout(r, 800));
-      if (gen !== generacionVestir) return;
-    }
-    try { rufflePlayer.clearAsset?.(); } catch {}
-    rufflePlayer.changeAttr(JSON.stringify(attrs));
-    msgRuffle(Object.keys(attrs).length ? "" : "Agregá una Pieza para verla puesta.");
+    // changeAttr carga los packs que haga falta por su cuenta (GaturroLibraries); no uso searchAssets
+    // (eso es para las miniaturas y deja visible la pantalla de render).
+    // changeAttr alterna la visibilidad del avatar en cada llamada: hay que terminar siempre «puesto».
+    const json = JSON.stringify(attrs);
+    if (ruffleVestido) rufflePlayer.changeAttr(json); // apaga el estado anterior
+    rufflePlayer.changeAttr(json); // prende y aplica
+    ruffleVestido = true;
+    msgRuffle("");
   } catch (e) {
     msgRuffle("No se pudo abrir la vista nueva.");
     console.warn("ruffle:", e);
   }
 }
 
-function mostrarModelo(nuevo) {
-  modeloNuevo = nuevo;
-  $("modelo-viejo").classList.toggle("activo", !nuevo);
-  $("modelo-nuevo").classList.toggle("activo", nuevo);
-  $("imagen-gaturro").hidden = nuevo;
-  $("gaturro-ruffle").hidden = !nuevo;
-  $("estado-gaturro").style.display = nuevo ? "none" : ""; // los avisos son del preview viejo
-  if (nuevo) vestirRuffle();
-  else msgRuffle("");
+// El zoom del Gaturro ahora escala el stage de Ruffle (antes era de la imagen vieja).
+function aplicarZoom() {
+  const z = Number($("zoom-gaturro").value) || 1;
+  $("gaturro-ruffle").style.transform = `scale(${z})`;
 }
+$("zoom-gaturro").addEventListener("input", aplicarZoom);
+aplicarZoom();
 
-$("modelo-viejo").addEventListener("click", () => mostrarModelo(false));
-$("modelo-nuevo").addEventListener("click", () => mostrarModelo(true));
-
-// Engancha a cada redibujo del Gaturro para vestir también la vista nueva.
+// El preview nuevo es la única vista: se viste en cada redibujo del Gaturro (cada cambio del Look).
+$("estado-gaturro").style.display = "none"; // los avisos eran del preview viejo
 const _dibujarGaturro = dibujarGaturro;
 dibujarGaturro = function () {
   const r = _dibujarGaturro.apply(this, arguments);
-  if (modeloNuevo) vestirRuffle();
+  vestirRuffle();
   return r;
 };
