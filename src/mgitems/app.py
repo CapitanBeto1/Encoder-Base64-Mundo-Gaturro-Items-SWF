@@ -8,6 +8,7 @@ import webview
 
 from mgitems.guardados import TIPOS as TIPOS_DE_GUARDADO, Guardados
 from mgitems.nucleo import Nucleo
+from mgitems.servidor_preview import ServidorPreview
 
 TITULO = "MG Items"
 UI = Path(__file__).parent / "ui" / "index.html"
@@ -122,9 +123,12 @@ def _dialogo(tipo, **opciones) -> str | None:
 
 
 def main() -> None:
+    # La interfaz se sirve por http (no file://) para que Ruffle pueda cargar el preview del Gaturro.
+    servidor = ServidorPreview()
+    url = servidor.iniciar()
     webview.create_window(
         TITULO,
-        url=str(UI),
+        url=url,
         js_api=Puente(Nucleo()),
         width=1100,
         height=720,
@@ -133,6 +137,7 @@ def main() -> None:
         background_color="#f6d610",
     )
     webview.start()
+    servidor.detener()
 
 
 if __name__ == "__main__":

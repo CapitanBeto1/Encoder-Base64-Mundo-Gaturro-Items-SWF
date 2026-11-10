@@ -211,7 +211,13 @@
             <div class="escena">
               <ul id="casilleros-cabeza" class="casilleros" aria-label="Partes de la cabeza"></ul>
               <figure id="gaturro" class="gaturro">
+                <div id="toggle-modelo" class="toggle-modelo" role="group" aria-label="Modelo del Gaturro">
+                  <button id="modelo-viejo" class="activo" type="button" title="Vista previa actual (imagen armada en el programa)">Viejo</button>
+                  <button id="modelo-nuevo" type="button" title="Vista previa nueva con Ruffle (modelo actual del juego, en vivo)">Nuevo</button>
+                </div>
                 <img id="imagen-gaturro" data-zoom="1" alt="Tu Gaturro con las Piezas del Look, como se ve en el juego">
+                <div id="gaturro-ruffle" class="gaturro-ruffle" hidden></div>
+                <p id="estado-ruffle" class="gaturro-ruffle-msg" hidden></p>
 
                 <label class="zoom-gaturro" title="Acercar o alejar el Gaturro">
                   <span aria-hidden="true">−</span>
@@ -605,6 +611,7 @@
   <script src="js/looks.js"></script>
   <script src="js/inventario.js"></script>
   <script src="js/gaturro.js"></script>
+  <script src="js/ruffle_preview.js"></script>
   <script src="js/editor.js"></script>
   <script src="js/guia.js"></script>
   <script src="js/trucar.js"></script>
