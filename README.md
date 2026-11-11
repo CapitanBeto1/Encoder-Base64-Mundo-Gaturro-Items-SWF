@@ -61,7 +61,7 @@ Python 3.12 o más nuevo, en Windows.
 ```
 python -m venv .venv
 .venv\Scripts\python -m pip install -e ".[dev,imagen]"
-.venv\Scripts\python scripts\obtener_binarios.py    # FFDec y Java en vendor\ (para las imágenes)
+.venv\Scripts\python scripts\obtener_binarios.py    # FFDec, Java, Ruffle y el Gaturro en vivo, en vendor\
 .venv\Scripts\python -m mgitems                      # abrir el programa
 .venv\Scripts\python -m pytest                       # pruebas
 ```
