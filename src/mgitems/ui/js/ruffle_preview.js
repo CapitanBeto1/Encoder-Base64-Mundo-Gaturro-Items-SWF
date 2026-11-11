@@ -1,6 +1,6 @@
 // PROTOTIPO: vista previa del Gaturro con Ruffle (el modelo actual del juego, en vivo).
 // Carga /preview.swf (el avatar real envuelto) en Ruffle y lo viste con changeAttr, usando los SWF que sirve
-// el servidor local en /assets/<pack>.swf. El toggle «Viejo/Nuevo» alterna con la imagen armada en el programa.
+// el servidor local en /assets/<pack>.swf. Es la única vista del Gaturro (la imagen vieja queda oculta).
 
 // --- Pieza "swf.Clase" → valor que viste el juego ("swf.clase_on"), con las excepciones conocidas ---
 // (portado de naw-trucador/app/frontend/src/look/slots.js)
@@ -138,13 +138,14 @@ async function vestirRuffle() {
   }
 }
 
-// Encuadra el avatar del preview.swf: lo acerca y lo sube para centrarlo y recortar el Gaturro de referencia de
-// arriba. El zoom del Gaturro multiplica el acercamiento.
+// Encuadra el avatar del preview.swf: lo acerca y lo sube un poco (en el escenario queda algo abajo del centro).
+// El zoom del Gaturro multiplica el acercamiento.
 const RUFFLE_ZOOM_BASE = 1.8;
-const RUFFLE_SUBIR = -15; // %
+const RUFFLE_SUBIR = -6; // %
 function aplicarZoom() {
+  if (!rufflePlayer) return;
   const z = Number($("zoom-gaturro").value) || 1;
-  $("gaturro-ruffle").style.transform = `scale(${(RUFFLE_ZOOM_BASE * z).toFixed(3)}) translateY(${RUFFLE_SUBIR}%)`;
+  rufflePlayer.style.transform = `scale(${(RUFFLE_ZOOM_BASE * z).toFixed(3)}) translateY(${RUFFLE_SUBIR}%)`;
 }
 $("zoom-gaturro").addEventListener("input", aplicarZoom);
 aplicarZoom();

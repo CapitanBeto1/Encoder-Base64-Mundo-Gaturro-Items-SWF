@@ -66,15 +66,18 @@ main.modo-looks .buscador-swf { display: none; }
   gap: 4px;
   padding: 0 8px;
 }
-.gaturro { margin: 0; min-height: 0; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; }
+.gaturro { margin: 0; min-height: 0; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 .gaturro img { width: 100%; height: 100%; min-height: 0; object-fit: contain; }
 .gaturro img[hidden] { display: none; }
 
 /* Vista previa del Gaturro con Ruffle (modelo actual del juego, en vivo). El preview.swf dibuja un Gaturro de
    referencia arriba; se encuadra el avatar (abajo) con zoom + corrimiento y se recorta lo de arriba. */
-.gaturro-ruffle { width: 100%; height: 100%; min-height: 0; transform-origin: center center; }
+.gaturro { width: 100%; }
+.gaturro #imagen-gaturro { display: none; } /* el modelo viejo ya no se muestra */
+.gaturro-ruffle { position: relative; flex: 1 1 0; align-self: stretch; min-height: 0; overflow: hidden; }
 .gaturro-ruffle[hidden] { display: none; }
-.gaturro-ruffle ruffle-player, .gaturro-ruffle ruffle-embed { width: 100% !important; height: 100% !important; }
+.gaturro-ruffle ruffle-player, .gaturro-ruffle ruffle-embed { position: absolute; inset: 0; width: 100% !important; height: 100% !important; transform-origin: center center; }
+.gaturro .zoom-gaturro { position: relative; z-index: 2; }
 .gaturro-ruffle-msg { position: absolute; top: 50%; left: 0; right: 0; transform: translateY(-50%); margin: 0; text-align: center; color: #fff; font-size: 12px; pointer-events: none; }
 .gaturro-ruffle-msg[hidden] { display: none; }
 .gaturro figcaption { flex: none; display: flex; flex-direction: column; gap: 2px; color: #fff; font-size: 10px; line-height: 1.2; text-align: center; }
