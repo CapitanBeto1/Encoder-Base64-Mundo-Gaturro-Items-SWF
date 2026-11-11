@@ -178,6 +178,7 @@ function mostrarSelectoresColor() {
 $("colores-look").addEventListener("click", () => {
   coloresEnEdicion = coloresDe(lookActual);
   mostrarSelectoresColor();
+  pedirGaturro($("gaturro-colores"), coloresEnEdicion);
   $("dialogo-colores").showModal();
 });
 $("reiniciar-colores").addEventListener("click", () => {
