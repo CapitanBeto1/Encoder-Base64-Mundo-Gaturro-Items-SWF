@@ -25,10 +25,10 @@ def test_las_animaciones_del_juego_en_el_orden_en_que_se_ofrecen(nucleo):
     filas = resultado["animaciones"]
     assert len(filas) == len(ANIMACIONES) == 106
     grupos = [f["grupo"] for f in filas]
-    assert grupos == sorted(grupos, key=["accion", "no_se_dibuja", "otras"].index)  # de verdad, sin dibujo, otras
+    assert grupos == sorted(grupos, key=["accion", "otras"].index)  # las de verdad y las otras
     mostrar = next(f for f in filas if f["id"] == "showObject")
-    assert mostrar == {"id": "showObject", "nombre": "Mostrar en la mano", "grupo": "accion", "se_dibuja": True}
-    assert next(f for f in filas if f["id"] == "fortnite1")["grupo"] == "no_se_dibuja"
+    assert mostrar == {"id": "showObject", "nombre": "Mostrar en la mano", "grupo": "accion"}
+    assert next(f for f in filas if f["id"] == "fortnite1")["grupo"] == "accion"
     assert next(f for f in filas if f["id"] == "transportStand_moto")["grupo"] == "otras"
     de_verdad = [f["nombre"] for f in filas if f["grupo"] == "accion"]
     assert de_verdad.index("Agarrar") < de_verdad.index("Bailar") < de_verdad.index("Tomar")
@@ -141,15 +141,6 @@ def test_el_indice_anota_el_tamano_que_mira_una_accion():
     assert "accion" not in donde_se_ve("casa.mesa_on", (0, 0, 150, 150))  # 150 justo, sí
     assert donde_se_ve("casa.nada_on", (0, 0, 0, 0))["accion"] == "vacia"
     assert donde_se_ve("petClothes.collar_on", (0, 0, 400, 10))["accion"] == "grande"  # aunque el Gaturro no la dibuje
-
-
-def test_la_vista_previa_no_inventa_una_animacion_que_no_puede_leer(nucleo):
-    resultado = nucleo.animacion_de_accion({"animacion": "fortnite1"})
-
-    assert resultado["ok"]
-    assert resultado["imagenes"] == []
-    assert "no se puede mostrar" in resultado["aviso"]
-    assert not nucleo.animacion_de_accion({"animacion": "volar"})["ok"]
 
 
 # --- Mis acciones ---

@@ -38,7 +38,7 @@ dialog .esqueleto-filas { background: rgba(255, 255, 255, 0.5); }
 
 /* El Gaturro: su silueta (orejas, cabeza, cuerpo y cola) flotando, con la sombra que respira. */
 .gaturro { position: relative; }
-.gaturro.cargando > :is(img, iframe, .zoom-gaturro, figcaption, button) { visibility: hidden; }
+.gaturro.cargando > :is(iframe, .zoom-gaturro, figcaption, button) { visibility: hidden; }
 .gaturro.cargando::before {
   content: ""; position: absolute; left: 50%; top: 44%; width: min(62%, 210px); aspect-ratio: 200 / 240; translate: -50% -50%;
   background: var(--brillo-carga), rgba(255, 250, 222, 0.55);
@@ -49,8 +49,6 @@ dialog .esqueleto-filas { background: rgba(255, 255, 255, 0.5); }
   content: ""; position: absolute; left: 50%; bottom: 14%; width: 30%; height: 10px; border-radius: 50%; transform: translateX(-50%);
   background: rgba(0, 0, 0, 0.16); animation: respirar 1.5s ease-in-out infinite alternate;
 }
-/* Sin imagen todavía, ni la imagen rota ni su texto. */
-#imagen-gaturro:not([src]) { visibility: hidden; }
 
 /* El Encode mientras se arma. */
 #encode.cargando { color: transparent; background: var(--brillo-carga), rgba(80, 140, 170, 0.14); }

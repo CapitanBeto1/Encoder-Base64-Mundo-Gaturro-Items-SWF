@@ -3,8 +3,8 @@
 - FFDec (JPEXS Free Flash Decompiler): lee y exporta SWF. Queda en vendor/ffdec.
 - Java (Eclipse Temurin JRE): lo necesita FFDec. Queda en vendor/java.
 - Ruffle (reproductor de Flash para la web): muestra al Gaturro en vivo. Queda en vendor/ruffle.
-- El Gaturro en vivo (`preview.swf` de naw-trucador, el Gaturro de pantalla del juego): queda en vendor/gaturro,
-  con lo que le agrega `parchear_preview.py` (necesita FFDec).
+- El Gaturro en vivo (`anim_preview.swf` de naw-trucador: el Gaturro del juego con su código): queda en
+  vendor/gaturro, armado por `armar_gaturro.py` (necesita FFDec).
 
 No se versionan en git: se obtienen con este script para desarrollar y al armar
 el instalador. Para desarrollar alcanza con FFDec si ya hay Java instalado.
@@ -25,7 +25,7 @@ from collections.abc import Callable, Iterator
 from dataclasses import dataclass
 from pathlib import Path
 
-import parchear_preview
+import armar_gaturro
 
 VENDOR = Path(__file__).resolve().parent.parent / "vendor"
 
@@ -66,11 +66,11 @@ BINARIOS = {
         solo=("ruffle.js", "*.wasm", "LICENSE_*"),
     ),
     "gaturro": Binario(
-        "gaturro", "c2e07e7+mg1",
+        "gaturro", "c2e07e7+mg2",
         "https://raw.githubusercontent.com/novendotrap/naw-trucador/c2e07e71385568818f51076404a7b247ee9b2674/"
-        "app/static/ruffle/preview.swf",
-        "1965f0ef10a3c526f4a364396aec4f9d4d90ebca5197450932e77ecc3f2a8c7a",
-        despues=parchear_preview.parchear,
+        "app/static/ruffle/anim_preview.swf",
+        "9d974aab2ff9fcff35f81997b744f5450dcc4de6084c4680e8e70bac659c05f5",
+        despues=armar_gaturro.armar,
     ),
 }
 

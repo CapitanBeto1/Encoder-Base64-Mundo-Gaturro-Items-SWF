@@ -4,18 +4,19 @@
 <meta charset="utf-8">
 <title>El Gaturro en vivo</title>
 <style>
-  /* El Gaturro de pantalla del juego, en un marco de la interfaz (js/gaturro_vivo.js). El fondo es el del marco. */
+  /* El Gaturro del juego, en un marco de la interfaz (js/gaturro_vivo.js). El fondo es el del marco. */
   html, body { margin: 0; height: 100%; overflow: hidden; background: transparent; }
-  /* En el escenario del preview.swf el Gaturro queda chico y algo abajo del centro: se acerca y se sube. Se agranda
-     el reproductor (no se estira con `transform`) para que Ruffle lo dibuje nítido a ese tamaño. */
-  ruffle-player { --veces: calc(1.8 * var(--zoom, 1)); position: absolute; width: calc(100% * var(--veces)); height: calc(100% * var(--veces));
-    left: calc(50% - 50% * var(--veces)); top: calc(50% - 56% * var(--veces)); }
+  /* El zoom agranda el reproductor (no lo estira con `transform`: Ruffle lo dibuja nítido a ese tamaño) alrededor
+     de los pies del Gaturro, que el SWF pone en el medio, al 80% del alto (scripts/gaturro_en_vivo/MMO.as). */
+  ruffle-player { position: absolute; width: calc(100% * var(--zoom, 1)); height: calc(100% * var(--zoom, 1));
+    left: calc(50% - 50% * var(--zoom, 1)); top: calc(80% - 80% * var(--zoom, 1)); }
 </style>
 </head>
 <body>
 <script>
-  // Lo maneja la interfaz con mensajes: {vestir: {partes, colores, emote}} (lo de `Nucleo.gaturro_en_vivo`) y
-  // {zoom: número}. Avisa {listo: true} cuando el Gaturro ya se puede vestir, o {error: "…"} si no se pudo abrir.
+  // Lo maneja la interfaz con mensajes: {vestir: atributos} (los de `Nucleo.gaturro_en_vivo`), {zoom: número} y
+  // {repetir: true} (la acción, desde el principio). Avisa {listo: true} cuando el Gaturro ya se puede vestir, o
+  // {error: "…"} si no se pudo abrir.
   window.RufflePlayer = { config: {
     publicPath: "/ruffle/", polyfills: false, wmode: "transparent", allowScriptAccess: true, autoplay: "on",
     contextMenu: "off", splashScreen: false, unmuteOverlay: "hidden", letterbox: "on", logLevel: "warn",
@@ -25,8 +26,9 @@
   let pendiente = null; // lo último que se pidió vestir antes de que el Gaturro estuviera listo
 
   addEventListener("message", (evento) => {
-    const { vestir, zoom } = evento.data ?? {};
+    const { vestir, zoom, repetir } = evento.data ?? {};
     if (zoom) document.documentElement.style.setProperty("--zoom", String(zoom));
+    if (repetir) player?.mgRepetir();
     if (!vestir) return;
     if (player) player.mgVestir(JSON.stringify(vestir));
     else pendiente = vestir;
@@ -40,8 +42,8 @@
     });
     const nuevo = window.RufflePlayer.newest().createPlayer();
     document.body.append(nuevo);
-    await nuevo.load({ url: "/preview.swf" });
-    // El preview.swf registra `mgVestir` al arrancar (scripts/parchear_preview.py).
+    await nuevo.load({ url: "/gaturro.swf" });
+    // El SWF registra `mgVestir` al arrancar (scripts/gaturro_en_vivo/MMO.as).
     for (let i = 0; i < 150 && typeof nuevo.mgVestir !== "function"; i++) await new Promise((r) => setTimeout(r, 80));
     if (typeof nuevo.mgVestir !== "function") throw new Error("el Gaturro no arrancó");
     player = nuevo;

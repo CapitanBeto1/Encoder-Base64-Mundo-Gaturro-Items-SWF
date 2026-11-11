@@ -2,9 +2,10 @@
 
 import subprocess
 
+from mgitems.acciones import valor_de_accion
 from mgitems.ffdec import FFDecNoDisponible
 from mgitems.gaturro import (
-    CLASE_CARA, CLASE_CUERPO, CLASE_PLANTILLA, COLORES, CUADRO_QUIETO_DEL_VEHICULO, EMOTE_SUBCLIPS, PARTES_EN_VIVO,
+    CLASE_CARA, CLASE_CUERPO, CLASE_PLANTILLA, COLORES, CUADRO_QUIETO_DEL_VEHICULO, EMOTE_SUBCLIPS, PARTES,
     SWF_CUERPO, SWF_CUERPO_COMPLETO, SWF_PLANTILLA, SWF_POSES, ImagenesPiezas, completar_con_plantilla,
     colores_del_jugador, componer, pose_de_transporte, preparar_cuerpo, tiene_lugar,
 )
@@ -12,7 +13,7 @@ from mgitems.iconos import IconosItems
 from mgitems.looks import EMOTES
 from mgitems.items import es_ruta_valida, filtrar_por_prefijos, piezas_del_swf
 from mgitems.nucleo._comun import _simbolos_con_imagen
-from mgitems.prendas import EFECTO, PARTES_DEL_CUERPO
+from mgitems.prendas import ACCION, EFECTO, PARTES_DEL_CUERPO, PREFIJO_EFECTO
 from mgitems.se_ve import TRANSPORTE, motivo_sin_efecto
 from mgitems.swf import SwfInvalido, congelado_en, leer_simbolos, rotulos
 
@@ -122,28 +123,31 @@ class Imagenes:
                 "no_se_ven": no_se_ven, "transporte": sin_pose,
                 "colores_de_fabrica": COLORES}
 
-    def gaturro_en_vivo(self, partes: dict, colores: dict | None = None, emote: str | None = None) -> dict:
-        """Cómo vestir al Gaturro en vivo (el Gaturro de pantalla del juego, que corre en la interfaz) con `partes`.
+    def gaturro_en_vivo(self, partes: dict, colores: dict | None = None, emote: str | None = None,
+                        animacion: str | None = None) -> dict:
+        """Los atributos con los que se ve el Gaturro en vivo (el del juego, que corre en la interfaz, ADR 0009).
 
-        `vestir` es lo que recibe su `mgVestir`: cada Parte del cuerpo donde tiene lugar con su Pieza (o vacía),
-        los colores como enteros (los del jugador o, si faltan, los de fábrica) y la emoción. Las Piezas que el
-        juego no dibujaría en esa Parte (ver `se_ve`) no se ponen y van en `no_se_ven` ({ruta, parte, motivo});
-        las de Partes donde este Gaturro no tiene lugar (el transporte, el efecto de cabeza), en `sin_lugar`.
+        Son los que tendría el avatar en el juego, y los aplica el código del juego: cada Parte del cuerpo y el
+        transporte con su Pieza (o vacía), el efecto de cabeza («head.<swf>.<Pieza>»), los colores como enteros
+        (los del jugador o, si faltan, los de fábrica), la emoción y, si hay `animacion`, la acción
+        («<animación>» o «<animación>.<swf>.<Pieza>», con la Pieza de `partes["action"]`).
+        `no_se_ven` ({ruta, parte, motivo}) explica las Piezas que el juego no dibuja en esa Parte (ver `se_ve`).
         """
         if not isinstance(partes, dict) or not isinstance(colores, (dict, type(None))):
             return {"ok": False, "error": "Las Partes del cuerpo no tienen la forma esperada."}
         elegidas = {p: r for p, r in partes.items() if isinstance(r, str) and es_ruta_valida(r)}
-        no_se_ven = [{"ruta": r, "parte": p, "motivo": m} for p, r in elegidas.items() if (m := self._motivo_no_se_ve(r, p))]
-        se_ven = {p: r for p, r in elegidas.items() if p not in {n["parte"] for n in no_se_ven}}
+        atributos = {p: elegidas.get(p, "") for p in PARTES}
+        atributos[EFECTO] = PREFIJO_EFECTO + elegidas[EFECTO] if EFECTO in elegidas else ""
+        atributos |= {c: int(v[1:], 16) for c, v in colores_del_jugador(colores).items()}
+        atributos["emote"] = emote if emote in EMOTES else EMOTES[0]
+        atributos[ACCION] = ""
+        if isinstance(animacion, str) and animacion.isidentifier():
+            atributos[ACCION] = valor_de_accion(animacion, elegidas.get(ACCION))
         return {
             "ok": True,
-            "vestir": {
-                "partes": {p: se_ven.get(p, "") for p in PARTES_EN_VIVO},
-                "colores": {c: int(v[1:], 16) for c, v in colores_del_jugador(colores).items()},
-                "emote": emote if emote in EMOTES else EMOTES[0],
-            },
-            "no_se_ven": no_se_ven,
-            "sin_lugar": [r for p, r in se_ven.items() if p not in PARTES_EN_VIVO],
+            "atributos": atributos,
+            "no_se_ven": [{"ruta": r, "parte": p, "motivo": m} for p, r in elegidas.items()
+                          if p != ACCION and (m := self._motivo_no_se_ve(r, p))],
             "colores_de_fabrica": COLORES,
         }
 

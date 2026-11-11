@@ -5,7 +5,7 @@ bajar sus archivos por http. Este servidor, que solo atiende a esta computadora,
 
 - `/gaturro_vivo.html`   la página del marco (de `ui/`)
 - `/ruffle/<archivo>`    Ruffle (de `vendor/ruffle`)
-- `/preview.swf`         el Gaturro (de `vendor/gaturro`)
+- `/gaturro.swf`         el Gaturro (de `vendor/gaturro`)
 - `/assets/<swf>.swf`    el SWF de donde sale cada Pieza, que el Gaturro pide al vestirse
 """
 
@@ -49,8 +49,8 @@ class ServidorDelGaturro:
         vendor = carpeta_vendor()
         if ruta == f"/{PAGINA.name}":
             archivo = PAGINA
-        elif ruta == "/preview.swf":
-            archivo = vendor / "gaturro" / "preview.swf"
+        elif ruta == "/gaturro.swf":
+            archivo = vendor / "gaturro" / "gaturro.swf"
         elif pedido := _DE_RUFFLE.match(ruta):
             archivo = vendor / "ruffle" / pedido[1]
         elif pedido := _ASSET.match(ruta):
