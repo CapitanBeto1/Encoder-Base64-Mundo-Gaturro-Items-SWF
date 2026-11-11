@@ -108,6 +108,7 @@ function iniciarPlayer() {
     if (typeof player.changeAttr !== "function") throw new Error("el preview no expuso changeAttr");
     rufflePlayer = player;
     ruffleListo = true;
+    aplicarZoom();
   })();
   return playerPromesa;
 }
@@ -129,6 +130,7 @@ async function vestirRuffle() {
     }
     if (sembro) { await new Promise((r) => setTimeout(r, 800)); if (gen !== generacionVestir) return; }
     rufflePlayer.changeAttr(JSON.stringify(attrs));
+    aplicarZoom();
     msgRuffle("");
   } catch (e) {
     msgRuffle("No se pudo abrir la vista nueva.");
@@ -136,10 +138,13 @@ async function vestirRuffle() {
   }
 }
 
-// El zoom del Gaturro ahora escala el stage de Ruffle (antes era de la imagen vieja).
+// Encuadra el avatar del preview.swf: lo acerca y lo sube para centrarlo y recortar el Gaturro de referencia de
+// arriba. El zoom del Gaturro multiplica el acercamiento.
+const RUFFLE_ZOOM_BASE = 1.8;
+const RUFFLE_SUBIR = -15; // %
 function aplicarZoom() {
   const z = Number($("zoom-gaturro").value) || 1;
-  $("gaturro-ruffle").style.transform = `scale(${z})`;
+  $("gaturro-ruffle").style.transform = `scale(${(RUFFLE_ZOOM_BASE * z).toFixed(3)}) translateY(${RUFFLE_SUBIR}%)`;
 }
 $("zoom-gaturro").addEventListener("input", aplicarZoom);
 aplicarZoom();
