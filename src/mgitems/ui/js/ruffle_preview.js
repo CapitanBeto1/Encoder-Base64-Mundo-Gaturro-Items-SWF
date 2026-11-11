@@ -114,14 +114,14 @@ function iniciarPlayer() {
 }
 
 let generacionVestir = 0;
+let llamadasChangeAttr = 0;
 async function vestirRuffle() {
   if (vista !== "looks") return; // solo en la pestaña Looks
   const gen = ++generacionVestir;
   try {
     await iniciarPlayer();
     if (gen !== generacionVestir) return;
-    const attrs = atributosDelLook(lookActual.partes);
-    if (!Object.keys(attrs).length) { msgRuffle("Agregá una Pieza para verla puesta."); return; }
+    const attrs = atributosDelLook(lookActual.partes); // vacío: el Gaturro sin Piezas
     // Misma secuencia que el spike (una sola vista): sembrar los packs con searchAssets y UN solo changeAttr.
     const packs = new Set(Object.values(attrs).map((v) => v.split(".")[0]));
     let sembro = false;
@@ -129,7 +129,11 @@ async function vestirRuffle() {
       if (!packsCargados.has(p)) { packsCargados.add(p); sembro = true; try { rufflePlayer.searchAssets(p); } catch {} }
     }
     if (sembro) { await new Promise((r) => setTimeout(r, 800)); if (gen !== generacionVestir) return; }
-    rufflePlayer.changeAttr(JSON.stringify(attrs));
+    // changeAttr del preview.swf alterna mostrar/ocultar el avatar en cada llamada: la cantidad total de
+    // llamadas tiene que quedar impar para que el Gaturro se vea.
+    const json = JSON.stringify(attrs);
+    if (llamadasChangeAttr > 0) { rufflePlayer.changeAttr(json); llamadasChangeAttr++; }
+    rufflePlayer.changeAttr(json); llamadasChangeAttr++;
     aplicarZoom();
     msgRuffle("");
   } catch (e) {
