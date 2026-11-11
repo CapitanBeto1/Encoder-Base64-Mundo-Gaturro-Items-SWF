@@ -1,6 +1,6 @@
 """Arma el instalador de MG Items para Windows.
 
-1. Descarga FFDec y Java a vendor/ (scripts/obtener_binarios.py).
+1. Descarga FFDec, Java, Ruffle y el Gaturro en vivo a vendor/ (scripts/obtener_binarios.py).
 2. Arma el programa con PyInstaller en dist/MGItems (carpeta con MGItems.exe, sin consola).
 3. Si está Inno Setup 6, arma dist/MGItems-Setup-<versión>.exe con instalador/mgitems.iss.
 
@@ -34,6 +34,8 @@ def armar_programa() -> Path:
         RAIZ / "src" / "mgitems" / "datos": "mgitems/datos",
         RAIZ / "vendor" / "ffdec": "vendor/ffdec",
         RAIZ / "vendor" / "java": "vendor/java",
+        RAIZ / "vendor" / "ruffle": "vendor/ruffle",
+        RAIZ / "vendor" / "gaturro": "vendor/gaturro",
     }
     argumentos = [
         str(RAIZ / "src" / "mgitems" / "__main__.py"),
