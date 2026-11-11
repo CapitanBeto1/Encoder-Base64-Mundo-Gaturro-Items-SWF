@@ -1,7 +1,8 @@
 // El Gaturro en vivo: el Gaturro de pantalla del juego, corriendo en un marco (gaturro_vivo.html, ADR 0003).
 
 // Un Gaturro en vivo en `marco` (un <iframe>). Su página se abre recién la primera vez que se lo viste.
-function gaturroVivo(marco) {
+// `tamano` achica o agranda al Gaturro dentro del marco (1: lo llena a lo alto).
+function gaturroVivo(marco, tamano = 1) {
   let abierto = null; // la página avisó que el Gaturro ya se puede vestir
   let pedido = 0; // si se lo viste varias veces seguidas, queda lo último
   let zoom = 1;
@@ -35,13 +36,13 @@ function gaturroVivo(marco) {
         resultado = { ok: false, error: error.message };
       }
       if (este !== pedido) return null;
-      if (resultado.ok) decir({ vestir: resultado.vestir, zoom });
+      if (resultado.ok) decir({ vestir: resultado.vestir, zoom: zoom * tamano });
       return resultado;
     },
     // 1 es el tamaño de siempre; menos lo aleja y más lo acerca.
     zoom(valor) {
       zoom = valor;
-      if (marco.src) decir({ zoom });
+      if (marco.src) decir({ zoom: zoom * tamano });
     },
   };
 }

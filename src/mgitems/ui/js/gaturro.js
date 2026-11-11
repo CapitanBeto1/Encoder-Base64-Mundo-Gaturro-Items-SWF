@@ -5,7 +5,6 @@
 // Colores del Gaturro (como en el juego: cara, cuerpo, ojos, nariz). Cada Look tiene los suyos; los que no
 // tiene, los de fábrica del juego.
 let coloresDeFabrica = { color1: "#FFF200", color2: "#DDB42D", color3: "#FFFFFF", color4: "#FB8CBB" };
-let tieneColorDeNariz = false;
 const CLAVES_COLOR = ["color1", "color2", "color3", "color4"];
 const coloresDe = (look) => ({ ...coloresDeFabrica, ...(look?.colores ?? {}) });
 
@@ -58,13 +57,16 @@ async function pedirGaturro(img, colores, partes = lookActual.partes, emote = nu
     svgsGaturro.set(img, resultado.svg);
     mostrarGaturroEn(img);
     coloresDeFabrica = resultado.colores_de_fabrica;
-    tieneColorDeNariz = resultado.color_de_nariz;
   }
   return resultado;
 }
 
 // El Gaturro de la tarjeta (Looks y Trucar Prenda) es el Gaturro en vivo; en Acciones, las imágenes de la animación.
 const gaturroDelLook = gaturroVivo($("gaturro-vivo"));
+// Los de las ventanas: el escenario de los guardados y «Elige tus colores».
+const gaturroDelEscenario = gaturroVivo($("vivo-mis-looks"), 0.75); // más chico: entra entero sobre el piso
+const gaturroDeColores = gaturroVivo($("gaturro-colores"));
+const mostrarColoresEnEdicion = () => gaturroDeColores.vestir(lookActual.partes, coloresEnEdicion, lookActual.emote ?? null);
 
 async function dibujarGaturro() {
   detenerAnimacion();
@@ -111,7 +113,6 @@ function arrastrable(elemento, mover) {
     mover(Math.min(Math.max((e.clientX - caja.left) / caja.width, 0), 1), Math.min(Math.max((e.clientY - caja.top) / caja.height, 0), 1));
   };
   elemento.addEventListener("pointerdown", (e) => {
-    if (elemento.closest(".deshabilitado")) return;
     try {
       elemento.setPointerCapture(e.pointerId);
     } catch {}
@@ -145,7 +146,7 @@ function crearSelectorColor(contenedor) {
   const cambiar = () => {
     pintar();
     coloresEnEdicion[clave] = hsvAHex(hsv);
-    pedirGaturro($("gaturro-colores"), coloresEnEdicion);
+    mostrarColoresEnEdicion();
   };
   arrastrable(tono, (_, y) => {
     hsv = { ...hsv, h: Math.min(y * 360, 359.9) };
@@ -166,25 +167,19 @@ function crearSelectorColor(contenedor) {
 document.querySelectorAll(".selector-color").forEach(crearSelectorColor);
 
 function mostrarSelectoresColor() {
-  for (const [clave, selector] of Object.entries(selectoresColor)) {
-    const habilitado = clave !== "color4" || tieneColorDeNariz;
-    const contenedor = document.querySelector(`.selector-color[data-color="${clave}"]`);
-    contenedor.classList.toggle("deshabilitado", !habilitado);
-    contenedor.title = habilitado ? "" : "Este Gaturro (una versión anterior del juego) no tiene color de nariz.";
-    selector.mostrar(coloresEnEdicion[clave] ?? "#F49AC1");
-  }
+  for (const [clave, selector] of Object.entries(selectoresColor)) selector.mostrar(coloresEnEdicion[clave] ?? "#F49AC1");
 }
 
 $("colores-look").addEventListener("click", () => {
   coloresEnEdicion = coloresDe(lookActual);
   mostrarSelectoresColor();
-  pedirGaturro($("gaturro-colores"), coloresEnEdicion);
+  mostrarColoresEnEdicion();
   $("dialogo-colores").showModal();
 });
 $("reiniciar-colores").addEventListener("click", () => {
   coloresEnEdicion = { ...coloresDeFabrica };
   mostrarSelectoresColor();
-  pedirGaturro($("gaturro-colores"), coloresEnEdicion);
+  mostrarColoresEnEdicion();
 });
 // GUARDAR: los colores pasan a ser del Look abierto (se guardan con «Guardar el Look», como cualquier cambio).
 $("guardar-colores").addEventListener("click", () => {
