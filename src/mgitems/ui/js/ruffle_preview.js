@@ -46,8 +46,14 @@ function valorOn(ruta) {
 // Las Partes del cuerpo que la vista de Ruffle sabe vestir (los efectos de cabeza son aparte; se omiten por ahora).
 const PARTES_RUFFLE = ["hats", "hairs", "accesories", "accesories2", "mouths", "neck", "cloth", "arm", "clothBack", "grip", "gripFore", "leg", "foot", "transport"];
 
-function atributosDelLook(partes) {
+// Los colores del Gaturro van como enteros (color1..color4): el preview.swf pinta con ellos los clips de color,
+// como el juego (`ColorTransform.color`).
+function atributosDelLook(partes, colores) {
   const attrs = {};
+  for (const clave of CLAVES_COLOR) {
+    const hex = /^#?([0-9a-f]{6})$/i.exec(colores?.[clave] ?? "");
+    if (hex) attrs[clave] = parseInt(hex[1], 16);
+  }
   for (const parte of PARTES_RUFFLE) {
     const ruta = partes?.[parte];
     if (!ruta) continue;
@@ -121,9 +127,9 @@ async function vestirRuffle() {
   try {
     await iniciarPlayer();
     if (gen !== generacionVestir) return;
-    const attrs = atributosDelLook(lookActual.partes); // vacío: el Gaturro sin Piezas
+    const attrs = atributosDelLook(lookActual.partes, coloresDe(lookActual)); // sin Piezas: el Gaturro solo
     // Misma secuencia que el spike (una sola vista): sembrar los packs con searchAssets y UN solo changeAttr.
-    const packs = new Set(Object.values(attrs).map((v) => v.split(".")[0]));
+    const packs = new Set(Object.entries(attrs).filter(([k]) => k.startsWith("wear_")).map(([, v]) => v.split(".")[0]));
     let sembro = false;
     for (const p of packs) {
       if (!packsCargados.has(p)) { packsCargados.add(p); sembro = true; try { rufflePlayer.searchAssets(p); } catch {} }
