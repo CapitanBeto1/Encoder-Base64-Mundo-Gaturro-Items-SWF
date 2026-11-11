@@ -70,6 +70,8 @@ EMOTE_SUBCLIPS: dict[str, dict[str, str]] = {
 # `accesories2` existe en el juego actual (se ve), aunque no en la versión del cliente que se leyó.
 PARTES = ["hats", "hairs", "mouths", "neck", "accesories", "accesories2", "cloth", "clothFront", "clothBack", "leg",
           "foot", "arm", "armFore", "armBack", "glove", "gloveFore", "gloveBack", "grip", "gripFore", "gripBack", "transport"]
+# Las Partes del cuerpo donde el Gaturro en vivo (el de pantalla, ADR 0003) tiene lugar: no dibuja vehículos.
+PARTES_EN_VIVO = tuple(p for p in PARTES if p != "transport")
 # El Gaturro con las poses de transporte (`transportStand_<tipo del vehículo>`): el de `superHeroesTrajes`
 # es el animado, con las mismas poses en los mismos cuadros que el del juego (el de `fashion_nuevo` es quieto).
 SWF_POSES = "superHeroesTrajes"
@@ -100,6 +102,11 @@ _TRANSFORMACION = re.compile(r'transform="([^"]+)"')
 _TAMANO = re.compile(r'height="(?P<alto>[\d.]+)px" width="(?P<ancho>[\d.]+)px"')
 _COLOR = re.compile(r"^#[0-9a-fA-F]{6}$")
 _MARGEN = 15  # lugar alrededor del cuerpo para Piezas grandes (sombreros, alas)
+
+
+def colores_del_jugador(colores: dict | None) -> dict[str, str]:
+    """Los cuatro colores del Gaturro: los de `colores` que valen ("#RRGGBB") y, los que faltan, los de fábrica."""
+    return COLORES | {k: c for k, c in (colores or {}).items() if k in COLORES and isinstance(c, str) and _COLOR.match(c)}
 
 
 def huecos_de(parte: str) -> list[str]:
@@ -322,8 +329,7 @@ def _pintar_nariz(svg: str, color: str) -> str:
 
 def componer(cuerpo: str, piezas: dict[str, tuple[str, str]], colores: dict | None = None) -> str:
     """El SVG del Gaturro con `piezas` (Parte del cuerpo → (clase, SVG exportado por FFDec)) puestas."""
-    elegidos = {k: c for k, c in (colores or {}).items() if k in COLORES and isinstance(c, str) and _COLOR.match(c)}
-    colores = COLORES | elegidos
+    colores = colores_del_jugador(colores)
 
     # Qué Pieza va en cada clip, en el orden del juego (la última gana).
     en_hueco: dict[str, str] = {}

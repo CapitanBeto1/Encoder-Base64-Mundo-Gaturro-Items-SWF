@@ -205,6 +205,14 @@ class Swfs:
             return {"ok": False, "error": f"No se pudieron clasificar los Items de {swf}: {e}"}
         return {"ok": True, "piezas": piezas, "otros_usos": otros, "items": tipos, "se_ve": se_ve}
 
+    def swf_del_juego(self, swf: str) -> bytes | None:
+        """El SWF `swf` entero (el abierto, o del caché o el CDN), o None si no se consiguió. Lo pide el Gaturro en
+        vivo para vestirse (`mgitems.servidor`); no es para la interfaz."""
+        if swf == self._swf_abierto:
+            return self._data_swf
+        obtenido = self._datos_de_otro_swf(swf) if _NOMBRE_SWF.match(swf) else {"ok": False}
+        return obtenido["data"] if obtenido["ok"] else None
+
     def _datos_de_otro_swf(self, swf: str) -> dict:
         """Un SWF del CDN que no es el abierto (se recuerda mientras dura el programa)."""
         if swf not in self._otros_swf:

@@ -28,3 +28,5 @@ Las Piezas (primer cuadro de cada una, en SVG con su punto de anclaje) se ponen 
 - El repositorio no contiene arte del juego: el cuerpo y las Piezas se exportan en la computadora del jugador.
 
 **Actualización (noviembre de 2026):** la vista previa ya no avisa que el Gaturro es de una versión anterior. El usuario no tiene nada que hacer con ese dato y se veía como texto de más; el iris y el lugar de «Accesorio 2» se siguen agregando igual.
+
+**Actualización (noviembre de 2026, ADR 0009):** en la tarjeta de Looks y de Trucar Prenda este Gaturro se reemplazó por el Gaturro de pantalla del juego, en vivo con Ruffle. El de este ADR sigue en las miniaturas de los guardados, las Acciones y la búsqueda por imagen.
