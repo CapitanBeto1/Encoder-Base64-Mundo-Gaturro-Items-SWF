@@ -160,17 +160,6 @@ def completar_con_plantilla(cuerpo: str, plantilla: str) -> str:
     return cuerpo.replace(torso.group(0), torso.group(0).replace(torso.group("hijos"), hijos, 1), 1)
 
 
-def tiene_color_de_nariz(cuerpo: str) -> bool:
-    """Si el cuerpo tiene una zona de color además de cara, cuerpo y ojos (la del Gaturro actual es la nariz).
-
-    La versión publicada no la tiene; no se sabe cómo se llama en la actual, así que vale cualquier
-    clip `color…` que no sea de los conocidos.
-    """
-    if _MARCA_NARIZ in cuerpo:  # la nariz del publicado: se le pinta el relleno (`_pintar_nariz`)
-        return True
-    return any(nombre not in _CLIP_DE_COLOR for nombre in re.findall(r'\bid="(color[A-Za-z0-9]*)"', cuerpo))
-
-
 def sin_sombra(cuerpo: str) -> str:
     """El cuerpo sin la sombra que trae `GaturroMC` en su primera capa (una forma sin nombre, antes de
     `transport`). En el juego la sombra queda centrada debajo de los pies; con este cuerpo queda corrida,

@@ -6,7 +6,7 @@ from mgitems.ffdec import FFDecNoDisponible
 from mgitems.gaturro import (
     CLASE_CARA, CLASE_CUERPO, CLASE_PLANTILLA, COLORES, CUADRO_QUIETO_DEL_VEHICULO, EMOTE_SUBCLIPS, PARTES_EN_VIVO,
     SWF_CUERPO, SWF_CUERPO_COMPLETO, SWF_PLANTILLA, SWF_POSES, ImagenesPiezas, completar_con_plantilla,
-    colores_del_jugador, componer, pose_de_transporte, preparar_cuerpo, tiene_color_de_nariz, tiene_lugar,
+    colores_del_jugador, componer, pose_de_transporte, preparar_cuerpo, tiene_lugar,
 )
 from mgitems.iconos import IconosItems
 from mgitems.looks import EMOTES
@@ -120,7 +120,7 @@ class Imagenes:
             piezas[TRANSPORTE] = vehiculo
         return {"ok": True, "svg": componer(cuerpo, piezas, colores), "sin_imagen": sin_imagen, "sin_lugar": sin_lugar,
                 "no_se_ven": no_se_ven, "transporte": sin_pose,
-                "colores_de_fabrica": COLORES, "color_de_nariz": tiene_color_de_nariz(cuerpo)}
+                "colores_de_fabrica": COLORES}
 
     def gaturro_en_vivo(self, partes: dict, colores: dict | None = None, emote: str | None = None) -> dict:
         """Cómo vestir al Gaturro en vivo (el Gaturro de pantalla del juego, que corre en la interfaz) con `partes`.

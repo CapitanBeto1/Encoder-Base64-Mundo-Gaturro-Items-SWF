@@ -113,15 +113,19 @@ function mostrarLookElegido() {
   const look = looksGuardados.find((l) => l.id === lookElegido);
   document.querySelectorAll("#grilla-looks .casillero-look:not(.nuevo)").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.id === lookElegido)));
   $("exportar-look").disabled = $("duplicar-look").disabled = $("eliminar-look-elegido").disabled = !look;
-  // En Tiendas y Portales se ve el Item, no un Gaturro.
+  // En Tiendas y Portales se ve el Item, no un Gaturro. En Acciones, lo de la cabeza, que el Gaturro en vivo no dibuja.
+  const vivo = !esNpc() && vista !== "acciones";
   const mostrar = (documento) => {
-    $("gaturro-mis-looks").hidden = esNpc() || !documento;
+    $("gaturro-mis-looks").hidden = esNpc() || vivo || !documento;
+    $("vivo-mis-looks").hidden = !vivo || !documento;
     $("icono-mis-looks").hidden = !esNpc() || !documento?.base;
     document.querySelector(".zoom-escenario").hidden = esNpc();
     if (!documento) return;
     if (esNpc()) {
       if (documento.base) $("icono-mis-looks").replaceChildren(elementoIcono(documento.base));
       cargarIconos(documento.base ? [documento.base] : []);
+    } else if (vivo) {
+      gaturroDelEscenario.vestir(documento.partes, coloresDe(documento), documento.emote ?? null);
     } else {
       pedirGaturro($("gaturro-mis-looks"), coloresDe(documento), partesQuietas(documento));
     }
@@ -172,7 +176,7 @@ for (const barra of [$("zoom-gaturro"), $("zoom-escenario")]) {
   barra.addEventListener("input", () => {
     const img = $(barra.dataset.img);
     img.dataset.zoom = barra.value;
-    if (img === $("imagen-gaturro")) gaturroDelLook.zoom(Number(barra.value));
+    (img === $("imagen-gaturro") ? gaturroDelLook : gaturroDelEscenario).zoom(Number(barra.value));
     if (img === $("imagen-gaturro") && animacion) encuadrarAnimacion();
     else mostrarGaturroEn(img);
   });

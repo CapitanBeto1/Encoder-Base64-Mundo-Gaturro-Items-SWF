@@ -274,26 +274,6 @@ def test_sin_java_devuelve_error(tmp_path, fuente):
     assert "Java" in resultado["error"]
 
 
-def test_el_gaturro_publicado_no_tiene_color_de_nariz(nucleo):
-    resultado = nucleo.gaturro({})
-
-    assert resultado["color_de_nariz"] is False
-    assert resultado["colores_de_fabrica"] == {"color1": "#FFF200", "color2": "#DDB42D", "color3": "#FFFFFF", "color4": "#FB8CBB"}
-
-
-def test_un_gaturro_con_otra_zona_de_color_tiene_color_de_nariz(tmp_path, fuente):
-    class ConNariz(ExportadorConGaturro):
-        def exportar(self, swf, simbolos, destino, formato="png"):
-            super().exportar(swf, simbolos, destino, formato)
-            cuerpo = destino / "assets.GaturroMC.svg"
-            if cuerpo.exists():
-                cuerpo.write_text(CUERPO.replace('id="orejas"', 'id="colorNose"'), encoding="utf-8")
-
-    nucleo = Nucleo(SistemaFalso(tmp_path), fuente=fuente, catalogo=[], exportador=ConNariz())
-
-    assert nucleo.gaturro({})["color_de_nariz"] is True
-
-
 # --- Espalda: el hueco de la plantilla de 2025 (fashion2025.maniqui_so) ---
 
 # El Gaturro publicado no tiene `clothBack`; el torso del maniquí de 2025 sí (y `clothFront`).
@@ -422,7 +402,6 @@ def test_la_nariz_se_pinta_como_en_el_juego(tmp_path, fuente):
     de_fabrica = nucleo.gaturro({})
     verde = nucleo.gaturro({}, {"color4": "#00ff00"})["svg"]
 
-    assert de_fabrica["color_de_nariz"] is True
     assert 'fill="#fb8cbb"' in de_fabrica["svg"].lower()
     assert 'fill="#00ff00"' in verde and 'fill="#fb8cbb"' not in verde.lower()
     assert 'stroke="#67032e"' in verde

@@ -417,6 +417,7 @@
           <div class="escenario-look" data-dibujo="escenario" data-dibujo-como="fondo">
             <button type="button" id="reiniciar-look" class="girar-look" title="Volver al Look que tenés puesto" aria-label="Volver al Look que tenés puesto" data-dibujo="reiniciar">↻</button>
             <button type="button" id="eliminar-look-elegido" class="girar-look eliminar-look" title="Eliminar el Look elegido" aria-label="Eliminar el Look elegido" data-dibujo="eliminar">🗑</button>
+            <iframe id="vivo-mis-looks" class="gaturro-vivo" title="El Look elegido" tabindex="-1" hidden></iframe>
             <img id="gaturro-mis-looks" data-zoom="1" alt="El Look elegido">
             <div id="icono-mis-looks" class="icono-mis-looks" hidden></div>
             <label class="zoom-gaturro zoom-escenario" title="Acercar o alejar el Gaturro">
@@ -486,7 +487,7 @@
   <dialog id="dialogo-colores" class="dialogo-colores">
     <div class="pantalla-colores">
       <div class="escena-colores">
-        <img id="gaturro-colores" alt="Tu Gaturro con los colores elegidos">
+        <iframe id="gaturro-colores" class="gaturro-vivo" title="Tu Gaturro con los colores elegidos" tabindex="-1"></iframe>
         <div class="acciones-colores">
           <button type="button" id="reiniciar-colores" class="pastilla-colores" title="Volver a los colores de fábrica del juego">REINICIAR</button>
           <button type="button" id="guardar-colores" class="pastilla-colores">GUARDAR</button>

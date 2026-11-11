@@ -14,7 +14,7 @@ dialog.dialogo-colores { width: auto; max-width: 96vw; padding: 0; border: 0; ba
 .dialogo-colores::backdrop { background: rgba(10, 14, 30, 0.6); }
 .pantalla-colores { display: flex; align-items: stretch; gap: 16px; }
 .escena-colores { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 10px; }
-.escena-colores img { width: 300px; aspect-ratio: 1; }
+.escena-colores .gaturro-vivo { flex: none; align-self: center; width: 300px; aspect-ratio: 1; }
 .acciones-colores { display: flex; gap: 10px; }
 .dialogo-colores .pastilla-colores, .dialogo-mis-looks .pastilla-colores {
   padding: 8px 22px;
@@ -96,9 +96,6 @@ dialog.dialogo-colores { width: auto; max-width: 96vw; padding: 0; border: 0; ba
   pointer-events: none;
 }
 .barra-tono .marca-color { left: 50%; background: #e02020; }
-.selector-color.deshabilitado { opacity: 0.35; }
-.selector-color.deshabilitado .zona-color { cursor: not-allowed; }
-.selector-color.deshabilitado .barra-tono, .selector-color.deshabilitado .cuadro-color { cursor: not-allowed; }
 
 /* --- Mis Looks: botón de la pestaña y ventana "Guarda tu Look", como en el juego --- */
 
@@ -162,6 +159,7 @@ dialog.dialogo-mis-looks { position: fixed; inset: 0; margin: auto; width: fit-c
 }
 .escenario-look img { width: 370px; height: 370px; }
 .escenario-look img[hidden] { display: none; }
+.escenario-look .gaturro-vivo { width: 100%; }
 .nombre-look-elegido { margin: 0 0 10px; padding: 3px 12px; border-radius: 10px; background: rgba(34, 42, 69, 0.75); font-size: 13px; }
 .girar-look {
   position: absolute;
