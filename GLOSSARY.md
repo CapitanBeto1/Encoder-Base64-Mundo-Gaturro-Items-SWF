@@ -24,6 +24,10 @@ _Avoid_: vestimenta (en la interfaz se aclara entre paréntesis)
 Un lugar del Gaturro donde va una Pieza. Nombres del juego: `hats`, `hairs`, `mouths`, `neck`, `accesories`, `accesories2`, `cloth`, `clothBack`, `leg`, `foot`, `arm`, `grip`, `gripFore` (y otras menos comunes).
 _Avoid_: slot, zona
 
+**Gaturro en vivo**:
+El Gaturro de pantalla del juego (el grande, de trazo grueso) corriendo dentro del programa, vestido con las Piezas, los colores y la emoción del Look. Es el de la tarjeta de Looks y de Trucar Prenda (ADR 0009).
+_Avoid_: preview, visor
+
 ## Truqueo
 
 **Prenda trucada**:

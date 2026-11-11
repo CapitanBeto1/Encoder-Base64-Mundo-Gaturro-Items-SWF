@@ -4,11 +4,12 @@ import subprocess
 
 from mgitems.ffdec import FFDecNoDisponible
 from mgitems.gaturro import (
-    CLASE_CARA, CLASE_CUERPO, CLASE_PLANTILLA, COLORES, CUADRO_QUIETO_DEL_VEHICULO, EMOTE_SUBCLIPS,
+    CLASE_CARA, CLASE_CUERPO, CLASE_PLANTILLA, COLORES, CUADRO_QUIETO_DEL_VEHICULO, EMOTE_SUBCLIPS, PARTES_EN_VIVO,
     SWF_CUERPO, SWF_CUERPO_COMPLETO, SWF_PLANTILLA, SWF_POSES, ImagenesPiezas, completar_con_plantilla,
-    componer, pose_de_transporte, preparar_cuerpo, tiene_color_de_nariz, tiene_lugar,
+    colores_del_jugador, componer, pose_de_transporte, preparar_cuerpo, tiene_color_de_nariz, tiene_lugar,
 )
 from mgitems.iconos import IconosItems
+from mgitems.looks import EMOTES
 from mgitems.items import es_ruta_valida, filtrar_por_prefijos, piezas_del_swf
 from mgitems.nucleo._comun import _simbolos_con_imagen
 from mgitems.prendas import EFECTO, PARTES_DEL_CUERPO
@@ -120,6 +121,31 @@ class Imagenes:
         return {"ok": True, "svg": componer(cuerpo, piezas, colores), "sin_imagen": sin_imagen, "sin_lugar": sin_lugar,
                 "no_se_ven": no_se_ven, "transporte": sin_pose,
                 "colores_de_fabrica": COLORES, "color_de_nariz": tiene_color_de_nariz(cuerpo)}
+
+    def gaturro_en_vivo(self, partes: dict, colores: dict | None = None, emote: str | None = None) -> dict:
+        """Cómo vestir al Gaturro en vivo (el Gaturro de pantalla del juego, que corre en la interfaz) con `partes`.
+
+        `vestir` es lo que recibe su `mgVestir`: cada Parte del cuerpo donde tiene lugar con su Pieza (o vacía),
+        los colores como enteros (los del jugador o, si faltan, los de fábrica) y la emoción. Las Piezas que el
+        juego no dibujaría en esa Parte (ver `se_ve`) no se ponen y van en `no_se_ven` ({ruta, parte, motivo});
+        las de Partes donde este Gaturro no tiene lugar (el transporte, el efecto de cabeza), en `sin_lugar`.
+        """
+        if not isinstance(partes, dict) or not isinstance(colores, (dict, type(None))):
+            return {"ok": False, "error": "Las Partes del cuerpo no tienen la forma esperada."}
+        elegidas = {p: r for p, r in partes.items() if isinstance(r, str) and es_ruta_valida(r)}
+        no_se_ven = [{"ruta": r, "parte": p, "motivo": m} for p, r in elegidas.items() if (m := self._motivo_no_se_ve(r, p))]
+        se_ven = {p: r for p, r in elegidas.items() if p not in {n["parte"] for n in no_se_ven}}
+        return {
+            "ok": True,
+            "vestir": {
+                "partes": {p: se_ven.get(p, "") for p in PARTES_EN_VIVO},
+                "colores": {c: int(v[1:], 16) for c, v in colores_del_jugador(colores).items()},
+                "emote": emote if emote in EMOTES else EMOTES[0],
+            },
+            "no_se_ven": no_se_ven,
+            "sin_lugar": [r for p, r in se_ven.items() if p not in PARTES_EN_VIVO],
+            "colores_de_fabrica": COLORES,
+        }
 
     def _gaturro_en_vehiculo(self, ruta: str) -> tuple[tuple[str, str] | None, str | None, dict | None]:
         """(vehículo (clase, SVG), cuerpo en su pose, None) para dibujar el Gaturro subido al vehículo `ruta`,

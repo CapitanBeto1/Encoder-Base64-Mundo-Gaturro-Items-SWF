@@ -172,6 +172,7 @@ for (const barra of [$("zoom-gaturro"), $("zoom-escenario")]) {
   barra.addEventListener("input", () => {
     const img = $(barra.dataset.img);
     img.dataset.zoom = barra.value;
+    if (img === $("imagen-gaturro")) gaturroDelLook.zoom(Number(barra.value));
     if (img === $("imagen-gaturro") && animacion) encuadrarAnimacion();
     else mostrarGaturroEn(img);
   });

@@ -38,7 +38,7 @@ dialog .esqueleto-filas { background: rgba(255, 255, 255, 0.5); }
 
 /* El Gaturro: su silueta (orejas, cabeza, cuerpo y cola) flotando, con la sombra que respira. */
 .gaturro { position: relative; }
-.gaturro.cargando > :is(img, .zoom-gaturro, figcaption, button) { visibility: hidden; }
+.gaturro.cargando > :is(img, iframe, .zoom-gaturro, figcaption, button) { visibility: hidden; }
 .gaturro.cargando::before {
   content: ""; position: absolute; left: 50%; top: 44%; width: min(62%, 210px); aspect-ratio: 200 / 240; translate: -50% -50%;
   background: var(--brillo-carga), rgba(255, 250, 222, 0.55);

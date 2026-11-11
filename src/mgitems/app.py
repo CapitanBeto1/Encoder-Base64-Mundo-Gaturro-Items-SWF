@@ -8,6 +8,7 @@ import webview
 
 from mgitems.guardados import TIPOS as TIPOS_DE_GUARDADO, Guardados
 from mgitems.nucleo import Nucleo
+from mgitems.servidor import ServidorDelGaturro
 
 TITULO = "MG Items"
 UI = Path(__file__).parent / "ui" / "index.html"
@@ -63,8 +64,9 @@ class Puente:
     Los atributos empiezan con `_` para que pywebview no los exponga a la interfaz.
     """
 
-    def __init__(self, nucleo: Nucleo):
+    def __init__(self, nucleo: Nucleo, pagina_del_gaturro: str | None = None):
         self._nucleo = nucleo
+        self._pagina_del_gaturro = pagina_del_gaturro
         self.guardados = _GuardadosConDialogos(nucleo.guardados)
         # Lo demás del núcleo, tal cual: pywebview expone los métodos de este objeto (también estos, que son del
         # núcleo). Acá solo se escribe lo que agrega la ventana. Lo que recibe una ruta no se expone: la elige el
@@ -73,6 +75,12 @@ class Puente:
             metodo = getattr(nucleo, nombre)
             if not nombre.startswith("_") and not hasattr(type(self), nombre) and callable(metodo) and not _recibe_una_ruta(metodo):
                 setattr(self, nombre, metodo)
+
+    def pagina_del_gaturro(self) -> dict:
+        """La dirección de la página del Gaturro en vivo (`mgitems.servidor`), para el marco que lo muestra."""
+        if not self._pagina_del_gaturro:
+            return {"ok": False, "error": "El Gaturro en vivo no está disponible."}
+        return {"ok": True, "url": self._pagina_del_gaturro}
 
     def abrir_swf(self) -> dict:
         ruta = _dialogo(webview.FileDialog.OPEN, file_types=("SWF (*.swf)", "Todos los archivos (*.*)"))
@@ -122,10 +130,12 @@ def _dialogo(tipo, **opciones) -> str | None:
 
 
 def main() -> None:
+    nucleo = Nucleo()
+    servidor = ServidorDelGaturro(nucleo.swf_del_juego)
     webview.create_window(
         TITULO,
         url=str(UI),
-        js_api=Puente(Nucleo()),
+        js_api=Puente(nucleo, servidor.iniciar()),
         width=1100,
         height=720,
         # Más chica, la grilla y el Gaturro no entran (la barra lateral ya se achica a íconos: css/estructura.css).
@@ -133,6 +143,7 @@ def main() -> None:
         background_color="#f6d610",
     )
     webview.start()
+    servidor.detener()
 
 
 if __name__ == "__main__":

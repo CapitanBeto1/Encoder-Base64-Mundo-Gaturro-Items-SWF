@@ -63,22 +63,23 @@ async function pedirGaturro(img, colores, partes = lookActual.partes, emote = nu
   return resultado;
 }
 
+// El Gaturro de la tarjeta (Looks y Trucar Prenda) es el Gaturro en vivo; en Acciones, las imágenes de la animación.
+const gaturroDelLook = gaturroVivo($("gaturro-vivo"));
+
 async function dibujarGaturro() {
   detenerAnimacion();
   if (esNpc()) return; // en Tiendas y Portales no hay Gaturro
   if (vista === "acciones") return dibujarAccion();
-  const resultado = await conEsqueleto($("gaturro"), "gaturro", () => pedirGaturro($("imagen-gaturro"), coloresDe(lookActual), lookActual.partes, lookActual.emote ?? null));
+  const resultado = await conEsqueleto($("gaturro"), "gaturro", () => gaturroDelLook.vestir(lookActual.partes, coloresDe(lookActual), lookActual.emote ?? null));
   if (!resultado) return;
+  $("gaturro-vivo").hidden = !resultado.ok; // si no se pudo abrir, no se muestra ninguno
   if (!resultado.ok) {
     $("estado-gaturro").textContent = resultado.error;
     return;
   }
-  const clases = (rutas) => rutas.map(claseDeRuta).join(", ");
-  const avisos = [];
-  if (resultado.sin_lugar.length) avisos.push(`No se dibuja: ${clases(resultado.sin_lugar)}.`);
-  if (resultado.sin_imagen.length) avisos.push(`Sin imagen: ${clases(resultado.sin_imagen)}.`);
-  for (const n of resultado.no_se_ven) avisos.push(`No se ve en el juego: ${claseDeRuta(n.ruta)} (${n.motivo}).`);
-  if (resultado.transporte) avisos.push(`El transporte (${claseDeRuta(resultado.transporte.ruta)}) se ve en el juego, pero la vista previa no lo dibuja: ${resultado.transporte.motivo}.`);
+  coloresDeFabrica = resultado.colores_de_fabrica;
+  const avisos = resultado.no_se_ven.map((n) => `No se ve en el juego: ${claseDeRuta(n.ruta)} (${n.motivo}).`);
+  if (resultado.sin_lugar.length) avisos.push(`Se ve en el juego, pero la vista previa no lo dibuja: ${resultado.sin_lugar.map(claseDeRuta).join(", ")}.`);
   $("estado-gaturro").replaceChildren(...avisos.map((a) => Object.assign(etiqueta(a, "aviso-gaturro"), { title: a })));
 }
 
@@ -177,7 +178,6 @@ function mostrarSelectoresColor() {
 $("colores-look").addEventListener("click", () => {
   coloresEnEdicion = coloresDe(lookActual);
   mostrarSelectoresColor();
-  $("gaturro-colores").src = $("imagen-gaturro").src;
   $("dialogo-colores").showModal();
 });
 $("reiniciar-colores").addEventListener("click", () => {
