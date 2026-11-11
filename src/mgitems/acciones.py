@@ -23,7 +23,6 @@ TAMANO_MAXIMO_ACCION = 150  # `whenAssetForPlaceholderIsLoaded`: más grande que
 
 # Grupos, en el orden en que se ofrecen.
 DE_VERDAD = "accion"
-NO_SE_DIBUJA = "no_se_dibuja"  # el juego la hace, pero el Gaturro que el programa puede leer no la tiene
 OTRAS = "otras"  # parte de otra animación (caminar, quieto, transportes, lo que se repite o la cierra)
 
 # Los cuadros con nombre del `assets.GaturroMC` del juego de hoy, con su nombre en castellano.
@@ -57,12 +56,6 @@ for _tipo, _nombre in _VEHICULOS.items():
     ANIMACIONES[f"transportStand_{_tipo}"] = f"Transporte quieto: {_nombre}"
     ANIMACIONES[f"transportMove_{_tipo}"] = f"Transporte andando: {_nombre}"
 
-# Las que el Gaturro de `superHeroesTrajes` (el que el programa puede leer) no tiene: solo están en el cliente.
-NO_SE_DIBUJAN = {
-    "blank", "dormido", "dormido2", "dormido2_loop", "dormido_loop", "emote", "flotando", "fortnite1", "fortnite2",
-    "jueguito", "nadando", "run", "shy", "spellfighting", "transportMove_nube", "transportMove_walk",
-    "transportStand_nube", "transportStand_walk", "wink", "zombieStand", "zombieWalk",
-}
 _OTRAS = {"blank", "emote", "standBy", "walk", "run", "zombieStand", "zombieWalk", "showObjectOn"}
 
 # `AttributeControl.isAllowedAnimation`: si el texto de la acción dice esto, el juego no la hace.
@@ -80,7 +73,7 @@ def grupo(animacion: str) -> str:
     if animacion in _OTRAS or animacion.startswith("transport") or animacion.lower().endswith(("loop", "end")) \
             or animacion == "loopInAHole":
         return OTRAS
-    return NO_SE_DIBUJA if animacion in NO_SE_DIBUJAN else DE_VERDAD
+    return DE_VERDAD
 
 
 def _sin_tildes(texto: str) -> str:
@@ -88,10 +81,9 @@ def _sin_tildes(texto: str) -> str:
 
 
 def animaciones() -> list[dict]:
-    """Las animaciones en el orden en que se ofrecen: las de verdad, las que no se pueden dibujar y las otras,
-    cada grupo de la A a la Z."""
-    orden = [DE_VERDAD, NO_SE_DIBUJA, OTRAS]
-    filas = [{"id": a, "nombre": n, "grupo": grupo(a), "se_dibuja": a not in NO_SE_DIBUJAN} for a, n in ANIMACIONES.items()]
+    """Las animaciones en el orden en que se ofrecen: las de verdad y las otras, cada grupo de la A a la Z."""
+    orden = [DE_VERDAD, OTRAS]
+    filas = [{"id": a, "nombre": n, "grupo": grupo(a)} for a, n in ANIMACIONES.items()]
     return sorted(filas, key=lambda f: (orden.index(f["grupo"]), _sin_tildes(f["nombre"])))
 
 

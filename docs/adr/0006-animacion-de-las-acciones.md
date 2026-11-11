@@ -27,3 +27,5 @@ Cada cuadro se dibuja «congelado»: un sprite de un solo cuadro, cuyos clips so
 
 - Las 21 animaciones que el Gaturro legible no tiene no se muestran: se avisa.
 - Si el juego cambia el código de sus cuadros con algo nuevo, esa animación deja de mostrarse (con aviso) hasta que el simulador lo entienda.
+
+**Reemplazado (noviembre de 2026, ADR 0009):** las Acciones las anima el `Gaturro` del juego, en vivo. El simulador de este ADR (`mgitems.animacion`) se borró.

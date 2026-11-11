@@ -61,19 +61,22 @@ async function pedirGaturro(img, colores, partes = lookActual.partes, emote = nu
   return resultado;
 }
 
-// El Gaturro de la tarjeta (Looks y Trucar Prenda) es el Gaturro en vivo; en Acciones, las imágenes de la animación.
+// El Gaturro de la tarjeta (Looks, Trucar Prenda y Acciones).
 const gaturroDelLook = gaturroVivo($("gaturro-vivo"));
 // Los de las ventanas: el escenario de los guardados y «Elige tus colores».
-const gaturroDelEscenario = gaturroVivo($("vivo-mis-looks"), 0.75); // más chico: entra entero sobre el piso
+const gaturroDelEscenario = gaturroVivo($("vivo-mis-looks"));
 const gaturroDeColores = gaturroVivo($("gaturro-colores"));
 const mostrarColoresEnEdicion = () => gaturroDeColores.vestir(lookActual.partes, coloresEnEdicion, lookActual.emote ?? null);
 
+// La acción que hace el Gaturro de un documento: solo en Acciones (en las demás pestañas se ve quieto).
+const animacionDe = (documento) => (vista === "acciones" ? documento.animacion || null : null);
+const vestirCon = (gaturro, documento) => gaturro.vestir(documento.partes, coloresDe(documento), documento.emote ?? null, animacionDe(documento));
+
 async function dibujarGaturro() {
-  detenerAnimacion();
   if (esNpc()) return; // en Tiendas y Portales no hay Gaturro
-  if (vista === "acciones") return dibujarAccion();
-  const resultado = await conEsqueleto($("gaturro"), "gaturro", () => gaturroDelLook.vestir(lookActual.partes, coloresDe(lookActual), lookActual.emote ?? null));
+  const resultado = await conEsqueleto($("gaturro"), "gaturro", () => vestirCon(gaturroDelLook, lookActual));
   if (!resultado) return;
+  $("repetir-accion").hidden = !(resultado.ok && animacionDe(lookActual));
   $("gaturro-vivo").hidden = !resultado.ok; // si no se pudo abrir, no se muestra ninguno
   if (!resultado.ok) {
     $("estado-gaturro").textContent = resultado.error;
@@ -81,7 +84,6 @@ async function dibujarGaturro() {
   }
   coloresDeFabrica = resultado.colores_de_fabrica;
   const avisos = resultado.no_se_ven.map((n) => `No se ve en el juego: ${claseDeRuta(n.ruta)} (${n.motivo}).`);
-  if (resultado.sin_lugar.length) avisos.push(`Se ve en el juego, pero la vista previa no lo dibuja: ${resultado.sin_lugar.map(claseDeRuta).join(", ")}.`);
   $("estado-gaturro").replaceChildren(...avisos.map((a) => Object.assign(etiqueta(a, "aviso-gaturro"), { title: a })));
 }
 

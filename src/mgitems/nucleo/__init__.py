@@ -6,7 +6,6 @@ Está repartido en una parte por función (`entrega`, `swfs`, `trucar`, `accione
 
 import threading
 
-from mgitems.animacion import Linea
 from mgitems.busqueda import DatosBusqueda
 from mgitems.catalogo import cargar_catalogo
 from mgitems.categorias import IndicePiezas
@@ -63,7 +62,6 @@ class Nucleo(Entregar, Swfs, Trucar, Acciones, Looks, Npcs, Busqueda, Imagenes, 
         self._prendas: dict[tuple[str, str], dict[str, ItemBase]] = {}
         self._trucos: dict[str, dict[str, bytes]] = {}  # Encode → SWF trucados que necesita
         self._otros_swf: dict[str, bytes] = {}  # SWF de donde se sacan Piezas para trucar
-        self._lineas: dict[tuple[str, str], Linea] = {}  # (SWF, versión) → sus líneas de tiempo, para las animaciones
         self._candado_ffdec = threading.Lock()
         self._swf_abierto: str | None = None
         self._items_del_swf: list[str] = []

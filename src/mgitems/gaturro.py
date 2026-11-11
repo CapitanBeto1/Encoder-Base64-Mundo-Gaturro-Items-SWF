@@ -70,8 +70,6 @@ EMOTE_SUBCLIPS: dict[str, dict[str, str]] = {
 # `accesories2` existe en el juego actual (se ve), aunque no en la versión del cliente que se leyó.
 PARTES = ["hats", "hairs", "mouths", "neck", "accesories", "accesories2", "cloth", "clothFront", "clothBack", "leg",
           "foot", "arm", "armFore", "armBack", "glove", "gloveFore", "gloveBack", "grip", "gripFore", "gripBack", "transport"]
-# Las Partes del cuerpo donde el Gaturro en vivo (el de pantalla, ADR 0003) tiene lugar: no dibuja vehículos.
-PARTES_EN_VIVO = tuple(p for p in PARTES if p != "transport")
 # El Gaturro con las poses de transporte (`transportStand_<tipo del vehículo>`): el de `superHeroesTrajes`
 # es el animado, con las mismas poses en los mismos cuadros que el del juego (el de `fashion_nuevo` es quieto).
 SWF_POSES = "superHeroesTrajes"

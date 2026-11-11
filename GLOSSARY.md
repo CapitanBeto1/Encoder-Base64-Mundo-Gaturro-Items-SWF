@@ -25,7 +25,7 @@ Un lugar del Gaturro donde va una Pieza. Nombres del juego: `hats`, `hairs`, `mo
 _Avoid_: slot, zona
 
 **Gaturro en vivo**:
-El Gaturro de pantalla del juego (el grande, de trazo grueso) corriendo dentro del programa, vestido con las Piezas, los colores y la emoción del Look. Es el de la tarjeta de Looks y de Trucar Prenda, el escenario de los guardados y «Elige tus colores» (ADR 0009).
+El Gaturro del juego corriendo dentro del programa con el código del juego: recibe los mismos atributos que un avatar (Piezas, transporte, efecto de cabeza, colores, emoción, acción) y se ve y se anima como en el juego. Es el de la tarjeta de Looks, Trucar Prenda y Acciones, el escenario de los guardados y «Elige tus colores» (ADR 0009).
 _Avoid_: preview, visor
 
 ## Truqueo

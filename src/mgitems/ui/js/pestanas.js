@@ -97,7 +97,6 @@ function cambiarVista(nueva) {
     lookElegido = null;
     looksGuardados = [];
   }
-  detenerAnimacion();
   vista = nueva;
   const pantalla = PESTANAS_DEL_EDITOR.includes(vista) ? "looks" : vista;
   for (const nombre of ["agregar", "looks", "monedas", "terminator"]) $(`vista-${nombre}`).hidden = nombre !== pantalla;
