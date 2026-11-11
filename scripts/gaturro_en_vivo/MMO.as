@@ -68,6 +68,7 @@ package
          {
             ExternalInterface.addCallback("mgVestir",this.mgVestir);
             ExternalInterface.addCallback("mgRepetir",this.actuar);
+            ExternalInterface.addCallback("mgCargado",this.mgCargado);
          }
       }
 
@@ -155,6 +156,12 @@ package
             this.accion = accion;
             this.actuar();
          }
+      }
+
+      /** Si ya llegaron todas las Piezas que se le pidieron (para sacarle una foto entero). */
+      private function mgCargado() : Boolean
+      {
+         return this.gaturro.loaded;
       }
 
       /** Hace la acción desde el principio, o vuelve a quedarse quieto si no hay ninguna. */

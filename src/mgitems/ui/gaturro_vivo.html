@@ -16,23 +16,37 @@
 <script>
   // Lo maneja la interfaz con mensajes: {vestir: atributos} (los de `Nucleo.gaturro_en_vivo`), {zoom: número} y
   // {repetir: true} (la acción, desde el principio). Avisa {listo: true} cuando el Gaturro ya se puede vestir, o
-  // {error: "…"} si no se pudo abrir.
+  // {error: "…"} si no se pudo abrir. Con {foto: número, vestir}, lo viste, espera a que lleguen sus Piezas y
+  // contesta {foto: número, imagen: "data:image/png…"}; para eso la página se abre con «?fotos» (dibuja en un
+  // lienzo del que se puede leer la imagen).
   window.RufflePlayer = { config: {
     publicPath: "/ruffle/", polyfills: false, wmode: "transparent", allowScriptAccess: true, autoplay: "on",
     contextMenu: "off", splashScreen: false, unmuteOverlay: "hidden", letterbox: "on", logLevel: "warn",
+    ...(location.search.includes("fotos") ? { preferredRenderer: "canvas" } : {}),
   } };
   const avisar = (mensaje) => parent.postMessage(mensaje, "*");
   let player = null;
   let pendiente = null; // lo último que se pidió vestir antes de que el Gaturro estuviera listo
 
   addEventListener("message", (evento) => {
-    const { vestir, zoom, repetir } = evento.data ?? {};
+    const { vestir, zoom, repetir, foto } = evento.data ?? {};
     if (zoom) document.documentElement.style.setProperty("--zoom", String(zoom));
     if (repetir) player?.mgRepetir();
+    if (foto) return void fotografiar(foto, vestir);
     if (!vestir) return;
     if (player) player.mgVestir(JSON.stringify(vestir));
     else pendiente = vestir;
   });
+
+  const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  async function fotografiar(foto, vestir) {
+    player.mgVestir(JSON.stringify(vestir));
+    // Las Piezas llegan de a una; después, un par de cuadros para que queden dibujadas.
+    for (let i = 0; i < 100 && !(i > 1 && player.mgCargado()); i++) await esperar(50);
+    await esperar(150);
+    avisar({ foto, imagen: player.shadowRoot.querySelector("canvas")?.toDataURL("image/png") ?? null });
+  }
 
   async function abrir() {
     await new Promise((listo, fallo) => {

@@ -31,5 +31,6 @@ En noviembre de 2026 se probó en la rama `prototipo-ui` un Gaturro corriendo en
 - **Es el cliente de una fecha.** Si el juego cambia el Gaturro o sus reglas, la vista previa queda atrás hasta que se fije una copia nueva.
 - **Sin las restricciones del servidor**: las listas de Items prohibidos o válidos por sala vienen de la configuración que el juego baja al entrar, y acá van vacías. Lo que el programa sabe que el juego no dibuja (`se_ve`) se sigue avisando debajo del Gaturro.
 - Se borró el simulador de animaciones del ADR 0006 (`mgitems.animacion`): las Acciones las anima el juego.
-- El Gaturro de las imágenes (ADR 0003) sigue en las miniaturas de los guardados y en la búsqueda por imagen, donde hay muchos a la vez.
+- **Donde hay muchos a la vez, fotos.** Las miniaturas de los guardados son fotos del mismo Gaturro: uno que no se ve se viste, espera a que lleguen sus Piezas y se retrata, de a uno (`fotoDelGaturro`). La primera vez tardan en aparecer (menos de medio segundo cada una).
+- El Gaturro de las imágenes (ADR 0003) sigue solo en la búsqueda por imagen, que acerca cada parte del cuerpo.
 - El programa suma unos 31 MB (Ruffle y el archivo del Gaturro).

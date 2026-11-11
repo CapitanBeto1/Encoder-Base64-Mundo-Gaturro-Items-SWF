@@ -1,5 +1,26 @@
 // El Gaturro en vivo: el Gaturro del juego, corriendo en un marco (gaturro_vivo.html, ADR 0009).
 
+// Lo que contesta la página de `marco` que cumple con `esLaRespuesta`.
+function respuestaDe(marco, esLaRespuesta) {
+  return new Promise((llego) => {
+    addEventListener("message", function oir(evento) {
+      if (evento.source !== marco.contentWindow || !esLaRespuesta(evento.data ?? {})) return;
+      removeEventListener("message", oir);
+      llego(evento.data);
+    });
+  });
+}
+
+// Abre la página del Gaturro en `marco` (un <iframe>) y espera a que el Gaturro se pueda vestir.
+async function abrirGaturroEn(marco, opciones = "") {
+  const pagina = await api().pagina_del_gaturro();
+  if (!pagina.ok) throw new Error(pagina.error);
+  const respuesta = respuestaDe(marco, (r) => r.listo || r.error);
+  marco.src = pagina.url + opciones;
+  const { error } = await respuesta;
+  if (error) throw new Error(`No se pudo abrir el Gaturro: ${error}.`);
+}
+
 // Un Gaturro en vivo en `marco` (un <iframe>). Su página se abre recién la primera vez que se lo viste.
 // `tamano` achica o agranda al Gaturro dentro del marco (1: lo llena a lo alto).
 function gaturroVivo(marco, tamano = 1) {
@@ -7,19 +28,7 @@ function gaturroVivo(marco, tamano = 1) {
   let pedido = 0; // si se lo viste varias veces seguidas, queda lo último
   let zoom = 1;
   const decir = (mensaje) => marco.contentWindow.postMessage(mensaje, "*");
-  const abrir = () => abierto ??= (async () => {
-    const pagina = await api().pagina_del_gaturro();
-    if (!pagina.ok) throw new Error(pagina.error);
-    await new Promise((listo, fallo) => {
-      addEventListener("message", function oir(evento) {
-        if (evento.source !== marco.contentWindow || !(evento.data?.listo || evento.data?.error)) return;
-        removeEventListener("message", oir);
-        if (evento.data?.listo) listo();
-        else fallo(new Error(`No se pudo abrir el Gaturro: ${evento.data?.error ?? "no respondió"}.`));
-      });
-      marco.src = pagina.url;
-    });
-  })().catch((error) => {
+  const abrir = () => abierto ??= abrirGaturroEn(marco).catch((error) => {
     abierto = null; // la próxima vez se intenta de nuevo
     throw error;
   });
@@ -50,4 +59,42 @@ function gaturroVivo(marco, tamano = 1) {
       if (marco.src) decir({ zoom: zoom * tamano });
     },
   };
+}
+
+// --- Fotos del Gaturro en vivo: para donde hay muchos a la vez (las miniaturas de los guardados) ---
+
+// Un Gaturro que no se ve: se viste, se le saca la foto y pasa al siguiente. Cada foto se saca una sola vez.
+const fotosDelGaturro = new Map(); // atributos (JSON) → la imagen, o la promesa de la imagen
+let fotografo = null; // el marco, ya abierto
+let turnoDeFoto = Promise.resolve(); // de a una
+let fotosPedidas = 0;
+
+function abrirFotografo() {
+  const marco = Object.assign(document.createElement("iframe"), { className: "fotografo-del-gaturro", tabIndex: -1 });
+  marco.setAttribute("aria-hidden", "true");
+  document.body.append(marco);
+  return abrirGaturroEn(marco, "?fotos").then(() => marco);
+}
+
+// La imagen (data:image/png…) del Gaturro quieto con esas Piezas, colores y emoción, o null si no se pudo sacar.
+async function fotoDelGaturro(partes, colores, emote = null) {
+  const resultado = await api().gaturro_en_vivo({ ...partes }, colores, emote);
+  if (!resultado.ok) return null;
+  const clave = JSON.stringify(resultado.atributos);
+  if (!fotosDelGaturro.has(clave)) {
+    const foto = turnoDeFoto.then(async () => {
+      const marco = await (fotografo ??= abrirFotografo());
+      const numero = ++fotosPedidas;
+      const respuesta = respuestaDe(marco, (r) => r.foto === numero);
+      marco.contentWindow.postMessage({ foto: numero, vestir: resultado.atributos, zoom: 1.6 }, "*");
+      return (await respuesta).imagen;
+    }).catch(() => {
+      fotografo = null; // la próxima foto lo abre de nuevo
+      fotosDelGaturro.delete(clave);
+      return null;
+    });
+    fotosDelGaturro.set(clave, foto);
+    turnoDeFoto = foto;
+  }
+  return fotosDelGaturro.get(clave);
 }
