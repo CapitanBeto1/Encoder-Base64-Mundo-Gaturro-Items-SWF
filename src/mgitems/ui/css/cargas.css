@@ -50,6 +50,12 @@ dialog .esqueleto-filas { background: rgba(255, 255, 255, 0.5); }
   background: rgba(0, 0, 0, 0.16); animation: respirar 1.5s ease-in-out infinite alternate;
 }
 
+/* La miniatura de un guardado mientras se le saca la foto al Gaturro: un bloque en su lugar. */
+.casillero-look.cargando::before {
+  content: ""; flex: 1; min-height: 0; align-self: stretch; margin: 8px 16px 2px; border-radius: 12px;
+  background: var(--brillo-carga), rgba(255, 255, 255, 0.16); animation: ola 1.5s ease-in-out infinite;
+}
+
 /* El Encode mientras se arma. */
 #encode.cargando { color: transparent; background: var(--brillo-carga), rgba(80, 140, 170, 0.14); }
 

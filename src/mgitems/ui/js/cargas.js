@@ -1,5 +1,6 @@
 // Las cargas: mientras algo tarda, su lugar muestra un esqueleto con la forma de lo que viene, nunca un texto.
-// Formas: «tarjetas» (una grilla de tarjetas vacías), «filas» (una lista), «gaturro» (su silueta) y «encode» (renglones).
+// Formas: «tarjetas» (una grilla de tarjetas vacías), «filas» (una lista), «gaturro» (su silueta), «foto» (la miniatura de
+// un guardado) y «encode» (renglones).
 // Lo que tarda menos de ESPERA_ESQUELETO no muestra nada, para que no parpadee.
 
 const ESPERA_ESQUELETO = 120;

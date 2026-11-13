@@ -54,7 +54,11 @@ const partesQuietas = (documento) =>
   vista === "acciones" ? (documento.partes.effect ? { effect: documento.partes.effect } : {}) : documento.partes;
 // Lo que se muestra de un guardado: el Gaturro, o en Tiendas y Portales, el Item que se convierte.
 function mostrarGuardadoEn(img, documento) {
-  if (!esNpc()) return pedirGaturro(img, coloresDe(documento), partesQuietas(documento));
+  if (!esNpc()) return conEsqueleto(img.parentElement, "foto", async () => {
+    const foto = await fotoDelGaturro(partesQuietas(documento), coloresDe(documento), documento.emote ?? null);
+    img.hidden = !foto;
+    if (foto) img.src = foto;
+  });
   img.replaceWith(Object.assign(elementoIcono(documento.base), { title: documento.base }));
   cargarIconos([documento.base]);
 }
@@ -75,7 +79,6 @@ async function cargarLooks() {
 // --- Mis Looks: la ventana "Guarda tu Look", como en el juego ---
 
 let lookElegido = null; // el Look tocado en la ventana (su id), o null
-const ZOOM_MINIATURAS = "0.85"; // todas las miniaturas a la misma escala
 const MINIMO_CASILLEROS = 9; // la grilla se completa con casilleros vacíos, como en el juego
 
 function mostrarListaLooks() {
@@ -90,8 +93,7 @@ function mostrarGrillaLooks() {
     const boton = Object.assign(document.createElement("button"), { type: "button", className: "casillero-look", title: look.nombre });
     boton.dataset.id = look.id;
     boton.setAttribute("aria-pressed", String(look.id === lookElegido));
-    const miniatura = Object.assign(document.createElement("img"), { alt: look.nombre });
-    miniatura.dataset.zoom = ZOOM_MINIATURAS;
+    const miniatura = Object.assign(document.createElement("img"), { alt: look.nombre, hidden: true });
     boton.append(miniatura, etiqueta(look.nombre, "nombre-casillero-look"));
     boton.addEventListener("click", () => elegirLook(look.id));
     boton.addEventListener("dblclick", () => equiparLook(look.id));

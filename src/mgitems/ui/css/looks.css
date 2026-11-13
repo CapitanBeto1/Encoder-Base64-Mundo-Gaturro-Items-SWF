@@ -70,6 +70,8 @@ main.modo-looks .buscador-swf { display: none; }
 /* El Gaturro en vivo (un marco, js/gaturro_vivo.js). */
 .gaturro-vivo { flex: 1 1 0; align-self: stretch; min-height: 0; border: 0; background: transparent; pointer-events: none; }
 .gaturro-vivo[hidden] { display: none; }
+/* El Gaturro al que se le sacan las fotos de las miniaturas: está, pero no se ve (fuera de la vista no se dibujaría). */
+.fotografo-del-gaturro { position: fixed; left: 0; top: 0; z-index: -1; width: 240px; height: 240px; border: 0; opacity: 0; pointer-events: none; }
 .gaturro figcaption { flex: none; display: flex; flex-direction: column; gap: 2px; color: #fff; font-size: 10px; line-height: 1.2; text-align: center; }
 .gaturro figcaption:empty { display: none; }
 

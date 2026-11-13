@@ -29,4 +29,4 @@ Las Piezas (primer cuadro de cada una, en SVG con su punto de anclaje) se ponen 
 
 **Actualización (noviembre de 2026):** la vista previa ya no avisa que el Gaturro es de una versión anterior. El usuario no tiene nada que hacer con ese dato y se veía como texto de más; el iris y el lugar de «Accesorio 2» se siguen agregando igual.
 
-**Actualización (noviembre de 2026, ADR 0009):** este Gaturro se reemplazó por el del juego corriendo en vivo, con el código del juego. El de este ADR sigue solo en las miniaturas de los guardados y en la búsqueda por imagen.
+**Actualización (noviembre de 2026, ADR 0009):** este Gaturro se reemplazó por el del juego corriendo en vivo, con el código del juego. El de este ADR sigue solo en la búsqueda por imagen.
