@@ -241,6 +241,7 @@
                 </div>
               </div>
               <button id="colores-look" class="boton-cuadrado boton-colores" title="Colores del Gaturro" aria-label="Colores del Gaturro"><span data-icono="gear"></span></button>
+              <button id="editar-piezas" class="boton-cuadrado boton-editar-piezas solo-looks" title="Personalizar las Piezas: colores por capa, mover, girar y ajustar" aria-label="Personalizar las Piezas"><span data-icono="paint-brush"></span></button>
               <button id="borrar-look" class="boton-cuadrado guardables" title="Borrar el Look" aria-label="Borrar el Look"><span data-icono="trash"></span></button>
               <button id="descartar-look" class="boton-cuadrado boton-descartar guardables" title="Descartar los cambios" aria-label="Descartar los cambios"><span data-icono="x"></span></button>
               <button id="guardar-look" class="boton-cuadrado boton-guardar guardables" title="Guardar el Look" aria-label="Guardar el Look"><span data-icono="check"></span></button>
@@ -594,6 +595,12 @@
         <button id="cerrar-entrega" class="derecha" disabled>Cerrar</button>
       </div>
     </div>
+  </dialog>
+
+  <!-- El editor de Piezas del juego («Customiza tu ropa»), en vivo: js/personalizar.js. -->
+  <dialog id="dialogo-editor-piezas" class="dialogo-editor-piezas" aria-label="Personalizar las Piezas">
+    <div class="carga-editor-piezas" aria-hidden="true"></div>
+    <iframe id="editor-piezas" class="editor-piezas" title="Personalizar las Piezas"></iframe>
   </dialog>
 
   <!-- La interfaz, en partes que comparten el ámbito global: cada una usa lo de las anteriores (por eso van en

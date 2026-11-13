@@ -66,7 +66,7 @@ BINARIOS = {
         solo=("ruffle.js", "*.wasm", "LICENSE_*"),
     ),
     "gaturro": Binario(
-        "gaturro", "c2e07e7+mg3",  # +mgN: cambia con scripts/gaturro_en_vivo, para que se vuelva a armar
+        "gaturro", "c2e07e7+mg9",  # +mgN: cambia con scripts/gaturro_en_vivo, para que se vuelva a armar
         "https://raw.githubusercontent.com/novendotrap/naw-trucador/c2e07e71385568818f51076404a7b247ee9b2674/"
         "app/static/ruffle/anim_preview.swf",
         "9d974aab2ff9fcff35f81997b744f5450dcc4de6084c4680e8e70bac659c05f5",

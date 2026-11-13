@@ -112,7 +112,7 @@ main.modo-trucar .casilleros { display: none; }
   background: var(--amarillo);
   border-color: var(--amarillo-contorno);
 }
-.boton-colores:hover:not(:disabled) { background: #6fc054; border-color: #2f6421; }
+.boton-colores:hover:not(:disabled), .boton-editar-piezas:hover:not(:disabled) { background: #6fc054; border-color: #2f6421; }
 .desplegable-emote { position: relative; }
 .boton-emote { padding: 2px; }
 .boton-emote img { width: 36px; height: auto; image-rendering: pixelated; }
