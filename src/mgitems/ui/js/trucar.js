@@ -32,6 +32,8 @@ function mostrarArmadoTrucar() {
     ...(pieza ? [elementoIcono(pieza), etiqueta(`${claseDeRuta(pieza)} (${swfDeRuta(pieza)})`, "nombre")] : [etiqueta("tocá una Pieza de la grilla", "ayuda")])
   );
   $("parte-trucar").value = lookActual.parte;
+  $("personalizar-trucada").hidden = !(pieza && esPersonalizable(lookActual.parte));
+  $("personalizar-trucada").classList.toggle("personalizada", tienePersonalizacion(lookActual.parte));
   $("agregar-trucada").disabled = !conectado || ocupado || !pieza || !lookActual.base;
   $("titulo-lista-trucadas").textContent = "Prendas trucadas";
   $("cantidad-trucadas").textContent = `(${lookActual.lista.length})`;
@@ -46,7 +48,7 @@ function mostrarArmadoTrucar() {
         mostrarEncode(null);
         mostrarLook();
       });
-      const texto = `${claseDeRuta(t.pieza)} en ${nombreDeParte(t.parte)} · ${claseDeRuta(t.base)}`;
+      const texto = `${claseDeRuta(t.pieza)}${t.personalizacion ? " (personalizada)" : ""} en ${nombreDeParte(t.parte)} · ${claseDeRuta(t.base)}`;
       li.append(elementoIcono(t.pieza), etiqueta(t.nombre ? `${t.nombre}: ${texto}` : texto, "nombre"), quitar);
       return li;
     })
@@ -56,8 +58,10 @@ function mostrarArmadoTrucar() {
 
 $("parte-trucar").addEventListener("change", () => {
   const pieza = piezaATrucar();
+  const personalizacion = lookActual.personalizacion?.[lookActual.parte];
   lookActual.parte = $("parte-trucar").value;
   lookActual.partes = pieza ? { [lookActual.parte]: pieza } : {};
+  lookActual.personalizacion = personalizacion ? { [lookActual.parte]: personalizacion } : {};
   mostrarLook();
 });
 
@@ -67,9 +71,10 @@ $("agregar-trucada").addEventListener("click", () => {
   if (lookActual.lista.some((t) => t.base === lookActual.base)) {
     return avisarLista(`${claseDeRuta(lookActual.base)} ya está en la lista: cada Prenda trucada necesita otro Item base.`, "advertencia");
   }
-  lookActual.lista.push({ base: lookActual.base, parte: lookActual.parte, pieza, nombre: lookActual.nombre.trim() });
+  const personalizacion = lookActual.personalizacion?.[lookActual.parte] ?? null;
+  lookActual.lista.push({ base: lookActual.base, parte: lookActual.parte, pieza, nombre: lookActual.nombre.trim(), personalizacion });
   avisarLista(`Se agregó ${claseDeRuta(pieza)} en ${nombreDeParte(lookActual.parte)} (${claseDeRuta(lookActual.base)}). Armá otra o tocá «Trucar todas».`, "exito");
-  Object.assign(lookActual, { id: "", nombre: "", base: null, partes: {} });
+  Object.assign(lookActual, { id: "", nombre: "", base: null, partes: {}, personalizacion: {} });
   mostrarEncode(null);
   mostrarListaLooks();
   mostrarLook();

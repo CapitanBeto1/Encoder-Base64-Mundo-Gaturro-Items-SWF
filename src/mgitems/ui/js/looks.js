@@ -55,7 +55,7 @@ const partesQuietas = (documento) =>
 // Lo que se muestra de un guardado: el Gaturro, o en Tiendas y Portales, el Item que se convierte.
 function mostrarGuardadoEn(img, documento) {
   if (!esNpc()) return conEsqueleto(img.parentElement, "foto", async () => {
-    const foto = await fotoDelGaturro(partesConPersonalizacion({ ...documento, partes: partesQuietas(documento) }), coloresDe(documento), documento.emote ?? null);
+    const foto = await fotoDelGaturro(partesQuietas(documento), coloresDe(documento), documento.emote ?? null, documento.personalizacion ?? null);
     img.hidden = !foto;
     if (foto) img.src = foto;
   });
@@ -65,6 +65,7 @@ function mostrarGuardadoEn(img, documento) {
 
 async function cargarLooks() {
   if (!partesConocidas.length) partesConocidas = (await api().partes_del_cuerpo()).partes_del_cuerpo;
+  await cargarReglasPersonalizar();
   const resultado = await llamarGuardados("lista");
   if (!resultado.ok) return avisarLista(resultado.error, "error");
   looksGuardados = resultado.guardados;
@@ -240,7 +241,7 @@ function casillero(id) {
   const boton = Object.assign(document.createElement("button"), { className: "casillero" });
   boton.title = ruta ? `${nombreDeParte(id)}: ${claseDeRuta(ruta)} · ${swfDeRuta(ruta)}` : `${nombreDeParte(id)}: vacío. Tocá para poner acá las Piezas que elijas.`;
   boton.setAttribute("aria-pressed", String(id === casilleroMarcado));
-  if (ruta && typeof tienePersonalizacion === "function" && tienePersonalizacion(id)) boton.classList.add("personalizada");
+  if (ruta && tienePersonalizacion(id)) boton.classList.add("personalizada");
   boton.append(ruta ? elementoIcono(ruta) : Object.assign(document.createElement("span"), { className: "icono vacio" }), etiqueta(nombreDeParte(id), "nombre-casillero"));
   boton.addEventListener("click", () => {
     casilleroMarcado = casilleroMarcado === id ? null : id;
@@ -252,7 +253,7 @@ function casillero(id) {
     quitar.append(icono("x"));
     quitar.addEventListener("click", () => {
       delete lookActual.partes[id];
-      if (lookActual.personalizacion) delete lookActual.personalizacion[id];
+      olvidarPersonalizacion(id);
       mostrarLook();
     });
     li.append(quitar);
@@ -273,7 +274,7 @@ function mostrarCasilleros() {
   }
   $("poniendo-en").hidden = !casilleroMarcado;
   $("texto-poniendo-en").textContent = casilleroMarcado ? `Poniendo en: ${nombreDeParte(casilleroMarcado)}` : "";
-  $("personalizar-pieza").hidden = !(casilleroMarcado && lookActual.partes[casilleroMarcado]);
+  $("personalizar-pieza").hidden = !(casilleroMarcado && lookActual.partes[casilleroMarcado] && esPersonalizable(casilleroMarcado));
 }
 
 $("dejar-de-poner").addEventListener("click", () => {

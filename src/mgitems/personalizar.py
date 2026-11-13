@@ -9,7 +9,10 @@ El cliente del juego lee el valor de una Parte del cuerpo como `pack.Clase_on[,c
 - el ajuste `x,y,rot,escala` mueve, rota y escala la Pieza entera. El juego solo lo aplica a las Partes
   "rotables" (o a administradores) y con topes; `escala` va de 5 a 10 y vale `escala/10` (10 = tamaño normal).
 
-Acá se arma y se lee ese valor; dibujarlo y entregarlo es de quien use estas funciones.
+Acá se valida la personalización de un Look y se arma ese valor: lo usan la vista previa, la entrega (en el SWF
+trucado o en los atributos de `inventory.addOptions`) y los guardados. El propio juego guarda así su «Personalizar
+prenda» (`ClothEditorModal`: `wear_<parte> = "<pieza>,…//x,y,rot,escala"`), y al ponerse la Prenda solo le agrega el
+SWF a la Pieza si no tiene punto (`ClothInventorySceneObject`), así que la cola llega intacta.
 """
 
 import re
@@ -20,6 +23,14 @@ LIMITES_AJUSTE = {"x": (-15, 15), "y": (-15, 15), "rot": (-180, 180), "escala": 
 AJUSTE_DEFECTO = {"x": 0, "y": 0, "rot": 0, "escala": 10}
 # Partes donde el juego aplica el ajuste a un jugador normal (prefijo; ClothCustomUtil.ROTATABLE_CATEGORIES).
 PARTES_ROTABLES = ("hairs", "hats", "accesories", "mouths", "neck", "cloth", "leg", "grip", "glove")
+# Donde el juego no la aplica: el efecto de cabeza se busca por el nombre exacto de la Pieza
+# (`GaturroEffectsManager.applyHead`) y el transporte no pinta formas (`Gaturro.add`). La acción no es una Parte.
+PARTES_SIN_PERSONALIZAR = frozenset({"effect", "transport", "action"})
+MAXIMO_FORMAS = 32
+
+
+class PersonalizacionInvalida(ValueError):
+    """La personalización no tiene la forma esperada."""
 
 _RUTA = re.compile(r"^[A-Za-z0-9_\-]+(?:/[A-Za-z0-9_\-]+)*\.[A-Za-z_][A-Za-z0-9_]*$")
 _TOKEN_COLOR = re.compile(r"^-?\d+(?:;\d+)?$")
@@ -28,6 +39,81 @@ _TOKEN_AJUSTE = re.compile(r"^-?\d+$")
 
 def es_parte_rotable(parte: str) -> bool:
     return any(parte == c or parte.startswith(c) for c in PARTES_ROTABLES)
+
+
+def es_personalizable(parte: str) -> bool:
+    return parte not in PARTES_SIN_PERSONALIZAR
+
+
+def reglas() -> dict:
+    """Lo que la interfaz necesita saber para mostrar el panel (sin repetir las reglas del juego)."""
+    return {"sin_personalizar": sorted(PARTES_SIN_PERSONALIZAR), "rotables": list(PARTES_ROTABLES),
+            "limites": {k: list(v) for k, v in LIMITES_AJUSTE.items()}, "ajuste_defecto": dict(AJUSTE_DEFECTO),
+            "maximo_formas": MAXIMO_FORMAS}
+
+
+def _entero(valor, minimo: int, maximo: int, que: str) -> int:
+    if isinstance(valor, bool) or not isinstance(valor, int) or not minimo <= valor <= maximo:
+        raise PersonalizacionInvalida(f"{que} no es válido: {valor!r}")
+    return valor
+
+
+def _normalizar_forma(forma) -> dict:
+    if not isinstance(forma, dict):
+        raise PersonalizacionInvalida("Una forma no tiene la forma esperada.")
+    if forma.get("quitar"):
+        return {"quitar": True}
+    if forma.get("color") is None:
+        return {"color": None}
+    normal = {"color": _entero(forma["color"], 0, 0xFFFFFF, "El color")}
+    if forma.get("opacidad") is not None:
+        opacidad = _entero(forma["opacidad"], 1, 10, "La opacidad")
+        if opacidad < 10:
+            normal["opacidad"] = opacidad
+    return normal
+
+
+def normalizar(personalizacion, partes: dict) -> dict[str, dict]:
+    """La personalización validada, por Parte: `{"colores": [forma…], "ajuste": {x, y, rot, escala}}`, solo con lo
+    que cambia algo (sin las formas por defecto del final, sin el ajuste si no mueve nada o la Parte no es rotable).
+
+    Se descarta la de Partes sin Pieza en `partes` o que no se pueden personalizar (queda de una Pieza que ya no
+    está). Lanza `PersonalizacionInvalida` si no tiene la forma esperada.
+    """
+    if not personalizacion:
+        return {}
+    if not isinstance(personalizacion, dict):
+        raise PersonalizacionInvalida("La personalización no tiene la forma esperada.")
+    resultado = {}
+    for parte, datos in personalizacion.items():
+        if parte not in partes or not es_personalizable(parte) or not datos:
+            continue
+        if not isinstance(datos, dict):
+            raise PersonalizacionInvalida(f"La personalización de {parte} no tiene la forma esperada.")
+        colores = datos.get("colores") or []
+        if not isinstance(colores, list) or len(colores) > MAXIMO_FORMAS:
+            raise PersonalizacionInvalida(f"Los colores de {parte} no tienen la forma esperada.")
+        colores = [_normalizar_forma(f) for f in colores]
+        while colores and colores[-1] == {"color": None}:
+            colores.pop()
+        entrada = {"colores": colores} if colores else {}
+        ajuste = datos.get("ajuste")
+        if ajuste is not None:
+            if not isinstance(ajuste, dict):
+                raise PersonalizacionInvalida(f"El ajuste de {parte} no tiene la forma esperada.")
+            ajuste = {k: _entero(ajuste.get(k, AJUSTE_DEFECTO[k]), -999, 999, f"El ajuste ({k})") for k in AJUSTE_DEFECTO}
+            ajuste = {k: _clamp(v, *LIMITES_AJUSTE[k]) for k, v in ajuste.items()}
+            if es_parte_rotable(parte) and ajuste != AJUSTE_DEFECTO:
+                entrada["ajuste"] = ajuste
+        if entrada:
+            resultado[parte] = entrada
+    return resultado
+
+
+def con_personalizacion(partes: dict[str, str], personalizacion: dict[str, dict]) -> dict[str, str]:
+    """`partes` con el valor de cada Pieza ya personalizado (`personalizacion` ya normalizada)."""
+    return {parte: componer(ruta, personalizacion[parte].get("colores"), personalizacion[parte].get("ajuste"))
+            if parte in personalizacion and isinstance(ruta, str) else ruta for parte, ruta in partes.items()}
 
 
 def _clamp(valor: int, minimo: int, maximo: int) -> int:
@@ -93,6 +179,17 @@ def _leer_token_color(token: str) -> dict:
 def ruta_limpia(valor: str) -> str:
     """Solo la Pieza (`pack.Clase_on`), sin colores ni ajuste."""
     return valor.split("//", 1)[0].split(",", 1)[0]
+
+
+def separar_cola(valor: str) -> tuple[str, str]:
+    """(la Pieza, lo que le sigue: `,colores//ajuste`, o vacío)."""
+    limpio = ruta_limpia(valor)
+    return limpio, valor[len(limpio):]
+
+
+def es_cola_valida(cola: str) -> bool:
+    """Si `cola` (lo que sigue a la Pieza) son colores y ajuste bien formados, o nada."""
+    return cola == "" or es_valor_valido("a.b" + cola)
 
 
 def es_valor_valido(valor: str) -> bool:

@@ -296,5 +296,5 @@ dialog.dialogo-personalizar::backdrop { background: rgba(10, 14, 30, 0.12); }
 .pie-personalizar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 16px; }
 #agregar-forma { margin-top: 8px; }
 /* Un casillero con Pieza personalizada lleva un puntito. */
-.casillero.personalizada { position: relative; }
-.casillero.personalizada::after { content: ""; position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; border-radius: 50%; background: #f04a4a; box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.25); }
+.casillero.personalizada, #personalizar-trucada.personalizada { position: relative; }
+.casillero.personalizada::after, #personalizar-trucada.personalizada::after { content: ""; position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; border-radius: 50%; background: #f04a4a; box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.25); }

@@ -70,7 +70,8 @@ const mostrarColoresEnEdicion = () => gaturroDeColores.vestir(lookActual.partes,
 
 // La acción que hace el Gaturro de un documento: solo en Acciones (en las demás pestañas se ve quieto).
 const animacionDe = (documento) => (vista === "acciones" ? documento.animacion || null : null);
-const vestirCon = (gaturro, documento) => gaturro.vestir(partesConPersonalizacion(documento), coloresDe(documento), documento.emote ?? null, animacionDe(documento));
+const vestirCon = (gaturro, documento) => gaturro.vestir(documento.partes, coloresDe(documento), documento.emote ?? null,
+  animacionDe(documento), documento.personalizacion ?? null);
 
 async function dibujarGaturro() {
   if (esNpc()) return; // en Tiendas y Portales no hay Gaturro

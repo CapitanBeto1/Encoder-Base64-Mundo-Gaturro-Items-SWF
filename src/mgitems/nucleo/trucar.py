@@ -4,6 +4,7 @@ import subprocess
 
 from mgitems.ffdec import FFDecNoDisponible
 from mgitems.items import es_ruta_valida, piezas_del_swf
+from mgitems.personalizar import PersonalizacionInvalida, con_personalizacion, normalizar, separar_cola
 from mgitems.prendas import (
     EFECTO, MOCHILA, PREFIJO_EFECTO, ItemBase, TruqueoFallido, no_sirve_de_base, reescribir_partes,
 )
@@ -29,9 +30,13 @@ class Trucar:
             if t["base"] in vistas:
                 return {"ok": False, "error": f"{t['base']} está dos veces: cada Prenda trucada necesita otro Item base."}
             vistas.add(t["base"])
+        try:
+            piezas = [_pieza_personalizada(t) for t in trucadas]
+        except PersonalizacionInvalida as e:
+            return {"ok": False, "error": str(e)}
 
         trucados, resumen = {}, []
-        for t in trucadas:
+        for t, pieza in zip(trucadas, piezas):
             swf, _, clase = t["base"].rpartition(".")
             obtenido = {"ok": True, "data": self._data_swf} if swf == self._swf_abierto else self._datos_de_otro_swf(swf)
             if not obtenido["ok"]:
@@ -47,7 +52,7 @@ class Trucar:
                 return {"ok": False, "error": f"{clase} no es una Prenda ni un Item de mochila de {swf}."}
             if motivo := no_sirve_de_base(t["base"], item.tipo):
                 return {"ok": False, "error": f"{clase} no sirve de Item base: {motivo}."}
-            valores, error = self._valores_de_piezas(swf, data, item, {t["parte"]: t["pieza"]})
+            valores, error = self._valores_de_piezas(swf, data, item, {t["parte"]: pieza})
             if error:
                 return {"ok": False, "error": error}
             try:
@@ -79,9 +84,13 @@ class Trucar:
             if not isinstance(t, dict) or not all(isinstance(t.get(k), str) for k in ("base", "parte", "pieza")) \
                     or not es_ruta_valida(t["base"]) or not es_ruta_valida(t["pieza"]):
                 return {"ok": False, "error": "Las Prendas trucadas no tienen la forma esperada."}
+        try:
+            piezas = [_pieza_personalizada(t) for t in trucadas]
+        except PersonalizacionInvalida as e:
+            return {"ok": False, "error": str(e)}
 
         pedidos, resumen = [], []
-        for t in trucadas:
+        for t, pieza in zip(trucadas, piezas):
             swf, _, clase = t["base"].rpartition(".")
             obtenido = {"ok": True, "data": self._data_swf} if swf == self._swf_abierto else self._datos_de_otro_swf(swf)
             if not obtenido["ok"]:
@@ -99,7 +108,7 @@ class Trucar:
             if motivo := no_sirve_de_base(t["base"], item.tipo):
                 return {"ok": False, "error": f"{clase} no sirve de Item base: {motivo}."}
             piezas_propias = set(piezas_del_swf([cls for _, cls in leer_simbolos(data)]))
-            valor, error = self._valor_de_pieza(swf, piezas_propias, t["pieza"], con_swf=True)
+            valor, error = self._valor_de_pieza(swf, piezas_propias, pieza, con_swf=True)
             if error:
                 return {"ok": False, "error": error}
             pedidos.append((t["base"], 1, {f"wear_{t['parte']}": valor}))
@@ -200,17 +209,27 @@ class Trucar:
         """(cómo se escribe la Pieza en el Item base de `swf`, error).
 
         En una Prenda, una Pieza del mismo SWF va sin su nombre (el juego lo agrega). En un Item de
-        mochila (`con_swf`) va siempre con él: se aplica tal cual al Gaturro.
+        mochila (`con_swf`) va siempre con él: se aplica tal cual al Gaturro. Los colores por forma y el ajuste
+        (`personalizar`) siguen a la Pieza: el juego solo le agrega el SWF si no tiene punto, y la cola no lleva.
         """
+        pieza, cola = separar_cola(pieza)
         swf_pieza, _, clase = pieza.rpartition(".")
         if swf_pieza in ("", swf):
             if clase not in piezas_propias:
                 return None, f"{clase} no es una Pieza de {swf}."
-            return (f"{swf}.{clase}" if con_swf else clase), None
+            return (f"{swf}.{clase}" if con_swf else clase) + cola, None
         # De otro SWF se escribe "<swf>.<clase>": el juego la busca en ese SWF.
         otras = self.piezas(swf_pieza)
         if not otras["ok"]:
             return None, f"No se pudo usar una Pieza de {swf_pieza}: {otras['error']}"
         if clase not in {p["clase"] for p in otras["piezas"]}:
             return None, f"{clase} no es una Pieza de {swf_pieza}."
-        return f"{swf_pieza}.{clase}", None
+        return f"{swf_pieza}.{clase}" + cola, None
+
+
+def _pieza_personalizada(trucada: dict) -> str:
+    """La Pieza de una Prenda trucada con su personalización (`{"colores", "ajuste"}`, opcional) ya puesta.
+    Lanza `PersonalizacionInvalida` si la personalización no tiene la forma esperada."""
+    parte, pieza = trucada["parte"], trucada["pieza"]
+    personalizacion = normalizar({parte: trucada["personalizacion"]} if trucada.get("personalizacion") else None, {parte: pieza})
+    return con_personalizacion({parte: pieza}, personalizacion)[parte]
