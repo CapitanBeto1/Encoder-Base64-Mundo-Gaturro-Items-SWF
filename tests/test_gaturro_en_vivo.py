@@ -112,7 +112,7 @@ def test_lo_demas_no_existe(pagina, ruta):
     assert error.value.code == 404
 
 
-# --- El banner del editor de Piezas ---
+# --- Los banners de las ventanas de personalizar ---
 
 def test_el_servidor_le_da_al_editor_su_banner():
     servidor_local = ServidorDelGaturro(lambda swf: None, lambda nombre: b"CWS-banner" if nombre == "CustomClothBanner" else None)
@@ -125,12 +125,14 @@ def test_el_servidor_le_da_al_editor_su_banner():
         servidor_local.detener()
 
 
-def test_el_nucleo_solo_da_el_banner_del_editor(tmp_path):
-    banner = crear_swf(["CustomClothBanner", "EditorModalMC"])
+def test_el_nucleo_solo_da_los_banners_de_personalizar(tmp_path):
+    banners = {nombre: crear_swf([nombre, "Algo"]) for nombre in ("AvatarConfig", "CustomClothBanner", "CustomLayerBanner")}
     fuente = fuente_con()
-    fuente.publicar("banners/CustomClothBanner", banner, '"v1"')
+    for nombre, banner in banners.items():
+        fuente.publicar(f"banners/{nombre}", banner, '"v1"')
     fuente.publicar("banners/AvatarSaverBanner", crear_swf(["AvatarSaverBanner"]), '"v1"')
     nucleo = Nucleo(SistemaFalso(tmp_path), fuente=fuente, catalogo=[])
 
-    assert nucleo.banner_del_juego("CustomClothBanner") == banner  # tal cual: el juego verifica su firma
+    for nombre, banner in banners.items():  # el menú, «Customiza tu ropa» y «Configura tus accesorios»
+        assert nucleo.banner_del_juego(nombre) == banner  # tal cual: el juego verifica su firma
     assert nucleo.banner_del_juego("AvatarSaverBanner") is None

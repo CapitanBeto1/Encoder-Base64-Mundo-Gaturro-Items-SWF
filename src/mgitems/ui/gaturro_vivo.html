@@ -23,6 +23,10 @@
   // avisa {editor: "abierto", partes: [las que muestra]}, {editor: "guardado", piezas: {parte: valor}} (las que quedaron),
   // {editor: "cancelado"} (✗ o Escape, como en el juego), {editor: "error"} y {coloresGuardados: "…"} (los que el
   // jugador guarda con «+»).
+  // Con {personalizar: {atributos, piezas, colores, capas}} abre el menú de personalizar del juego: avisa
+  // {personalizar: "abierto"} cuando se ve, {editor: "sin piezas"} si se eligió «Customiza tu ropa» sin Piezas, y
+  // {capas: {parte: valor}} cuando «Configura tus accesorios» guardó algo; el editor avisa como arriba, y
+  // {editor: "cancelado"} es también salir del menú.
   window.RufflePlayer = { config: {
     publicPath: "/ruffle/", polyfills: false, wmode: "transparent", allowScriptAccess: true, autoplay: "on",
     contextMenu: "off", splashScreen: false, unmuteOverlay: "hidden", letterbox: "on", logLevel: "warn",
@@ -37,14 +41,18 @@
   addEventListener("keydown", (e) => { if (e.key === "Escape" && editando) window.mgEditorCerrado(); });
   window.mgEditorError = (texto) => avisar({ editor: "error", error: texto });
   window.mgColoresGuardados = (colores) => avisar({ coloresGuardados: colores });
+  window.mgPersonalizarAbierto = () => { editando = true; avisar({ personalizar: "abierto" }); };
+  window.mgSinPiezas = () => avisar({ editor: "sin piezas" });
+  window.mgCapas = (json) => { editando = false; avisar({ capas: JSON.parse(json) }); };
   let player = null;
   let pendiente = null; // lo último que se pidió vestir antes de que el Gaturro estuviera listo
 
   addEventListener("message", (evento) => {
-    const { vestir, zoom, repetir, foto, editar } = evento.data ?? {};
+    const { vestir, zoom, repetir, foto, editar, personalizar } = evento.data ?? {};
     if (zoom) document.documentElement.style.setProperty("--zoom", String(zoom));
     if (repetir) player?.mgRepetir();
     if (editar) return void player?.mgEditar(JSON.stringify(editar));
+    if (personalizar) return void player?.mgPersonalizar(JSON.stringify(personalizar));
     if (foto) return void fotografiar(foto, vestir);
     if (!vestir) return;
     if (player) player.mgVestir(JSON.stringify(vestir));

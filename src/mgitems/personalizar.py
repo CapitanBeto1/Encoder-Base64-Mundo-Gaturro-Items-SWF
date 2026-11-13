@@ -30,9 +30,10 @@ PARTES_ROTABLES = ("hairs", "hats", "accesories", "mouths", "neck", "cloth", "le
 # (`GaturroEffectsManager.applyHead`) y el transporte no pinta formas (`Gaturro.add`). La acción no es una Parte.
 PARTES_SIN_PERSONALIZAR = frozenset({"effect", "transport", "action"})
 MAXIMO_FORMAS = 999  # el editor del juego escribe todas las formas de la Pieza, aunque no las toque
-# El banner del juego con el arte de su editor de Piezas («Customiza tu ropa»: `ClothEditorModal`). El programa lo
-# baja del CDN para el editor en vivo, como hace el juego.
-BANNER_DEL_EDITOR = "CustomClothBanner"
+# Los banners del juego con el arte de sus ventanas de personalizar, que el programa baja del CDN para correrlas en vivo
+# como hace el juego: el menú (`AvatarConfig`), «Customiza tu ropa» (`ClothEditorModal`) y «Configura tus accesorios»
+# (`CustomLayerBanner`).
+BANNERS_DE_PERSONALIZAR = frozenset({"AvatarConfig", "CustomClothBanner", "CustomLayerBanner"})
 
 
 class PersonalizacionInvalida(ValueError):

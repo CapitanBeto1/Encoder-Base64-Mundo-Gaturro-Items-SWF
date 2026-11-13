@@ -37,6 +37,7 @@ const PESTANA = {
     generar: "Aplicar Look", aplicar: "Aplicar Look", nombre: "NOMBRE DEL LOOK", seGuarda: "Se guarda en:", tocaUno: "un Look",
     pasos: () => [["Elegí las Piezas", conPiezas()], ["Aplicá el Look", hayEncode()], ["Agregá al juego", false]],
     sinBase: "se elige al aplicar", tituloBase: "¿Dónde se guarda el Look?", nuevo: () => nuevoLook(), alAplicar: () => aplicarLook(),
+    capas: true, // el pincel abre el menú del juego, con «Configura tus accesorios»
     guardados: { tipo: "look", el: "el Look", lo: "lo", nuevo: "Look nuevo", mis: "Mis Looks", titulo: "GUARDA TU LOOK", sub: "GUARDA TUS LOOKS FAVORITOS" },
   },
   acciones: {
@@ -51,6 +52,7 @@ const PESTANA = {
     generar: "Trucar Prenda", aplicar: "Trucar todas", nombre: "NOMBRE DE LA PRENDA TRUCADA", seGuarda: "Se trucará:",
     tocaUno: "una Prenda trucada", sinBase: "elegí el Item base", tituloBase: "¿Qué Item se truca?", nuevo: () => nuevaPrendaATrucar(),
     alAplicar: () => trucarPrenda(),
+    capas: false, // va una sola Pieza: el pincel abre directo «Customiza tu ropa»
     pasos: () => [["Elegí el Item base", Boolean(lookActual.base)], ["Elegí la Pieza", conPiezas()], ["Sumala a la lista", enLaLista()],
                   ["Trucá todas", hayEncode()], ["Agregá al juego", false]],
     guardados: { tipo: "trucada", el: "la Prenda trucada", lo: "la", nuevo: "Prenda trucada nueva", mis: "Mis Prendas trucadas",

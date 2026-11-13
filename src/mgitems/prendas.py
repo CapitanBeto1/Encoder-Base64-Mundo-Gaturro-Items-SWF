@@ -27,13 +27,23 @@ from mgitems.personalizar import es_cola_valida, separar_cola
 from mgitems.ffdec import FFDec
 
 # Partes del cuerpo con su nombre en el juego, en orden de arriba hacia abajo.
+# Las capas 2 y 3 (`hats2`, `hats3`…) son las de «Configura tus accesorios» (ver `PARTES_CON_CAPAS`).
 PARTES_DEL_CUERPO = {
     "hats": "Sombrero",
+    "hats2": "Sombrero (capa 2)",
+    "hats3": "Sombrero (capa 3)",
     "hairs": "Pelo",
+    "hairs2": "Pelo (capa 2)",
+    "hairs3": "Pelo (capa 3)",
     "accesories": "Accesorio",
-    "accesories2": "Accesorio 2",
+    "accesories2": "Accesorio (capa 2)",
+    "accesories3": "Accesorio (capa 3)",
     "mouths": "Boca",
+    "mouths2": "Boca (capa 2)",
+    "mouths3": "Boca (capa 3)",
     "neck": "Cuello",
+    "neck2": "Cuello (capa 2)",
+    "neck3": "Cuello (capa 3)",
     "cloth": "Torso",
     "arm": "Brazos",
     "clothBack": "Espalda",
@@ -44,6 +54,23 @@ PARTES_DEL_CUERPO = {
     "transport": "Transporte",  # solo vehículos (ver `se_ve`)
     "effect": "Cabeza (efecto)",  # una Pieza más sobre la cabeza, hasta salir del juego (ver `se_ve`)
 }
+# «Configura tus accesorios» del juego (`CustomLayerBanner`): en estas Partes van hasta tres Piezas, una arriba de la
+# otra. La Parte es la capa 1; las de arriba se llaman como ella con el número de capa (`AvatarBodyEnum`: `hats2`, `hats3`).
+PARTES_CON_CAPAS = ("hats", "hairs", "accesories", "mouths", "neck")
+CAPAS = (1, 2, 3)
+
+
+def capa(parte: str, numero: int) -> str:
+    """La Parte de la capa `numero` de `parte` (la 1 es la Parte misma), como la nombra el juego."""
+    return parte if numero == 1 else f"{parte}{numero}"
+
+
+def parte_de_la_capa(parte: str) -> str:
+    """La Parte de la que `parte` es una capa (`hats3` → `hats`), o `parte` misma."""
+    base = parte.rstrip("23")
+    return base if base != parte and base in PARTES_CON_CAPAS else parte
+
+
 # El efecto de cabeza se escribe «head.<swf>.<Pieza>» (`GaturroEffectsManager.applyHead`).
 EFECTO = "effect"
 PREFIJO_EFECTO = "head."

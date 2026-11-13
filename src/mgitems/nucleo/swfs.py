@@ -18,7 +18,7 @@ from mgitems.iconos import version_de
 from mgitems.interfaz import CARPETA_BANNERS
 from mgitems.items import items_del_swf, orden_natural, piezas_del_swf
 from mgitems.nucleo._comun import _simbolos_con_imagen
-from mgitems.personalizar import BANNER_DEL_EDITOR
+from mgitems.personalizar import BANNERS_DE_PERSONALIZAR
 from mgitems.prendas import (
     EFECTO, PARTES_DEL_CUERPO, PREFIJO_EFECTO, PRENDA, CacheItemsBase, ItemBase, leer_item_base, no_sirve_de_base,
 )
@@ -217,9 +217,10 @@ class Swfs:
 
     def banner_del_juego(self, nombre: str) -> bytes | None:
         """El banner `nombre` del juego tal como está en el CDN (o en el caché), o None. Solo los que usa el Gaturro en
-        vivo (el editor de Piezas, `personalizar.BANNER_DEL_EDITOR`): el juego verifica su firma, así que va sin tocar.
+        vivo (las ventanas de personalizar, `personalizar.BANNERS_DE_PERSONALIZAR`): el juego verifica su firma, así que va
+        sin tocar.
         No es para la interfaz."""
-        if nombre != BANNER_DEL_EDITOR:
+        if nombre not in BANNERS_DE_PERSONALIZAR:
             return None
         obtenido = self._obtener_del_cdn(nombre, CARPETA_BANNERS)
         return obtenido["data"] if obtenido["ok"] else None

@@ -230,7 +230,9 @@ function mostrarLook() {
 
 // --- Casilleros: una Parte del cuerpo cada uno, a los costados del Gaturro ---
 
-const CASILLEROS_CABEZA = ["hats", "hairs", "mouths", "accesories", "accesories2", "neck", "effect"];
+const CASILLEROS_CABEZA = ["hats", "hairs", "mouths", "accesories", "neck", "effect"];
+// Las capas de arriba de una Parte (las de «Configura tus accesorios») que tienen Pieza en el Look.
+const capasPuestas = (id) => partesConocidas.filter((p) => p.capa_de === id && lookActual.partes[p.id]).map((p) => p.id);
 const CASILLEROS_CUERPO = ["cloth", "arm", "clothBack", "grip", "gripFore", "leg", "foot", "transport"];
 let casilleroMarcado = null; // si hay uno, toda Pieza que se toque va a esa Parte
 
@@ -239,6 +241,11 @@ function casillero(id) {
   const li = document.createElement("li");
   const boton = Object.assign(document.createElement("button"), { className: "casillero" });
   boton.title = ruta ? `${nombreDeParte(id)}: ${claseDeRuta(ruta)} · ${swfDeRuta(ruta)}` : `${nombreDeParte(id)}: vacío. Tocá para poner acá las Piezas que elijas.`;
+  const arriba = capasPuestas(id);
+  if (arriba.length) {
+    boton.title += `\nY ${arriba.length === 1 ? "una capa" : `${arriba.length} capas`} más: ${arriba.map((p) => claseDeRuta(lookActual.partes[p])).join(", ")} (en «Configura tus accesorios»).`;
+    boton.append(etiqueta(`+${arriba.length}`, "capas-casillero"));
+  }
   boton.setAttribute("aria-pressed", String(id === casilleroMarcado));
   if (tienePersonalizacion(id)) boton.classList.add("personalizada");
   boton.append(ruta ? elementoIcono(ruta) : Object.assign(document.createElement("span"), { className: "icono vacio" }), etiqueta(nombreDeParte(id), "nombre-casillero"));
@@ -265,7 +272,7 @@ function mostrarCasilleros() {
     $("casilleros-cabeza").replaceChildren(casillero("effect"));
     $("casilleros-cuerpo").replaceChildren(casillero("action"));
   } else {
-    const ubicadas = new Set([...CASILLEROS_CABEZA, ...CASILLEROS_CUERPO]);
+    const ubicadas = new Set([...CASILLEROS_CABEZA, ...CASILLEROS_CUERPO, ...partesConocidas.filter((p) => p.capa_de).map((p) => p.id)]);
     // Partes del Look que no tienen casillero (de un Look importado, por ejemplo): van con el cuerpo.
     const extra = Object.keys(lookActual.partes).filter((p) => !ubicadas.has(p));
     $("casilleros-cabeza").replaceChildren(...CASILLEROS_CABEZA.map(casillero));
@@ -273,10 +280,11 @@ function mostrarCasilleros() {
   }
   $("poniendo-en").hidden = !casilleroMarcado;
   $("texto-poniendo-en").textContent = casilleroMarcado ? `Poniendo en: ${nombreDeParte(casilleroMarcado)}` : "";
-  const conPiezas = Object.keys(lookActual.partes).length > 0;
-  $("editar-piezas").disabled = !conPiezas;
-  $("editar-piezas").title = conPiezas ? "Personalizar las Piezas: colores por capa, mover, girar y ajustar"
-    : "Personalizar las Piezas: poné primero una Pieza en el Gaturro";
+  const sePuede = dePestana().capas || Object.keys(lookActual.partes).length > 0;
+  $("editar-piezas").disabled = !sePuede;
+  $("editar-piezas").title = !sePuede ? "Personalizar las Piezas: poné primero una Pieza en el Gaturro"
+    : dePestana().capas ? "Personalizar: colores, mover y girar las Piezas, o ponerlas en capas (accesorios)"
+    : "Personalizar las Piezas: colores por capa, mover, girar y ajustar";
 }
 
 $("dejar-de-poner").addEventListener("click", () => {

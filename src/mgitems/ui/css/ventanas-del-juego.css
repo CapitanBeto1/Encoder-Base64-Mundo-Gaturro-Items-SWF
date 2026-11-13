@@ -288,3 +288,6 @@ dialog.dialogo-editor-piezas::backdrop { background: rgba(10, 14, 30, 0.6); }
 /* Un casillero con Pieza personalizada lleva un puntito (arriba a la izquierda: a la derecha va la ✕ de quitarla). */
 .casillero.personalizada { position: relative; }
 .casillero.personalizada::after { content: ""; position: absolute; top: 4px; left: 4px; width: 8px; height: 8px; border-radius: 50%; background: #f04a4a; box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.25); }
+/* Las capas de arriba de una Parte («Configura tus accesorios»): cuántas hay, abajo a la derecha del casillero. */
+.capas-casillero { position: absolute; right: 3px; bottom: 16px; padding: 0 4px; border-radius: 6px; background: #2a3150; color: #fff; font-size: 10px; line-height: 14px; font-weight: 700; }
+.casillero:has(.capas-casillero) { position: relative; }

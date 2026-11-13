@@ -32,6 +32,10 @@ _Avoid_: preview, visor
 Los colores por capa (o quitar una capa, con su saturación) y el ajuste (mover, girar, escalar) de una Pieza del Look, como los guarda el «Customiza tu ropa» del juego: en el mismo texto de la Pieza (`pack.Clase_on,colores//x,y,rotación,escala`). Se edita con el editor del juego, en vivo, y viaja con el Look a la vista previa, a la entrega y a los guardados (ADR 0009).
 _Avoid_: customización
 
+**Capa** (de una Parte):
+Una de las hasta tres Piezas que van una arriba de la otra en Sombrero, Pelo, Accesorio, Boca o Cuello, como en «Configura tus accesorios» del juego: la Parte es la capa 1, y las de arriba son otras Partes (`hats2`, `hats3`…). Se ponen con esa ventana del juego, en vivo, y el casillero de la Parte dice cuántas hay (ADR 0009). No confundir con las capas de color de una Pieza (sus formas, que pinta «Customiza tu ropa»: ver Personalización).
+_Avoid_: slot, nivel
+
 ## Truqueo
 
 **Prenda trucada**:
