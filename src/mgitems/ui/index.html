@@ -272,6 +272,7 @@
             <div id="categorias" class="categorias" role="tablist" aria-label="Categorías de Piezas"></div>
             <div id="poniendo-en" class="poniendo-en" hidden>
               <span id="texto-poniendo-en"></span>
+              <button id="personalizar-pieza" class="enlace" title="Colores por forma y posición/rotación/escala de la Pieza" hidden><span data-icono="magic-wand"></span> Personalizar</button>
               <button id="dejar-de-poner" class="quitar" title="Volver a poner cada Pieza en su Parte"><span data-icono="x"></span></button>
             </div>
             <div class="filtros-items">
@@ -606,6 +607,7 @@
   <script src="js/inventario.js"></script>
   <script src="js/gaturro_vivo.js"></script>
   <script src="js/gaturro.js"></script>
+  <script src="js/personalizar.js"></script>
   <script src="js/editor.js"></script>
   <script src="js/guia.js"></script>
   <script src="js/trucar.js"></script>
@@ -617,5 +619,27 @@
   <script src="js/busqueda.js"></script>
   <script src="js/terminator.js"></script>
   <script src="js/inicio.js"></script>
+  <dialog id="dialogo-personalizar" class="dialogo-personalizar">
+    <div class="panel-personalizar">
+      <div class="cabecera-personalizar">
+        <h2 id="titulo-personalizar">Personalizar</h2>
+        <button type="button" id="cerrar-personalizar" class="quitar" title="Cerrar"><span data-icono="x"></span></button>
+      </div>
+      <p class="ayuda">Cada forma de la Pieza, de la más chica a la más grande. Mirá el Gaturro: lo que ves es lo que llega al juego.</p>
+      <div class="seccion-personalizar">
+        <div class="titulo-seccion">Colores por forma</div>
+        <div id="filas-color" class="filas-color"></div>
+        <button type="button" id="agregar-forma" class="enlace"><span data-icono="plus-circle"></span> Agregar forma</button>
+      </div>
+      <div id="ajuste-personalizar" class="seccion-personalizar" hidden>
+        <div class="titulo-seccion">Posición y tamaño <button type="button" id="reiniciar-ajuste" class="enlace">Reiniciar</button></div>
+        <div id="sliders-ajuste" class="sliders-ajuste"></div>
+      </div>
+      <div class="pie-personalizar">
+        <button type="button" id="quitar-personalizacion" class="enlace">Quitar personalización</button>
+        <button type="button" id="listo-personalizar" class="pastilla-colores">Listo</button>
+      </div>
+    </div>
+  </dialog>
 </body>
 </html>

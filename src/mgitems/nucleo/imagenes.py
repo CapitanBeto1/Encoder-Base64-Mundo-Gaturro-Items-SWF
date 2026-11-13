@@ -11,6 +11,7 @@ from mgitems.gaturro import (
 )
 from mgitems.iconos import IconosItems
 from mgitems.looks import EMOTES
+from mgitems.personalizar import es_valor_valido, ruta_limpia
 from mgitems.items import es_ruta_valida, filtrar_por_prefijos, piezas_del_swf
 from mgitems.nucleo._comun import _simbolos_con_imagen
 from mgitems.prendas import ACCION, EFECTO, PARTES_DEL_CUERPO, PREFIJO_EFECTO
@@ -135,7 +136,9 @@ class Imagenes:
         """
         if not isinstance(partes, dict) or not isinstance(colores, (dict, type(None))):
             return {"ok": False, "error": "Las Partes del cuerpo no tienen la forma esperada."}
-        elegidas = {p: r for p, r in partes.items() if isinstance(r, str) and es_ruta_valida(r)}
+        # Una Pieza puede traer colores por forma y ajuste (personalizar): se valida y se dibuja la Pieza entera,
+        # y la ruta limpia es la que se usa para saber qué es y si se ve.
+        elegidas = {p: r for p, r in partes.items() if isinstance(r, str) and es_valor_valido(r)}
         atributos = {p: elegidas.get(p, "") for p in PARTES}
         atributos[EFECTO] = PREFIJO_EFECTO + elegidas[EFECTO] if EFECTO in elegidas else ""
         atributos |= {c: int(v[1:], 16) for c, v in colores_del_jugador(colores).items()}
@@ -146,8 +149,8 @@ class Imagenes:
         return {
             "ok": True,
             "atributos": atributos,
-            "no_se_ven": [{"ruta": r, "parte": p, "motivo": m} for p, r in elegidas.items()
-                          if p != ACCION and (m := self._motivo_no_se_ve(r, p))],
+            "no_se_ven": [{"ruta": ruta_limpia(r), "parte": p, "motivo": m} for p, r in elegidas.items()
+                          if p != ACCION and (m := self._motivo_no_se_ve(ruta_limpia(r), p))],
             "colores_de_fabrica": COLORES,
         }
 
