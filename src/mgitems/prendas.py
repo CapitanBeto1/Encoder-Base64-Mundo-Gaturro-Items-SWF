@@ -23,6 +23,7 @@ import tempfile
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
+from mgitems.personalizar import es_cola_valida, separar_cola
 from mgitems.ffdec import FFDec
 
 # Partes del cuerpo con su nombre en el juego, en orden de arriba hacia abajo.
@@ -129,7 +130,8 @@ def reescribir_partes(item: ItemBase, partes: dict[str, str], colores: dict | No
             pieza = (objeto if "." in objeto else "") if objeto else animacion
             if not _IDENTIFICADOR.match(animacion):
                 pieza = ""
-        if not _IDENTIFICADOR.match(parte) or not _PIEZA.match(pieza):
+        limpia, cola = separar_cola(pieza)  # la Pieza puede llevar colores por forma y ajuste (`personalizar`)
+        if not _IDENTIFICADOR.match(parte) or not _PIEZA.match(limpia) or not es_cola_valida(cola):
             raise ValueError(f"Parte del cuerpo o Pieza inválida: {parte} → {pieza}")
     if item.tipo == PRENDA and ACCION in partes:
         raise ValueError("Una Prenda no hace acciones: solo un Item de mochila")

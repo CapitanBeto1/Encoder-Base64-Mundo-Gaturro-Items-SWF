@@ -37,11 +37,11 @@ function gaturroVivo(marco, tamano = 1) {
     // Lo deja con esas Piezas, colores y emoción, haciendo la acción `animacion` si la hay. Devuelve lo de
     // `Nucleo.gaturro_en_vivo` (con sus avisos), {ok: false, error} si el Gaturro no se pudo abrir, o null si
     // mientras tanto se pidió otra cosa.
-    async vestir(partes, colores, emote = null, animacion = null) {
+    async vestir(partes, colores, emote = null, animacion = null, personalizacion = null) {
       const este = ++pedido;
       let resultado;
       try {
-        [resultado] = await Promise.all([api().gaturro_en_vivo({ ...partes }, colores, emote, animacion), abrir()]);
+        [resultado] = await Promise.all([api().gaturro_en_vivo({ ...partes }, colores, emote, animacion, personalizacion), abrir()]);
       } catch (error) {
         resultado = { ok: false, error: error.message };
       }
@@ -76,9 +76,10 @@ function abrirFotografo() {
   return abrirGaturroEn(marco, "?fotos").then(() => marco);
 }
 
-// La imagen (data:image/png…) del Gaturro quieto con esas Piezas, colores y emoción, o null si no se pudo sacar.
-async function fotoDelGaturro(partes, colores, emote = null) {
-  const resultado = await api().gaturro_en_vivo({ ...partes }, colores, emote);
+// La imagen (data:image/png…) del Gaturro quieto con esas Piezas, colores, emoción y personalización, o null si no
+// se pudo sacar.
+async function fotoDelGaturro(partes, colores, emote = null, personalizacion = null) {
+  const resultado = await api().gaturro_en_vivo({ ...partes }, colores, emote, null, personalizacion);
   if (!resultado.ok) return null;
   const clave = JSON.stringify(resultado.atributos);
   if (!fotosDelGaturro.has(clave)) {

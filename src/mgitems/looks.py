@@ -15,6 +15,8 @@ import uuid
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
+from mgitems.personalizar import PersonalizacionInvalida, normalizar
+
 _RUTA = re.compile(r"^[A-Za-z0-9_\-]+(?:/[A-Za-z0-9_\-]+)*\.[A-Za-z_][A-Za-z0-9_]*$")
 _PARTE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 _COMPORTAMIENTO = re.compile(r"^[A-Za-z0-9_\-]+(?:/[A-Za-z0-9_\-]+)*$")
@@ -41,6 +43,8 @@ class Look:
     animacion: str | None = None  # solo las acciones: la animación del juego ("showObject", "dance"…)
     comportamiento: str | None = None  # solo tiendas, portales y minijuegos: el del NPC ("brujaMesa", "magia/portal"…)
     cuadro: int | None = None  # solo fondos: el cuadro del dibujo que se ve (1 es el primero)
+    # Por Parte: colores por forma y ajuste de su Pieza (`personalizar`), como el «Personalizar prenda» del juego.
+    personalizacion: dict[str, dict] = field(default_factory=dict)
 
     @classmethod
     def desde(cls, datos: dict) -> "Look":
@@ -75,8 +79,14 @@ class Look:
         cuadro = datos.get("cuadro")
         if cuadro is not None and (isinstance(cuadro, bool) or not isinstance(cuadro, int) or not 1 <= cuadro <= 9999):
             raise LookInvalido(f"El cuadro no es válido: {cuadro}")
-        return cls(nombre, base, {str(p): str(v) for p, v in partes.items()}, str(datos.get("id") or ""), dict(colores),
-                   emote and str(emote), animacion and str(animacion), comportamiento and str(comportamiento), cuadro)
+        partes = {str(p): str(v) for p, v in partes.items()}
+        try:
+            personalizacion = normalizar(datos.get("personalizacion"), partes)
+        except PersonalizacionInvalida as e:
+            raise LookInvalido(str(e)) from e
+        return cls(nombre, base, partes, str(datos.get("id") or ""), dict(colores),
+                   emote and str(emote), animacion and str(animacion), comportamiento and str(comportamiento), cuadro,
+                   personalizacion)
 
 
 FORMATO = "mgitems-look"
@@ -106,6 +116,8 @@ def archivo_de_look(look: Look, formato: str = FORMATO) -> str:
         datos["comportamiento"] = look.comportamiento
     if look.cuadro:
         datos["cuadro"] = look.cuadro
+    if look.personalizacion:
+        datos["personalizacion"] = look.personalizacion
     return json.dumps(datos, ensure_ascii=False, indent=1)
 
 
@@ -120,7 +132,8 @@ def look_de_archivo(contenido: str, formato: str = FORMATO) -> Look:
         raise LookInvalido(f"Este archivo no es {uno} de MG Items.")
     if not isinstance(datos.get("version"), int) or datos["version"] > VERSION_FORMATO:
         raise LookInvalido(f"{este_es} de una versión más nueva de MG Items: actualizá el programa.")
-    look = Look.desde({k: datos.get(k) for k in ("nombre", "base", "partes", "colores", "emote", "animacion", "comportamiento", "cuadro")})
+    look = Look.desde({k: datos.get(k) for k in ("nombre", "base", "partes", "colores", "emote", "animacion", "comportamiento", "cuadro",
+                                                 "personalizacion")})
     if formato == FORMATO and not look.partes:
         raise LookInvalido("El Look del archivo no tiene Piezas.")
     if formato == FORMATO_ACCION and not look.animacion:

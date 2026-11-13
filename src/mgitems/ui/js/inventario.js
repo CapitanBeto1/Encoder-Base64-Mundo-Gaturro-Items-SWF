@@ -228,6 +228,7 @@ function ponerPieza(pieza, destino) {
     avisarLista("Tocá primero el casillero de la Parte donde va esta Pieza.", "advertencia");
     return;
   }
+  if (lookActual.partes[destino] !== pieza.ruta || vista === "trucar") olvidarPersonalizacion(destino); // era de la otra Pieza
   if (vista === "trucar") lookActual.partes = lookActual.partes[destino] === pieza.ruta ? {} : { [destino]: pieza.ruta };
   else if (lookActual.partes[destino] === pieza.ruta) delete lookActual.partes[destino];
   else lookActual.partes[destino] = pieza.ruta;

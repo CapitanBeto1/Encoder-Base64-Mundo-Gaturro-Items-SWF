@@ -28,6 +28,10 @@ _Avoid_: slot, zona
 El Gaturro del juego corriendo dentro del programa con el código del juego: recibe los mismos atributos que un avatar (Piezas, transporte, efecto de cabeza, colores, emoción, acción) y se ve y se anima como en el juego. Es el de la tarjeta de Looks, Trucar Prenda y Acciones, el escenario de los guardados y «Elige tus colores» (ADR 0009).
 _Avoid_: preview, visor
 
+**Personalización** (de una Pieza):
+Los colores por capa (o quitar una capa, con su saturación) y el ajuste (mover, girar, escalar) de una Pieza del Look, como los guarda el «Customiza tu ropa» del juego: en el mismo texto de la Pieza (`pack.Clase_on,colores//x,y,rotación,escala`). Viaja con el Look a la vista previa, a la entrega y a los guardados.
+_Avoid_: customización
+
 ## Truqueo
 
 **Prenda trucada**:

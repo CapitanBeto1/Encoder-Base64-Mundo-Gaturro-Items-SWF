@@ -8,6 +8,7 @@ from mgitems.ffdec import FFDecNoDisponible
 from mgitems.interfaz import BANNERS, CARPETA_BANNERS, DIBUJOS, recortar
 from mgitems.items import orden_natural
 from mgitems.looks import Look, LookInvalido
+from mgitems.personalizar import con_personalizacion
 from mgitems.prendas import PARTES_DEL_CUERPO, PRENDA, no_sirve_de_base
 
 
@@ -71,7 +72,9 @@ class Looks:
             if not obtenido["ok"]:
                 return {"ok": False, "error": f"No se pudo usar la Prenda base: {obtenido['error']}"}
             data = obtenido["data"]
-        resultado = self._trucar(swf, data, clase, look.partes, colores=look.colores or None, emote=look.emote or None)
+        # Cada Pieza va con sus colores por forma y su ajuste: el juego los lee del mismo texto (`personalizar`).
+        partes = con_personalizacion(look.partes, look.personalizacion)
+        resultado = self._trucar(swf, data, clase, partes, colores=look.colores or None, emote=look.emote or None)
         if resultado["ok"]:
             resultado["look"] = {"nombre": look.nombre, "base": base, "base_propuesta": look.base is None}
         return resultado
