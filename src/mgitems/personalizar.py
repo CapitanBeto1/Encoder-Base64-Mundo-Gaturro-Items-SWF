@@ -4,7 +4,8 @@ El cliente del juego lee el valor de una Parte del cuerpo como `pack.Clase_on[,c
 (`GaturroColorManager.customColorStr`, `ClothCustomUtil.applyTransform`):
 
 - cada `c_i` pinta la forma `i` de la Pieza (las formas van ordenadas de menor a mayor tamaño): un entero RGB,
-  `QUITAR` (saca esa forma) o `DEFECTO` (la deja como está); opcional `;a` con `a` de 1 a 10 = opacidad `a/10`.
+  `QUITAR` (saca esa forma) o `DEFECTO` (la deja como está; el editor del juego escribe -1 en las animadas); opcional
+  `;a` con `a` de 0 a 10 = opacidad `a/10` (en una Pieza de una sola forma, la «saturación» del editor).
   Las formas sin color van quedando como están, así que solo hace falta nombrarlas hasta la última que se toca.
 - el ajuste `x,y,rot,escala` mueve, rota y escala la Pieza entera. El juego solo lo aplica a las Partes
   "rotables" (o a administradores) y con topes; `escala` va de 5 a 10 y vale `escala/10` (10 = tamaño normal).
@@ -26,7 +27,10 @@ PARTES_ROTABLES = ("hairs", "hats", "accesories", "mouths", "neck", "cloth", "le
 # Donde el juego no la aplica: el efecto de cabeza se busca por el nombre exacto de la Pieza
 # (`GaturroEffectsManager.applyHead`) y el transporte no pinta formas (`Gaturro.add`). La acción no es una Parte.
 PARTES_SIN_PERSONALIZAR = frozenset({"effect", "transport", "action"})
-MAXIMO_FORMAS = 32
+MAXIMO_FORMAS = 999  # el editor del juego escribe todas las formas de la Pieza, aunque no las toque
+# El banner del juego con el arte de su editor de Piezas («Customiza tu ropa»: `ClothEditorModal`). El programa lo
+# baja del CDN para el editor en vivo, como hace el juego.
+BANNER_DEL_EDITOR = "CustomClothBanner"
 
 
 class PersonalizacionInvalida(ValueError):
@@ -46,10 +50,10 @@ def es_personalizable(parte: str) -> bool:
 
 
 def reglas() -> dict:
-    """Lo que la interfaz necesita saber para mostrar el panel (sin repetir las reglas del juego)."""
+    """Lo que la interfaz necesita saber (sin repetir las reglas del juego): qué Partes se personalizan y se ajustan, y
+    el ajuste que no cambia nada (para marcar los casilleros personalizados)."""
     return {"sin_personalizar": sorted(PARTES_SIN_PERSONALIZAR), "rotables": list(PARTES_ROTABLES),
-            "limites": {k: list(v) for k, v in LIMITES_AJUSTE.items()}, "ajuste_defecto": dict(AJUSTE_DEFECTO),
-            "maximo_formas": MAXIMO_FORMAS}
+            "ajuste_defecto": dict(AJUSTE_DEFECTO)}
 
 
 def _entero(valor, minimo: int, maximo: int, que: str) -> int:
@@ -67,7 +71,7 @@ def _normalizar_forma(forma) -> dict:
         return {"color": None}
     normal = {"color": _entero(forma["color"], 0, 0xFFFFFF, "El color")}
     if forma.get("opacidad") is not None:
-        opacidad = _entero(forma["opacidad"], 1, 10, "La opacidad")
+        opacidad = _entero(forma["opacidad"], 0, 10, "La opacidad")
         if opacidad < 10:
             normal["opacidad"] = opacidad
     return normal
@@ -129,7 +133,7 @@ def _token_color(spec: dict) -> str:
         return str(DEFECTO)
     token = str(int(color) & 0xFFFFFF)
     opacidad = spec.get("opacidad")
-    if opacidad is not None and 1 <= opacidad < 10:
+    if opacidad is not None and 0 <= opacidad < 10:
         token += f";{opacidad}"
     return token
 
@@ -205,3 +209,20 @@ def es_valor_valido(valor: str) -> bool:
     if sep and (not cola_ajuste or not all(_TOKEN_AJUSTE.match(t) for t in cola_ajuste.split(","))):
         return False
     return True
+
+
+def desde_valores(valores: dict, partes: dict[str, str]) -> dict[str, dict]:
+    """La personalización (sin normalizar) que dicen los valores de Pieza `valores` (Parte → `pack.Clase_on,…//…`,
+    como los guarda el editor del juego). Se ignora el valor de una Parte que no tiene esa Pieza en `partes`.
+    Lanza `PersonalizacionInvalida` si un valor no tiene la forma esperada."""
+    if not isinstance(valores, dict):
+        raise PersonalizacionInvalida("Lo que devolvió el editor no tiene la forma esperada.")
+    resultado = {}
+    for parte, valor in valores.items():
+        if not isinstance(valor, str) or not es_valor_valido(valor):
+            raise PersonalizacionInvalida(f"El editor devolvió una Pieza que no tiene la forma esperada: {valor!r}")
+        ruta, colores, ajuste = separar(valor)
+        if partes.get(parte) == ruta:
+            resultado[parte] = {"colores": colores, "ajuste": ajuste}
+    return resultado
+

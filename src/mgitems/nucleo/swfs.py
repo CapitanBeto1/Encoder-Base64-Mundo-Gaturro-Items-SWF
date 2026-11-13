@@ -15,8 +15,10 @@ from mgitems.destinos import DESCARTADO, es_de_pasaporte, motivo_de
 from mgitems.ffdec import FFDecNoDisponible
 from mgitems.fuente import SinConexion, SwfNoEncontrado, Version
 from mgitems.iconos import version_de
+from mgitems.interfaz import CARPETA_BANNERS
 from mgitems.items import items_del_swf, orden_natural, piezas_del_swf
 from mgitems.nucleo._comun import _simbolos_con_imagen
+from mgitems.personalizar import BANNER_DEL_EDITOR
 from mgitems.prendas import (
     EFECTO, PARTES_DEL_CUERPO, PREFIJO_EFECTO, PRENDA, CacheItemsBase, ItemBase, leer_item_base, no_sirve_de_base,
 )
@@ -211,6 +213,15 @@ class Swfs:
         if swf == self._swf_abierto:
             return self._data_swf
         obtenido = self._datos_de_otro_swf(swf) if _NOMBRE_SWF.match(swf) else {"ok": False}
+        return obtenido["data"] if obtenido["ok"] else None
+
+    def banner_del_juego(self, nombre: str) -> bytes | None:
+        """El banner `nombre` del juego tal como está en el CDN (o en el caché), o None. Solo los que usa el Gaturro en
+        vivo (el editor de Piezas, `personalizar.BANNER_DEL_EDITOR`): el juego verifica su firma, así que va sin tocar.
+        No es para la interfaz."""
+        if nombre != BANNER_DEL_EDITOR:
+            return None
+        obtenido = self._obtener_del_cdn(nombre, CARPETA_BANNERS)
         return obtenido["data"] if obtenido["ok"] else None
 
     def _datos_de_otro_swf(self, swf: str) -> dict:

@@ -136,3 +136,52 @@ def test_la_personalizacion_de_una_pieza_que_ya_no_esta_se_descarta(nucleo):
     guardado = nucleo.guardados.guardar("look", dict(LOOK, partes={"cloth": "costumes2.buzo1_on"}))["documento"]
 
     assert guardado["personalizacion"] == {"cloth": ROJO_VERDE}
+
+
+# --- El editor de Piezas del juego ---
+
+def test_al_editor_van_las_piezas_personalizables_con_su_personalizacion(nucleo):
+    partes = dict(LOOK["partes"], effect="costumes.coronaRey_on")
+    resultado = nucleo.para_el_editor(partes, None, None, LOOK["personalizacion"])
+
+    assert resultado["ok"], resultado
+    # El efecto de cabeza no se personaliza; las demás van con su personalización, como las tendría el avatar.
+    assert resultado["piezas"] == {"cloth": "costumes2.buzo1_on,16711680,65280", "hats": "costumes.coronaRey_on//10,-8,25,7"}
+    assert resultado["atributos"]["effect"] == "head.costumes.coronaRey_on"
+
+
+def test_lo_que_guarda_el_editor_es_la_personalizacion_del_look(nucleo):
+    # Como lo escribe el juego: todas las formas, -1 (animada sin tocar), -2, la saturación con «;».
+    valores = {"cloth": "costumes2.buzo1_on,16711680,-1,-2", "hats": "costumes.coronaRey_on,65253;5//0,0,40,7"}
+
+    resultado = nucleo.personalizacion_del_editor(LOOK["partes"], valores, ["cloth", "hats"])
+
+    assert resultado["ok"], resultado
+    assert resultado["personalizacion"] == {
+        "cloth": {"colores": [{"color": 0xFF0000}]},
+        "hats": {"colores": [{"color": 65253, "opacidad": 5}], "ajuste": {"x": 0, "y": 0, "rot": 40, "escala": 7}},
+    }
+    assert resultado["quitadas"] == []
+
+
+def test_lo_que_el_editor_corto_con_la_tijera_se_saca(nucleo):
+    resultado = nucleo.personalizacion_del_editor(LOOK["partes"], {"cloth": "costumes2.buzo1_on"}, ["cloth", "hats"])
+
+    assert resultado["quitadas"] == ["hats"]
+    assert resultado["personalizacion"] == {}
+
+
+def test_una_parte_que_el_editor_no_mostro_no_se_saca(nucleo):
+    resultado = nucleo.personalizacion_del_editor(LOOK["partes"], {"cloth": "costumes2.buzo1_on"}, ["cloth"])
+
+    assert resultado["quitadas"] == []
+
+
+def test_la_saturacion_en_cero_vale(nucleo):
+    resultado = nucleo.personalizacion_del_editor(LOOK["partes"], {"cloth": "costumes2.buzo1_on,255;0"}, ["cloth"])
+
+    assert resultado["personalizacion"] == {"cloth": {"colores": [{"color": 255, "opacidad": 0}]}}
+
+
+def test_un_valor_roto_del_editor_no_cambia_nada(nucleo):
+    assert not nucleo.personalizacion_del_editor(LOOK["partes"], {"cloth": "costumes2.buzo1_on,rojo"}, ["cloth"])["ok"]

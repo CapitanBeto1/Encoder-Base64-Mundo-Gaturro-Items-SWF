@@ -269,32 +269,21 @@ dialog.dialogo-mis-looks { position: fixed; inset: 0; margin: auto; width: fit-c
 .zoom-gaturro input[type="range"] { width: 120px; accent-color: var(--amarillo); cursor: pointer; }
 .zoom-escenario { position: relative; z-index: 2; margin-bottom: 6px; background: rgba(34, 42, 69, 0.75); }
 
-/* PROTOTIPO — Personalizar una Pieza (js/personalizar.js): colores por forma y ajuste. */
-/* Sobre el inventario, a la derecha: el Gaturro de la tarjeta queda a la vista y se ve cada cambio. */
-dialog.dialogo-personalizar { width: min(420px, 94vw); margin: auto 24px auto auto; padding: 0; border: 0; border-radius: 16px; background: transparent; }
-dialog.dialogo-personalizar::backdrop { background: rgba(10, 14, 30, 0.12); }
-.panel-personalizar { background: #2b3366; color: #fff; border-radius: 16px; padding: 16px 18px 18px; box-shadow: 0 16px 50px rgba(0, 0, 0, 0.5); max-height: 86vh; overflow: auto; }
-.cabecera-personalizar { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.cabecera-personalizar h2 { margin: 0; font-size: 18px; }
-.panel-personalizar .ayuda { color: #c7cef0; margin: 4px 0 10px; }
-.seccion-personalizar { margin-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.12); padding-top: 12px; }
-.seccion-personalizar[hidden] { display: none; }
-.titulo-seccion { display: flex; align-items: center; gap: 10px; font-weight: 800; margin-bottom: 8px; }
-.filas-color { display: flex; flex-direction: column; gap: 8px; }
-.fila-color { display: flex; align-items: center; gap: 8px; background: rgba(255, 255, 255, 0.06); border-radius: 10px; padding: 6px 8px; }
-.fila-color .nombre-forma { flex: none; min-width: 64px; font-size: 12px; color: #c7cef0; }
-.fila-color input[type="color"] { width: 36px; height: 28px; border: 0; border-radius: 8px; background: none; cursor: pointer; padding: 0; }
-.fila-color input[type="color"]:disabled { opacity: 0.35; cursor: not-allowed; }
-.fila-color .quitar { margin-left: auto; }
-.chip-alterna { font-size: 12px; padding: 4px 10px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.25); background: transparent; color: #fff; cursor: pointer; }
-.chip-alterna[aria-pressed="true"] { background: #f04a4a; border-color: #f04a4a; }
-.sliders-ajuste { display: flex; flex-direction: column; gap: 8px; }
-.fila-ajuste { display: grid; grid-template-columns: 96px 1fr 52px; align-items: center; gap: 10px; }
-.fila-ajuste .nombre-ajuste { font-size: 12px; color: #c7cef0; }
-.fila-ajuste input[type="range"] { width: 100%; accent-color: var(--amarillo); }
-.fila-ajuste .valor-ajuste { font-size: 12px; text-align: right; font-variant-numeric: tabular-nums; }
-.pie-personalizar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 16px; }
-#agregar-forma { margin-top: 8px; }
+/* El editor de Piezas del juego (js/personalizar.js): es el suyo, con su arte, corriendo en vivo. Como en el juego,
+   aparece sobre la pantalla oscurecida; el marco no tiene fondo propio (el panel es del editor). */
+dialog.dialogo-editor-piezas {
+  width: min(1100px, 96vw); height: min(680px, 92vh); max-width: none; max-height: none;
+  padding: 0; border: 0; background: transparent; box-shadow: none; overflow: visible;
+}
+dialog.dialogo-editor-piezas::backdrop { background: rgba(10, 14, 30, 0.6); }
+.editor-piezas { display: block; width: 100%; height: 100%; border: 0; background: transparent; transition: opacity 0.2s ease-out; }
+/* Mientras se abre: el panel del editor, vacío y brillando. El marco sigue en su lugar (sin tamaño, Ruffle no arranca). */
+.dialogo-editor-piezas.cargando .editor-piezas { opacity: 0; }
+.carga-editor-piezas { display: none; }
+.dialogo-editor-piezas.cargando .carga-editor-piezas {
+  display: block; position: absolute; inset: 9% 8%; border-radius: 22px;
+  background: var(--brillo-carga), #222943; animation: ola 1.5s ease-in-out infinite;
+}
 /* Un casillero con Pieza personalizada lleva un puntito. */
-.casillero.personalizada, #personalizar-trucada.personalizada { position: relative; }
-.casillero.personalizada::after, #personalizar-trucada.personalizada::after { content: ""; position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; border-radius: 50%; background: #f04a4a; box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.25); }
+.casillero.personalizada { position: relative; }
+.casillero.personalizada::after { content: ""; position: absolute; top: 4px; left: 4px; width: 8px; height: 8px; border-radius: 50%; background: #f04a4a; box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.25); }

@@ -19,19 +19,32 @@
   // {error: "…"} si no se pudo abrir. Con {foto: número, vestir}, lo viste, espera a que lleguen sus Piezas y
   // contesta {foto: número, imagen: "data:image/png…"}; para eso la página se abre con «?fotos» (dibuja en un
   // lienzo del que se puede leer la imagen).
+  // Con {editar: {piezas, atributos, colores}} abre el editor de Piezas del juego (scripts/gaturro_en_vivo/MMO.as) y
+  // avisa {editor: "abierto", partes: [las que muestra]}, {editor: "guardado", piezas: {parte: valor}} (las que quedaron),
+  // {editor: "cancelado"} (✗ o Escape, como en el juego), {editor: "error"} y {coloresGuardados: "…"} (los que el
+  // jugador guarda con «+»).
   window.RufflePlayer = { config: {
     publicPath: "/ruffle/", polyfills: false, wmode: "transparent", allowScriptAccess: true, autoplay: "on",
     contextMenu: "off", splashScreen: false, unmuteOverlay: "hidden", letterbox: "on", logLevel: "warn",
     ...(location.search.includes("fotos") ? { preferredRenderer: "canvas" } : {}),
   } };
   const avisar = (mensaje) => parent.postMessage(mensaje, "*");
+  // Lo que llama el SWF del editor (ExternalInterface).
+  let editando = false;
+  window.mgEditorAbierto = (json) => { editando = true; avisar({ editor: "abierto", partes: JSON.parse(json) }); };
+  window.mgEditado = (json) => { editando = false; avisar({ editor: "guardado", piezas: JSON.parse(json) }); };
+  window.mgEditorCerrado = () => { editando = false; avisar({ editor: "cancelado" }); };
+  addEventListener("keydown", (e) => { if (e.key === "Escape" && editando) window.mgEditorCerrado(); });
+  window.mgEditorError = (texto) => avisar({ editor: "error", error: texto });
+  window.mgColoresGuardados = (colores) => avisar({ coloresGuardados: colores });
   let player = null;
   let pendiente = null; // lo último que se pidió vestir antes de que el Gaturro estuviera listo
 
   addEventListener("message", (evento) => {
-    const { vestir, zoom, repetir, foto } = evento.data ?? {};
+    const { vestir, zoom, repetir, foto, editar } = evento.data ?? {};
     if (zoom) document.documentElement.style.setProperty("--zoom", String(zoom));
     if (repetir) player?.mgRepetir();
+    if (editar) return void player?.mgEditar(JSON.stringify(editar));
     if (foto) return void fotografiar(foto, vestir);
     if (!vestir) return;
     if (player) player.mgVestir(JSON.stringify(vestir));

@@ -274,7 +274,10 @@ function mostrarCasilleros() {
   }
   $("poniendo-en").hidden = !casilleroMarcado;
   $("texto-poniendo-en").textContent = casilleroMarcado ? `Poniendo en: ${nombreDeParte(casilleroMarcado)}` : "";
-  $("personalizar-pieza").hidden = !(casilleroMarcado && lookActual.partes[casilleroMarcado] && esPersonalizable(casilleroMarcado));
+  const personalizable = hayParaPersonalizar();
+  $("editar-piezas").disabled = !personalizable;
+  $("editar-piezas").title = personalizable ? "Personalizar las Piezas: colores por capa, mover, girar y ajustar"
+    : "Personalizar las Piezas: poné primero una Pieza en el Gaturro";
 }
 
 $("dejar-de-poner").addEventListener("click", () => {

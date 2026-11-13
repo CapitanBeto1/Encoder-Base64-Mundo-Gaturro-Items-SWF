@@ -9,6 +9,7 @@ from mgitems.gaturro import COLORES
 from mgitems.nucleo import Nucleo
 from mgitems.servidor import ServidorDelGaturro
 from sistema_falso import SistemaFalso
+from swf_de_ejemplo import crear_swf
 from test_gaturro import fuente_con
 
 
@@ -109,3 +110,27 @@ def test_lo_demas_no_existe(pagina, ruta):
     with pytest.raises(urllib.error.HTTPError) as error:
         bajar(pagina, ruta)
     assert error.value.code == 404
+
+
+# --- El banner del editor de Piezas ---
+
+def test_el_servidor_le_da_al_editor_su_banner():
+    servidor_local = ServidorDelGaturro(lambda swf: None, lambda nombre: b"CWS-banner" if nombre == "CustomClothBanner" else None)
+    pagina = servidor_local.iniciar()
+    try:
+        assert bajar(pagina, "/banners/CustomClothBanner.swf?33294") == b"CWS-banner"
+        with pytest.raises(urllib.error.HTTPError):
+            bajar(pagina, "/banners/OtroBanner.swf")
+    finally:
+        servidor_local.detener()
+
+
+def test_el_nucleo_solo_da_el_banner_del_editor(tmp_path):
+    banner = crear_swf(["CustomClothBanner", "EditorModalMC"])
+    fuente = fuente_con()
+    fuente.publicar("banners/CustomClothBanner", banner, '"v1"')
+    fuente.publicar("banners/AvatarSaverBanner", crear_swf(["AvatarSaverBanner"]), '"v1"')
+    nucleo = Nucleo(SistemaFalso(tmp_path), fuente=fuente, catalogo=[])
+
+    assert nucleo.banner_del_juego("CustomClothBanner") == banner  # tal cual: el juego verifica su firma
+    assert nucleo.banner_del_juego("AvatarSaverBanner") is None

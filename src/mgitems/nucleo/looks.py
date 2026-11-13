@@ -8,7 +8,9 @@ from mgitems.ffdec import FFDecNoDisponible
 from mgitems.interfaz import BANNERS, CARPETA_BANNERS, DIBUJOS, recortar
 from mgitems.items import orden_natural
 from mgitems.looks import Look, LookInvalido
-from mgitems.personalizar import con_personalizacion, reglas
+from mgitems.personalizar import (
+    PersonalizacionInvalida, con_personalizacion, desde_valores, es_personalizable, normalizar, reglas,
+)
 from mgitems.prendas import PARTES_DEL_CUERPO, PRENDA, no_sirve_de_base
 
 
@@ -44,6 +46,31 @@ class Looks:
                 except OSError:
                     pass
         return {"ok": True, "dibujos": dibujos}
+
+    def para_el_editor(self, partes: dict, colores: dict | None = None, emote: str | None = None,
+                       personalizacion: dict | None = None) -> dict:
+        """Lo que necesita el editor de Piezas del juego (`ClothEditorModal`, en el Gaturro en vivo) para editar el
+        Look: `piezas` (Parte → valor de su Pieza con la personalización, solo las que se pueden personalizar) y
+        `atributos` (los del Gaturro, para su «Visualizar»)."""
+        vivo = self.gaturro_en_vivo(partes, colores, emote, None, personalizacion)
+        if not vivo["ok"]:
+            return vivo
+        atributos = vivo["atributos"]
+        piezas = {p: atributos[p] for p in partes if es_personalizable(p) and atributos.get(p)}
+        return {"ok": True, "piezas": piezas, "atributos": atributos}
+
+    def personalizacion_del_editor(self, partes: dict, valores: dict, editadas: list) -> dict:
+        """La personalización del Look según lo que guardó el editor del juego: `valores` (Parte → valor de Pieza,
+        las que quedaron) de las Partes `editadas` (las que el editor mostró). Las editadas que faltan en `valores`
+        se cortaron con la tijera: van en `quitadas`, para sacarlas del Look, como hace el juego con la Prenda."""
+        if not isinstance(partes, dict) or not isinstance(editadas, list):
+            return {"ok": False, "error": "Lo que devolvió el editor no tiene la forma esperada."}
+        try:
+            personalizacion = normalizar(desde_valores(valores, partes), partes)
+        except PersonalizacionInvalida as e:
+            return {"ok": False, "error": str(e)}
+        quitadas = [p for p in editadas if p in partes and p not in valores]
+        return {"ok": True, "personalizacion": personalizacion, "quitadas": quitadas}
 
     def reglas_de_personalizar(self) -> dict:
         """Qué Partes se pueden personalizar y ajustar, y los topes del ajuste (los del juego, ver `personalizar`)."""

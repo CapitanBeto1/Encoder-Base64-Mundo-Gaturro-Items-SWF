@@ -32,8 +32,6 @@ function mostrarArmadoTrucar() {
     ...(pieza ? [elementoIcono(pieza), etiqueta(`${claseDeRuta(pieza)} (${swfDeRuta(pieza)})`, "nombre")] : [etiqueta("tocá una Pieza de la grilla", "ayuda")])
   );
   $("parte-trucar").value = lookActual.parte;
-  $("personalizar-trucada").hidden = !(pieza && esPersonalizable(lookActual.parte));
-  $("personalizar-trucada").classList.toggle("personalizada", tienePersonalizacion(lookActual.parte));
   $("agregar-trucada").disabled = !conectado || ocupado || !pieza || !lookActual.base;
   $("titulo-lista-trucadas").textContent = "Prendas trucadas";
   $("cantidad-trucadas").textContent = `(${lookActual.lista.length})`;

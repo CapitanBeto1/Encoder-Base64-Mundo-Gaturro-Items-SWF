@@ -1,12 +1,13 @@
 """Arma el SWF del Gaturro en vivo (docs/adr/0009) con el archivo que baja `obtener_binarios.py`.
 
 Lo bajado (`anim_preview.swf`, de naw-trucador) trae el Gaturro del juego (`assets.GaturroMC`, el actual, con
-todas sus animaciones) y el código del juego que lo viste (`Gaturro` y sus ayudantes). Con FFDec se le cambian
-tres clases por las de `scripts/gaturro_en_vivo/`:
+todas sus animaciones) y el código del juego que lo viste (`Gaturro` y sus ayudantes), y también su editor de Piezas
+(`ClothEditorModal`). Con FFDec se le cambian unas clases por las de `scripts/gaturro_en_vivo/`:
 
-- `MMO`, la clase principal: crea un `Gaturro` del juego y recibe sus atributos de la página (`mgVestir`);
-- `api` y `user`, dos globales del juego que el `Gaturro` consulta: pasan a aceptar cualquier objeto, para
-  darle los mínimos que necesita sin armar el juego entero.
+- `MMO`, la clase principal: crea un `Gaturro` del juego y recibe sus atributos de la página (`mgVestir`), y abre el
+  editor de Piezas (`mgEditar`);
+- `api`, `user`, `region`, `server` y `audio`, globales del juego que consultan el `Gaturro` y el editor: pasan a
+  aceptar cualquier objeto, para darles los mínimos que necesitan sin armar el juego entero.
 
 El resto del archivo queda como vino.
 """
