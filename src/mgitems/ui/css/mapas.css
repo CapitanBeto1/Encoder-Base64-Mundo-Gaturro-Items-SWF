@@ -1,0 +1,61 @@
+/* Pestaña Mapas */
+
+#vista-mapas > .ayuda {
+  padding: 12px 16px;
+  border-radius: var(--radio);
+  background: rgba(10, 10, 10, 0.72);
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.45;
+}
+
+.mapas-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 16px 0;
+}
+
+.btn-mapa {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: var(--radio);
+  border: 2px solid rgba(255, 255, 255, 0.22);
+  background: rgba(10, 10, 10, 0.72);
+  color: #fff;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s, border-color 0.12s, transform 0.08s;
+}
+
+.btn-mapa .nombre-mapa {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.btn-mapa .descripcion-mapa {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.btn-mapa:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.45);
+  transform: translateY(-1px);
+}
+
+.btn-mapa:active {
+  transform: translateY(0);
+}
+
+.btn-mapa.activo {
+  background: linear-gradient(to bottom, #fc3f3d 0%, #a60400 100%);
+  border-color: #a60400;
+}
+
+.btn-mapa.activo .descripcion-mapa {
+  color: rgba(255, 255, 255, 0.85);
+}

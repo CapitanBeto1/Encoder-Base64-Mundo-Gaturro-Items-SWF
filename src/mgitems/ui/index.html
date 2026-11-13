@@ -19,6 +19,7 @@
   <link rel="stylesheet" href="css/textos.css">
   <link rel="stylesheet" href="css/toques.css">
   <link rel="stylesheet" href="css/terminator.css">
+  <link rel="stylesheet" href="css/mapas.css">
   <link rel="stylesheet" href="css/monedas.css">
 </head>
 <body>
@@ -87,6 +88,7 @@
     <button id="pestana-minijuegos" class="pestana" role="tab" aria-selected="false" aria-controls="vista-looks" title="Minijuegos"><span data-icono="game-controller"></span> Minijuegos</button>
     <button id="pestana-fondos" class="pestana" role="tab" aria-selected="false" aria-controls="vista-looks" title="Fondos"><span data-icono="images-square"></span> Fondos</button>
     <span class="grupo-pestanas" role="presentation">Juego</span>
+    <button id="pestana-mapas" class="pestana" role="tab" aria-selected="false" aria-controls="vista-mapas" title="Mapas interactivos para la casa"><span data-icono="map-trifold"></span> Mapas</button>
     <button id="pestana-monedas" class="pestana" role="tab" aria-selected="false" aria-controls="vista-monedas" title="Recibir monedas"><span data-icono="coin"></span> Monedas</button>
     <button id="pestana-terminator" class="pestana" role="tab" aria-selected="false" aria-controls="vista-terminator" title="Desbloquear objetos del juego"><span data-icono="lock-open"></span> Desbloquear</button>
   </nav>
@@ -327,6 +329,13 @@
           <button id="entregar-look" class="primario entregar">Agregar al juego</button>
         </div>
       </div>
+      <div id="vista-mapas" class="vista" role="tabpanel" hidden>
+        <h2>Mapas interactivos</h2>
+        <p class="ayuda">Elegí un mapa y tocá «Agregar al juego». Llega a tu inventario como una computadora: ponela en la casa y en su lugar aparece el mapa. No se ve, ocupa un casillero y no abre ningún cartel. Solo lo ves vos (en el juego de escritorio parcheado).</p>
+        <div id="mapas-lista" class="mapas-lista"></div>
+        <p id="mensaje-mapas" class="mensaje" role="status" aria-live="polite"></p>
+      </div>
+
       <div id="vista-monedas" class="vista" role="tabpanel" hidden>
 
         <div class="monedas-pantalla">
@@ -612,6 +621,7 @@
   <script src="js/npcs.js"></script>
   <script src="js/acciones.js"></script>
   <script src="js/entorno.js"></script>
+  <script src="js/mapas.js"></script>
   <script src="js/monedas.js"></script>
   <script src="js/agregar.js"></script>
   <script src="js/busqueda.js"></script>

@@ -228,7 +228,9 @@ button.chip-look[aria-pressed="true"] {
   font-size: 12px;
 }
 
-main.modo-monedas .buscador-swf {
+main.modo-monedas .buscador-swf,
+main.modo-mapas .buscador-swf,
+main.modo-mapas #generar {
   display: none;
 }
 
