@@ -29,7 +29,7 @@ El Gaturro del juego corriendo dentro del programa con el código del juego: rec
 _Avoid_: preview, visor
 
 **Personalización** (de una Pieza):
-Los colores por capa (o quitar una capa, con su saturación) y el ajuste (mover, girar, escalar) de una Pieza del Look, como los guarda el «Customiza tu ropa» del juego: en el mismo texto de la Pieza (`pack.Clase_on,colores//x,y,rotación,escala`). Viaja con el Look a la vista previa, a la entrega y a los guardados.
+Los colores por capa (o quitar una capa, con su saturación) y el ajuste (mover, girar, escalar) de una Pieza del Look, como los guarda el «Customiza tu ropa» del juego: en el mismo texto de la Pieza (`pack.Clase_on,colores//x,y,rotación,escala`). Se edita con el editor del juego, en vivo, y viaja con el Look a la vista previa, a la entrega y a los guardados (ADR 0009).
 _Avoid_: customización
 
 ## Truqueo

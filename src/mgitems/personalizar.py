@@ -30,6 +30,9 @@ PARTES_ROTABLES = ("hairs", "hats", "accesories", "mouths", "neck", "cloth", "le
 # (`GaturroEffectsManager.applyHead`) y el transporte no pinta formas (`Gaturro.add`). La acción no es una Parte.
 PARTES_SIN_PERSONALIZAR = frozenset({"effect", "transport", "action"})
 MAXIMO_FORMAS = 999  # el editor del juego escribe todas las formas de la Pieza, aunque no las toque
+# El banner del juego con el arte de su editor de Piezas («Customiza tu ropa»: `ClothEditorModal`). El programa lo
+# baja del CDN para el editor en vivo, como hace el juego.
+BANNER_DEL_EDITOR = "CustomClothBanner"
 
 
 class PersonalizacionInvalida(ValueError):
@@ -200,4 +203,20 @@ def es_valor_valido(valor: str) -> bool:
     if sep and (not cola_ajuste or not all(_TOKEN_AJUSTE.match(t) for t in cola_ajuste.split(","))):
         return False
     return True
+
+
+def desde_valores(valores: dict, partes: dict[str, str]) -> dict[str, dict]:
+    """La personalización (sin normalizar) que dicen los valores de Pieza `valores` (Parte → `pack.Clase_on,…//…`,
+    como los guarda el editor del juego). Se ignora el valor de una Parte que no tiene esa Pieza en `partes`.
+    Lanza `PersonalizacionInvalida` si un valor no tiene la forma esperada."""
+    if not isinstance(valores, dict):
+        raise PersonalizacionInvalida("Lo que devolvió el editor no tiene la forma esperada.")
+    resultado = {}
+    for parte, valor in valores.items():
+        if not isinstance(valor, str) or not es_valor_valido(valor):
+            raise PersonalizacionInvalida(f"El editor devolvió una Pieza que no tiene la forma esperada: {valor!r}")
+        ruta, colores, ajuste = separar(valor)
+        if partes.get(parte) == ruta:
+            resultado[parte] = {"colores": colores, "ajuste": ajuste}
+    return resultado
 

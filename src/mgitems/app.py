@@ -131,7 +131,7 @@ def _dialogo(tipo, **opciones) -> str | None:
 
 def main() -> None:
     nucleo = Nucleo()
-    servidor = ServidorDelGaturro(nucleo.swf_del_juego)
+    servidor = ServidorDelGaturro(nucleo.swf_del_juego, nucleo.banner_del_juego)
     webview.create_window(
         TITULO,
         url=str(UI),
