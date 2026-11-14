@@ -5,11 +5,10 @@ import zlib
 import pytest
 
 from fuente_falsa import FuenteFalsa
-from mgitems.categorias import animadas, piezas_que_pone, se_mueven
-from mgitems.prendas import leer_item_base
+from mgitems.categorias import animadas, piezas_que_ponen, se_mueven
 from mgitems.swf import ADENTRO, RAIZ, movimientos
 from swf_de_ejemplo import LADO, _cuadrado, _rect, _tag
-from test_categorias import nucleo_con, por_ruta
+from test_categorias import clase_con, nucleo_con, por_ruta
 from test_mochila import codigo_mochila
 from test_prendas import PrendasFalsas, codigo_prenda
 
@@ -89,15 +88,21 @@ def test_lo_que_su_codigo_frena_no_se_mueve_salvo_lo_de_adentro():
     assert se_mueven({"fondo": RAIZ, "gorro": ADENTRO, "chispas": RAIZ}, fuentes) == {"gorro", "chispas"}
 
 
-def test_las_piezas_que_pone_un_item():
-    prenda = leer_item_base(codigo_prenda("gorro", {"hats": "gorro_on", "neck": "costumes.collar_on"}))
-    pocion = leer_item_base(codigo_mochila("pocion", "ConsumableMamboAsset",
-                                           'adds.effect = "head.granja.crecePrueba";\n         adds.action = "drink.potions.tomar_on";'))
-    filtro = leer_item_base(codigo_mochila("sepia", "ConsumableMamboAsset", 'adds.effect = "sepia";'))
+def test_las_piezas_que_pone_cada_item():
+    fuentes = {
+        "gorro": codigo_prenda("gorro", {"hats": "gorro_on", "neck": "costumes.collar_on"}),
+        "pocion": codigo_mochila("pocion", "ConsumableMamboAsset",
+                                 'adds.effect = "head.granja.crecePrueba";\n         adds.action = "drink.potions.tomar_on";'),
+        "sepia": codigo_mochila("sepia", "ConsumableMamboAsset", 'adds.effect = "sepia";'),
+        "alas": clase_con("alas", "TransportMamboAsset", 'vehicle = "alas_on";'),
+        "TransportMamboAsset": clase_con("TransportMamboAsset", "MamboAsset", 'vehicle = "nada_on";'),
+    }
 
-    assert piezas_que_pone("ropa", prenda) == ["ropa.gorro_on", "costumes.collar_on"]
-    assert piezas_que_pone("potions", pocion) == ["granja.crecePrueba"]  # el efecto sí; la animación de tomarla, no
-    assert piezas_que_pone("potions", filtro) == []  # un filtro no es una Pieza
+    assert piezas_que_ponen("ropa", fuentes) == {
+        "gorro": ["ropa.gorro_on", "costumes.collar_on"],
+        "pocion": ["granja.crecePrueba"],  # el efecto sí; la animación de tomarla, no
+        "alas": ["ropa.alas_on"],  # el vehículo, que el Gaturro lleva al usarlo
+    }  # «sepia» es un filtro, no una Pieza; la clase base no es un Item
 
 
 def test_un_item_que_pone_una_pieza_que_se_mueve_se_ve_animado():

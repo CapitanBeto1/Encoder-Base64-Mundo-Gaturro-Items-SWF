@@ -8,7 +8,7 @@ from mgitems.cache_swf import CacheSwf
 from mgitems.catalogo import buscar_en_catalogo
 from mgitems.categorias import (
     CASA, CacheCategorias, animadas, categorias, decoracion_en_acciones, donde_se_ven, es_decoracion, otros_usos,
-    piezas_que_pone, se_mueven, tipos_de_items, usos_de_piezas,
+    piezas_que_ponen, se_mueven, tipos_de_items, usos_de_piezas,
 )
 from mgitems.destinos import DESCARTADO, es_de_pasaporte, motivo_de
 from mgitems.ffdec import FFDecNoDisponible
@@ -205,7 +205,7 @@ class Swfs:
             tipos = {clase: tipo for clase, tipo in tipos_de_items(swf, fuentes).items() if clase in items}
             limites = limites_de_simbolos(data)
             se_ve = donde_se_ven(swf, list(piezas), fuentes, limites) | decoracion_en_acciones(swf, tipos, limites)
-            pone = {clase: piezas_que_pone(swf, item) for clase, item in items_base.items()}
+            pone = {clase: rutas for clase, rutas in piezas_que_ponen(swf, fuentes).items() if clase in items}
             propias = se_mueven(movimientos(data), fuentes) & set(items + piezas_del_swf(clases))
             animadas_del_swf = animadas(swf, propias, pone, self._se_mueve_en_el_indice)
             cache.guardar(swf, version, piezas, otros, tipos, se_ve, animadas_del_swf)

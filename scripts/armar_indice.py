@@ -52,7 +52,7 @@ sys.path.insert(0, str(RAIZ / "src"))
 
 from mgitems.catalogo import cargar_catalogo  # noqa: E402
 from mgitems.categorias import (  # noqa: E402
-    ARCHIVO_INDICE, MASCOTA, animadas, categorias, decoracion_en_acciones, donde_se_ven, otros_usos, piezas_que_pone, se_mueven,
+    ARCHIVO_INDICE, MASCOTA, animadas, categorias, decoracion_en_acciones, donde_se_ven, otros_usos, piezas_que_ponen, se_mueven,
     tipos_de_items, usos_de_piezas,
 )
 from mgitems.ffdec import FFDecNoDisponible  # noqa: E402
@@ -118,7 +118,7 @@ def analizar(fuente: FuenteCDN, ffdec: ItemsBaseFFDec, trabajo: Path, swf: str) 
         "items": {clase: tipo for clase, tipo in tipos_de_items(swf, fuentes).items() if clase in items},
         "se_ve": donde_se_ven(swf, piezas, fuentes, limites),
         "se_mueven": sorted(se_mueven(movimientos(data), fuentes) & set(items + piezas)),
-        "pone": {clase: rutas for clase, item in items_base.items() if (rutas := piezas_que_pone(swf, item))},
+        "pone": {clase: rutas for clase, rutas in piezas_que_ponen(swf, fuentes).items() if clase in items},
     }
     guardado.write_text(json.dumps(datos, ensure_ascii=False), encoding="utf-8")
     return swf, con_decoracion(swf, datos, data), ""

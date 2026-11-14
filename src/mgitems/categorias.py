@@ -193,26 +193,34 @@ def _se_frena(fuente: str) -> bool:
     return bool(primero and _FRENO.search(primero.group("cuerpo")))
 
 
-def piezas_que_pone(swf: str, item: ItemBase) -> list[str]:
-    """Las Piezas ("swf.Clase") que el Item le pone al Gaturro: las que viste y la de su efecto de cabeza. No la de su
-    acción, la animación de usarlo: la tiene cualquier Item que se usa."""
-    rutas = []
-    for parte, valor in item.partes.items():
-        if parte == EFECTO:
-            if not valor.startswith(PREFIJO_EFECTO):
-                continue  # un filtro («sepia», «ghost»…), no una Pieza
-            valor = valor.removeprefix(PREFIJO_EFECTO)
-        elif parte == PARTE_ACCION or (item.tipo != PRENDA and parte not in PARTES_QUE_VISTEN):
+def piezas_que_ponen(swf: str, fuentes: dict[str, str]) -> dict[str, list[str]]:
+    """Item → las Piezas ("swf.Clase") que le pone al Gaturro: las que viste, la de su efecto de cabeza y, si es un
+    transporte, su vehículo. No la de su acción, la animación de usarlo: la tiene cualquier Item que se usa. Solo los
+    Items que ponen alguna. `fuentes`: clase → código AS3."""
+    pone = {}
+    for fuente in fuentes.values():
+        clase = _CLASE.search(fuente)
+        if not clase or clase.group(1).endswith("MamboAsset"):  # las clases base que trae cada SWF
             continue
-        otro, _, clase = valor.rpartition(".")
-        if clase:
-            rutas.append(f"{otro or swf}.{clase}")
-    return rutas
+        valores = _VEHICULO.findall(fuente) if clase.group(2) == "TransportMamboAsset" else []
+        if item := leer_item_base(fuente):
+            for parte, valor in item.partes.items():
+                if parte == EFECTO:
+                    if not valor.startswith(PREFIJO_EFECTO):
+                        continue  # un filtro («sepia», «ghost»…), no una Pieza
+                    valor = valor.removeprefix(PREFIJO_EFECTO)
+                elif parte == PARTE_ACCION or (item.tipo != PRENDA and parte not in PARTES_QUE_VISTEN):
+                    continue
+                valores.append(valor)
+        rutas = [f"{otro or swf}.{pieza}" for otro, _, pieza in (v.rpartition(".") for v in valores) if pieza]
+        if rutas:
+            pone[clase.group(1)] = rutas
+    return pone
 
 
 def animadas(swf: str, propias: set[str], pone: dict[str, list[str]], se_mueve_en_otro=lambda ruta: False) -> list[str]:
     """Las clases de `swf` que se ven animadas: las que se mueven (`propias`, ver `se_mueven`) y los Items que le
-    ponen al Gaturro una Pieza que se mueve (`pone`: Item → Piezas, ver `piezas_que_pone`; las de otro SWF, según
+    ponen al Gaturro una Pieza que se mueve (`pone`: Item → Piezas, ver `piezas_que_ponen`; las de otro SWF, según
     `se_mueve_en_otro(ruta)`)."""
     resultado = set(propias)
     for item, rutas in pone.items():
