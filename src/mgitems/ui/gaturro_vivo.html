@@ -22,7 +22,7 @@
   // Con {editar: {piezas, atributos, colores}} abre el editor de Piezas del juego (scripts/gaturro_en_vivo/MMO.as) y
   // avisa {editor: "abierto", partes: [las que muestra]}, {editor: "guardado", piezas: {parte: valor}} (las que quedaron),
   // {editor: "cancelado"} (✗ o Escape, como en el juego), {editor: "error"} y {coloresGuardados: "…"} (los que el
-  // jugador guarda con «+»).
+  // jugador guarda con «+»). Con {pausa: true} se queda quieto hasta {pausa: false} (el de las fotos, no).
   window.RufflePlayer = { config: {
     publicPath: "/ruffle/", polyfills: false, wmode: "transparent", allowScriptAccess: true, autoplay: "on",
     contextMenu: "off", splashScreen: false, unmuteOverlay: "hidden", letterbox: "on", logLevel: "warn",
@@ -30,11 +30,38 @@
   // Las fotos se leen del lienzo de WebGL, el mismo dibujador de los demás Gaturros: sin esto, el navegador borra lo
   // dibujado apenas lo muestra y la imagen sale vacía. (El dibujador «canvas» de Ruffle se puede leer siempre, pero es
   // el más limitado y guardaba cada dibujo en la memoria de video: con 29 fotos, casi 2 GB.)
-  if (location.search.includes("fotos")) {
+  const FOTOS = location.search.includes("fotos");
+  if (FOTOS) {
     const contexto = HTMLCanvasElement.prototype.getContext;
     HTMLCanvasElement.prototype.getContext = function (tipo, opciones) {
       return contexto.call(this, tipo, tipo.startsWith("webgl") ? { ...opciones, preserveDrawingBuffer: true } : opciones);
     };
+  }
+  // En pausa, el Gaturro queda quieto en el cuadro en que estaba, sin gastar: Ruffle avanza cuadro a cuadro con
+  // requestAnimationFrame y, mientras dura la pausa, no se le da ninguno (lo mismo que hace el navegador con un marco
+  // oculto). Al terminar, sigue desde ahí. Lo que se le pide estando en pausa (otra ropa, otro tamaño) se termina de
+  // dibujar y después queda quieto otra vez; mientras arranca, no se pausa.
+  let enPausa = false;
+  let pausaPedida = false;
+  let despierto = 0; // cuántos pedidos se están terminando de dibujar
+  const cuadrosEnPausa = [];
+  const pedirCuadro = window.requestAnimationFrame.bind(window);
+  window.requestAnimationFrame = (siguiente) => (enPausa ? (cuadrosEnPausa.push(siguiente), 0) : pedirCuadro(siguiente));
+  function ponerEnPausa(si) {
+    enPausa = si && !FOTOS && player !== null;
+    if (!enPausa) for (const siguiente of cuadrosEnPausa.splice(0)) pedirCuadro(siguiente);
+  }
+  function pausar(si) {
+    pausaPedida = si;
+    if (!despierto) ponerEnPausa(si);
+  }
+  async function despertarUnRato() {
+    if (!pausaPedida) return;
+    despierto++;
+    ponerEnPausa(false);
+    for (let i = 0; i < 100 && !(i > 1 && player?.mgCargado()); i++) await esperar(50);
+    await esperar(300);
+    if (--despierto === 0) ponerEnPausa(pausaPedida);
   }
   const avisar = (mensaje) => parent.postMessage(mensaje, "*");
   // Lo que llama el SWF del editor (ExternalInterface).
@@ -49,14 +76,15 @@
   let pendiente = null; // lo último que se pidió vestir antes de que el Gaturro estuviera listo
 
   addEventListener("message", (evento) => {
-    const { vestir, zoom, repetir, foto, editar } = evento.data ?? {};
+    const { vestir, zoom, repetir, foto, editar, pausa } = evento.data ?? {};
+    if (pausa !== undefined) pausar(pausa);
     if (zoom) document.documentElement.style.setProperty("--zoom", String(zoom));
-    if (repetir) player?.mgRepetir();
-    if (editar) return void player?.mgEditar(JSON.stringify(editar));
     if (foto) return void fotografiar(foto, vestir);
-    if (!vestir) return;
-    if (player) player.mgVestir(JSON.stringify(vestir));
-    else pendiente = vestir;
+    if (repetir) player?.mgRepetir();
+    if (editar) player?.mgEditar(JSON.stringify(editar));
+    else if (vestir && player) player.mgVestir(JSON.stringify(vestir));
+    else if (vestir) pendiente = vestir;
+    if (zoom || repetir || editar || vestir) despertarUnRato();
   });
 
   const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -83,6 +111,7 @@
     if (typeof nuevo.mgVestir !== "function") throw new Error("el Gaturro no arrancó");
     player = nuevo;
     if (pendiente) player.mgVestir(JSON.stringify(pendiente));
+    despertarUnRato(); // si mientras arrancaba se pidió la pausa, queda quieto cuando termina de dibujarse
     avisar({ listo: true });
   }
   abrir().catch((e) => avisar({ error: String(e.message ?? e) }));
