@@ -17,8 +17,8 @@
   // Lo maneja la interfaz con mensajes: {vestir: atributos} (los de `Nucleo.gaturro_en_vivo`), {zoom: número} y
   // {repetir: true} (la acción, desde el principio). Avisa {listo: true} cuando el Gaturro ya se puede vestir, o
   // {error: "…"} si no se pudo abrir. Con {foto: número, vestir}, lo viste, espera a que lleguen sus Piezas y
-  // contesta {foto: número, imagen: "data:image/png…"}; para eso la página se abre con «?fotos» (dibuja en un
-  // lienzo del que se puede leer la imagen).
+  // contesta {foto: número, imagen: "data:image/png…"}; para eso la página se abre con «?fotos» (el lienzo conserva
+  // lo último que dibujó, para poder leer la imagen).
   // Con {editar: {piezas, atributos, colores}} abre el editor de Piezas del juego (scripts/gaturro_en_vivo/MMO.as) y
   // avisa {editor: "abierto", partes: [las que muestra]}, {editor: "guardado", piezas: {parte: valor}} (las que quedaron),
   // {editor: "cancelado"} (✗ o Escape, como en el juego), {editor: "error"} y {coloresGuardados: "…"} (los que el
@@ -26,8 +26,16 @@
   window.RufflePlayer = { config: {
     publicPath: "/ruffle/", polyfills: false, wmode: "transparent", allowScriptAccess: true, autoplay: "on",
     contextMenu: "off", splashScreen: false, unmuteOverlay: "hidden", letterbox: "on", logLevel: "warn",
-    ...(location.search.includes("fotos") ? { preferredRenderer: "canvas" } : {}),
   } };
+  // Las fotos se leen del lienzo de WebGL, el mismo dibujador de los demás Gaturros: sin esto, el navegador borra lo
+  // dibujado apenas lo muestra y la imagen sale vacía. (El dibujador «canvas» de Ruffle se puede leer siempre, pero es
+  // el más limitado y guardaba cada dibujo en la memoria de video: con 29 fotos, casi 2 GB.)
+  if (location.search.includes("fotos")) {
+    const contexto = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = function (tipo, opciones) {
+      return contexto.call(this, tipo, tipo.startsWith("webgl") ? { ...opciones, preserveDrawingBuffer: true } : opciones);
+    };
+  }
   const avisar = (mensaje) => parent.postMessage(mensaje, "*");
   // Lo que llama el SWF del editor (ExternalInterface).
   let editando = false;
