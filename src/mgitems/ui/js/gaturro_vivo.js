@@ -63,17 +63,29 @@ function gaturroVivo(marco, tamano = 1) {
 
 // --- Fotos del Gaturro en vivo: para donde hay muchos a la vez (las miniaturas de los guardados) ---
 
-// Un Gaturro que no se ve: se viste, se le saca la foto y pasa al siguiente. Cada foto se saca una sola vez.
+// Un Gaturro que no se ve: se viste, se le saca la foto y pasa al siguiente. Cada foto se saca una sola vez. Cuando no
+// quedan fotos por sacar, se cierra: abierto, se sigue dibujando aunque no se vea, y gasta CPU y memoria.
 const fotosDelGaturro = new Map(); // atributos (JSON) → la imagen, o la promesa de la imagen
-let fotografo = null; // el marco, ya abierto
+let fotografo = null; // la promesa del marco, ya abierto
 let turnoDeFoto = Promise.resolve(); // de a una
 let fotosPedidas = 0;
+let fotosPorSacar = 0;
+let cierreDelFotografo = null;
+const ESPERA_ANTES_DE_CERRAR_EL_FOTOGRAFO = 3000; // si enseguida se piden más (otro guardado), las saca el mismo
 
 function abrirFotografo() {
   const marco = Object.assign(document.createElement("iframe"), { className: "fotografo-del-gaturro", tabIndex: -1 });
   marco.setAttribute("aria-hidden", "true");
   document.body.append(marco);
-  return abrirGaturroEn(marco, "?fotos").then(() => marco);
+  return abrirGaturroEn(marco, "?fotos").then(() => marco, (error) => {
+    marco.remove();
+    throw error;
+  });
+}
+
+function cerrarFotografo() {
+  fotografo?.then((marco) => marco.remove(), () => {});
+  fotografo = null;
 }
 
 // La imagen (data:image/png…) del Gaturro quieto con esas Piezas, colores, emoción y personalización, o null si no
@@ -83,6 +95,8 @@ async function fotoDelGaturro(partes, colores, emote = null, personalizacion = n
   if (!resultado.ok) return null;
   const clave = JSON.stringify(resultado.atributos);
   if (!fotosDelGaturro.has(clave)) {
+    fotosPorSacar++;
+    clearTimeout(cierreDelFotografo);
     const foto = turnoDeFoto.then(async () => {
       const marco = await (fotografo ??= abrirFotografo());
       const numero = ++fotosPedidas;
@@ -90,9 +104,11 @@ async function fotoDelGaturro(partes, colores, emote = null, personalizacion = n
       marco.contentWindow.postMessage({ foto: numero, vestir: resultado.atributos, zoom: 1.6 }, "*");
       return (await respuesta).imagen;
     }).catch(() => {
-      fotografo = null; // la próxima foto lo abre de nuevo
+      cerrarFotografo(); // la próxima foto lo abre de nuevo
       fotosDelGaturro.delete(clave);
       return null;
+    }).finally(() => {
+      if (--fotosPorSacar === 0) cierreDelFotografo = setTimeout(cerrarFotografo, ESPERA_ANTES_DE_CERRAR_EL_FOTOGRAFO);
     });
     fotosDelGaturro.set(clave, foto);
     turnoDeFoto = foto;
