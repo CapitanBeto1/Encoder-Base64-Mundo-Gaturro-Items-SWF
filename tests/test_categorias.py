@@ -66,7 +66,8 @@ def test_del_indice_sin_descargar_ni_analizar(tmp_path, fuente, ffdec):
 
     assert resultado["ok"], resultado
     assert por_ruta(resultado)["costumes.coronaRey_on"] == {
-        "ruta": "costumes.coronaRey_on", "clase": "coronaRey_on", "swf": "costumes", "partes": ["hats"], "uso": None, "pasaporte": False, "sin_accion": None}
+        "ruta": "costumes.coronaRey_on", "clase": "coronaRey_on", "swf": "costumes", "partes": ["hats"], "uso": None, "pasaporte": False, "sin_accion": None,
+        "se_mueve": False}
     assert por_ruta(resultado)["costumes.raro_on"]["partes"] == []  # "Otros"
     assert fuente.descargas == [] and ffdec.analisis == 0
 
@@ -157,7 +158,8 @@ def test_una_copia_de_la_misma_version_usa_el_indice(tmp_path, fuente, ffdec):
 
     resultado = nucleo.piezas_de_swfs(["clothes1"])
 
-    assert resultado["piezas"] == [{"ruta": "clothes1.remera5_on", "clase": "remera5_on", "swf": "clothes1", "partes": ["leg"], "uso": None, "pasaporte": False, "sin_accion": None}]
+    assert resultado["piezas"] == [{"ruta": "clothes1.remera5_on", "clase": "remera5_on", "swf": "clothes1", "partes": ["leg"], "uso": None, "pasaporte": False, "sin_accion": None,
+                                   "se_mueve": False}]
     assert ffdec.analisis == 0
 
 
@@ -233,9 +235,9 @@ def test_los_items_vienen_del_indice(tmp_path, fuente, ffdec):
 
     assert resultado["items"] == [
         {"ruta": "costumes.coronaRey", "clase": "coronaRey", "swf": "costumes", "tipo": "prenda", "partes": ["hats"], "mascota": None,
-         "destino": "guardarropa", "motivo": None, "parecido": [], "pasaporte": False, "dibujo": False, "no_sirve_de_base": None},
+         "destino": "guardarropa", "motivo": None, "parecido": [], "pasaporte": False, "dibujo": False, "se_mueve": False, "no_sirve_de_base": None},
         {"ruta": "costumes.trono", "clase": "trono", "swf": "costumes", "tipo": "casa", "partes": [], "mascota": None,
-         "destino": "casa", "motivo": None, "parecido": [], "pasaporte": False, "dibujo": False, "no_sirve_de_base": None},
+         "destino": "casa", "motivo": None, "parecido": [], "pasaporte": False, "dibujo": False, "se_mueve": False, "no_sirve_de_base": None},
     ]
     assert fuente.descargas == [] and ffdec.analisis == 0
 

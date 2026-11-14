@@ -22,6 +22,9 @@ Cada Pieza se ubica con lo primero que corresponda:
 6. ...salvo que la primera palabra de su nombre casi siempre vaya en la misma Parte en el juego
    (`remeraGranjero` → Torso, `remeraGranjero_brazo` → Brazos).
 
+Además anota qué se ve animado (`animadas`, ver `categorias.animadas`): los Items y las Piezas cuyo dibujo se mueve, y
+los Items que le ponen al Gaturro una Pieza que se mueve, de cualquier SWF.
+
 Tarda: FFDec analiza cada SWF (unos segundos cada uno). Necesita Java y FFDec en `vendor/`, y
 scikit-learn para los pasos 4 y 5 (`pip install -e ".[indice]"`).
 
@@ -49,7 +52,8 @@ sys.path.insert(0, str(RAIZ / "src"))
 
 from mgitems.catalogo import cargar_catalogo  # noqa: E402
 from mgitems.categorias import (  # noqa: E402
-    ARCHIVO_INDICE, MASCOTA, categorias, decoracion_en_acciones, donde_se_ven, otros_usos, tipos_de_items, usos_de_piezas,
+    ARCHIVO_INDICE, MASCOTA, animadas, categorias, decoracion_en_acciones, donde_se_ven, otros_usos, piezas_que_pone, se_mueven,
+    tipos_de_items, usos_de_piezas,
 )
 from mgitems.ffdec import FFDecNoDisponible  # noqa: E402
 from mgitems.fuente import FuenteCDN, SwfNoEncontrado  # noqa: E402
@@ -57,10 +61,10 @@ from mgitems.iconos import version_de  # noqa: E402
 from mgitems.items import items_del_swf, piezas_del_swf  # noqa: E402
 from mgitems.destinos import PARTES_DEL_GATURRO  # noqa: E402
 from mgitems.prendas import PRENDA, ItemsBaseFFDec, leer_item_base  # noqa: E402
-from mgitems.swf import SwfInvalido, leer_clases, limites_de_simbolos  # noqa: E402
+from mgitems.swf import SwfInvalido, leer_clases, limites_de_simbolos, movimientos  # noqa: E402
 
 # Sube cuando cambia lo que se guarda de cada SWF en la carpeta de trabajo.
-FORMATO_TRABAJO = 17
+FORMATO_TRABAJO = 18  # 18: lo que se mueve
 # Seguridad mínima para ubicar una Pieza en el paso 4. Con 0.7, al probarlo con las Piezas que el
 # juego ya ubica, acertó el 98-99 %.
 SEGURIDAD_MINIMA = 0.7
@@ -80,8 +84,8 @@ def descargar(fuente: FuenteCDN, swf: str, intentos: int = 4) -> bytes:
 
 
 def analizar(fuente: FuenteCDN, ffdec: ItemsBaseFFDec, trabajo: Path, swf: str) -> tuple[str, dict | None, str]:
-    """(swf, {"version", "piezas", "usos", "otros_usos", "limites", "items"}, error). Reusa el análisis guardado
-    si el SWF no cambió."""
+    """(swf, {"version", "piezas", "usos", "otros_usos", "limites", "items", "se_ve", "se_mueven", "pone"}, error). Reusa
+    el análisis guardado si el SWF no cambió."""
     try:
         data = descargar(fuente, swf)
     except SwfNoEncontrado:
@@ -113,6 +117,8 @@ def analizar(fuente: FuenteCDN, ffdec: ItemsBaseFFDec, trabajo: Path, swf: str) 
         "otros_usos": otros_usos(swf, fuentes), "limites": {p: limites[p] for p in piezas if p in limites},
         "items": {clase: tipo for clase, tipo in tipos_de_items(swf, fuentes).items() if clase in items},
         "se_ve": donde_se_ven(swf, piezas, fuentes, limites),
+        "se_mueven": sorted(se_mueven(movimientos(data), fuentes) & set(items + piezas)),
+        "pone": {clase: rutas for clase, item in items_base.items() if (rutas := piezas_que_pone(swf, item))},
     }
     guardado.write_text(json.dumps(datos, ensure_ascii=False), encoding="utf-8")
     return swf, con_decoracion(swf, datos, data), ""
@@ -328,6 +334,8 @@ def main() -> None:
             motivos["no parece ropa"] += 1
 
     completar_prendas_rotas(analizados, partes, por_palabra)
+    # Lo que se mueve, para los Items que ponen una Pieza de otro SWF.
+    se_mueve = {f"{swf}.{clase}" for swf, datos in analizados.items() for clase in datos["se_mueven"]}
 
     indice = {"swfs": {
         swf: {
@@ -336,12 +344,14 @@ def main() -> None:
             "otros_usos": {pieza: otros[(swf, pieza)] for pieza in datos["piezas"] if (swf, pieza) in otros},
             "items": datos["items"],
             "se_ve": datos["se_ve"],
+            "animadas": animadas(swf, set(datos["se_mueven"]), datos["pone"], se_mueve.__contains__),
         }
         for swf, datos in sorted(analizados.items(), key=lambda s: s[0].lower())
     }}
     ARCHIVO_INDICE.write_text(json.dumps(indice, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
     con = sum(1 for ps in partes.values() if ps)
-    print(f"Índice: {len(indice['swfs'])} SWF, {len(partes)} Piezas ({con} con Parte).")
+    print(f"Índice: {len(indice['swfs'])} SWF, {len(partes)} Piezas ({con} con Parte), "
+          f"{sum(len(s['animadas']) for s in indice['swfs'].values())} clases animadas.")
     for motivo, cantidad in motivos.items():
         print(f"  {motivo}: {cantidad}")
     print(f"Con error: {len(errores)}")

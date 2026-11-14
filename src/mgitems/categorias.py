@@ -9,6 +9,9 @@ Item viste no tienen Parte ("Otros"); para esas se anota, si se sabe, para qué 
 Cada Item es de un tipo según la clase del juego de la que hereda (una Prenda, un Item de mochila,
 un transporte, algo de la casa, algo de la mascota); las Prendas, además, con sus Partes.
 
+También se anota qué se ve animado (`animadas`): los Items y las Piezas cuyo dibujo se mueve, y los Items que le ponen
+al Gaturro una Pieza que se mueve.
+
 El programa trae un índice armado de antemano para todos los SWF del catálogo (`armar_indice.py`;
 solo nombres). Ese índice ubica además las Piezas que ningún Item viste, cuando hay con qué: ver
 `armar_indice.py`. Los SWF que no están o que cambiaron se analizan en la computadora del jugador,
@@ -22,13 +25,16 @@ from pathlib import Path
 
 from mgitems.destinos import destino_de_item, requiere_pasaporte
 from mgitems.se_ve import TRANSPORTE as TRANSPORTE_PARTE, donde_se_ve
-from mgitems.prendas import EFECTO, MOCHILA, PARTES_DEL_CUERPO, PRENDA, ItemBase, leer_item_base
+from mgitems.prendas import (
+    ACCION as PARTE_ACCION, EFECTO, MOCHILA, PARTES_DEL_CUERPO, PREFIJO_EFECTO, PRENDA, ItemBase, leer_item_base,
+)
+from mgitems.swf import ADENTRO
 
 ARCHIVO_INDICE = Path(__file__).parent / "datos" / "indice_piezas.json"
 # Lo que un Item de mochila agrega y viste al Gaturro (el resto de `adds`, como `action`, no viste).
 PARTES_QUE_VISTEN = (set(PARTES_DEL_CUERPO) - {EFECTO}) | {"clothFront", "armFore", "armBack", "gripBack", "glove", "gloveFore", "gloveBack"}
 # Sube cuando cambia cómo se clasifica, para no usar lo analizado antes en la computadora del jugador.
-FORMATO = 17  # 16: el tamaño de los objetos de la casa, para las acciones; 17: los dibujos de Flash
+FORMATO = 18  # 16: el tamaño de los objetos de la casa, para las acciones; 17: los dibujos de Flash; 18: animadas
 
 # Para qué usa el juego una Pieza que no viste al Gaturro; también, tipos de Items.
 TRANSPORTE, ACCION, CASA, MASCOTA = "transporte", "accion", "casa", "mascota"
@@ -64,6 +70,10 @@ _VEHICULO = re.compile(r'\bvehicle\s*=\s*"([^"]+)"')
 _VEHICULO_TIPO = re.compile(r'(?:\bpublic var type\b|(?<![\w.])type\s*=\s*"|\bextends\s+TransportOnMamboAsset\b)')
 _TIPO_DE_VEHICULO = re.compile(r'(?<![\w.])type\s*=\s*"(\w*)"')
 _PIEZA_EN_MAPA = re.compile(r'"\w+"\s*:\s*"([^"]+_on)"')
+# El código del primer cuadro de una clase (`frame1`, con lo que tenga entre llaves adentro) y si frena la línea de
+# tiempo: un fondo, por ejemplo, tiene un cuadro por dibujo y muestra el elegido.
+_PRIMER_CUADRO = re.compile(r"function frame1\(\)[^{]*\{(?P<cuerpo>(?:[^{}]|\{[^{}]*\})*)\}")
+_FRENO = re.compile(r"\b(?:stop|gotoAndStop)\(")
 
 
 def usos_de_piezas(swf: str, items: dict[str, ItemBase]) -> dict[str, dict[str, set[str]]]:
@@ -172,6 +182,48 @@ def decoracion_en_acciones(swf: str, items: dict[str, dict], limites: dict[str, 
     return resultado
 
 
+def se_mueven(movimientos: dict[str, str], fuentes: dict[str, str]) -> set[str]:
+    """Las clases de un SWF cuyo dibujo se mueve (`swf.movimientos`), sin las que su propio código frena en el primer
+    cuadro (`stop()`), salvo que se mueva un clip de adentro. `fuentes`: clase → código AS3."""
+    return {clase for clase, como in movimientos.items() if como == ADENTRO or not _se_frena(fuentes.get(clase, ""))}
+
+
+def _se_frena(fuente: str) -> bool:
+    primero = _PRIMER_CUADRO.search(fuente)
+    return bool(primero and _FRENO.search(primero.group("cuerpo")))
+
+
+def piezas_que_pone(swf: str, item: ItemBase) -> list[str]:
+    """Las Piezas ("swf.Clase") que el Item le pone al Gaturro: las que viste y la de su efecto de cabeza. No la de su
+    acción, la animación de usarlo: la tiene cualquier Item que se usa."""
+    rutas = []
+    for parte, valor in item.partes.items():
+        if parte == EFECTO:
+            if not valor.startswith(PREFIJO_EFECTO):
+                continue  # un filtro («sepia», «ghost»…), no una Pieza
+            valor = valor.removeprefix(PREFIJO_EFECTO)
+        elif parte == PARTE_ACCION or (item.tipo != PRENDA and parte not in PARTES_QUE_VISTEN):
+            continue
+        otro, _, clase = valor.rpartition(".")
+        if clase:
+            rutas.append(f"{otro or swf}.{clase}")
+    return rutas
+
+
+def animadas(swf: str, propias: set[str], pone: dict[str, list[str]], se_mueve_en_otro=lambda ruta: False) -> list[str]:
+    """Las clases de `swf` que se ven animadas: las que se mueven (`propias`, ver `se_mueven`) y los Items que le
+    ponen al Gaturro una Pieza que se mueve (`pone`: Item → Piezas, ver `piezas_que_pone`; las de otro SWF, según
+    `se_mueve_en_otro(ruta)`)."""
+    resultado = set(propias)
+    for item, rutas in pone.items():
+        for ruta in rutas:
+            otro, _, clase = ruta.rpartition(".")
+            if clase in propias if otro == swf else se_mueve_en_otro(ruta):
+                resultado.add(item)
+                break
+    return sorted(resultado)
+
+
 def categorias(piezas: list[str], usos: dict[str, set[str]]) -> dict[str, list[str]]:
     """Cada Pieza del SWF con sus Partes (ordenadas); [] si ningún Item la viste."""
     return {pieza: sorted(usos.get(pieza, ())) for pieza in piezas}
@@ -205,7 +257,8 @@ class CacheCategorias:
         return base.with_name(base.name + ".json")
 
     def leer(self, swf: str, version: str) -> dict | None:
-        """{"piezas", "otros_usos", "items"} (como en el índice), o None si no está o es de otra versión."""
+        """{"piezas", "otros_usos", "items", "se_ve", "animadas"} (como en el índice), o None si no está o es de otra
+        versión."""
         try:
             datos = json.loads(self._archivo(swf).read_text(encoding="utf-8"))
         except (OSError, ValueError):
@@ -213,11 +266,12 @@ class CacheCategorias:
         if datos.get("version") != version or datos.get("formato") != FORMATO:
             return None
         return {"piezas": datos.get("piezas", {}), "otros_usos": datos.get("otros_usos", {}), "items": datos.get("items", {}),
-                "se_ve": datos.get("se_ve", {})}
+                "se_ve": datos.get("se_ve", {}), "animadas": datos.get("animadas", [])}
 
     def guardar(self, swf: str, version: str, piezas: dict[str, list[str]], otros: dict[str, str], items: dict[str, dict],
-                se_ve: dict[str, dict]) -> None:
+                se_ve: dict[str, dict], animadas: list[str]) -> None:
         archivo = self._archivo(swf)
         archivo.parent.mkdir(parents=True, exist_ok=True)
-        datos = {"formato": FORMATO, "version": version, "piezas": piezas, "otros_usos": otros, "items": items, "se_ve": se_ve}
+        datos = {"formato": FORMATO, "version": version, "piezas": piezas, "otros_usos": otros, "items": items, "se_ve": se_ve,
+                 "animadas": animadas}
         archivo.write_text(json.dumps(datos, ensure_ascii=False), encoding="utf-8")

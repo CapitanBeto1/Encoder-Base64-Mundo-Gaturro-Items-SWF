@@ -7,8 +7,10 @@ import zlib
 
 TAG_FIN = 0
 TAG_SHOW_FRAME = 1
+TAG_DO_ACTION = 12
 TAG_REMOVE_OBJECT2 = 28
 TAG_DEFINE_SPRITE = 39
+TAG_FRAME_LABEL = 43
 TAG_PLACE_OBJECT2 = 26
 TAG_PLACE_OBJECT3 = 70
 TAG_SYMBOL_CLASS = 76
@@ -53,6 +55,71 @@ def cuadros_de_clases(data: bytes) -> dict[str, int]:
     except (struct.error, IndexError, ValueError, UnicodeDecodeError) as e:
         raise SwfInvalido("El SWF está dañado") from e
     return {clase: max(cuadros.get(id_simbolo, 1), 1) for id_simbolo, clase in simbolos}
+
+
+RAIZ, ADENTRO = "raiz", "adentro"
+
+
+def movimientos(data: bytes) -> dict[str, str]:
+    """Clase → qué se mueve de su dibujo al reproducirlo: `RAIZ` si cambia su propia línea de tiempo, `ADENTRO` si
+    cambia un clip de adentro. Las clases cuyo dibujo queda fijo no aparecen.
+
+    Una línea de tiempo se mueve si tiene dos cuadros o más y algo cambia después del primero (se coloca, se mueve o
+    se saca un dibujo), y no tiene rótulos: los cuadros con rótulo son estados que el juego elige (`gotoAndStop`), como
+    las dos versiones de un zapato. No mira el código: un `stop()` en el primer cuadro de la clase la frena (ver
+    `categorias.se_mueven`)."""
+    swf = _descomprimir(data)
+    sprites, simbolos = {}, []
+    try:
+        for codigo, cuerpo in _tags(swf):
+            if codigo == TAG_DEFINE_SPRITE:
+                id_sprite, cuadros = struct.unpack_from("<HH", cuerpo, 0)
+                sprites[id_sprite] = _linea_de_tiempo(cuerpo, cuadros)
+            elif codigo == TAG_SYMBOL_CLASS:
+                simbolos += _entradas_symbol_class(cuerpo)
+    except (struct.error, IndexError, ValueError, UnicodeDecodeError) as e:
+        raise SwfInvalido("El SWF está dañado") from e
+
+    adentro: dict[int, bool] = {}
+
+    def se_mueve_adentro(id_sprite: int) -> bool:
+        """Si algún clip que el sprite coloca (o alguno de adentro de ese) se mueve."""
+        if id_sprite in adentro:
+            return adentro[id_sprite]
+        adentro[id_sprite] = False  # un sprite que se contiene a sí mismo no suma
+        adentro[id_sprite] = any(h in sprites and (sprites[h][0] or se_mueve_adentro(h)) for h in sprites[id_sprite][1])
+        return adentro[id_sprite]
+
+    resultado = {}
+    for id_simbolo, clase in simbolos:
+        if id_simbolo in sprites:
+            if sprites[id_simbolo][0]:
+                resultado[clase] = RAIZ
+            elif se_mueve_adentro(id_simbolo):
+                resultado[clase] = ADENTRO
+    return resultado
+
+
+def _linea_de_tiempo(cuerpo: bytes, cuadros: int) -> tuple[bool, set[int]]:
+    """(si se mueve, ids de lo que coloca) de la línea de tiempo de un DefineSprite (ver `movimientos`)."""
+    hijos, rotulos, cuadro, cambia = set(), False, 1, False
+    for codigo, tag, _ in _tags_crudos(cuerpo, 4):
+        if codigo == TAG_FRAME_LABEL:
+            rotulos = True
+        elif codigo == TAG_SHOW_FRAME:
+            cuadro += 1
+        elif codigo == TAG_REMOVE_OBJECT2:
+            cambia = cambia or cuadro > 1
+        elif codigo in (TAG_PLACE_OBJECT2, TAG_PLACE_OBJECT3):
+            cambia = cambia or cuadro > 1
+            banderas, q = tag[0], 1
+            if codigo == TAG_PLACE_OBJECT3:
+                banderas3, q = tag[1], 2
+                if banderas3 & 0x08 or (banderas3 & 0x10 and banderas & 0x02):  # nombre de clase
+                    q = tag.index(b"\0", q) + 1
+            if banderas & 0x02:
+                hijos.add(struct.unpack_from("<H", tag, q + 2)[0])  # después de la profundidad
+    return cuadros >= 2 and cambia and not rotulos, hijos
 
 
 def limites_de_simbolos(data: bytes) -> dict[str, tuple[float, float, float, float]]:
@@ -254,9 +321,6 @@ def _entradas_symbol_class(cuerpo: bytes) -> list[tuple[int, str]]:
         pos = fin + 1
     return entradas
 
-
-TAG_FRAME_LABEL = 43
-TAG_DO_ACTION = 12
 
 
 def rotulos(data: bytes, clase: str) -> dict[str, int]:
