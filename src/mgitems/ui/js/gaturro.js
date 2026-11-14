@@ -61,8 +61,11 @@ async function pedirGaturro(img, colores, partes = lookActual.partes, emote = nu
   return resultado;
 }
 
-// El Gaturro de la tarjeta (Looks, Trucar Prenda y Acciones).
+// El Gaturro de la tarjeta (Looks, Trucar Prenda y Acciones). Se cierra al rato de ir a una pestaña sin él (Agregar
+// Items, Tiendas, Monedas…); al volver, se abre de nuevo.
 const gaturroDelLook = gaturroVivo($("gaturro-vivo"));
+const pestanaConGaturro = () => PESTANAS_DEL_EDITOR.includes(vista) && !esNpc();
+const cerrarElDeLaTarjetaAlRato = cierreAlRato(() => gaturroDelLook.cerrar(), () => !pestanaConGaturro());
 // Los de las ventanas: el escenario de los guardados y «Elige tus colores».
 const gaturroDelEscenario = gaturroVivo($("vivo-mis-looks"));
 const gaturroDeColores = gaturroVivo($("gaturro-colores"));

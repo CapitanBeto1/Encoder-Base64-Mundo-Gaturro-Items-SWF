@@ -11,6 +11,20 @@ function respuestaDe(marco, esLaRespuesta) {
   });
 }
 
+// Mientras la ventana del programa no está activa (por ejemplo, mientras se juega), los Gaturros se quedan quietos, así
+// no le sacan CPU al juego; al volver, siguen. El foco puede estar en un marco (el editor), y ahí la ventana sigue
+// activa: `document.hasFocus()` lo cuenta. Se mira cada segundo, porque si el foco se va desde un marco la página no se
+// entera.
+let ventanaActiva = true;
+const decirleLaPausa = (marco) => marco.contentWindow?.postMessage({ pausa: !ventanaActiva }, "*");
+function mirarElFoco() {
+  if (document.hasFocus() === ventanaActiva) return;
+  ventanaActiva = !ventanaActiva;
+  document.querySelectorAll("iframe").forEach(decirleLaPausa);
+}
+setInterval(mirarElFoco, 1000);
+addEventListener("focus", mirarElFoco);
+
 // Abre la página del Gaturro en `marco` (un <iframe>) y espera a que el Gaturro se pueda vestir.
 async function abrirGaturroEn(marco, opciones = "") {
   const pagina = await api().pagina_del_gaturro();
@@ -19,6 +33,7 @@ async function abrirGaturroEn(marco, opciones = "") {
   marco.src = pagina.url + opciones;
   const { error } = await respuesta;
   if (error) throw new Error(`No se pudo abrir el Gaturro: ${error}.`);
+  decirleLaPausa(marco);
 }
 
 // Un Gaturro en vivo en `marco` (un <iframe>). Su página se abre recién la primera vez que se lo viste.
@@ -67,16 +82,20 @@ function gaturroVivo(marco, tamano = 1) {
   };
 }
 
-// Un Gaturro abierto ocupa unos 100 MB aunque no se vea. El de una ventana (<dialog>) se cierra con `cerrar` un rato
-// después de que se cierra la ventana: si se la vuelve a abrir antes, sigue el mismo, sin esperar a que se abra.
+// Un Gaturro abierto ocupa unos 100 MB aunque no se vea. Cuando deja de verse, se cierra un rato después: si antes se lo
+// vuelve a ver, sigue el mismo, sin esperar a que se abra. Devuelve con qué avisar que dejó de verse; `cerrar` se llama
+// si para entonces `sigueSinVerse()`.
 const ESPERA_PARA_CERRAR_EL_GATURRO = 60000;
-function cerrarAlRatoDeCerrarse(dialogo, cerrar) {
+function cierreAlRato(cerrar, sigueSinVerse) {
   let cierre = null;
-  dialogo.addEventListener("close", () => {
+  return () => {
     clearTimeout(cierre);
-    cierre = setTimeout(() => dialogo.open || cerrar(), ESPERA_PARA_CERRAR_EL_GATURRO);
-  });
+    cierre = setTimeout(() => sigueSinVerse() && cerrar(), ESPERA_PARA_CERRAR_EL_GATURRO);
+  };
 }
+
+// El de una ventana (<dialog>), al rato de cerrarla.
+const cerrarAlRatoDeCerrarse = (dialogo, cerrar) => dialogo.addEventListener("close", cierreAlRato(cerrar, () => !dialogo.open));
 
 // --- Fotos del Gaturro en vivo: para donde hay muchos a la vez (las miniaturas de los guardados) ---
 
