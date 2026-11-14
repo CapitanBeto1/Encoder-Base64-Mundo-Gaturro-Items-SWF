@@ -58,7 +58,24 @@ function gaturroVivo(marco, tamano = 1) {
       zoom = valor;
       if (marco.src) decir({ zoom: zoom * tamano });
     },
+    // Cierra su página y libera lo que ocupa. Se abre de nuevo la próxima vez que se lo viste.
+    cerrar() {
+      pedido++; // si se estaba vistiendo, no se le dice nada más
+      abierto = null;
+      marco.src = "about:blank";
+    },
   };
+}
+
+// Un Gaturro abierto ocupa unos 100 MB aunque no se vea. El de una ventana (<dialog>) se cierra con `cerrar` un rato
+// después de que se cierra la ventana: si se la vuelve a abrir antes, sigue el mismo, sin esperar a que se abra.
+const ESPERA_PARA_CERRAR_EL_GATURRO = 60000;
+function cerrarAlRatoDeCerrarse(dialogo, cerrar) {
+  let cierre = null;
+  dialogo.addEventListener("close", () => {
+    clearTimeout(cierre);
+    cierre = setTimeout(() => dialogo.open || cerrar(), ESPERA_PARA_CERRAR_EL_GATURRO);
+  });
 }
 
 // --- Fotos del Gaturro en vivo: para donde hay muchos a la vez (las miniaturas de los guardados) ---

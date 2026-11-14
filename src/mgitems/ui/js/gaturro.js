@@ -66,6 +66,8 @@ const gaturroDelLook = gaturroVivo($("gaturro-vivo"));
 // Los de las ventanas: el escenario de los guardados y «Elige tus colores».
 const gaturroDelEscenario = gaturroVivo($("vivo-mis-looks"));
 const gaturroDeColores = gaturroVivo($("gaturro-colores"));
+cerrarAlRatoDeCerrarse($("dialogo-mis-looks"), () => gaturroDelEscenario.cerrar());
+cerrarAlRatoDeCerrarse($("dialogo-colores"), () => gaturroDeColores.cerrar());
 const mostrarColoresEnEdicion = () => gaturroDeColores.vestir(lookActual.partes, coloresEnEdicion, lookActual.emote ?? null);
 
 // La acción que hace el Gaturro de un documento: solo en Acciones (en las demás pestañas se ve quieto).
