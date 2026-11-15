@@ -99,8 +99,8 @@ main.modo-agregar .acciones button { padding-left: 10px; padding-right: 10px; fo
 .total-paginas { margin-left: 4px; color: #fff; font-size: 11px; }
 
 /* Agregar Items: nombre, orden y destino en una fila. */
-.filtros-items { flex: none; display: flex; gap: 6px; align-items: center; }
-.filtros-items #filtro-items, .filtros-items #filtro-piezas { flex: 1; min-width: 110px; font-size: 12px; padding: 4px 8px; }
+.filtros-items { flex: none; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.filtros-items #filtro-items, .filtros-items #filtro-piezas { flex: 1; min-width: 96px; font-size: 12px; padding: 4px 8px; }
 select.filtro-lista {
   flex: none;
   max-width: 112px;
@@ -113,3 +113,13 @@ select.filtro-lista {
   font: inherit;
   font-size: 11px;
 }
+
+/* Lo que se ve animado: un rollo de película arriba a la derecha de la tarjeta (o de la fila del Item base), y el
+   filtro, con el mismo rollo (en las grillas sin texto: no entra). */
+.marca-animado { position: absolute; top: 3px; right: 3px; width: 15px; height: 15px; padding: 2px; border-radius: 5px;
+  background: #2a3150; color: #ffd84d; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.6); }
+.fila-base { position: relative; }
+.fila-base .marca-animado { top: 6px; right: 8px; }
+.enlace.filtro-animados { flex: none; min-height: 30px; padding: 3px 7px; font-size: 11px; display: inline-flex; align-items: center; gap: 4px; }
+.enlace.filtro-animados .ic { width: 14px; height: 14px; }
+.enlace.filtro-animados[aria-pressed="true"] { background: #2a3150; border-color: #141a30; color: #ffd84d; }

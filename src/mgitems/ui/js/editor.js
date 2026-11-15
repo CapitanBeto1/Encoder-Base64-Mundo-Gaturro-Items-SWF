@@ -11,7 +11,7 @@ const BOTONES_TIPO = ["tipo-ambos", "solo-mochila", "solo-guardarropa"];
 
 function mostrarBases() {
   const texto = $("filtro-base").value.trim().toLowerCase();
-  const porNombre = basesDelSwf.filter((b) => b.clase.toLowerCase().includes(texto));
+  const porNombre = basesDelSwf.filter((b) => b.clase.toLowerCase().includes(texto) && pasaAnimados(b, "base"));
   const deMochila = porNombre.filter((b) => b.tipo === "mochila").length;
   $("tipo-ambos").querySelector(".cantidad-tipo").textContent = `(${porNombre.length})`;
   $("solo-mochila").querySelector(".cantidad-tipo").textContent = `(${deMochila})`;
@@ -27,6 +27,7 @@ function mostrarBases() {
       const boton = Object.assign(document.createElement("button"), { className: "fila-base", title: b.ruta });
       boton.setAttribute("aria-pressed", String(lookActual.base === b.ruta));
       boton.append(...filaDeBase(b));
+      if (b.se_mueve) marcarAnimado(boton);
       boton.addEventListener("click", () => {
         if (vista === "trucar" && lookActual.lista.some((t) => t.base === b.ruta)) {
           return avisar($("mensaje-base"), `${b.clase} ya está en la lista: cada uno necesita otro Item.`, "advertencia");
@@ -114,6 +115,7 @@ crearDesplegable({
   vacio: "No hay SWF con ese nombre.",
 });
 $("filtro-base").addEventListener("input", mostrarBases);
+conectarFiltroAnimados("base", mostrarBases);
 $("bases-de-todos").addEventListener("click", usarBasesDeTodos);
 for (const id of BOTONES_TIPO) {
   $(id).addEventListener("click", () => {

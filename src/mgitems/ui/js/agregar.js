@@ -81,7 +81,8 @@ function itemsVisibles() {
   const destino = $("destino-items").value;
 
   const coincide = buscarPorNombre($("filtro-items").value, $("modo-nombre-items").value);
-  const encontrados = buscador.items.filter((i) => enCategoriaItems(i, categoria) && (!destino || i.destino === destino) && coincide(i.clase));
+  const encontrados = buscador.items.filter((i) => enCategoriaItems(i, categoria) && (!destino || i.destino === destino) && coincide(i.clase)
+    && pasaAnimados(i, "items"));
   const orden = $("orden-items").value;
   if (orden !== "exclusivos") return ordenarPor(ordenarPorNombre(encontrados, orden), (i) => [Boolean(i.motivo)]); // los rojos, al final igual
   // Primero los que son solo de esta categoría, después los que suman una más, dos más…; al final, los
@@ -172,6 +173,7 @@ function mostrarBuscador() {
       llega.dataset.bien = String(!item.motivo);
       boton.append(elementoIcono(item.ruta), etiqueta(nombreConCortes(item.clase), "nombre-item"), tipo, llega);
       if (item.pasaporte) marcarPasaporte(boton);
+      if (item.se_mueve) marcarAnimado(boton);
       const li = document.createElement("li");
       li.append(boton);
       return li;
@@ -183,7 +185,7 @@ function mostrarBuscador() {
       ? ""
       : $("filtro-items").value.trim()
         ? $("modo-nombre-items").value === "contiene" ? "Ningún Item tiene eso en el nombre." : "Ningún Item empieza así."
-        : "No hay Items de esta categoría en estas fuentes.";
+        : soloAnimados("items") ? "Ningún Item de esta categoría se ve animado." : "No hay Items de esta categoría en estas fuentes.";
   $("numero-pagina-items").textContent = visibles.length ? contarItems(visibles.length) : "";
   mostrarPaginas($("paginas-items"), visibles.length ? buscador.pagina : -1, paginas, irAPaginaDeItems);
   $("pagina-anterior-items").disabled = $("diez-atras-items").disabled = buscador.pagina === 0;
@@ -247,6 +249,7 @@ $("diez-adelante-items").addEventListener("click", () => irAPaginaDeItems(buscad
 for (const filtro of ["orden-items", "destino-items", "modo-nombre-items"]) {
   $(filtro).addEventListener("change", () => irAPaginaDeItems(0));
 }
+conectarFiltroAnimados("items", () => irAPaginaDeItems(0));
 $("pagina-anterior-items").addEventListener("click", () => {
   buscador.pagina--;
   mostrarBuscador();

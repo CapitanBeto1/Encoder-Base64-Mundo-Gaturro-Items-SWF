@@ -37,7 +37,7 @@ Una de las hasta tres Piezas que van una arriba de la otra en Sombrero, Pelo, Ac
 _Avoid_: slot, nivel
 
 **Animado** (un Item o una Pieza):
-Que en el juego se ve moviéndose: su dibujo cambia de un cuadro a otro (él o un clip de adentro), o es un Item que le pone al Gaturro una Pieza animada (lo que viste, su efecto de cabeza, el vehículo de un transporte). No cuentan los cuadros con rótulo, que son estados que el juego elige (las versiones de un zapato), ni lo que su código frena en el primer cuadro (un fondo). Lo anota el índice de Piezas (`animadas`); los SWF que no están en él se analizan en la computadora.
+Que en el juego se ve moviéndose: su dibujo cambia de un cuadro a otro (él o un clip de adentro), o es un Item que le pone al Gaturro una Pieza animada (lo que viste, su efecto de cabeza, el vehículo de un transporte). No cuentan los cuadros con rótulo, que son estados que el juego elige (las versiones de un zapato), ni lo que su código frena en el primer cuadro (un fondo). Lo anota el índice de Piezas (`animadas`); los SWF que no están en él se analizan en la computadora. En las listas lo marca un rollo de película, y el botón con el mismo rollo muestra solo lo animado.
 _Avoid_: con movimiento
 
 ## Truqueo

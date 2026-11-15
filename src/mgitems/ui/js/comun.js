@@ -368,6 +368,23 @@ function marcarPasaporte(boton) {
   boton.title += " · Requiere pasaporte: sin pasaporte, el juego no deja ponérselo.";
 }
 
+// Se ve animado: su dibujo se mueve, o le pone al Gaturro una Pieza que se mueve (`se_mueve`, lo sabe el núcleo). Un
+// rollo de película arriba a la derecha.
+function marcarAnimado(boton) {
+  boton.append(icono("film-strip", "marca-animado"));
+  boton.title += " · Se ve animado.";
+}
+
+// El filtro «Animados» de una lista («items», «piezas» o «base»): un botón con el mismo rollo, que se prende y se apaga.
+const soloAnimados = (lista) => $(`animados-${lista}`).getAttribute("aria-pressed") === "true";
+const pasaAnimados = (cosa, lista) => !soloAnimados(lista) || Boolean(cosa.se_mueve);
+function conectarFiltroAnimados(lista, mostrar) {
+  $(`animados-${lista}`).addEventListener("click", () => {
+    $(`animados-${lista}`).setAttribute("aria-pressed", String(!soloAnimados(lista)));
+    mostrar();
+  });
+}
+
 // Los números de página, como en Google: hasta 10 a la vista, y al avanzar se corren (en la 10 se ven
 // de la 5 a la 14). `pagina` empieza en 0; -1 si no hay nada que mostrar.
 function mostrarPaginas(nav, pagina, paginas, ir) {
