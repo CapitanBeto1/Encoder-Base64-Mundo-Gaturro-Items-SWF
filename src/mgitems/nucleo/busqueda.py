@@ -24,7 +24,7 @@ class Busqueda:
         return {"ok": True, "listos": datos.listos(), "tamano": DatosBusqueda.TAMANO}
 
     def preparar_busqueda(self) -> dict:
-        """Baja los datos de la búsqueda la primera vez (unos 107 MB). `progreso_busqueda` dice cuánto va."""
+        """Baja los datos de la búsqueda la primera vez (unos 230 MB). `progreso_busqueda` dice cuánto va."""
         try:
             datos = self._datos()
             if datos.listos():
@@ -73,9 +73,10 @@ class Busqueda:
             datos = self._datos()
             if not datos.listos():
                 return {"ok": False, "faltan_datos": True, "error": "Primero hay que bajar los datos de la búsqueda."}
-            modelo, huellas = datos.cargar()
-            consultas = guiar(modelo.huellas(encuadres + [espejada(e) for e in encuadres]), huellas.de_items(se_parece),
-                              huellas.de_items(descartados))
+            modelos, huellas = datos.cargar()
+            imagenes = encuadres + [espejada(e) for e in encuadres]
+            consultas = [guiar(modelo.huellas(imagenes), parecidas, lejos) for modelo, parecidas, lejos
+                         in zip(modelos, huellas.de_items(se_parece), huellas.de_items(descartados))]
             parecidos = huellas.parecidos(consultas)
         except (OSError, ValueError, RuntimeError) as e:
             return {"ok": False, "error": f"No se pudo buscar: {e}"}

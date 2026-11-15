@@ -10,7 +10,7 @@ Buscás los Items en los SWF del juego (el programa los descarga solo), armás u
 
 - **Catálogo de SWF del juego** con buscador: 610 SWF con Items (todos los que lista el juego), descargados del servidor del juego cuando hacen falta y guardados para la próxima vez.
 - **Buscar Items** por el comienzo del nombre, con sugerencias e imágenes mientras escribís (por ejemplo `remera`, `zapa, campera`).
-- **Buscar por imagen**: ¿viste algo en una casa ajena o puesto en otro Gaturro y no sabés cómo se llama? Pegá una captura, marcá el objeto y el programa te muestra los 20 Items del juego que más se le parecen, con su SWF; tocás el que es y va a la lista. Reconoce también una prenda cortada (el pantalón de un traje, una remera sin mangas) y deja trucar solo esa parte. Si no aparece, se puede decir qué es (un pantalón, algo de la casa…), descartar los que no son («No es ninguno de estos») o guiarla con uno parecido («Se parece»). La primera vez baja sus datos (unos 107 MB).
+- **Buscar por imagen**: ¿viste algo en una casa ajena o puesto en otro Gaturro y no sabés cómo se llama? Pegá una captura, marcá el objeto y el programa te muestra los 20 Items del juego que más se le parecen, con su SWF; tocás el que es y va a la lista. Reconoce también una prenda cortada (el pantalón de un traje, una remera sin mangas) y deja trucar solo esa parte. Si no aparece, se puede decir qué es (un pantalón, algo de la casa…), descartar los que no son («No es ninguno de estos») o guiarla con uno parecido («Se parece»). La primera vez baja sus datos (unos 230 MB).
 - **Lista de Items** con imagen y cantidad de cada uno; se pueden quitar o agregar a mano (`clothes1.remera5`).
 - **Trucar Prenda**: un Item que, en vez de lo suyo, muestra una sola Pieza de cualquier SWF (por ejemplo, un «Otro») en la Parte del cuerpo que elijas; armás una lista y las recibís todas en un solo Encode. Cada Prenda trucada se puede guardar con un nombre y pasar en un archivo, como los Looks. Las Prendas de `clothes1` no sirven de base: el juego no guarda lo trucado y vuelven a ser las originales.
 - **Looks**: armás un Gaturro con Piezas de cualquier SWF y lo recibís en una sola Prenda o Item; se guardan y se pasan en archivos.
@@ -85,7 +85,7 @@ El instalador incluye, sin modificarlos:
 
 Los textos de esas licencias van dentro de la carpeta del programa instalado.
 
-La búsqueda por imagen baja, la primera vez que se usa, la parte de imágenes de **[OpenCLIP](https://github.com/mlfoundations/open_clip)** ViT-B/32 (pesos `laion2b_s34b_b79k` de [LAION](https://laion.ai)), licencia MIT, convertida a ONNX y comprimida por `scripts/armar_busqueda.py`. Se publica con su licencia en el release de datos del repositorio, junto con las huellas de las imágenes del juego (solo números, sin las imágenes).
+La búsqueda por imagen baja, la primera vez que se usa, dos modelos de imágenes: la parte de imágenes de **[OpenCLIP](https://github.com/mlfoundations/open_clip)** ViT-B/32 (pesos `laion2b_s34b_b79k` de [LAION](https://laion.ai)), licencia MIT, convertida a ONNX y comprimida por `scripts/armar_busqueda.py`, y **[DINOv2](https://github.com/facebookresearch/dinov2)** chico (de Meta), licencia Apache 2.0, en la versión ONNX de [Transformers.js](https://huggingface.co/Xenova/dinov2-small). Se publican con sus licencias en el release de datos del repositorio, junto con las huellas de las imágenes del juego (solo números, sin las imágenes).
 
 ## Licencia
 

@@ -34,8 +34,8 @@ class DatosFalsos:
         self.huellas = Huellas(
             ["muebles.silla", "ropa.remera_on", "muebles.rota", "ropa.suelta_on", "muebles.mesa", "ropa.pantalon", "ropa.disfraz",
              "ropa.disfrazPantalon_on"],
-            np.stack([unitario(1, 0, 0), unitario(1, 0.04, 0), unitario(0, 1, 0), unitario(0, 0, 1), unitario(0.7, 0.7, 0),
-                      unitario(0.2, 0.2, 1), unitario(1, 0.1, 0.1), unitario(0.1, 0.1, 1)]),
+            [np.stack([unitario(1, 0, 0), unitario(1, 0.04, 0), unitario(0, 1, 0), unitario(0, 0, 1), unitario(0.7, 0.7, 0),
+                      unitario(0.2, 0.2, 1), unitario(1, 0.1, 0.1), unitario(0.1, 0.1, 1)])],
             # El pantalón del disfraz, dibujado puesto: se parece al azul.
             {"ropa.remera_on": ["ropa.remera"], "ropa.disfrazPantalon_on": ["ropa.disfraz"]},
         )
@@ -48,7 +48,7 @@ class DatosFalsos:
         self._listos = True
 
     def cargar(self):
-        return ModeloFalso(), self.huellas
+        return [ModeloFalso()], self.huellas
 
 
 INDICE = {"swfs": {
