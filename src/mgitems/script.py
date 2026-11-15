@@ -38,11 +38,13 @@ def _lineas_colores(colores: dict) -> list[str]:
     return [f"{INDENTACION}user.attr {c} {int(v.lstrip('#'), 16)}" for c, v in colores.items()]
 
 
-def generar_script(pedidos: list[tuple[str, int]]) -> str:
+def generar_script(pedidos: list[tuple[str, int]], colores: dict | None = None) -> str:
     """Script que agrega cada Item en su cantidad, encadenando un bloque `A<n>` por Item.
 
     El formato (incluida la línea de 4 espacios tras `on activate` y los dos saltos
     finales) reproduce el de los Encodes que ya se sabe que funcionan en el juego.
+    Con `colores` ({"color1": "#RRGGBB", …}), el primer bloque además le pone esos colores al Gaturro
+    (`user.attr`): llegan junto con el Look, la Prenda trucada o la acción.
     """
     lineas = ["INICIO: DO", f"{INDENTACION}on activate A1", INDENTACION]
     for n, (ruta, cantidad) in enumerate(pedidos, start=1):
@@ -51,6 +53,7 @@ def generar_script(pedidos: list[tuple[str, int]]) -> str:
             f"A{n}: DO",
             f"{INDENTACION}user.state get",
             f"{INDENTACION}inventory.add {cantidad} {ruta}",
+            *(_lineas_colores(colores) if colores and n == 1 else []),
             f"{INDENTACION}after 1 {siguiente}",
         ]
         if n < len(pedidos):
@@ -58,14 +61,14 @@ def generar_script(pedidos: list[tuple[str, int]]) -> str:
     return "\n".join(lineas) + "\n\n"
 
 
-def generar_script_con_atributos(pedidos: list[tuple[str, int, dict]]) -> str:
+def generar_script_con_atributos(pedidos: list[tuple[str, int, dict]], colores: dict | None = None) -> str:
     """Como `generar_script`, pero cada Item llega con atributos propios (`inventory.addOptions`).
 
     `inventory.addOptions <Item> <cantidad> <catálogo> <atributos>` del juego (`NpcActionRunner.addItemWithOptions`)
     los suma a los del Item al recibirlo (`mergeAttrs` en `InventoryUtil.doAcquireObject`), y el servidor los guarda
     en ese objeto: el mismo Item puede llegar varias veces, cada una con otros atributos, sin trucar su SWF. Los
     atributos van como JSON sin espacios, porque el guion separa los argumentos por espacios (y no deja comillas
-    dentro de un argumento entre comillas). Sin catálogo: `null`."""
+    dentro de un argumento entre comillas). Sin catálogo: `null`. `colores`: como en `generar_script`."""
     lineas = ["INICIO: DO", f"{INDENTACION}on activate A1", INDENTACION]
     for n, (ruta, cantidad, atributos) in enumerate(pedidos, start=1):
         texto = json.dumps(atributos, separators=(",", ":"), ensure_ascii=True)
@@ -76,6 +79,7 @@ def generar_script_con_atributos(pedidos: list[tuple[str, int, dict]]) -> str:
             f"A{n}: DO",
             f"{INDENTACION}user.state get",
             f"{INDENTACION}inventory.addOptions {ruta} {cantidad} null {texto}",
+            *(_lineas_colores(colores) if colores and n == 1 else []),
             f"{INDENTACION}after 1 {siguiente}",
         ]
         if n < len(pedidos):
@@ -119,18 +123,6 @@ def generar_script_monedas(cantidad: int) -> str:
         f"{INDENTACION}reward.coin {cant}\n"
         f"{INDENTACION}    goto initial\n"
     )
-
-
-def generar_script_colores(colores: dict) -> str:
-    """Script que setea los colores del Gaturro via `user.attr` (`color1`–`color4`).
-
-    Los colores del avatar se guardan en el perfil del usuario en el servidor;
-    no dependen de un Item y persisten permanentemente (ADR 0003, ADR 0005).
-    """
-    lineas = ["INICIO: DO", f"{INDENTACION}on activate A1", INDENTACION, "A1: DO"]
-    lineas += _lineas_colores(colores)
-    lineas.append(f"{INDENTACION}after 1 INICIO")
-    return "\n".join(lineas) + "\n\n"
 
 
 def codificar(script: str) -> str:

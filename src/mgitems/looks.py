@@ -26,6 +26,12 @@ _CLAVES_COLOR = {"color1", "color2", "color3", "color4"}
 EMOTES = ("normal", "angry", "boring", "good", "smile", "love", "money")
 
 
+def colores_validos(colores) -> bool:
+    """Si `colores` son colores del Gaturro: {"color1": "#RRGGBB", …} (cara, cuerpo, ojos, nariz)."""
+    return isinstance(colores, dict) and all(c in _CLAVES_COLOR and isinstance(v, str) and _COLOR.match(v)
+                                             for c, v in colores.items())
+
+
 class LookInvalido(ValueError):
     """El Look no tiene la forma esperada."""
 
@@ -64,8 +70,7 @@ class Look:
             if not _PARTE.match(str(parte)) or not _RUTA.match(str(pieza)):
                 raise LookInvalido(f"Pieza no válida: {parte} → {pieza}")
         colores = datos.get("colores") or {}
-        if not isinstance(colores, dict) or any(c not in _CLAVES_COLOR or not isinstance(v, str) or not _COLOR.match(v)
-                                                for c, v in colores.items()):
+        if not colores_validos(colores):
             raise LookInvalido("Los colores del Look no tienen la forma esperada.")
         emote = datos.get("emote") or None
         if emote is not None and emote not in EMOTES:

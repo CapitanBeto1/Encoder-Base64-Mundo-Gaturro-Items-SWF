@@ -40,7 +40,8 @@ $("repetir-accion").addEventListener("click", () => gaturroDelLook.repetir());
 
 async function aplicarAccion() {
   const { nombre, animacion, base, partes } = lookActual;
-  const pedido = { animacion, base, pieza: partes.action ?? null, efecto: partes.effect ?? null };
+  const colores = Object.keys(lookActual.colores ?? {}).length ? lookActual.colores : null;
+  const pedido = { animacion, base, pieza: partes.action ?? null, efecto: partes.effect ?? null, colores };
   const resultado = await mientras("Aplicando la acción… (tarda unos segundos)", () => api().aplicar_accion(pedido));
   if (!resultado.ok) return avisarLista(resultado.error, "error");
   const animacionElegida = animacionesDelJuego.find((a) => a.id === animacion);
