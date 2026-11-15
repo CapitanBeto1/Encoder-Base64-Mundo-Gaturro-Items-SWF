@@ -7,8 +7,8 @@ from mgitems.acciones import motivo_pieza_sin_accion
 from mgitems.cache_swf import CacheSwf
 from mgitems.catalogo import buscar_en_catalogo
 from mgitems.categorias import (
-    CASA, CacheCategorias, categorias, decoracion_en_acciones, donde_se_ven, es_decoracion, otros_usos, tipos_de_items,
-    usos_de_piezas,
+    CASA, CacheCategorias, animadas, categorias, decoracion_en_acciones, donde_se_ven, es_decoracion, otros_usos,
+    piezas_que_ponen, se_mueven, tipos_de_items, usos_de_piezas,
 )
 from mgitems.destinos import DESCARTADO, es_de_pasaporte, motivo_de
 from mgitems.ffdec import FFDecNoDisponible
@@ -21,7 +21,7 @@ from mgitems.personalizar import BANNERS_DE_PERSONALIZAR
 from mgitems.prendas import (
     EFECTO, PARTES_DEL_CUERPO, PREFIJO_EFECTO, PRENDA, CacheItemsBase, ItemBase, leer_item_base, no_sirve_de_base,
 )
-from mgitems.swf import SwfInvalido, leer_simbolos, limites_de_simbolos
+from mgitems.swf import SwfInvalido, leer_simbolos, limites_de_simbolos, movimientos
 
 
 
@@ -77,7 +77,8 @@ class Swfs:
 
     def items_base(self, swf: str) -> dict:
         """Los Items base (Prendas e Items de mochila) de cualquier SWF del juego: dónde se guarda un Look.
-        Sin los que no sirven (ver `no_sirve_de_base`); si se sacó alguno, `aviso` dice por qué."""
+        Sin los que no sirven (ver `no_sirve_de_base`); si se sacó alguno, `aviso` dice por qué. `se_mueve`: si se ve
+        animado (como en `items_de_swfs`)."""
         obtenido = {"ok": True, "data": self._data_swf} if swf == self._swf_abierto else self._datos_de_otro_swf(swf)
         if not obtenido["ok"]:
             return obtenido
@@ -89,16 +90,18 @@ class Swfs:
             return {"ok": False, "error": f"No se pudieron leer los Items base: {e}"}
         sirven = [i for i in items.values() if not no_sirve_de_base(f"{swf}.{i.clase}", i.tipo)]
         motivos = {no_sirve_de_base(f"{swf}.{i.clase}", i.tipo) for i in items.values()} - {None}
+        categorias = self._categorias_de(swf)
+        animadas_del_swf = set(categorias["animadas"]) if categorias["ok"] else set()
         return {"ok": True, "swf": swf, "items": [
-            {"ruta": f"{swf}.{i.clase}", "clase": i.clase, "tipo": i.tipo}
+            {"ruta": f"{swf}.{i.clase}", "clase": i.clase, "tipo": i.tipo, "se_mueve": i.clase in animadas_del_swf}
             for i in sorted(sirven, key=lambda i: orden_natural(i.clase))
         ], "aviso": f"Sus Prendas no sirven de Item base: {next(iter(motivos))}." if motivos else None}
 
     def piezas_de_swfs(self, swfs: list | None = None) -> dict:
         """Las Piezas de varios SWF (None: todos los del juego) con su SWF, las Partes del cuerpo donde
         el juego las usa ([] si ningún Item las viste: "Otros") y, si no visten, para qué las usa el
-        juego (`uso`: "transporte", "accion", "casa", "mascota", o None si no se sabe) y si es de pasaporte
-        (`pasaporte`: sin pasaporte, el juego no la dibuja).
+        juego (`uso`: "transporte", "accion", "casa", "mascota", o None si no se sabe), si es de pasaporte
+        (`pasaporte`: sin pasaporte, el juego no la dibuja) y si su dibujo se mueve (`se_mueve`).
 
         Usa el índice que trae el programa. Un SWF que no está en el índice, o cuya copia descargada es
         de otra versión, se analiza acá (la primera vez tarda unos segundos) y se recuerda.
@@ -108,7 +111,7 @@ class Swfs:
             return [{"ruta": f"{swf}.{clase}", "clase": clase, "swf": swf, "partes": partes,
                      "uso": None if partes else otros.get(clase), "pasaporte": es_de_pasaporte(f"{swf}.{clase}"),
                      "sin_accion": motivo_pieza_sin_accion(f"{swf}.{clase}", obtenido["se_ve"].get(clase, {})),
-                     **obtenido["se_ve"].get(clase, {})}
+                     "se_mueve": clase in obtenido["animadas"], **obtenido["se_ve"].get(clase, {})}
                     for clase, partes in obtenido["piezas"].items()]
 
         return self._de_varios_swf(swfs, "piezas", piezas)
@@ -117,10 +120,11 @@ class Swfs:
         """Los objetos de la casa (muebles, decoración, y los dibujos de Flash, que llegan a la casa como un objeto)
         de varios SWF (None: todos los del juego), con la
         forma de las Piezas de `piezas_de_swfs` (`partes` vacías, `uso` "casa", `decoracion`): una acción
-        los puede mostrar como a una Pieza (probado en el juego). `sin_accion`: por qué no lo mostraría."""
+        los puede mostrar como a una Pieza (probado en el juego). `sin_accion`: por qué no lo mostraría; `se_mueve`, si su
+        dibujo se mueve."""
         def decoracion(swf, obtenido):
             return [{"ruta": f"{swf}.{clase}", "clase": clase, "swf": swf, "partes": [], "uso": CASA, "decoracion": True,
-                     "pasaporte": item.get("pasaporte", False),
+                     "pasaporte": item.get("pasaporte", False), "se_mueve": clase in obtenido["animadas"],
                      "sin_accion": motivo_pieza_sin_accion(f"{swf}.{clase}", obtenido["se_ve"].get(clase, {}))}
                     for clase, item in sorted(obtenido["items"].items(), key=lambda i: orden_natural(i[0]))
                     if es_decoracion(item) and item.get("destino") != DESCARTADO]
@@ -132,7 +136,8 @@ class Swfs:
         "transporte", "casa", "mascota", "ropa_mascota", "comida_mascota", "juguete_mascota", "cuidado_mascota" u "otro"),
         las Partes del cuerpo que viste si es una Prenda, para qué mascota es (`mascota`, o None) y dónde
         llega al juego (`destino`, ver `destinos`; `motivo` si no llega bien, o None), si solo se la
-        puede poner quien tiene pasaporte (`pasaporte`) y, si no sirve de Item base, por qué (`no_sirve_de_base`).
+        puede poner quien tiene pasaporte (`pasaporte`), si se ve animado (`se_mueve`: su dibujo se mueve, o le pone al
+        Gaturro una Pieza que se mueve) y, si no sirve de Item base, por qué (`no_sirve_de_base`).
 
         Como `piezas_de_swfs`: del índice que trae el programa, o analizados acá si no están o cambiaron.
         """
@@ -140,7 +145,8 @@ class Swfs:
             return [{"ruta": f"{swf}.{clase}", "clase": clase, "swf": swf, "tipo": item["tipo"], "partes": item.get("partes", []),
                      "mascota": item.get("mascota"), "destino": item.get("destino"), "motivo": motivo_de(item),
                      "parecido": item.get("parecido", []), "pasaporte": item.get("pasaporte", False),
-                     "dibujo": item.get("dibujo", False), "no_sirve_de_base": no_sirve_de_base(f"{swf}.{clase}", item["tipo"])}
+                     "dibujo": item.get("dibujo", False), "se_mueve": clase in obtenido["animadas"],
+                     "no_sirve_de_base": no_sirve_de_base(f"{swf}.{clase}", item["tipo"])}
                     for clase, item in sorted(obtenido["items"].items(), key=lambda i: orden_natural(i[0]))]
 
         return self._de_varios_swf(swfs, "items", items)
@@ -161,8 +167,8 @@ class Swfs:
         return {"ok": True, clave: resultado, "errores": errores}
 
     def _categorias_de(self, swf: str) -> dict:
-        """`{"ok", "piezas": {Pieza: [Partes]}, "otros_usos": {Pieza: uso}, "items": {Item: {"tipo", "partes"}}}`
-        de un SWF: del índice, o analizado acá si no está o cambió."""
+        """`{"ok", "piezas": {Pieza: [Partes]}, "otros_usos": {Pieza: uso}, "items": {Item: {"tipo", "partes"}}, "se_ve",
+        "animadas": [clases]}` de un SWF: del índice, o analizado acá si no está o cambió."""
         if not _NOMBRE_SWF.match(swf):
             return {"ok": False, "error": f"Nombre de SWF inválido: {swf}"}
         del_indice = self._indice.leer(swf)
@@ -175,7 +181,8 @@ class Swfs:
             data = guardado[0] if guardado else None
         if del_indice and (data is None or version_de(data) == del_indice.get("version")):
             return {"ok": True, "piezas": del_indice["piezas"], "otros_usos": del_indice.get("otros_usos", {}),
-                    "items": del_indice.get("items", {}), "se_ve": del_indice.get("se_ve", {})}
+                    "items": del_indice.get("items", {}), "se_ve": del_indice.get("se_ve", {}),
+                    "animadas": del_indice.get("animadas", [])}
         if data is None:
             obtenido = self._datos_de_otro_swf(swf)
             if not obtenido["ok"]:
@@ -198,12 +205,20 @@ class Swfs:
             tipos = {clase: tipo for clase, tipo in tipos_de_items(swf, fuentes).items() if clase in items}
             limites = limites_de_simbolos(data)
             se_ve = donde_se_ven(swf, list(piezas), fuentes, limites) | decoracion_en_acciones(swf, tipos, limites)
-            cache.guardar(swf, version, piezas, otros, tipos, se_ve)
+            pone = {clase: rutas for clase, rutas in piezas_que_ponen(swf, fuentes).items() if clase in items}
+            propias = se_mueven(movimientos(data), fuentes) & set(items + piezas_del_swf(clases))
+            animadas_del_swf = animadas(swf, propias, pone, self._se_mueve_en_el_indice)
+            cache.guardar(swf, version, piezas, otros, tipos, se_ve, animadas_del_swf)
         except FFDecNoDisponible as e:
             return {"ok": False, "error": f"{e}: no se pueden clasificar los Items de {swf}."}
         except (OSError, SwfInvalido, subprocess.SubprocessError) as e:
             return {"ok": False, "error": f"No se pudieron clasificar los Items de {swf}: {e}"}
-        return {"ok": True, "piezas": piezas, "otros_usos": otros, "items": tipos, "se_ve": se_ve}
+        return {"ok": True, "piezas": piezas, "otros_usos": otros, "items": tipos, "se_ve": se_ve, "animadas": animadas_del_swf}
+
+    def _se_mueve_en_el_indice(self, ruta: str) -> bool:
+        """Si la Pieza `ruta` (de otro SWF) se mueve, según el índice que trae el programa."""
+        swf, _, clase = ruta.rpartition(".")
+        return clase in (self._indice.leer(swf) or {}).get("animadas", [])
 
     def swf_del_juego(self, swf: str) -> bytes | None:
         """El SWF `swf` entero (el abierto, o del caché o el CDN), o None si no se consiguió. Lo pide el Gaturro en

@@ -36,6 +36,10 @@ _Avoid_: customización
 Una de las hasta tres Piezas que van una arriba de la otra en Sombrero, Pelo, Accesorio, Boca o Cuello, como en «Configura tus accesorios» del juego: la Parte es la capa 1, y las de arriba son otras Partes (`hats2`, `hats3`…). Se ponen con esa ventana del juego, en vivo, y el casillero de la Parte dice cuántas hay (ADR 0009). No confundir con las capas de color de una Pieza (sus formas, que pinta «Customiza tu ropa»: ver Personalización).
 _Avoid_: slot, nivel
 
+**Animado** (un Item o una Pieza):
+Que en el juego se ve moviéndose: su dibujo cambia de un cuadro a otro (él o un clip de adentro), o es un Item que le pone al Gaturro una Pieza animada (lo que viste, su efecto de cabeza, el vehículo de un transporte). No cuentan los cuadros con rótulo, que son estados que el juego elige (las versiones de un zapato), ni lo que su código frena en el primer cuadro (un fondo). Lo anota el índice de Piezas (`animadas`); los SWF que no están en él se analizan en la computadora.
+_Avoid_: con movimiento
+
 ## Truqueo
 
 **Prenda trucada**:
