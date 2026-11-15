@@ -4,8 +4,8 @@ Lo bajado (`anim_preview.swf`, de naw-trucador) trae el Gaturro del juego (`asse
 todas sus animaciones) y el código del juego que lo viste (`Gaturro` y sus ayudantes), y también su editor de Piezas
 (`ClothEditorModal`). Con FFDec se le cambian unas clases por las de `scripts/gaturro_en_vivo/`:
 
-- `MMO`, la clase principal: crea un `Gaturro` del juego y recibe sus atributos de la página (`mgVestir`), y abre el
-  editor de Piezas (`mgEditar`);
+- `MMO`, la clase principal: crea un `Gaturro` del juego y recibe sus atributos de la página (`mgVestir`), y abre las
+  ventanas de personalizar del juego: el editor de Piezas (`mgEditar`) o su menú (`mgPersonalizar`);
 - `api`, `user`, `region`, `server` y `audio`, globales del juego que consultan el `Gaturro` y el editor: pasan a
   aceptar cualquier objeto, para darles los mínimos que necesitan sin armar el juego entero.
 

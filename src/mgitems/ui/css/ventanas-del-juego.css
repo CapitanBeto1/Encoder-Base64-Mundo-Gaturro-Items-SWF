@@ -269,22 +269,30 @@ dialog.dialogo-mis-looks { position: fixed; inset: 0; margin: auto; width: fit-c
 .zoom-gaturro input[type="range"] { width: 120px; accent-color: var(--amarillo); cursor: pointer; }
 .zoom-escenario { position: relative; z-index: 2; margin-bottom: 6px; background: rgba(34, 42, 69, 0.75); }
 
-/* El editor de Piezas del juego (js/personalizar.js): es el suyo, con su arte, corriendo en vivo. Como en el juego,
-   aparece sobre la pantalla oscurecida; el marco no tiene fondo propio (el panel es del editor). */
+/* Las ventanas del juego para personalizar (js/personalizar.js): son las suyas, con su arte, corriendo en vivo en su
+   escenario de 800 × 480, entero a la vista y centrado en el marco. Como en el juego, aparecen sobre la pantalla
+   oscurecida; el marco no tiene fondo propio (los paneles son de las ventanas). */
 dialog.dialogo-editor-piezas {
-  width: min(1100px, 96vw); height: min(680px, 92vh); max-width: none; max-height: none;
+  --ancho: min(1100px, 96vw); --alto: min(680px, 92vh);
+  width: var(--ancho); height: var(--alto); max-width: none; max-height: none;
   padding: 0; border: 0; background: transparent; box-shadow: none; overflow: visible;
 }
 dialog.dialogo-editor-piezas::backdrop { background: rgba(10, 14, 30, 0.6); }
 .editor-piezas { display: block; width: 100%; height: 100%; border: 0; background: transparent; transition: opacity 0.2s ease-out; }
-/* Mientras se abre: el panel del editor, vacío y brillando. El marco sigue en su lugar (sin tamaño, Ruffle no arranca). */
+/* Mientras se abre: el escenario del juego con el panel de la ventana que va a aparecer, vacío y brillando, donde la pone
+   el juego: su menú para personalizar o, en Trucar Prenda, el editor. El marco sigue en su lugar (sin tamaño, Ruffle no
+   arranca). */
 .dialogo-editor-piezas.cargando .editor-piezas { opacity: 0; }
 .carga-editor-piezas { display: none; }
 .dialogo-editor-piezas.cargando .carga-editor-piezas {
-  display: block; position: absolute; inset: 9% 8%; border-radius: 22px;
+  display: block; position: absolute; left: 50%; top: 50%; translate: -50% -50%;
+  width: min(var(--ancho), var(--alto) * 5 / 3); height: min(var(--alto), var(--ancho) * 3 / 5);
+}
+.carga-editor-piezas::before {
+  content: ""; position: absolute; inset: 12.9% 15.1% 21.3%; border-radius: 22px; /* el menú (banner AvatarConfig) */
   background: var(--brillo-carga), #222943; animation: ola 1.5s ease-in-out infinite;
 }
+.dialogo-editor-piezas.solo-editor .carga-editor-piezas::before { inset: 8.6% 16.1% 20.6% 16.3%; } /* «Customiza tu ropa» */
 
 /* Un casillero con Pieza personalizada lleva un puntito (arriba a la izquierda: a la derecha va la ✕ de quitarla). */
-.casillero.personalizada { position: relative; }
 .casillero.personalizada::after { content: ""; position: absolute; top: 4px; left: 4px; width: 8px; height: 8px; border-radius: 50%; background: #f04a4a; box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.25); }

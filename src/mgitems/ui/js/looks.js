@@ -230,9 +230,12 @@ function mostrarLook() {
 
 // --- Casilleros: una Parte del cuerpo cada uno, a los costados del Gaturro ---
 
-const CASILLEROS_CABEZA = ["hats", "hairs", "mouths", "accesories", "accesories2", "neck", "effect"];
+const CASILLEROS_CABEZA = ["hats", "hairs", "mouths", "accesories", "neck", "effect"];
 const CASILLEROS_CUERPO = ["cloth", "arm", "clothBack", "grip", "gripFore", "leg", "foot", "transport"];
 let casilleroMarcado = null; // si hay uno, toda Pieza que se toque va a esa Parte
+// Las capas de arriba de una Parte («Configura tus accesorios») no tienen casillero: el de la Parte dice cuántas tienen Pieza.
+const esCapaDeArriba = (id) => partesConocidas.some((p) => p.id === id && p.capa_de);
+const capasDeArriba = (id) => partesConocidas.filter((p) => p.capa_de === id && lookActual.partes[p.id]).map((p) => p.id);
 
 function casillero(id) {
   const ruta = lookActual.partes[id];
@@ -242,6 +245,11 @@ function casillero(id) {
   boton.setAttribute("aria-pressed", String(id === casilleroMarcado));
   if (tienePersonalizacion(id)) boton.classList.add("personalizada");
   boton.append(ruta ? elementoIcono(ruta) : Object.assign(document.createElement("span"), { className: "icono vacio" }), etiqueta(nombreDeParte(id), "nombre-casillero"));
+  const arriba = capasDeArriba(id);
+  if (arriba.length) {
+    boton.title += `\nY ${arriba.length === 1 ? "una capa" : `${arriba.length} capas`} más arriba: ${arriba.map((p) => claseDeRuta(lookActual.partes[p])).join(", ")} (se cambian con el pincel, en «Configura tus accesorios»).`;
+    boton.append(etiqueta(`+${arriba.length}`, "capas-casillero"));
+  }
   boton.addEventListener("click", () => {
     casilleroMarcado = casilleroMarcado === id ? null : id;
     mostrarLook();
@@ -267,16 +275,18 @@ function mostrarCasilleros() {
   } else {
     const ubicadas = new Set([...CASILLEROS_CABEZA, ...CASILLEROS_CUERPO]);
     // Partes del Look que no tienen casillero (de un Look importado, por ejemplo): van con el cuerpo.
-    const extra = Object.keys(lookActual.partes).filter((p) => !ubicadas.has(p));
+    const extra = Object.keys(lookActual.partes).filter((p) => !ubicadas.has(p) && !esCapaDeArriba(p));
     $("casilleros-cabeza").replaceChildren(...CASILLEROS_CABEZA.map(casillero));
     $("casilleros-cuerpo").replaceChildren(...[...CASILLEROS_CUERPO, ...extra].map(casillero));
   }
   $("poniendo-en").hidden = !casilleroMarcado;
   $("texto-poniendo-en").textContent = casilleroMarcado ? `Poniendo en: ${nombreDeParte(casilleroMarcado)}` : "";
-  const conPiezas = Object.keys(lookActual.partes).length > 0;
-  $("editar-piezas").disabled = !conPiezas;
-  $("editar-piezas").title = conPiezas ? "Personalizar las Piezas: colores por capa, mover, girar y ajustar"
-    : "Personalizar las Piezas: poné primero una Pieza en el Gaturro";
+  const conCapas = dePestana().capas;
+  const sePuede = conCapas || Object.keys(lookActual.partes).length > 0; // las capas se ponen también sin Piezas
+  $("editar-piezas").disabled = !sePuede;
+  $("editar-piezas").title = !sePuede ? "Personalizar las Piezas: poné primero una Pieza en el Gaturro"
+    : conCapas ? "Personalizar: colores, mover y girar las Piezas, o poner accesorios uno arriba del otro"
+    : "Personalizar las Piezas: colores por capa, mover, girar y ajustar";
 }
 
 $("dejar-de-poner").addEventListener("click", () => {

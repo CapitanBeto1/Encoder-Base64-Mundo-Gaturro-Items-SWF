@@ -7,9 +7,8 @@ import re
 from mgitems.cache_swf import CacheSwf
 from mgitems.ffdec import carpeta_vendor
 from mgitems.fotos import FotoInvalida, FotosGuardadas
-from mgitems.gaturro import PARTES
 from mgitems.iconos import version_de
-from mgitems.nucleo._comun import _NOMBRE_SWF
+from mgitems.nucleo._comun import _NOMBRE_SWF, _PARTES_EN_VIVO
 from mgitems.personalizar import ruta_limpia
 from mgitems.prendas import ACCION, EFECTO, PREFIJO_EFECTO
 
@@ -70,7 +69,7 @@ def _swf_de(parte: str, valor) -> str | None:
         valor = valor.removeprefix(PREFIJO_EFECTO)
     elif parte == ACCION:
         valor = valor.partition(".")[2]  # «<animación>.<swf>.<Pieza>»
-    elif parte not in PARTES:
+    elif parte not in _PARTES_EN_VIVO:
         return None
     swf = ruta_limpia(valor).rpartition(".")[0]
     return swf if _NOMBRE_SWF.match(swf) else None

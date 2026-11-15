@@ -26,14 +26,14 @@ from pathlib import Path
 from mgitems.personalizar import es_cola_valida, separar_cola
 from mgitems.ffdec import FFDec
 
-# Partes del cuerpo con su nombre en el juego, en orden de arriba hacia abajo.
+# Partes del cuerpo con su nombre en el juego, en orden de arriba hacia abajo. Las capas 2 y 3 son las de «Configura tus
+# accesorios» (ver `CAPAS`).
 PARTES_DEL_CUERPO = {
-    "hats": "Sombrero",
-    "hairs": "Pelo",
-    "accesories": "Accesorio",
-    "accesories2": "Accesorio 2",
-    "mouths": "Boca",
-    "neck": "Cuello",
+    "hats": "Sombrero", "hats2": "Sombrero (capa 2)", "hats3": "Sombrero (capa 3)",
+    "hairs": "Pelo", "hairs2": "Pelo (capa 2)", "hairs3": "Pelo (capa 3)",
+    "accesories": "Accesorio", "accesories2": "Accesorio (capa 2)", "accesories3": "Accesorio (capa 3)",
+    "mouths": "Boca", "mouths2": "Boca (capa 2)", "mouths3": "Boca (capa 3)",
+    "neck": "Cuello", "neck2": "Cuello (capa 2)", "neck3": "Cuello (capa 3)",
     "cloth": "Torso",
     "arm": "Brazos",
     "clothBack": "Espalda",
@@ -44,6 +44,19 @@ PARTES_DEL_CUERPO = {
     "transport": "Transporte",  # solo vehículos (ver `se_ve`)
     "effect": "Cabeza (efecto)",  # una Pieza más sobre la cabeza, hasta salir del juego (ver `se_ve`)
 }
+# «Configura tus accesorios» del juego (`CustomLayerBanner`): en estas Partes van hasta tres Piezas, una arriba de la
+# otra. Las capas de cada una, de abajo hacia arriba: la Parte misma y las que se llaman como ella con su número
+# (`AvatarBodyEnum`: `hats2`, `hats3`). Una Prenda las viste como a las demás Partes (`wear_hats2`; probado en el juego).
+PARTES_CON_CAPAS = ("hats", "hairs", "accesories", "mouths", "neck")
+CAPAS = {parte: (parte, f"{parte}2", f"{parte}3") for parte in PARTES_CON_CAPAS}
+_DE_LA_CAPA = {capa: parte for parte, capas in CAPAS.items() for capa in capas}
+
+
+def parte_de_la_capa(parte: str) -> str:
+    """La Parte de la que `parte` es una capa (`hats3` → `hats`), o `parte` misma."""
+    return _DE_LA_CAPA.get(parte, parte)
+
+
 # El efecto de cabeza se escribe «head.<swf>.<Pieza>» (`GaturroEffectsManager.applyHead`).
 EFECTO = "effect"
 PREFIJO_EFECTO = "head."

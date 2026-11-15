@@ -1,8 +1,11 @@
 // La personalización de las Piezas del documento (`lookActual.personalizacion`: Parte → {colores, ajuste}, ya
 // validada por el núcleo, ver `mgitems.personalizar`): viaja con él a la vista previa, a la entrega y a los guardados.
-// Se edita con el editor del juego («Customiza tu ropa»: `ClothEditorModal`, con su arte), corriendo en vivo como el
-// Gaturro (ADR 0009): MG Items le pasa las Piezas y, al guardar, recibe lo que el juego habría guardado
-// (`wear_<parte>`), que el núcleo convierte en la personalización.
+// Se edita con las ventanas del juego, con su arte, corriendo en vivo como el Gaturro (ADR 0009). En Looks, el pincel abre
+// su menú para personalizar (`PESTANA[…].capas`), con sus dos ventanas: «Customiza tu ropa» (`ClothEditorModal`: MG Items
+// le pasa las Piezas y, al guardar, recibe lo que el juego habría guardado, `wear_<parte>`, que el núcleo convierte en la
+// personalización) y «Configura tus accesorios» (`CustomLayerBanner`: hasta tres Piezas en Sombrero, Pelo, Accesorio,
+// Boca y Cuello, una arriba de la otra, elegidas entre las de las fuentes del inventario). En Trucar Prenda, que lleva una
+// sola Pieza, el pincel abre directo el editor.
 
 // Si la Pieza de una Parte está personalizada (para marcar su casillero).
 const tienePersonalizacion = (parte) => !!lookActual.partes[parte] && !!lookActual.personalizacion?.[parte];
@@ -12,7 +15,7 @@ function olvidarPersonalizacion(parte) {
   if (lookActual.personalizacion) delete lookActual.personalizacion[parte];
 }
 
-// --- El editor ---
+// --- Las ventanas del juego ---
 
 // Los colores que el jugador guarda en el editor («+»), como en su perfil del juego: quedan en esta computadora.
 const CLAVE_COLORES_EDITOR = "coloresEditorPiezas";
@@ -26,17 +29,23 @@ function coloresDelEditor() {
 
 const dialogoEditor = () => $("dialogo-editor-piezas");
 const marcoEditor = () => $("editor-piezas");
-let editorListo = null; // la página del editor, abierta (queda para las siguientes, hasta un rato después de cerrarlo)
+let editorListo = null; // la página de las ventanas, abierta (queda para las siguientes, hasta un rato después de cerrarlas)
 let partesEnElEditor = []; // las que el editor mostró (las que no vuelven al guardar, se cortaron con la tijera)
 let documentoEnElEditor = null; // el que se está editando (si se cambia de pestaña, el resultado no se pierde)
+let sinPiezasParaElEditor = null; // por qué «Customiza tu ropa» no tiene Piezas que mostrar (lo dice el núcleo)
 
 const mostrarCargaEditor = (cargando) => dialogoEditor().classList.toggle("cargando", cargando);
 
-async function abrirEditorDePiezas() {
-  const preparado = await api().para_el_editor({ ...lookActual.partes }, coloresDe(lookActual), lookActual.emote ?? null,
-    lookActual.personalizacion ?? null);
+async function abrirPersonalizar() {
+  const conCapas = dePestana().capas;
+  const documento = [{ ...lookActual.partes }, coloresDe(lookActual), lookActual.emote ?? null, lookActual.personalizacion ?? null];
+  const preparado = conCapas
+    ? await api().para_personalizar(...documento, fuentes.todos ? null : fuentes.swfs)
+    : await api().para_el_editor(...documento);
   if (!preparado.ok) return avisarLista(preparado.error, "advertencia");
   documentoEnElEditor = lookActual;
+  sinPiezasParaElEditor = preparado.sin_piezas ?? null;
+  dialogoEditor().classList.toggle("solo-editor", !conCapas); // para la forma de la carga
   mostrarCargaEditor(true);
   dialogoEditor().showModal();
   try {
@@ -48,7 +57,15 @@ async function abrirEditorDePiezas() {
     dialogoEditor().close();
     return avisarLista(error.message, "error");
   }
-  marcoEditor().contentWindow.postMessage({ editar: { piezas: preparado.piezas, atributos: preparado.atributos, colores: coloresDelEditor() } }, "*");
+  const datos = { piezas: preparado.piezas, atributos: preparado.atributos, colores: coloresDelEditor() };
+  marcoEditor().contentWindow.postMessage(conCapas ? { personalizar: { ...datos, capas: preparado.capas } } : { editar: datos }, "*");
+}
+
+// Después de guardar en una ventana del juego: el documento cambió, y su Encode también.
+function alCambiarElDocumento(documento) {
+  if (documento !== lookActual) return;
+  mostrarEncode(null);
+  mostrarLook();
 }
 
 async function alGuardarEnElEditor(piezas) {
@@ -58,23 +75,43 @@ async function alGuardarEnElEditor(piezas) {
   if (!resultado.ok) return avisarLista(resultado.error, "error");
   documento.personalizacion = resultado.personalizacion;
   for (const parte of resultado.quitadas) delete documento.partes[parte];
-  if (documento !== lookActual) return;
-  mostrarEncode(null); // el Encode que había era sin estos cambios
-  mostrarLook();
-  if (resultado.quitadas.length) {
+  alCambiarElDocumento(documento);
+  if (documento === lookActual && resultado.quitadas.length) {
     avisarLista(`Se sacó del Look: ${resultado.quitadas.map(nombreDeParte).join(", ")} (cortado en el editor).`, "advertencia");
   }
 }
 
+// Lo que guardó «Configura tus accesorios»: la Pieza de cada capa (las de arriba no tienen casillero).
+async function alGuardarCapas(valores) {
+  const documento = documentoEnElEditor;
+  dialogoEditor().close();
+  const resultado = await api().capas_configuradas({ ...documento.partes }, documento.personalizacion ?? null, valores);
+  if (!resultado.ok) return avisarLista(resultado.error, "error");
+  documento.partes = resultado.partes;
+  documento.personalizacion = resultado.personalizacion;
+  alCambiarElDocumento(documento);
+}
+
 addEventListener("message", (evento) => {
   if (evento.source !== marcoEditor().contentWindow) return;
-  const { editor, partes, piezas, error, coloresGuardados } = evento.data ?? {};
+  const { editor, personalizar, capas, partes, piezas, error, coloresGuardados } = evento.data ?? {};
   if (coloresGuardados !== undefined) {
     try {
       localStorage.setItem(CLAVE_COLORES_EDITOR, coloresGuardados);
     } catch {}
   }
-  if (editor === "abierto") {
+  if (personalizar === "abierto") {
+    mostrarCargaEditor(false);
+    marcoEditor().focus();
+  } else if (personalizar === "error") {
+    dialogoEditor().close();
+    avisarLista(`No se pudo abrir la ventana del juego: ${error}`, "error");
+  } else if (capas) {
+    alGuardarCapas(capas);
+  } else if (editor === "sin piezas") {
+    dialogoEditor().close();
+    avisarLista(sinPiezasParaElEditor, "advertencia");
+  } else if (editor === "abierto") {
     partesEnElEditor = partes ?? [];
     mostrarCargaEditor(false);
     marcoEditor().focus();
@@ -88,7 +125,7 @@ addEventListener("message", (evento) => {
   }
 });
 
-$("editar-piezas").addEventListener("click", () => abrirEditorDePiezas());
+$("editar-piezas").addEventListener("click", () => abrirPersonalizar());
 cerrarAlRatoDeCerrarse(dialogoEditor(), () => {
   editorListo = null;
   marcoEditor().src = "about:blank";

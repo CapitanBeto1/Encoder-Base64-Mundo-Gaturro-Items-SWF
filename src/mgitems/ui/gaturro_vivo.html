@@ -22,7 +22,11 @@
   // Con {editar: {piezas, atributos, colores}} abre el editor de Piezas del juego (scripts/gaturro_en_vivo/MMO.as) y
   // avisa {editor: "abierto", partes: [las que muestra]}, {editor: "guardado", piezas: {parte: valor}} (las que quedaron),
   // {editor: "cancelado"} (✗ o Escape, como en el juego), {editor: "error"} y {coloresGuardados: "…"} (los que el
-  // jugador guarda con «+»). Con {pausa: true} se queda quieto hasta {pausa: false} (el de las fotos, no).
+  // jugador guarda con «+»). Con {personalizar: {atributos, piezas, colores, capas}} abre el menú del juego para
+  // personalizar: avisa {personalizar: "abierto"} cuando se ve, {personalizar: "error"} si no se pudo abrir,
+  // {editor: "sin piezas"} si se eligió «Customiza tu ropa» sin Piezas y {capas: {parte: valor}} cuando «Configura tus
+  // accesorios» guardó algo; el editor avisa como arriba, y salir del menú es {editor: "cancelado"}.
+  // Con {pausa: true} se queda quieto hasta {pausa: false} (el de las fotos, no).
   window.RufflePlayer = { config: {
     publicPath: "/ruffle/", polyfills: false, wmode: "transparent", allowScriptAccess: true, autoplay: "on",
     contextMenu: "off", splashScreen: false, unmuteOverlay: "hidden", letterbox: "on", logLevel: "warn",
@@ -44,7 +48,7 @@
   // (`Player::tick`: acumula lo que pasó y avanza un cuadro cada 1000/24 ms), así avanza y dibuja en los mismos momentos.
   // Si no dibujó cuando le tocaba (se perdió la cuenta), se le dan todos hasta que dibuje, y desde ahí se cuenta de nuevo.
   // Se le dan todos mientras carga (arranca, le llegan Piezas, cambia de tamaño: Ruffle carga los SWF de a pedazos, uno
-  // por refresco) y con el editor (responde al mouse entre cuadro y cuadro).
+  // por refresco) y con las ventanas del juego (responden al mouse entre cuadro y cuadro).
   const MS_POR_CUADRO = 1000 / 24; // scripts/gaturro_en_vivo/MMO.as: frameRate="24"
   const pedirRefresco = window.requestAnimationFrame.bind(window);
   const pedidos = []; // lo que se pidió hacer en el próximo refresco que se le dé
@@ -53,7 +57,7 @@
   let acumulado = 0; // el tiempo que acumuló desde que avanzó, como lo cuenta Ruffle
   let contando = false; // si se sabe cuándo le toca avanzar
   let cargando = 1; // lo que se le pidió y todavía se está cargando y dibujando (empieza con el arranque)
-  let conEditor = false;
+  let conVentanas = false; // las del juego para personalizar
   let dibujo = false;
   const terminarDeDibujar = WebGL2RenderingContext.prototype.flush; // Ruffle lo llama al dibujar cada cuadro
   WebGL2RenderingContext.prototype.flush = function () {
@@ -75,7 +79,7 @@
     if (enPausa) return;
     const pasado = anterior === null ? 0 : t - anterior;
     const leToca = acumulado + pasado >= MS_POR_CUADRO;
-    if (contando && !cargando && !conEditor && !leToca) return pedirElSiguiente();
+    if (contando && !cargando && !conVentanas && !leToca) return pedirElSiguiente();
     anterior = t;
     acumulado += pasado;
     while (acumulado >= MS_POR_CUADRO) acumulado -= MS_POR_CUADRO;
@@ -108,7 +112,7 @@
     if (--cargando === 0) ponerEnPausa(pausaPedida);
   }
   const avisar = (mensaje) => parent.postMessage(mensaje, "*");
-  // Lo que llama el SWF del editor (ExternalInterface).
+  // Lo que llaman las ventanas del juego para personalizar (ExternalInterface).
   let editando = false;
   window.mgEditorAbierto = (json) => { editando = true; avisar({ editor: "abierto", partes: JSON.parse(json) }); };
   window.mgEditado = (json) => { editando = false; avisar({ editor: "guardado", piezas: JSON.parse(json) }); };
@@ -116,21 +120,25 @@
   addEventListener("keydown", (e) => { if (e.key === "Escape" && editando) window.mgEditorCerrado(); });
   window.mgEditorError = (texto) => avisar({ editor: "error", error: texto });
   window.mgColoresGuardados = (colores) => avisar({ coloresGuardados: colores });
+  window.mgPersonalizarAbierto = () => { editando = true; avisar({ personalizar: "abierto" }); };
+  window.mgPersonalizarError = (texto) => avisar({ personalizar: "error", error: texto });
+  window.mgSinPiezas = () => avisar({ editor: "sin piezas" });
+  window.mgCapas = (json) => { editando = false; avisar({ capas: JSON.parse(json) }); };
   let player = null;
   let pendiente = null; // lo último que se pidió vestir antes de que el Gaturro estuviera listo
 
   addEventListener("message", (evento) => {
-    const { vestir, zoom, repetir, foto, editar, pausa } = evento.data ?? {};
+    const { vestir, zoom, repetir, foto, editar, personalizar, pausa } = evento.data ?? {};
     if (pausa !== undefined) pausar(pausa);
     if (zoom) document.documentElement.style.setProperty("--zoom", String(zoom));
     if (foto) return void fotografiar(foto, vestir);
     if (repetir) player?.mgRepetir();
-    if (editar) {
-      conEditor = true;
-      player?.mgEditar(JSON.stringify(editar));
-    } else if (vestir && player) player.mgVestir(JSON.stringify(vestir));
+    if (editar || personalizar) conVentanas = true;
+    if (editar) player?.mgEditar(JSON.stringify(editar));
+    else if (personalizar) player?.mgPersonalizar(JSON.stringify(personalizar));
+    else if (vestir && player) player.mgVestir(JSON.stringify(vestir));
     else if (vestir) pendiente = vestir;
-    if (zoom || repetir || editar || vestir) mientrasCarga();
+    if (zoom || repetir || editar || personalizar || vestir) mientrasCarga();
   });
 
   const esperar = (ms) => new Promise((r) => setTimeout(r, ms));

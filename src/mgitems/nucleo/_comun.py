@@ -2,7 +2,13 @@
 
 import re
 
+from mgitems.gaturro import PARTES
 from mgitems.items import items_del_swf, piezas_del_swf
+from mgitems.prendas import CAPAS
+
+# Las Partes del avatar que se le pasan al Gaturro en vivo (y cuyas Piezas cuentan en sus fotos): las del juego
+# (`AvatarBodyEnum.getList`) y las capas de «Configura tus accesorios».
+_PARTES_EN_VIVO = tuple(dict.fromkeys([*PARTES, *(capa for capas in CAPAS.values() for capa in capas)]))
 
 # El nombre de un SWF del juego (`fashion_nuevo`, `npcs/tienda`…): solo eso, así no se sale de su carpeta.
 _NOMBRE_SWF = re.compile(r"^[A-Za-z0-9_\-]+(?:/[A-Za-z0-9_\-]+)*$")
