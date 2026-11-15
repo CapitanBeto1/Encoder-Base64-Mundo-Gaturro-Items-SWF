@@ -41,6 +41,9 @@ $("reiniciar-imagen").addEventListener("click", () => {
   buscarCaptura();
 });
 $("cerrar-imagen").addEventListener("click", () => $("dialogo-imagen").close());
+// Los modelos y las huellas cargados ocupan unos 300 MB: se sueltan al rato de cerrar la ventana, y la próxima búsqueda
+// los vuelve a leer (unos segundos). Lo que se ve en la ventana (la captura, los resultados) queda.
+cerrarAlRatoDeCerrarse($("dialogo-imagen"), () => api().soltar_busqueda());
 
 function mostrarBusqueda() {
   $("bajar-datos").hidden = $("bajar-datos-busqueda").hidden = busqueda.listos;

@@ -31,6 +31,7 @@ def unitario(*v):
 class DatosFalsos:
     def __init__(self, listos=True):
         self._listos = listos
+        self.soltados = 0
         self.huellas = Huellas(
             ["muebles.silla", "ropa.remera_on", "muebles.rota", "ropa.suelta_on", "muebles.mesa", "ropa.pantalon", "ropa.disfraz",
              "ropa.disfrazPantalon_on"],
@@ -52,6 +53,9 @@ class DatosFalsos:
 
     def cargar(self):
         return [ModeloFalso()], self.huellas
+
+    def soltar(self):
+        self.soltados += 1
 
 
 INDICE = {"swfs": {
@@ -173,6 +177,33 @@ def test_sin_onnxruntime_avisa_antes_de_bajar_nada(sistema, tmp_path, monkeypatc
     assert not estado["ok"] and estado["sin_onnxruntime"] and "onnxruntime" in estado["error"]
     with pytest.raises(RuntimeError, match="onnxruntime"):
         mgitems.busqueda.Modelo(tmp_path / "modelo.onnx")
+
+
+def test_la_busqueda_suelta_sus_datos_y_la_proxima_los_vuelve_a_cargar(sistema, tmp_path):
+    # La ventana lo pide un rato después de cerrarse: la búsqueda siguiente da lo mismo.
+    datos = DatosFalsos()
+    nucleo = nucleo_con(sistema, tmp_path, datos)
+    antes = nucleo.buscar_por_imagen(captura((255, 0, 0)))
+
+    soltado = nucleo.soltar_busqueda()
+    despues = nucleo.buscar_por_imagen(captura((255, 0, 0)))
+
+    assert soltado["ok"] and datos.soltados == 1
+    assert despues == antes
+
+
+def test_los_datos_soltados_se_vuelven_a_leer(tmp_path, monkeypatch):
+    import mgitems.busqueda
+    monkeypatch.setattr(mgitems.busqueda, "MODELOS", (("modelo.onnx", lambda archivo: ModeloFalso()),))
+    Huellas(["casa.silla"], [np.array([[1, 0, 0]], np.float32)], {}).guardar(tmp_path / mgitems.busqueda.ARCHIVO_HUELLAS)
+    datos = DatosBusqueda(tmp_path, {})
+
+    primeros = datos.cargar()
+    datos.soltar()
+    segundos = datos.cargar()
+
+    assert segundos is not primeros and datos.cargar() is segundos
+    assert segundos[1].rutas == ["casa.silla"]
 
 
 def test_una_imagen_que_no_se_puede_leer(sistema, tmp_path):

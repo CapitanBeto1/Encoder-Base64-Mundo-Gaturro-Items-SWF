@@ -358,6 +358,10 @@ class DatosBusqueda:
                               Huellas.leer(self._carpeta / ARCHIVO_HUELLAS))
         return self._cargados
 
+    def soltar(self) -> None:
+        """Deja de tener cargados los modelos y las huellas (unos 300 MB): se vuelven a leer en la próxima búsqueda."""
+        self._cargados = None
+
 
 def _abrir_url(url: str):
     import ssl
