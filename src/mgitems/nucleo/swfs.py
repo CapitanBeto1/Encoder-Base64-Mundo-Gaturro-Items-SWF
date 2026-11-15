@@ -1,6 +1,5 @@
 """Los SWF del juego: abrirlos (del CDN o de un archivo), sus Items, Piezas y decoración, del índice o analizados."""
 
-import re
 import subprocess
 from pathlib import Path
 
@@ -17,7 +16,7 @@ from mgitems.fuente import SinConexion, SwfNoEncontrado, Version
 from mgitems.iconos import version_de
 from mgitems.interfaz import CARPETA_BANNERS
 from mgitems.items import items_del_swf, orden_natural, piezas_del_swf
-from mgitems.nucleo._comun import _simbolos_con_imagen
+from mgitems.nucleo._comun import _NOMBRE_SWF, _simbolos_con_imagen
 from mgitems.personalizar import BANNER_DEL_EDITOR
 from mgitems.prendas import (
     EFECTO, PARTES_DEL_CUERPO, PREFIJO_EFECTO, PRENDA, CacheItemsBase, ItemBase, leer_item_base, no_sirve_de_base,
@@ -25,7 +24,6 @@ from mgitems.prendas import (
 from mgitems.swf import SwfInvalido, leer_simbolos, limites_de_simbolos
 
 
-_NOMBRE_SWF = re.compile(r"^[A-Za-z0-9_\-]+(?:/[A-Za-z0-9_\-]+)*$")
 
 
 class Swfs:
