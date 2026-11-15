@@ -33,7 +33,7 @@ Los colores por capa (o quitar una capa, con su saturación) y el ajuste (mover,
 _Avoid_: customización
 
 **Capa** (de una Parte):
-Una de las hasta tres Piezas que van una arriba de la otra en Sombrero, Pelo, Accesorio, Boca o Cuello, como en «Configura tus accesorios» del juego: la Parte es la capa 1, y las de arriba son otras Partes (`hats2`, `hats3`…). Se ponen con esa ventana del juego, en vivo, y el casillero de la Parte dice cuántas hay (ADR 0009). No confundir con las capas de color de una Pieza (sus formas, que pinta «Customiza tu ropa»: ver Personalización).
+Una de las hasta tres Piezas que van una arriba de la otra en Sombrero, Pelo, Accesorio, Boca o Cuello, como en «Configura tus accesorios» del juego: la Parte es la capa 1, y las de arriba son otras Partes (`hats2`, `hats3`…). Se ponen con esa ventana del juego, en vivo, o desde el casillero de la Parte: marcado, los botones 1 · 2 · 3 eligen la capa. El casillero dice cuántas hay arriba, y si se saca una, las de arriba bajan (ADR 0009). No confundir con las capas de color de una Pieza (sus formas, que pinta «Customiza tu ropa»: ver Personalización).
 _Avoid_: slot, nivel
 
 **Animado** (un Item o una Pieza):
