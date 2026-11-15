@@ -118,9 +118,11 @@ const cerrarAlRatoDeCerrarse = (dialogo, cerrar) => dialogo.addEventListener("cl
 
 // --- Fotos del Gaturro en vivo: para donde hay muchos a la vez (las miniaturas de los guardados) ---
 
-// Un Gaturro que no se ve: se viste, se le saca la foto y pasa al siguiente. Cada foto se saca una sola vez. Cuando no
-// quedan fotos por sacar, se cierra: abierto, se sigue dibujando aunque no se vea, y gasta CPU y memoria.
+// Un Gaturro que no se ve: se viste, se le saca la foto y pasa al siguiente. Cada foto se saca una sola vez, y se
+// guarda para la próxima vez que se abra el programa (`Nucleo.foto_guardada`: sacarlas cuesta tiempo y memoria). Cuando
+// no quedan fotos por sacar, se cierra: abierto, se sigue dibujando aunque no se vea, y gasta CPU y memoria.
 const fotosDelGaturro = new Map(); // atributos (JSON) → la imagen, o la promesa de la imagen
+const FORMATO_DE_FOTO = "webgl-240-1.6"; // cómo se saca (dibujador, tamaño, zoom): si cambia, las guardadas no sirven
 let fotografo = null; // la promesa del marco, ya abierto
 let turnoDeFoto = Promise.resolve(); // de a una
 let fotosPedidas = 0;
@@ -150,24 +152,35 @@ async function fotoDelGaturro(partes, colores, emote = null, personalizacion = n
   const resultado = await api().gaturro_en_vivo({ ...partes }, colores, emote, null, personalizacion);
   if (!resultado.ok) return null;
   const clave = JSON.stringify(resultado.atributos);
-  if (!fotosDelGaturro.has(clave)) {
-    fotosPorSacar++;
-    clearTimeout(cierreDelFotografo);
-    const foto = turnoDeFoto.then(async () => {
-      const marco = await (fotografo ??= abrirFotografo());
-      const numero = ++fotosPedidas;
-      const respuesta = respuestaDe(marco, (r) => r.foto === numero);
-      marco.contentWindow.postMessage({ foto: numero, vestir: resultado.atributos, zoom: 1.6 }, "*");
-      return (await respuesta).imagen;
-    }).catch(() => {
-      cerrarFotografo(); // la próxima foto lo abre de nuevo
-      fotosDelGaturro.delete(clave);
-      return null;
-    }).finally(() => {
-      if (--fotosPorSacar === 0) cierreDelFotografo = setTimeout(cerrarFotografo, ESPERA_ANTES_DE_CERRAR_EL_FOTOGRAFO);
-    });
-    fotosDelGaturro.set(clave, foto);
-    turnoDeFoto = foto;
-  }
+  if (!fotosDelGaturro.has(clave)) fotosDelGaturro.set(clave, guardadaOSacada(clave, resultado.atributos));
   return fotosDelGaturro.get(clave);
+}
+
+async function guardadaOSacada(clave, atributos) {
+  const guardada = await api().foto_guardada(atributos, FORMATO_DE_FOTO);
+  if (guardada.ok && guardada.imagen) return guardada.imagen;
+  const imagen = await sacarFoto(atributos);
+  if (imagen) api().guardar_foto(atributos, FORMATO_DE_FOTO, imagen);
+  else fotosDelGaturro.delete(clave); // la próxima vez se intenta de nuevo
+  return imagen;
+}
+
+// La foto que le saca el fotógrafo cuando le toca (de a una), o null si no se pudo.
+function sacarFoto(atributos) {
+  fotosPorSacar++;
+  clearTimeout(cierreDelFotografo);
+  const foto = turnoDeFoto.then(async () => {
+    const marco = await (fotografo ??= abrirFotografo());
+    const numero = ++fotosPedidas;
+    const respuesta = respuestaDe(marco, (r) => r.foto === numero);
+    marco.contentWindow.postMessage({ foto: numero, vestir: atributos, zoom: 1.6 }, "*");
+    return (await respuesta).imagen;
+  }).catch(() => {
+    cerrarFotografo(); // la próxima foto lo abre de nuevo
+    return null;
+  }).finally(() => {
+    if (--fotosPorSacar === 0) cierreDelFotografo = setTimeout(cerrarFotografo, ESPERA_ANTES_DE_CERRAR_EL_FOTOGRAFO);
+  });
+  turnoDeFoto = foto;
+  return foto;
 }
