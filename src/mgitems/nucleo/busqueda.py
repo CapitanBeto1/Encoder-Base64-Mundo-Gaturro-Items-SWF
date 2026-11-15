@@ -1,6 +1,7 @@
 """Buscar por imagen: qué Item es una captura del juego (`mgitems.busqueda`)."""
 
 import base64
+import gc
 
 from mgitems.busqueda import FALTA_ONNXRUNTIME, QUE_ES, DatosBusqueda, abrir_encuadres, espejada, guiar, hay_onnxruntime
 from mgitems.destinos import DESCARTADO, es_de_pasaporte, motivo_de
@@ -45,6 +46,14 @@ class Busqueda:
 
     def progreso_busqueda(self) -> dict:
         return {"ok": True, **self._progreso_busqueda}
+
+    def soltar_busqueda(self) -> dict:
+        """Devuelve la memoria de la búsqueda (los modelos y las huellas, unos 300 MB) hasta la próxima, que los vuelve a
+        leer (unos segundos). La ventana lo pide un rato después de cerrarse."""
+        if self._datos_busqueda is not None:
+            self._datos_busqueda.soltar()
+            gc.collect()
+        return {"ok": True}
 
     def opciones_que_es(self) -> dict:
         """Las opciones de «¿Qué es?» de la búsqueda por imagen, en orden."""

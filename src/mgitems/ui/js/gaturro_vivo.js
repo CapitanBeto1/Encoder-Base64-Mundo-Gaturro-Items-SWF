@@ -97,10 +97,10 @@ function limpiarEnUnRato() {
   }, 2000);
 }
 
-// Un Gaturro abierto ocupa unos 100 MB aunque no se vea. Cuando deja de verse, se cierra un rato después: si antes se lo
-// vuelve a ver, sigue el mismo, sin esperar a que se abra. Devuelve con qué avisar que dejó de verse; `cerrar` se llama
-// si para entonces `sigueSinVerse()`.
-const ESPERA_PARA_CERRAR_EL_GATURRO = 60000;
+// Un Gaturro abierto ocupa unos 100 MB aunque no se vea (y los datos de la búsqueda, unos 300). Cuando deja de verse, se
+// cierra un rato después: si antes se lo vuelve a ver, sigue el mismo, sin esperar a que se abra. Devuelve con qué
+// avisar que dejó de verse; `cerrar` se llama si para entonces `sigueSinVerse()`.
+const ESPERA_PARA_CERRAR = 60000;
 function cierreAlRato(cerrar, sigueSinVerse) {
   let cierre = null;
   return () => {
@@ -109,11 +109,11 @@ function cierreAlRato(cerrar, sigueSinVerse) {
       if (!sigueSinVerse()) return;
       cerrar();
       limpiarEnUnRato();
-    }, ESPERA_PARA_CERRAR_EL_GATURRO);
+    }, ESPERA_PARA_CERRAR);
   };
 }
 
-// El de una ventana (<dialog>), al rato de cerrarla.
+// Lo de una ventana (<dialog>), al rato de cerrarla.
 const cerrarAlRatoDeCerrarse = (dialogo, cerrar) => dialogo.addEventListener("close", cierreAlRato(cerrar, () => !dialogo.open));
 
 // --- Fotos del Gaturro en vivo: para donde hay muchos a la vez (las miniaturas de los guardados) ---
