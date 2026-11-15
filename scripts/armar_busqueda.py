@@ -1,11 +1,15 @@
 """Arma los datos de la búsqueda por imagen: el modelo comprimido y las huellas de todas las imágenes del juego.
 
-1. Exporta la parte de imágenes de CLIP ViT-B/32 (OpenCLIP, pesos de LAION) a ONNX y la comprime a int8.
-   Necesita torch y open_clip, solo para este paso: `pip install -e ".[busqueda]"`.
-2. Exporta con FFDec el primer cuadro de cada Item y cada Pieza de los SWF del índice.
+1. Los modelos: exporta la parte de imágenes de CLIP ViT-B/32 (OpenCLIP, pesos de LAION) a ONNX y la comprime a
+   int8 (necesita torch y open_clip, solo para este paso: `pip install -e ".[busqueda]"`), y baja DINOv2 chico ya en
+   ONNX (la copia de Transformers.js, fijada por commit y por hash; licencia Apache 2.0, de Meta).
+2. Exporta con FFDec el primer cuadro de cada Item y cada Pieza de los SWF del índice y, de los dibujos animados,
+   también el cuadro con más dibujo (el primero puede estar casi vacío: los brillos de `granja.crecePrueba`).
 3. Anota qué Items visten cada Pieza (sus `clothes` o sus `adds`), para mostrar el Item cuando lo más parecido
-   es una Pieza (lo que se ve puesto en un Gaturro).
-4. Calcula la huella de cada imagen con el mismo modelo y preprocesamiento que usa el programa (`mgitems.busqueda`).
+   es una Pieza (lo que se ve puesto en un Gaturro). También la que un Item de mochila pone en la cabeza como efecto
+   (`head.<swf>.<Pieza>`: los brillos de `potions.pocimaEstrellita`).
+4. Calcula las huellas de cada imagen con los mismos modelos y preprocesamiento que usa el programa (`mgitems.busqueda`).
+   Un dibujo claro (casi todo blanco) suma otra sobre fondo oscuro: sobre blanco no se ve.
 5. Dibuja el Gaturro con cada Pieza que viste algún Item, una por una, puesta (el mismo dibujo que la vista previa
    de Looks, pasado a imagen con resvg), y suma la huella de la zona donde está: así se encuentra una Prenda
    cortada (una sola parte de un traje, las mangas de una remera), que no se parece a su Pieza suelta (#125).
@@ -13,8 +17,8 @@
    caballo) y, en los dibujos grandes, sus mitades (la mandíbula de `virtualGoods3.ojoBionico`). Así se encuentra
    lo que en una captura se ve solo en parte.
 
-Escribe en `<trabajo>/datos/` los dos archivos que se publican en el release de datos del repositorio
-(`clip_visual_int8.onnx` y `huellas_busqueda.npz`). Lo exportado se guarda en la carpeta de trabajo: si se corta,
+Escribe en `<trabajo>/datos/` los archivos que se publican en el release de datos del repositorio (los modelos,
+`clip_visual_int8.onnx` y `dinov2_small.onnx`, y `huellas_busqueda.npz`). Lo exportado se guarda en la carpeta de trabajo: si se corta,
 al volver a correrlo solo se hace lo que falta o lo que cambió en el CDN. Tarda (unos 30 minutos la primera vez).
 
 Uso:
@@ -25,6 +29,7 @@ import argparse
 import concurrent.futures
 import hashlib
 import json
+import shutil
 import sys
 import tempfile
 import time
@@ -35,16 +40,22 @@ sys.path.insert(0, str(RAIZ / "src"))
 
 from PIL import Image  # noqa: E402
 
-from mgitems.busqueda import ARCHIVO_HUELLAS, ARCHIVO_MODELO, Huellas, Modelo, con_fondo  # noqa: E402
+from mgitems.busqueda import ARCHIVO_HUELLAS, ARCHIVO_MODELO, ARCHIVO_MODELO_DINO, MODELOS, Huellas, con_fondo  # noqa: E402
 from mgitems.categorias import ARCHIVO_INDICE  # noqa: E402
 from mgitems.fuente import FuenteCDN  # noqa: E402
 from mgitems.iconos import ExportadorFFDec, IconosItems, version_de  # noqa: E402
 from mgitems.items import items_del_swf, orden_natural  # noqa: E402
 from mgitems.nucleo._comun import _simbolos_con_imagen  # noqa: E402
-from mgitems.prendas import ACCION, EFECTO, ItemsBaseFFDec  # noqa: E402
-from mgitems.swf import leer_clases, leer_simbolos  # noqa: E402
+from mgitems.ffdec import FFDec  # noqa: E402
+from mgitems.prendas import ACCION, EFECTO, PREFIJO_EFECTO, ItemsBaseFFDec  # noqa: E402
+from mgitems.swf import cuadros_de_clases, leer_clases, leer_simbolos  # noqa: E402
 
 MODELO_CLIP, PESOS_CLIP = "ViT-B-32", "laion2b_s34b_b79k"
+# DINOv2 chico (facebook/dinov2-small) en ONNX, como lo publica Transformers.js. Entero: el comprimido a int8 pierde
+# mucho (los brackets de una captura real pasaban del 1.º al 38.º puesto entre las bocas).
+URL_DINO = ("https://huggingface.co/Xenova/dinov2-small/resolve/c2bb04a51fab207c420665f1946016107bffc701/"
+            "onnx/model.onnx")
+SHA_DINO = "83141175ec78b4ff9a2bb58a4c7c264ba0054d1c2e122e5a8114b79a8d4179ea"
 
 
 def exportar_modelo(destino: Path) -> None:
@@ -73,54 +84,160 @@ def exportar_modelo(destino: Path) -> None:
         quantize_dynamic(str(completo), str(destino), weight_type=QuantType.QUInt8)
 
 
-def preparar_swf(fuente: FuenteCDN, iconos: IconosItems, ffdec: ItemsBaseFFDec, trabajo: Path, swf: str):
-    """(swf, {Pieza: [Items que la visten]}, error): exporta sus imágenes y lee qué visten sus Items."""
+# Lo que se anota de cada SWF en `visten`: si cambia, se vuelve a leer aunque el SWF sea el mismo.
+CONTENIDO_VISTEN = "con efectos de cabeza"
+
+
+def bajar_dino(destino: Path) -> None:
+    """Baja DINOv2 chico (unos 88 MB) y verifica su hash."""
+    import urllib.request
+
+    pedido = urllib.request.Request(URL_DINO, headers={"User-Agent": "MGItems"})
+    with urllib.request.urlopen(pedido, timeout=120) as respuesta:
+        data = respuesta.read()
+    if hashlib.sha256(data).hexdigest() != SHA_DINO:
+        raise RuntimeError("DINOv2 llegó con otro contenido que el esperado")
+    destino.write_bytes(data)
+
+
+def preparar_swf(fuente: FuenteCDN, iconos: IconosItems, ffdec: ItemsBaseFFDec, trabajo: Path, swf: str,
+                 con_mochila: bool = True):
+    """(swf, {Pieza: [Items que la visten]}, error): exporta sus imágenes y lee qué visten sus Items. Sin Items de
+    mochila (`con_mochila`), que son los únicos con efecto de cabeza, sirve lo leído antes de que se anotaran."""
     try:
         data = fuente.descargar(swf)
-        iconos.preparar(swf, data, _simbolos_con_imagen(leer_simbolos(data)))
+        simbolos = _simbolos_con_imagen(leer_simbolos(data))
+        iconos.preparar(swf, data, simbolos)
+        exportar_mejores_cuadros(swf, data, simbolos, trabajo / "animados")
         guardado = trabajo / "visten" / (swf.replace("/", "__") + ".json")
+        version = f"{version_de(data)} {CONTENIDO_VISTEN}"
         if guardado.is_file():
             datos = json.loads(guardado.read_text(encoding="utf-8"))
-            if datos.get("version") == version_de(data):
+            if datos.get("version") == version or (not con_mochila and datos.get("version") == version_de(data)):
                 return swf, datos["visten"], ""
         visten: dict[str, list[str]] = {}
         for item in ffdec.analizar(data, items_del_swf(leer_clases(data))).values():
             for parte, pieza in item.partes.items():
-                if parte in (ACCION, EFECTO):
-                    continue  # no se ven puestas: se ven al usar el Item
+                if parte == ACCION:
+                    continue  # no se ve puesta: se ve al usar el Item
+                if parte == EFECTO:
+                    if not pieza.startswith(PREFIJO_EFECTO):
+                        continue  # un filtro (sepia, fantasma…), sin dibujo
+                    pieza = pieza[len(PREFIJO_EFECTO):]  # lo que el Item pone en la cabeza al usarlo
                 ruta = pieza if "." in pieza else f"{swf}.{pieza}"
                 visten.setdefault(ruta, []).append(f"{swf}.{item.clase}")
         guardado.parent.mkdir(parents=True, exist_ok=True)
-        guardado.write_text(json.dumps({"version": version_de(data), "visten": visten}, ensure_ascii=False), encoding="utf-8")
+        guardado.write_text(json.dumps({"version": version, "visten": visten}, ensure_ascii=False), encoding="utf-8")
         return swf, visten, ""
     except Exception as e:  # la red o FFDec pueden fallar con un SWF: se sigue con los demás
         return swf, {}, str(e)
 
 
-def huellas_de_archivos(clip: Modelo, archivos: list[tuple[Path, str]], guardado: Path, que: str):
-    """(rutas, huellas) de imágenes de referencia (archivo, ruta). Se guardan: si son las mismas, no se recalculan."""
+# Los dibujos animados (desde 3 cuadros: con 2 suelen ser estados, como los pies de `double`) suman el cuadro con más
+# dibujo de unos cuantos de muestra, si tiene bastante más que el primero.
+CUADROS_ANIMADO = 3
+CUADROS_DE_MUESTRA = 6
+MAS_DIBUJO = 1.5
+
+
+def _dibujado(png: Path) -> int:
     import numpy as np
 
-    clave = "\n".join(f"{r}:{a.stat().st_size}" for a, r in archivos)
-    if guardado.is_file():
-        with np.load(guardado, allow_pickle=False) as datos:
-            if str(datos["clave"]) == clave:
-                return [str(r) for r in datos["rutas"]], datos["huellas"]
-    rutas, lote, huellas = [], [], []
-    for n, (archivo, ruta) in enumerate(archivos, 1):
-        with Image.open(archivo) as imagen:
-            dibujo = con_fondo(imagen)
-        if dibujo is not None:
-            lote.append(dibujo)
-            rutas.append(ruta)
-        if len(lote) == 64 or (n == len(archivos) and lote):
-            huellas.append(clip.huellas(lote))
-            lote = []
-            print(f"\r{que}: {n}/{len(archivos)}", end="", flush=True)
-    print()
-    matriz = np.concatenate(huellas) if huellas else np.zeros((0, 512), np.float32)
-    np.savez(guardado, clave=np.array(clave), rutas=np.array(rutas), huellas=matriz)
-    return rutas, matriz
+    with Image.open(png) as imagen:
+        return int((np.asarray(imagen.convert("RGBA").getchannel("A")) > 20).sum())
+
+
+def exportar_mejores_cuadros(swf: str, data: bytes, simbolos: dict[int, str], carpeta: Path) -> None:
+    """Para cada dibujo animado del SWF, `carpeta/<swf>/<Clase>.png`: el cuadro de muestra con más dibujo, si tiene
+    bastante más que el primero (si no, nada). Una vez por versión del SWF."""
+    destino = carpeta.joinpath(*swf.split("/"))
+    marca, version = destino / "version", version_de(data)
+    if marca.is_file() and marca.read_text(encoding="utf-8") == version:
+        return
+    cuadros = cuadros_de_clases(data)
+    muestras = {i: sorted({round(1 + k * (cuadros[c] - 1) / (CUADROS_DE_MUESTRA - 1)) for k in range(CUADROS_DE_MUESTRA)})
+                for i, c in simbolos.items() if cuadros.get(c, 1) >= CUADROS_ANIMADO}
+    if destino.exists():
+        for viejo in destino.glob("*.png"):
+            viejo.unlink()
+    destino.mkdir(parents=True, exist_ok=True)
+    if muestras:
+        with tempfile.TemporaryDirectory(prefix="mgitems-", ignore_cleanup_errors=True) as temporal:
+            archivo = Path(temporal) / "assets.swf"
+            archivo.write_bytes(data)
+            exportados = Path(temporal) / "cuadros"
+            FFDec().ejecutar("-selectid", ",".join(str(i) for i in muestras),
+                             "-select", ",".join(f"{i}:{n}" for i, ns in muestras.items() for n in ns),
+                             "-zoom", "2", "-format", "sprite:png", "-export", "sprite", str(exportados), str(archivo))
+            for sprite in exportados.iterdir() if exportados.is_dir() else []:
+                partes = sprite.name.split("_", 2)
+                if len(partes) < 2 or not partes[1].isdigit() or int(partes[1]) not in muestras:
+                    continue
+                medidos = {int(p.stem): _dibujado(p) for p in sprite.glob("*.png") if p.stem.isdigit()}
+                if not medidos:
+                    continue
+                mejor = max(medidos, key=medidos.get)
+                if mejor != 1 and medidos[mejor] > MAS_DIBUJO * medidos.get(1, 0):
+                    shutil.copyfile(sprite / f"{mejor}.png", destino / f"{simbolos[int(partes[1])]}.png")
+    marca.write_text(version, encoding="utf-8")
+
+
+# Un dibujo es claro si casi todo lo dibujado es blanco o casi blanco: sobre fondo blanco no se ve (los brillos de
+# `granja.crecePrueba`), así que también se compara sobre este fondo oscuro.
+CLARO = 0.6
+FONDO_OSCURO = (35, 40, 60)
+
+
+def es_claro(imagen: Image.Image) -> bool:
+    import numpy as np
+
+    pixeles = np.asarray(imagen.convert("RGBA"))
+    dibujado = pixeles[..., 3] > 20
+    return bool(dibujado.any()) and float((pixeles[..., :3].min(axis=2) > 215)[dibujado].mean()) >= CLARO
+
+
+# Cómo se calculan las huellas: si cambia, se recalculan aunque las imágenes sean las mismas.
+RECETA = "clip+dinov2, claros también sobre oscuro"
+
+
+def huellas_de_archivos(modelos: list[tuple[str, object]], archivos: list[tuple[Path, str]], guardado: Path, que: str):
+    """(rutas, [huellas de cada modelo]) de imágenes de referencia (archivo, ruta), con `modelos` como en `MODELOS`
+    pero ya abiertos (nombre de su archivo, modelo); un dibujo claro, también sobre fondo oscuro. Se guardan aparte las
+    de cada modelo (`<guardado>_<modelo>.npz`): si las imágenes y el modelo son los mismos, no se recalculan."""
+    import numpy as np
+
+    lista = "\n".join(f"{r}:{a.stat().st_size}" for a, r in archivos)
+    guardados = {nombre: (guardado.with_name(f"{guardado.stem}_{Path(nombre).stem}.npz"), f"{RECETA}\n{nombre}\n{lista}")
+                 for nombre, _ in modelos}
+    hechas: dict[str, tuple[list[str], np.ndarray]] = {}
+    for nombre, (archivo, clave) in guardados.items():
+        if archivo.is_file():
+            with np.load(archivo, allow_pickle=False) as datos:
+                if str(datos["clave"]) == clave:
+                    hechas[nombre] = ([str(r) for r in datos["rutas"]], datos["huellas"])
+    faltan = [(nombre, modelo) for nombre, modelo in modelos if nombre not in hechas]
+    if faltan:
+        rutas, lote, huellas = [], [], {nombre: [] for nombre, _ in faltan}
+        for n, (archivo, ruta) in enumerate(archivos, 1):
+            with Image.open(archivo) as imagen:
+                dibujos = [con_fondo(imagen)] + ([con_fondo(imagen, FONDO_OSCURO)] if es_claro(imagen) else [])
+            for dibujo in dibujos:
+                if dibujo is not None:
+                    lote.append(dibujo)
+                    rutas.append(ruta)
+            if len(lote) >= 64 or (n == len(archivos) and lote):
+                for nombre, modelo in faltan:
+                    huellas[nombre].append(modelo.huellas(lote))
+                lote = []
+                print(f"\r{que} ({', '.join(Path(n).stem for n, _ in faltan)}): {n}/{len(archivos)}", end="", flush=True)
+        print()
+        for nombre, _ in faltan:
+            matriz = np.concatenate(huellas[nombre]) if huellas[nombre] else np.zeros((0, 1), np.float32)
+            archivo, clave = guardados[nombre]
+            np.savez(archivo, clave=np.array(clave), rutas=np.array(rutas), huellas=matriz)
+            hechas[nombre] = (rutas, matriz)
+    rutas = hechas[modelos[0][0]][0]
+    return rutas, [hechas[nombre][1] for nombre, _ in modelos]
 
 
 # Pedazos (paso 6). En píxeles de las imágenes exportadas (zoom 2).
@@ -256,19 +373,23 @@ def main() -> None:
     salida.mkdir(parents=True, exist_ok=True)
     t = time.time()
 
-    modelo = salida / ARCHIVO_MODELO
-    if not modelo.is_file():
-        print("1. modelo…", flush=True)
-        exportar_modelo(modelo)
+    if not (salida / ARCHIVO_MODELO).is_file():
+        print("1. CLIP…", flush=True)
+        exportar_modelo(salida / ARCHIVO_MODELO)
+    if not (salida / ARCHIVO_MODELO_DINO).is_file():
+        print("1. DINOv2…", flush=True)
+        bajar_dino(salida / ARCHIVO_MODELO_DINO)
 
-    swfs = list(json.loads(ARCHIVO_INDICE.read_text(encoding="utf-8"))["swfs"])
+    indice = json.loads(ARCHIVO_INDICE.read_text(encoding="utf-8"))["swfs"]
+    swfs = list(indice)
+    con_mochila = {s for s, datos in indice.items() if any(i.get("tipo") == "mochila" for i in datos.get("items", {}).values())}
     fuente, ffdec = FuenteCDN(), ItemsBaseFFDec()
     imagenes = args.trabajo / "imagenes"
     iconos = IconosItems(imagenes, ExportadorFFDec())
     prendas_de_pieza: dict[str, list[str]] = {}
     errores = []
     with concurrent.futures.ThreadPoolExecutor(args.hilos) as hilos:
-        trabajos = hilos.map(lambda s: preparar_swf(fuente, iconos, ffdec, args.trabajo, s), swfs)
+        trabajos = hilos.map(lambda s: preparar_swf(fuente, iconos, ffdec, args.trabajo, s, s in con_mochila), swfs)
         for n, (swf, visten, error) in enumerate(trabajos, 1):
             if error:
                 errores.append(f"{swf}: {error}")
@@ -279,22 +400,28 @@ def main() -> None:
 
     import numpy as np
 
-    clip = Modelo(modelo)
+    modelos = [(archivo, clase(salida / archivo)) for archivo, clase in MODELOS]
     pngs = sorted(imagenes.rglob("*.png"))
-    rutas, huellas = huellas_de_archivos(clip, [(p, "/".join(p.relative_to(imagenes).parts[:-1]) + "." + p.stem) for p in pngs],
+    rutas, huellas = huellas_de_archivos(modelos, [(p, "/".join(p.relative_to(imagenes).parts[:-1]) + "." + p.stem) for p in pngs],
                                          args.trabajo / "huellas_imagenes.npz", "4. huellas")
+    animados = args.trabajo / "animados"
+    pngs_a = sorted(animados.rglob("*.png"))
+    rutas_a, huellas_a = huellas_de_archivos(modelos, [(p, "/".join(p.relative_to(animados).parts[:-1]) + "." + p.stem) for p in pngs_a],
+                                             args.trabajo / "huellas_animados.npz", "4. huellas de los cuadros con más dibujo")
+    rutas = rutas + rutas_a
 
     prendas_de_pieza = {p: sorted(set(i), key=orden_natural) for p, i in prendas_de_pieza.items()}
     puestas = dibujar_puestas(args.trabajo / "puestas", sorted(prendas_de_pieza, key=orden_natural)[: args.puestas])
-    rutas_p, huellas_p = huellas_de_archivos(clip, puestas, args.trabajo / "huellas_puestas.npz", "5. huellas de las puestas")
+    rutas_p, huellas_p = huellas_de_archivos(modelos, puestas, args.trabajo / "huellas_puestas.npz", "5. huellas de las puestas")
     trozos = guardar_pedazos(imagenes, args.trabajo / "pedazos", pngs)
-    rutas_t, huellas_t = huellas_de_archivos(clip, trozos, args.trabajo / "huellas_pedazos.npz", "6. huellas de los pedazos")
+    rutas_t, huellas_t = huellas_de_archivos(modelos, trozos, args.trabajo / "huellas_pedazos.npz", "6. huellas de los pedazos")
     # Una Pieza queda varias veces: suelta, puesta y en pedazos (con la misma ruta, así lleva a los mismos Items).
     pedazos = np.concatenate([np.zeros(len(rutas) + len(rutas_p), bool), np.ones(len(rutas_t), bool)])
-    Huellas(rutas + rutas_p + rutas_t, np.concatenate([huellas, huellas_p, huellas_t]), prendas_de_pieza,
-            pedazos).guardar(salida / ARCHIVO_HUELLAS)
-    print(f"{len(rutas_p)} Piezas dibujadas puestas, {len(rutas_t)} pedazos")
-    for archivo in (modelo, salida / ARCHIVO_HUELLAS):
+    por_modelo = [np.concatenate([m for m in conjunto if len(m)])
+                  for conjunto in zip(huellas, huellas_a, huellas_p, huellas_t)]
+    Huellas(rutas + rutas_p + rutas_t, por_modelo, prendas_de_pieza, pedazos).guardar(salida / ARCHIVO_HUELLAS)
+    print(f"{len(rutas_a)} cuadros con más dibujo, {len(rutas_p)} Piezas dibujadas puestas, {len(rutas_t)} pedazos")
+    for archivo in [salida / a for a, _ in MODELOS] + [salida / ARCHIVO_HUELLAS]:
         print(f"{archivo.name}: {archivo.stat().st_size / 1e6:.1f} MB, sha256 {hashlib.sha256(archivo.read_bytes()).hexdigest()}")
     print(f"{len(rutas)} imágenes, {len(prendas_de_pieza)} Piezas con Prendas, {len(errores)} SWF con error, {time.time() - t:.0f} s")
     for e in errores:

@@ -13,23 +13,23 @@ class Busqueda:
     RESULTADOS_BUSQUEDA = 20
 
     def estado_busqueda(self) -> dict:
-        """Si ya están los datos de la búsqueda (el modelo y las huellas) y cuánto pesa bajarlos (en bytes). Sin
-        onnxruntime no se puede buscar: se avisa antes de bajar nada."""
+        """Si ya están los datos de la búsqueda (los modelos y las huellas) y cuánto falta bajar (en bytes: con los de
+        una versión anterior, solo lo que cambió). Sin onnxruntime no se puede buscar: se avisa antes de bajar nada."""
         if not hay_onnxruntime():
             return {"ok": False, "sin_onnxruntime": True, "error": FALTA_ONNXRUNTIME}
         try:
             datos = self._datos()
         except OSError as e:
             return {"ok": False, "error": str(e)}
-        return {"ok": True, "listos": datos.listos(), "tamano": DatosBusqueda.TAMANO}
+        return {"ok": True, "listos": datos.listos(), "tamano": datos.por_bajar()}
 
     def preparar_busqueda(self) -> dict:
-        """Baja los datos de la búsqueda la primera vez (unos 107 MB). `progreso_busqueda` dice cuánto va."""
+        """Baja los datos de la búsqueda la primera vez (unos 230 MB). `progreso_busqueda` dice cuánto va."""
         try:
             datos = self._datos()
             if datos.listos():
                 return {"ok": True}
-            self._progreso_busqueda = {"bajando": True, "hechos": 0, "total": DatosBusqueda.TAMANO}
+            self._progreso_busqueda = {"bajando": True, "hechos": 0, "total": datos.por_bajar()}
 
             def progreso(hechos, total):
                 self._progreso_busqueda = {"bajando": True, "hechos": hechos, "total": total}
@@ -73,9 +73,10 @@ class Busqueda:
             datos = self._datos()
             if not datos.listos():
                 return {"ok": False, "faltan_datos": True, "error": "Primero hay que bajar los datos de la búsqueda."}
-            modelo, huellas = datos.cargar()
-            consultas = guiar(modelo.huellas(encuadres + [espejada(e) for e in encuadres]), huellas.de_items(se_parece),
-                              huellas.de_items(descartados))
+            modelos, huellas = datos.cargar()
+            imagenes = encuadres + [espejada(e) for e in encuadres]
+            consultas = [guiar(modelo.huellas(imagenes), parecidas, lejos) for modelo, parecidas, lejos
+                         in zip(modelos, huellas.de_items(se_parece), huellas.de_items(descartados))]
             parecidos = huellas.parecidos(consultas)
         except (OSError, ValueError, RuntimeError) as e:
             return {"ok": False, "error": f"No se pudo buscar: {e}"}

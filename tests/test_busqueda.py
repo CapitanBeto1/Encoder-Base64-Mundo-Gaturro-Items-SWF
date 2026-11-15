@@ -49,17 +49,59 @@ def test_la_captura_se_recorta_al_rectangulo_marcado():
 
 def test_las_huellas_se_guardan_y_ordenan_por_parecido(tmp_path):
     huellas = Huellas(["casa.silla", "ropa.remera_on", "ropa.remera"],
-                      np.array([[1, 0, 0], [0, 1, 0], [0, 0.8, 0.6]], np.float32), {"ropa.remera_on": ["ropa.remera"]})
+                      [np.array([[1, 0, 0], [0, 1, 0], [0, 0.8, 0.6]], np.float32)], {"ropa.remera_on": ["ropa.remera"]})
     archivo = tmp_path / "huellas.npz"
 
     huellas.guardar(archivo)
     leidas = Huellas.leer(archivo)
     # La captura y su espejo: cuenta el más parecido de los dos.
-    parecidos = leidas.parecidos(np.array([[0, 1, 0], [0.9, 0, 0]], np.float32))
+    parecidos = leidas.parecidos([np.array([[0, 1, 0], [0.9, 0, 0]], np.float32)])
 
     assert [r for r, _ in parecidos] == ["ropa.remera_on", "casa.silla", "ropa.remera"]
     assert parecidos[0][1] == pytest.approx(1, abs=0.01)  # se guardan en int8: un poco de redondeo
     assert leidas.prendas_de_pieza == {"ropa.remera_on": ["ropa.remera"]}
+
+
+def test_una_ruta_con_varias_imagenes_sale_una_vez_con_la_mas_parecida():
+    # Suelta y puesta: dos imágenes de la misma Pieza.
+    huellas = Huellas(["ropa.gorra_on", "casa.silla", "ropa.gorra_on"], [np.array([[0, 1, 0], [0.6, 0.8, 0], [1, 0, 0]], np.float32)], {})
+
+    parecidos = huellas.parecidos([np.array([[1, 0, 0]], np.float32)])
+
+    assert parecidos == [("ropa.gorra_on", 1.0), ("casa.silla", pytest.approx(0.6))]
+
+
+def test_con_dos_modelos_se_juntan_por_puestos(tmp_path):
+    # CLIP ve primero la silla, y DINOv2 la ve última: igual queda arriba, porque fue la primera de uno de los dos.
+    # Con un promedio de parecidos quedaría tercera.
+    rutas = ["casa.silla", "casa.mesa", "casa.banco", "casa.cama"]
+    clip = np.array([[0.95, 0.31, 0], [0.5, 0.87, 0], [0.4, 0.92, 0], [0.3, 0.95, 0]], np.float32)
+    dino = np.array([[0.1, 0.99, 0], [0.9, 0.44, 0], [0.8, 0.6, 0], [0.7, 0.71, 0]], np.float32)
+    archivo = tmp_path / "huellas.npz"
+    Huellas(rutas, [clip, dino], {}).guardar(archivo)
+
+    parecidos = Huellas.leer(archivo).parecidos([np.array([[1, 0, 0]], np.float32)] * 2)
+
+    assert [r for r, _ in parecidos] == ["casa.mesa", "casa.silla", "casa.banco", "casa.cama"]
+    assert dict(parecidos)["casa.silla"] == pytest.approx(0.95, abs=0.01)  # el parecido: el mejor de los dos
+
+
+def test_las_huellas_leidas_quedan_en_int8_y_se_comparan_de_a_bloques(tmp_path):
+    # En memoria quedan como en el archivo (en float32 ocuparían 4 veces más) y se pasan a float32 de a bloques.
+    matriz = np.random.default_rng(0).normal(size=(50, 8)).astype(np.float32)
+    matriz /= np.linalg.norm(matriz, axis=1, keepdims=True)
+    archivo = tmp_path / "huellas.npz"
+    Huellas([f"casa.mueble{i}" for i in range(50)], [matriz], {}).guardar(archivo)
+    leidas = Huellas.leer(archivo)
+
+    enteras = leidas.parecidos([matriz[[7]]])
+    leidas.BLOQUE = 16
+    de_a_bloques = leidas.parecidos([matriz[[7]]])
+
+    assert leidas.huellas[0].dtype == np.int8
+    assert [r for r, _ in de_a_bloques] == [r for r, _ in enteras] and enteras[0][0] == "casa.mueble7"
+    assert [p for _, p in de_a_bloques] == pytest.approx([p for _, p in enteras])
+    assert leidas.de_items({"casa.mueble7"})[0] == pytest.approx(matriz[[7]], abs=0.01)
 
 
 
@@ -94,14 +136,32 @@ def test_los_pedazos_de_un_dibujo_sus_partes_separadas_y_sus_mitades():
     assert pedazos(chico) == []  # una sola parte y chico: nada que cortar
 
 
+def test_un_dibujo_claro_tambien_se_compara_sobre_oscuro():
+    # Los brillos de granja.crecePrueba: estrellitas blancas, que sobre el fondo blanco de las referencias no se ven.
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
+    from armar_busqueda import FONDO_OSCURO, es_claro
+
+    brillos = Image.new("RGBA", (40, 40), (0, 0, 0, 0))
+    brillos.paste((255, 255, 255, 255), (5, 5, 12, 12))
+    brillos.paste((250, 250, 245, 255), (25, 20, 32, 27))
+    gorra = Image.new("RGBA", (40, 40), (0, 0, 0, 0))
+    gorra.paste((200, 30, 30, 255), (5, 5, 35, 30))
+
+    assert es_claro(brillos) and not es_claro(gorra)
+    assert not es_claro(Image.new("RGBA", (10, 10), (0, 0, 0, 0)))  # vacío
+    assert con_fondo(brillos, FONDO_OSCURO).getpixel((10, 10)) == FONDO_OSCURO  # entre las estrellitas
+
+
 def test_un_pedazo_vale_un_poco_menos_que_el_dibujo_entero(tmp_path):
     # El caballo entero y un pedazo del cartel se parecen igual a la captura: gana el entero. Un pedazo gana solo
     # si se parece claramente más (cuando lo que se ve es de verdad un pedazo).
-    huellas = Huellas(["pruebas.caballo", "otro.cartel"], np.array([[1, 0, 0], [1, 0, 0]], np.float32), {},
+    huellas = Huellas(["pruebas.caballo", "otro.cartel"], [np.array([[1, 0, 0], [1, 0, 0]], np.float32)], {},
                       np.array([False, True]))
     archivo = tmp_path / "huellas.npz"
     huellas.guardar(archivo)
     leidas = Huellas.leer(archivo)
 
     assert list(leidas.pedazos) == [False, True]
-    assert [r for r, _ in leidas.parecidos(np.array([[1, 0, 0]], np.float32))] == ["pruebas.caballo", "otro.cartel"]
+    assert [r for r, _ in leidas.parecidos([np.array([[1, 0, 0]], np.float32)])] == ["pruebas.caballo", "otro.cartel"]

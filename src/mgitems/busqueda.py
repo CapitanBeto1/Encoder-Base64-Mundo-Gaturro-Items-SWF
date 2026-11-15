@@ -1,9 +1,15 @@
 """Búsqueda por imagen: qué Items y Piezas se parecen más a una captura del juego.
 
-Cada imagen (el primer cuadro de un Item o una Pieza, o la captura) se resume en una huella: 512 números que
-calcula la parte de imágenes de CLIP ViT-B/32 (OpenCLIP, entrenado por LAION), exportada a ONNX y comprimida.
-Dos imágenes que se parecen tienen huellas parecidas (el producto entre ellas, cercano a 1). Las huellas de todas
-las imágenes de referencia las arma `scripts/armar_busqueda.py`; el programa solo calcula la de la captura.
+Cada imagen (un cuadro de un Item o una Pieza, o la captura) se resume en huellas: números que calcula un modelo de
+imágenes, exportado a ONNX y comprimido. Dos imágenes que se parecen tienen huellas parecidas (el producto entre
+ellas, cercano a 1). Las huellas de todas las imágenes de referencia las arma `scripts/armar_busqueda.py`; el
+programa solo calcula las de la captura.
+
+Son dos modelos, porque ven cosas distintas: CLIP ViT-B/32 (OpenCLIP, entrenado por LAION) ve de qué se trata el
+dibujo, y DINOv2 (de Meta, el chico) ve sus detalles, aunque tenga otros colores o esté tapado en parte: los brackets
+de `virtualGoods3.brackets` con anteojos encima, o el casco de `espacio.gorroGalactico` teñido de negro, que CLIP dejaba
+más allá del puesto 100 y DINOv2 deja entre los 10 primeros. Cada uno ordena las referencias, y se juntan por puestos
+(ver `Huellas.parecidos`): queda arriba lo que cualquiera de los dos ve muy parecido.
 
 Probado con capturas reales (#116): el correcto quedó primero en 7 de 9. Comparar también la captura espejada
 (en las casas los objetos se pueden girar) no empeora nada.
@@ -19,8 +25,13 @@ import numpy as np
 from PIL import Image, ImageOps
 
 ARCHIVO_MODELO = "clip_visual_int8.onnx"
+ARCHIVO_MODELO_DINO = "dinov2_small.onnx"
 ARCHIVO_HUELLAS = "huellas_busqueda.npz"
-VERSION_DATOS = 2  # sube si cambia la forma de las huellas o el modelo. 2: en int8, con los pedazos de los dibujos
+# Sube si cambia la forma de las huellas o un modelo. 2: en int8, con los pedazos de los dibujos. 3: también DINOv2.
+VERSION_DATOS = 3
+# La fusión por puestos: cada modelo le suma a una referencia 1/(FUSION + su puesto en ese modelo). Con 5, lo primero
+# de cada lista pesa mucho más que lo que viene después (medido con capturas de prueba y las reales que fallaban).
+FUSION = 5
 
 # «¿Qué es?»: a qué se limita la búsqueda. La ropa, por la Parte del cuerpo donde va (cuenta la Prenda y lo que se
 # ve puesto): solo las Prendas que van únicamente ahí, porque el ícono de un disfraz es un Gaturro entero y se
@@ -67,6 +78,23 @@ _MEDIA = np.array([0.48145466, 0.4578275, 0.40821073], np.float32)
 _DESVIO = np.array([0.26862954, 0.26130258, 0.27577711], np.float32)
 
 
+def preparar_dino(imagen: Image.Image) -> np.ndarray:
+    """La imagen como la espera DINOv2: el lado corto a 256 (bicúbica), el centro de 224×224, normalizada como ImageNet,
+    con los canales primero."""
+    imagen = imagen.convert("RGB")
+    ancho, alto = imagen.size
+    escala = 256 / min(ancho, alto)
+    imagen = imagen.resize((max(256, round(ancho * escala)), max(256, round(alto * escala))), Image.BICUBIC)
+    ancho, alto = imagen.size
+    izquierda, arriba = (ancho - LADO) // 2, (alto - LADO) // 2
+    x = np.asarray(imagen.crop((izquierda, arriba, izquierda + LADO, arriba + LADO)), np.float32) / 255
+    return ((x - _MEDIA_IMAGENET) / _DESVIO_IMAGENET).transpose(2, 0, 1)
+
+
+_MEDIA_IMAGENET = np.array([0.485, 0.456, 0.406], np.float32)
+_DESVIO_IMAGENET = np.array([0.229, 0.224, 0.225], np.float32)
+
+
 def preparar(imagen: Image.Image) -> np.ndarray:
     """La imagen como la espera el modelo: el lado corto a 224 (bicúbica), el centro de 224×224, normalizada,
     con los canales primero. Igual que `open_clip` (con el que se probó)."""
@@ -80,15 +108,15 @@ def preparar(imagen: Image.Image) -> np.ndarray:
     return ((x - _MEDIA) / _DESVIO).transpose(2, 0, 1)
 
 
-def con_fondo(imagen: Image.Image) -> Image.Image | None:
-    """Una imagen de referencia (con transparencia) recortada a lo que tiene dibujo, sobre blanco; None si está
-    vacía."""
+def con_fondo(imagen: Image.Image, fondo: tuple[int, int, int] = (255, 255, 255)) -> Image.Image | None:
+    """Una imagen de referencia (con transparencia) recortada a lo que tiene dibujo, sobre `fondo` (blanco); None si
+    está vacía."""
     imagen = imagen.convert("RGBA")
     caja = imagen.getchannel("A").getbbox()
     if not caja:
         return None
     imagen = imagen.crop(caja)
-    lienzo = Image.new("RGBA", imagen.size, (255, 255, 255, 255))
+    lienzo = Image.new("RGBA", imagen.size, (*fondo, 255))
     lienzo.alpha_composite(imagen)
     return lienzo.convert("RGB")
 
@@ -152,6 +180,8 @@ def hay_onnxruntime() -> bool:
 class Modelo:
     """La parte de imágenes de CLIP, con onnxruntime: imágenes → huellas (normalizadas)."""
 
+    ENTRADA = "imagen"
+
     def __init__(self, archivo: Path):
         try:
             import onnxruntime  # tarda en importarse: solo cuando se busca
@@ -163,7 +193,23 @@ class Modelo:
         self._sesion = onnxruntime.InferenceSession(str(archivo), opciones, providers=["CPUExecutionProvider"])
 
     def huellas(self, imagenes: list[Image.Image]) -> np.ndarray:
-        return self._sesion.run(None, {"imagen": np.stack([preparar(i) for i in imagenes])})[0].astype(np.float32)
+        return self._sesion.run(None, {self.ENTRADA: np.stack([preparar(i) for i in imagenes])})[0].astype(np.float32)
+
+
+class ModeloDino(Modelo):
+    """DINOv2 (el chico), con onnxruntime: la huella es su token de clase, normalizado. Sin comprimir: comprimido a
+    int8 pierde justo los detalles por los que está."""
+
+    ENTRADA = "pixel_values"
+
+    def huellas(self, imagenes: list[Image.Image]) -> np.ndarray:
+        salida = self._sesion.run(None, {self.ENTRADA: np.stack([preparar_dino(i) for i in imagenes])})[0]
+        clase = salida[:, 0].astype(np.float32)
+        return clase / np.linalg.norm(clase, axis=1, keepdims=True)
+
+
+# Los modelos, en el orden de sus huellas en `Huellas`.
+MODELOS = ((ARCHIVO_MODELO, Modelo), (ARCHIVO_MODELO_DINO, ModeloDino))
 
 
 # Lo que vale menos un pedazo de un dibujo que el dibujo entero: así, si se parecen igual, gana el entero, y un
@@ -174,93 +220,142 @@ PENALIDAD_PEDAZO = 0.02
 class Huellas:
     """Las huellas de las imágenes de referencia (`scripts/armar_busqueda.py`): `rutas` ("swf.Clase", de Items
     y de Piezas; una misma ruta puede estar varias veces: suelta, dibujada puesta en el Gaturro y en pedazos),
-    `huellas` (una fila cada una), `prendas_de_pieza` (Pieza → las Prendas que la usan) y `pedazos` (qué filas
-    son de un pedazo de un dibujo)."""
+    `huellas` (las de cada modelo de `MODELOS`, una fila por imagen; en float32 o, como en el archivo, en int8 con
+    `escalas`, una por fila), `prendas_de_pieza` (Pieza → las Prendas que la usan) y `pedazos` (qué filas son de un
+    pedazo de un dibujo)."""
 
-    def __init__(self, rutas: list[str], huellas: np.ndarray, prendas_de_pieza: dict[str, list[str]],
-                 pedazos: np.ndarray | None = None):
-        self.rutas, self.huellas, self.prendas_de_pieza = rutas, huellas, prendas_de_pieza
+    # Filas que se comparan por vez: las huellas en int8 se pasan a float32 de a pedazos (enteras serían ~280 MB más).
+    BLOQUE = 16384
+
+    def __init__(self, rutas: list[str], huellas: list[np.ndarray], prendas_de_pieza: dict[str, list[str]],
+                 pedazos: np.ndarray | None = None, escalas: list[np.ndarray] | None = None):
+        self.rutas, self.huellas, self.prendas_de_pieza = rutas, list(huellas), prendas_de_pieza
+        self.escalas = list(escalas) if escalas is not None else [None] * len(self.huellas)
         self.pedazos = np.zeros(len(rutas), bool) if pedazos is None else pedazos.astype(bool)
+        self._unicas = list(dict.fromkeys(rutas))
+        indice = {r: i for i, r in enumerate(self._unicas)}
+        self._de_ruta = np.array([indice[r] for r in rutas], np.int64)
 
     @classmethod
     def leer(cls, archivo: Path) -> "Huellas":
         with np.load(archivo, allow_pickle=False) as datos:
             if int(datos["version"]) != VERSION_DATOS:
                 raise ValueError("las huellas son de otra versión")
-            huellas = datos["huellas"].astype(np.float32) * datos["escalas"].astype(np.float32)[:, None]
-            return cls([str(r) for r in datos["rutas"]], huellas, json.loads(str(datos["prendas_de_pieza"])), datos["pedazos"])
+            cuantas = sum(1 for clave in datos.files if clave.startswith("huellas_"))
+            return cls([str(r) for r in datos["rutas"]], [datos[f"huellas_{n}"] for n in range(cuantas)],
+                       json.loads(str(datos["prendas_de_pieza"])), datos["pedazos"],
+                       [datos[f"escalas_{n}"].astype(np.float32) for n in range(cuantas)])
+
+    def _de_modelo(self, n: int, filas=slice(None)) -> np.ndarray:
+        """Las huellas del modelo `n` (solo esas `filas`) en float32."""
+        huellas = self.huellas[n][filas].astype(np.float32)
+        if self.escalas[n] is not None:
+            np.multiply(huellas, self.escalas[n][filas][:, None], out=huellas)
+        return huellas
 
     def guardar(self, archivo: Path) -> None:
         """En int8, con una escala por fila (la mitad que en float16): para comparar parecidos alcanza y sobra."""
-        huellas = self.huellas.astype(np.float32)
-        escalas = np.maximum(np.abs(huellas).max(axis=1), 1e-8) / 127
-        np.savez_compressed(archivo, version=np.array(VERSION_DATOS), rutas=np.array(self.rutas),
-                            huellas=np.round(huellas / escalas[:, None]).astype(np.int8), escalas=escalas.astype(np.float16),
+        por_modelo = {}
+        for n in range(len(self.huellas)):
+            huellas = self._de_modelo(n)
+            escalas = np.maximum(np.abs(huellas).max(axis=1), 1e-8) / 127
+            por_modelo |= {f"huellas_{n}": np.round(huellas / escalas[:, None]).astype(np.int8), f"escalas_{n}": escalas.astype(np.float16)}
+        np.savez_compressed(archivo, version=np.array(VERSION_DATOS), rutas=np.array(self.rutas), **por_modelo,
                             prendas_de_pieza=np.array(json.dumps(self.prendas_de_pieza, ensure_ascii=False)),
                             pedazos=self.pedazos)
 
-    def de_items(self, items: set[str]) -> np.ndarray:
-        """Las huellas de las imágenes de estos Items: la suya y las de las Piezas que visten."""
+    def de_items(self, items: set[str]) -> list[np.ndarray]:
+        """Las huellas (de cada modelo) de las imágenes de estos Items: la suya y las de las Piezas que visten."""
         filas = [i for i, r in enumerate(self.rutas) if r in items or items & set(self.prendas_de_pieza.get(r, ()))]
-        return self.huellas[filas] if filas else np.zeros((0, self.huellas.shape[1]), np.float32)
+        return [self._de_modelo(n, filas) if filas else np.zeros((0, h.shape[1]), np.float32) for n, h in enumerate(self.huellas)]
 
-    def parecidos(self, consultas: np.ndarray) -> list[tuple[str, float]]:
-        """Todas las referencias de la más a la menos parecida a cualquiera de las `consultas` (la captura y su
-        espejo), con su parecido (de -1 a 1; un pedazo, con `PENALIDAD_PEDAZO` de menos)."""
-        puntajes = (self.huellas @ consultas.T).max(axis=1) - PENALIDAD_PEDAZO * self.pedazos
-        orden = np.argsort(-puntajes)
-        return [(self.rutas[i], float(puntajes[i])) for i in orden]
+    def parecidos(self, consultas: list[np.ndarray]) -> list[tuple[str, float]]:
+        """Cada ruta, de la más a la menos parecida a las `consultas` (las de cada modelo: la captura y su espejo), con
+        su parecido (de -1 a 1, el mejor de sus imágenes y de los modelos; un pedazo, con `PENALIDAD_PEDAZO` de menos).
+
+        Con un modelo, en el orden de su parecido. Con varios, por sus puestos: cada uno le suma a cada ruta
+        1/(`FUSION` + el puesto que le da), así queda arriba lo que cualquiera ve muy parecido."""
+        por_ruta = []
+        for n, consulta in enumerate(consultas):
+            puntajes = np.zeros(len(self.rutas), np.float32)
+            for desde in range(0, len(self.rutas), self.BLOQUE):
+                hasta = desde + self.BLOQUE
+                puntajes[desde:hasta] = (self._de_modelo(n, slice(desde, hasta)) @ consulta.T).max(axis=1)
+            puntajes -= PENALIDAD_PEDAZO * self.pedazos
+            mejor = np.full(len(self._unicas), -np.inf, np.float32)
+            np.maximum.at(mejor, self._de_ruta, puntajes)
+            por_ruta.append(mejor)
+        parecido = np.max(por_ruta, axis=0)
+        if len(por_ruta) == 1:
+            orden = np.argsort(-parecido, kind="stable")
+        else:
+            fusion = np.zeros(len(self._unicas))
+            for mejor in por_ruta:
+                puesto = np.empty(len(mejor), np.int64)
+                puesto[np.argsort(-mejor, kind="stable")] = np.arange(1, len(mejor) + 1)
+                fusion += 1 / (FUSION + puesto)
+            orden = np.argsort(-fusion, kind="stable")
+        return [(self._unicas[i], float(parecido[i])) for i in orden]
 
 
 # Dónde se publican los datos (el release de datos del repositorio) y cómo se reconocen.
-URL_DATOS = "https://github.com/CapitanBeto1/Encoder-Base64-Mundo-Gaturro-Items-SWF/releases/download/datos-busqueda-v3/"
+URL_DATOS = "https://github.com/CapitanBeto1/Encoder-Base64-Mundo-Gaturro-Items-SWF/releases/download/datos-busqueda-v4/"
 ARCHIVOS = {  # archivo → (tamaño, sha256)
     ARCHIVO_MODELO: (88890796, "02f827b5fa300a3013b9e077314098e5f02a2449afdf1900b3712fce22432e8a"),
-    ARCHIVO_HUELLAS: (26572869, "bb01f942c3406c8f24c6d63a94abde47b761f958522df90386641b74ebd28ae8"),  # v3: con los pedazos, en int8
+    ARCHIVO_MODELO_DINO: (88459888, "83141175ec78b4ff9a2bb58a4c7c264ba0054d1c2e122e5a8114b79a8d4179ea"),
+    ARCHIVO_HUELLAS: (53558810, "da60c360ddb256c40b77d323338133257fcb3b1a25c8b116d61170eac6210608"),  # v4: de los dos modelos
 }
 
 
 class DatosBusqueda:
-    """El modelo y las huellas en la carpeta del programa: se bajan del release de datos la primera vez."""
-
-    TAMANO = sum(t for t, _ in ARCHIVOS.values())
+    """Los modelos y las huellas en la carpeta del programa: se bajan del release de datos la primera vez."""
 
     def __init__(self, carpeta: Path, archivos: dict[str, tuple[int, str]] = ARCHIVOS, url: str = URL_DATOS, abrir=None):
         self._carpeta, self._archivos, self._url = carpeta, archivos, url
         self._abrir = abrir or _abrir_url
-        self._cargados: tuple[Modelo, Huellas] | None = None
+        self._cargados: tuple[list[Modelo], Huellas] | None = None
+
+    def _falta(self, nombre: str, tamano: int) -> bool:
+        archivo = self._carpeta / nombre
+        return not (archivo.is_file() and archivo.stat().st_size == tamano)
 
     def listos(self) -> bool:
-        """Si están los dos archivos, completos (el hash se verifica al bajarlos)."""
-        return all((self._carpeta / n).is_file() and (self._carpeta / n).stat().st_size == t for n, (t, _) in self._archivos.items())
+        """Si están todos los archivos, completos (el hash se verifica al bajarlos)."""
+        return not self.por_bajar()
+
+    def por_bajar(self) -> int:
+        """Los bytes que falta bajar: todo la primera vez; con los datos de una versión anterior, solo lo que cambió."""
+        return sum(t for n, (t, _) in self._archivos.items() if self._falta(n, t))
 
     def bajar(self, progreso=lambda hechos, total: None) -> None:
-        """Baja lo que falta y verifica su hash. OSError si no se pudo; ValueError si llegó dañado."""
+        """Baja lo que falta y verifica su hash; `progreso` va de 0 a `por_bajar`. OSError si no se pudo; ValueError si
+        llegó dañado."""
         import hashlib
 
         self._carpeta.mkdir(parents=True, exist_ok=True)
-        hechos = sum(t for n, (t, _) in self._archivos.items() if (self._carpeta / n).is_file() and (self._carpeta / n).stat().st_size == t)
+        hechos, total = 0, self.por_bajar()
         for nombre, (tamano, sha) in self._archivos.items():
-            destino = self._carpeta / nombre
-            if destino.is_file() and destino.stat().st_size == tamano:
+            if not self._falta(nombre, tamano):
                 continue
+            destino = self._carpeta / nombre
             parcial, suma = destino.with_suffix(destino.suffix + ".part"), hashlib.sha256()
             with self._abrir(self._url + nombre) as respuesta, parcial.open("wb") as salida:
                 while bloque := respuesta.read(1 << 20):
                     salida.write(bloque)
                     suma.update(bloque)
                     hechos += len(bloque)
-                    progreso(hechos, self.TAMANO)
+                    progreso(hechos, total)
             if suma.hexdigest() != sha:
                 parcial.unlink(missing_ok=True)
                 raise ValueError(f"{nombre} llegó dañado")
             parcial.replace(destino)
         self._cargados = None
 
-    def cargar(self) -> tuple["Modelo", Huellas]:
-        """El modelo y las huellas (se leen una vez)."""
+    def cargar(self) -> tuple[list["Modelo"], Huellas]:
+        """Los modelos (en el orden de `MODELOS`) y las huellas (se leen una vez)."""
         if self._cargados is None:
-            self._cargados = (Modelo(self._carpeta / ARCHIVO_MODELO), Huellas.leer(self._carpeta / ARCHIVO_HUELLAS))
+            self._cargados = ([clase(self._carpeta / archivo) for archivo, clase in MODELOS],
+                              Huellas.leer(self._carpeta / ARCHIVO_HUELLAS))
         return self._cargados
 
 
