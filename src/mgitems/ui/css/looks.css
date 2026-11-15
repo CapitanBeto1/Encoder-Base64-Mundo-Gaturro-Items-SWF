@@ -194,6 +194,12 @@ main.modo-trucar .casilleros { display: none; }
 
 .poniendo-en { flex: none; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 3px 8px; border-radius: 10px; background: #fff; color: var(--texto); font-size: 12px; }
 .poniendo-en[hidden] { display: none; }
+/* La capa donde va lo que se toque (Sombrero, Pelo, Accesorio, Boca y Cuello). */
+.capas-poniendo { display: inline-flex; align-items: center; gap: 3px; }
+.capas-poniendo[hidden] { display: none; }
+.capa-poniendo { width: 26px; min-height: 26px; padding: 0; font-size: 12px; border-radius: 7px; text-transform: none; }
+.capa-poniendo.llena { border-color: #2f6421; }
+.capa-poniendo[aria-pressed="true"] { background: #2a3150; color: #ffd84d; border-color: #141a30; }
 .poniendo-en .quitar { width: 20px; height: 20px; font-size: 10px; padding: 0; }
 .armario #filtro-piezas { flex: none; font-size: 12px; padding: 4px 8px; }
 

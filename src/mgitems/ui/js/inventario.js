@@ -176,7 +176,7 @@ function mostrarInventario() {
 
   $("grilla-piezas").replaceChildren(
     ...visibles.map((pieza) => {
-      const puesta = destino && lookActual.partes[destino] === pieza.ruta;
+      const puesta = destino && lookActual.partes[capaDestino(destino)] === pieza.ruta;
       const enUso = Object.values(lookActual.partes).includes(pieza.ruta);
       const boton = Object.assign(document.createElement("button"), { className: "pieza-grilla", title: `${pieza.clase} · ${pieza.swf}` });
       boton.setAttribute("aria-label", `${pieza.clase} de ${pieza.swf}`);
@@ -232,10 +232,13 @@ function ponerPieza(pieza, destino) {
     avisarLista("Tocá primero el casillero de la Parte donde va esta Pieza.", "advertencia");
     return;
   }
-  if (lookActual.partes[destino] !== pieza.ruta || vista === "trucar") olvidarPersonalizacion(destino); // era de la otra Pieza
+  const capa = capaDestino(destino); // en Looks, la capa elegida de la Parte marcada
+  if (lookActual.partes[capa] !== pieza.ruta || vista === "trucar") olvidarPersonalizacion(capa); // era de la otra Pieza
   if (vista === "trucar") lookActual.partes = lookActual.partes[destino] === pieza.ruta ? {} : { [destino]: pieza.ruta };
-  else if (lookActual.partes[destino] === pieza.ruta) delete lookActual.partes[destino];
-  else lookActual.partes[destino] = pieza.ruta;
+  else if (lookActual.partes[capa] === pieza.ruta) {
+    delete lookActual.partes[capa];
+    compactarCapas(destino);
+  } else lookActual.partes[capa] = pieza.ruta;
   mostrarLook();
 }
 

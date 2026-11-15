@@ -236,6 +236,34 @@ let casilleroMarcado = null; // si hay uno, toda Pieza que se toque va a esa Par
 // Las capas de arriba de una Parte («Configura tus accesorios») no tienen casillero: el de la Parte dice cuántas tienen Pieza.
 const esCapaDeArriba = (id) => partesConocidas.some((p) => p.id === id && p.capa_de);
 const capasDeArriba = (id) => partesConocidas.filter((p) => p.capa_de === id && lookActual.partes[p.id]).map((p) => p.id);
+// Las capas de una Parte: [la Parte, su capa 2, su capa 3], o solo [la Parte] si no tiene (Torso, Piernas…).
+const capasDe = (parte) => [parte, ...partesConocidas.filter((p) => p.capa_de === parte).map((p) => p.id)];
+const parteConCapas = (parte) => Boolean(dePestana().capas) && capasDe(parte).length > 1;
+// La capa elegida (1, 2 o 3) del casillero marcado, con los botones de «Poniendo en»; al marcar otro, vuelve a la 1.
+let capaElegida = { parte: null, numero: 1 };
+const numeroDeCapa = () => (capaElegida.parte === casilleroMarcado ? capaElegida.numero : 1);
+
+// Dónde va una Pieza que se toca con `destino` marcado: en la capa elegida, salvo que abajo haya una vacía.
+function capaDestino(destino) {
+  if (!destino || destino !== casilleroMarcado || !parteConCapas(destino)) return destino;
+  const capas = capasDe(destino);
+  const elegida = numeroDeCapa() - 1;
+  return capas.find((c, i) => i < elegida && !lookActual.partes[c]) ?? capas[elegida];
+}
+
+// Sin huecos, como en «Configura tus accesorios»: si se saca una capa, las de arriba bajan (con su personalización).
+function compactarCapas(parte) {
+  const capas = capasDe(parte);
+  capas.filter((c) => lookActual.partes[c]).forEach((c, i) => {
+    if (c === capas[i]) return;
+    lookActual.partes[capas[i]] = lookActual.partes[c];
+    delete lookActual.partes[c];
+    if (lookActual.personalizacion?.[c]) {
+      lookActual.personalizacion[capas[i]] = lookActual.personalizacion[c];
+      delete lookActual.personalizacion[c];
+    }
+  });
+}
 
 function casillero(id) {
   const ruta = lookActual.partes[id];
@@ -247,7 +275,7 @@ function casillero(id) {
   boton.append(ruta ? elementoIcono(ruta) : Object.assign(document.createElement("span"), { className: "icono vacio" }), etiqueta(nombreDeParte(id), "nombre-casillero"));
   const arriba = capasDeArriba(id);
   if (arriba.length) {
-    boton.title += `\nY ${arriba.length === 1 ? "una capa" : `${arriba.length} capas`} más arriba: ${arriba.map((p) => claseDeRuta(lookActual.partes[p])).join(", ")} (se cambian con el pincel, en «Configura tus accesorios»).`;
+    boton.title += `\nY ${arriba.length === 1 ? "una capa" : `${arriba.length} capas`} más arriba: ${arriba.map((p) => claseDeRuta(lookActual.partes[p])).join(", ")} (marcá el casillero y elegí la capa).`;
     boton.append(etiqueta(`+${arriba.length}`, "capas-casillero"));
   }
   boton.addEventListener("click", () => {
@@ -261,6 +289,7 @@ function casillero(id) {
     quitar.addEventListener("click", () => {
       delete lookActual.partes[id];
       olvidarPersonalizacion(id);
+      compactarCapas(id); // la capa 2 pasa a ser la 1
       mostrarLook();
     });
     li.append(quitar);
@@ -281,6 +310,21 @@ function mostrarCasilleros() {
   }
   $("poniendo-en").hidden = !casilleroMarcado;
   $("texto-poniendo-en").textContent = casilleroMarcado ? `Poniendo en: ${nombreDeParte(casilleroMarcado)}` : "";
+  // En Sombrero, Pelo, Accesorio, Boca y Cuello, los botones 1 · 2 · 3 eligen en qué capa va lo que se toque.
+  const capas = casilleroMarcado && parteConCapas(casilleroMarcado) ? capasDe(casilleroMarcado) : [];
+  $("capas-poniendo").hidden = !capas.length;
+  $("capas-poniendo").replaceChildren(...(capas.length ? [etiqueta("capa", "ayuda"), ...capas.map((c, i) => {
+    const ruta = lookActual.partes[c];
+    const boton = Object.assign(document.createElement("button"), { type: "button", className: "capa-poniendo", textContent: String(i + 1) });
+    boton.title = `Capa ${i + 1}${i ? " (arriba de la " + i + ")" : ""}: ${ruta ? claseDeRuta(ruta) : "vacía"}`;
+    boton.setAttribute("aria-pressed", String(numeroDeCapa() === i + 1));
+    boton.classList.toggle("llena", Boolean(ruta));
+    boton.addEventListener("click", () => {
+      capaElegida = { parte: casilleroMarcado, numero: i + 1 };
+      mostrarLook();
+    });
+    return boton;
+  })] : []));
   const conCapas = dePestana().capas;
   const sePuede = conCapas || Object.keys(lookActual.partes).length > 0; // las capas se ponen también sin Piezas
   $("editar-piezas").disabled = !sePuede;
