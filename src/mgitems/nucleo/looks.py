@@ -8,8 +8,10 @@ from mgitems.ffdec import FFDecNoDisponible
 from mgitems.interfaz import BANNERS, CARPETA_BANNERS, DIBUJOS, recortar
 from mgitems.items import orden_natural
 from mgitems.looks import Look, LookInvalido
-from mgitems.personalizar import PersonalizacionInvalida, con_personalizacion, desde_valores, es_personalizable, normalizar
-from mgitems.prendas import PARTES_DEL_CUERPO, PRENDA, no_sirve_de_base
+from mgitems.personalizar import (
+    PersonalizacionInvalida, con_personalizacion, desde_valores, es_personalizable, es_valor_valido, normalizar, separar,
+)
+from mgitems.prendas import CAPAS, PARTES_CON_CAPAS, PARTES_DEL_CUERPO, PRENDA, no_sirve_de_base, parte_de_la_capa
 
 
 class Looks:
@@ -53,12 +55,59 @@ class Looks:
         vivo = self.gaturro_en_vivo(partes, colores, emote, None, personalizacion)
         if not vivo["ok"]:
             return vivo
-        atributos = vivo["atributos"]
-        piezas = {p: atributos[p] for p in partes if es_personalizable(p) and atributos.get(p)}
-        if not piezas:
-            return {"ok": False, "error": "El transporte y el efecto de cabeza no se personalizan: poné una Pieza en "
-                                          "otra Parte."}
-        return {"ok": True, "piezas": piezas, "atributos": atributos}
+        piezas, sin_piezas = _piezas_del_editor(partes, vivo["atributos"])
+        if sin_piezas:
+            return {"ok": False, "error": sin_piezas}
+        return {"ok": True, "piezas": piezas, "atributos": vivo["atributos"]}
+
+    def para_personalizar(self, partes: dict, colores: dict | None = None, emote: str | None = None,
+                          personalizacion: dict | None = None, swfs: list | None = None) -> dict:
+        """Lo que necesita el menú del juego para personalizar el Look (banner `AvatarConfig`, en el Gaturro en vivo):
+        `atributos` (los del Gaturro), `piezas` (las que edita «Customiza tu ropa», como en `para_el_editor`; si no hay
+        ninguna, `sin_piezas` dice por qué) y `capas`: las Piezas de las fuentes `swfs` (None: todos los SWF) que
+        «Configura tus accesorios» muestra en su grilla, cada una con la Parte de su pestaña ({ruta, parte}).
+
+        La Parte de la pestaña es la primera de `PARTES_CON_CAPAS` en la que el juego usa la Pieza, como ordena el juego
+        sus Items (`CustomLayerBanner.getItemCategory`). Las que el juego no dibuja no van."""
+        vivo = self.gaturro_en_vivo(partes, colores, emote, None, personalizacion)
+        if not vivo["ok"]:
+            return vivo
+        disponibles = self.piezas_de_swfs(swfs)
+        if not disponibles["ok"]:
+            return disponibles
+        capas = []
+        for pieza in disponibles["piezas"]:
+            usos = {parte_de_la_capa(p) for p in pieza["partes"]}
+            parte = next((p for p in PARTES_CON_CAPAS if p in usos), None)
+            if parte and "no_se_ve" not in pieza:
+                capas.append({"ruta": pieza["ruta"], "parte": parte})
+        piezas, sin_piezas = _piezas_del_editor(partes, vivo["atributos"])
+        return {"ok": True, "atributos": vivo["atributos"], "piezas": piezas, "sin_piezas": sin_piezas, "capas": capas}
+
+    def capas_configuradas(self, partes: dict, personalizacion: dict | None, valores: dict) -> dict:
+        """El Look después de guardar «Configura tus accesorios»: `valores` son las capas como las dejó la ventana del
+        juego (cada capa de `CAPAS` → el valor de su Pieza, o "" si quedó vacía; las que no nombra quedan como estaban).
+        Devuelve las `partes` y la `personalizacion` nuevas: la personalización sigue a su Pieza aunque cambie de capa,
+        porque la ventana mueve el valor entero."""
+        if not isinstance(partes, dict) or not isinstance(valores, dict):
+            return {"ok": False, "error": "Lo que devolvió «Configura tus accesorios» no tiene la forma esperada."}
+        try:
+            nueva_personalizacion = normalizar(personalizacion, partes)
+        except PersonalizacionInvalida as e:
+            return {"ok": False, "error": str(e)}
+        nuevas = dict(partes)
+        for parte in (capa for capas in CAPAS.values() for capa in capas if capa in valores):
+            valor = valores[parte]
+            nuevas.pop(parte, None)
+            nueva_personalizacion.pop(parte, None)
+            if not valor:
+                continue
+            if not isinstance(valor, str) or not es_valor_valido(valor):
+                return {"ok": False, "error": f"«Configura tus accesorios» devolvió una Pieza que no tiene la forma "
+                                              f"esperada: {valor!r}"}
+            nuevas[parte], colores, ajuste = separar(valor)
+            nueva_personalizacion[parte] = {"colores": colores, "ajuste": ajuste}
+        return {"ok": True, "partes": nuevas, "personalizacion": normalizar(nueva_personalizacion, nuevas)}
 
     def personalizacion_del_editor(self, partes: dict, valores: dict, editadas: list) -> dict:
         """La personalización del Look según lo que guardó el editor del juego: `valores` (Parte → valor de Pieza,
@@ -74,8 +123,13 @@ class Looks:
         return {"ok": True, "personalizacion": personalizacion, "quitadas": quitadas}
 
     def partes_del_cuerpo(self) -> dict:
-        """Las Partes del cuerpo conocidas, con su nombre en español (no hace falta un SWF abierto)."""
-        return {"ok": True, "partes_del_cuerpo": [{"id": i, "nombre": n} for i, n in PARTES_DEL_CUERPO.items()]}
+        """Las Partes del cuerpo conocidas, con su nombre en español (no hace falta un SWF abierto). Las capas de arriba
+        de «Configura tus accesorios» dicen de qué Parte son (`capa_de`)."""
+        partes = []
+        for parte, nombre in PARTES_DEL_CUERPO.items():
+            de = parte_de_la_capa(parte)
+            partes.append({"id": parte, "nombre": nombre} | ({"capa_de": de} if de != parte else {}))
+        return {"ok": True, "partes_del_cuerpo": partes}
 
     def aplicar_look(self, look: dict) -> dict:
         """Genera la Prenda base modificada con todas las Piezas del Look y el Encode que la agrega.
@@ -118,3 +172,14 @@ class Looks:
             return None
         candidatas = [c for c, p in prendas.items() if p.tipo == PRENDA and not no_sirve_de_base(f"{swf}.{c}", p.tipo)]
         return f"{swf}.{min(candidatas, key=orden_natural)}" if candidatas else None
+
+
+def _piezas_del_editor(partes: dict, atributos: dict) -> tuple[dict, str | None]:
+    """Las Piezas que edita «Customiza tu ropa» (Parte → valor de la Pieza con su personalización, de `atributos`) y,
+    si no hay ninguna, por qué."""
+    piezas = {p: atributos[p] for p in partes if es_personalizable(p) and atributos.get(p)}
+    if piezas:
+        return piezas, None
+    if partes:
+        return {}, "El transporte y el efecto de cabeza no se personalizan: poné una Pieza en otra Parte."
+    return {}, "Para personalizar las Piezas, poné primero una en el Gaturro."

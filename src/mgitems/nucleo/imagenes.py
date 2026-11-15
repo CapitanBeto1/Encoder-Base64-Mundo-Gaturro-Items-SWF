@@ -5,7 +5,7 @@ import subprocess
 from mgitems.acciones import valor_de_accion
 from mgitems.ffdec import FFDecNoDisponible
 from mgitems.gaturro import (
-    CLASE_CARA, CLASE_CUERPO, CLASE_PLANTILLA, COLORES, CUADRO_QUIETO_DEL_VEHICULO, EMOTE_SUBCLIPS, PARTES,
+    CLASE_CARA, CLASE_CUERPO, CLASE_PLANTILLA, COLORES, CUADRO_QUIETO_DEL_VEHICULO, EMOTE_SUBCLIPS,
     SWF_CUERPO, SWF_CUERPO_COMPLETO, SWF_PLANTILLA, SWF_POSES, ImagenesPiezas, completar_con_plantilla,
     colores_del_jugador, componer, pose_de_transporte, preparar_cuerpo, tiene_lugar,
 )
@@ -13,8 +13,8 @@ from mgitems.iconos import IconosItems
 from mgitems.looks import EMOTES
 from mgitems.personalizar import PersonalizacionInvalida, con_personalizacion, es_valor_valido, normalizar, ruta_limpia
 from mgitems.items import es_ruta_valida, filtrar_por_prefijos, piezas_del_swf
-from mgitems.nucleo._comun import _simbolos_con_imagen
-from mgitems.prendas import ACCION, EFECTO, PARTES_DEL_CUERPO, PREFIJO_EFECTO
+from mgitems.nucleo._comun import _PARTES_EN_VIVO, _simbolos_con_imagen
+from mgitems.prendas import ACCION, EFECTO, PARTES_DEL_CUERPO, PREFIJO_EFECTO, parte_de_la_capa
 from mgitems.se_ve import TRANSPORTE, motivo_sin_efecto
 from mgitems.swf import SwfInvalido, congelado_en, leer_simbolos, rotulos
 
@@ -144,7 +144,7 @@ class Imagenes:
         # Una Pieza puede traer colores por forma y ajuste (personalizar): se valida y se dibuja la Pieza entera,
         # y la ruta limpia es la que se usa para saber qué es y si se ve.
         elegidas = {p: r for p, r in partes.items() if isinstance(r, str) and es_valor_valido(r)}
-        atributos = {p: elegidas.get(p, "") for p in PARTES}
+        atributos = {p: elegidas.get(p, "") for p in _PARTES_EN_VIVO}
         atributos[EFECTO] = PREFIJO_EFECTO + elegidas[EFECTO] if EFECTO in elegidas else ""
         atributos |= {c: int(v[1:], 16) for c, v in colores_del_jugador(colores).items()}
         atributos["emote"] = emote if emote in EMOTES else EMOTES[0]
@@ -208,7 +208,7 @@ class Imagenes:
             return motivo_sin_efecto(donde)
         if "no_se_ve" in donde:
             return donde["no_se_ve"]
-        if "solo_en" in donde and donde["solo_en"] != parte and donde.get("solo_en") != TRANSPORTE:
+        if "solo_en" in donde and donde["solo_en"] != parte_de_la_capa(parte) and donde.get("solo_en") != TRANSPORTE:
             return f"solo se ve en {PARTES_DEL_CUERPO.get(donde['solo_en'], donde['solo_en'])}"
         if parte == TRANSPORTE and donde.get("solo_en") != TRANSPORTE and not donde.get("vehiculo"):
             return "en Transporte solo se ven los vehículos"

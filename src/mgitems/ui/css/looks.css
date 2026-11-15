@@ -78,6 +78,7 @@ main.modo-looks .buscador-swf { display: none; }
 .casilleros { display: grid; grid-template-columns: repeat(2, 54px); align-content: center; gap: 4px; margin: 0; padding: 0; list-style: none; }
 .casilleros li { position: relative; }
 .casillero {
+  position: relative; /* lleva marcas encima: personalizada, capas de arriba */
   width: 54px;
   display: flex;
   flex-direction: column;
@@ -92,6 +93,8 @@ main.modo-looks .buscador-swf { display: none; }
 .casillero .nombre-casillero { max-width: 100%; overflow: hidden; text-overflow: ellipsis; font-size: 9px; line-height: 1.1; text-transform: uppercase; color: var(--texto); white-space: nowrap; }
 .casillero[aria-pressed="true"] { background: #6fc054; border-color: #2f6421; box-shadow: 0 0 0 3px #fff; }
 .casilleros .sacar-pieza { position: absolute; top: -4px; right: -4px; width: 22px; height: 22px; font-size: 12px; padding: 0; }
+/* Cuántas capas de arriba tienen Pieza («Configura tus accesorios»): abajo a la derecha del dibujo de la Parte. */
+.capas-casillero { position: absolute; right: 3px; bottom: 16px; padding: 0 4px; border-radius: 6px; background: #2a3150; color: #fff; font-size: 10px; line-height: 14px; font-weight: 700; }
 /* Trucar Prenda: una Pieza en una Parte por Prenda trucada (sin casilleros), y la lista de las que se reciben juntas. */
 main.modo-trucar .casilleros { display: none; }
 .armado-trucar { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; }
