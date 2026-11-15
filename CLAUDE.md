@@ -30,6 +30,17 @@ Al cambiar la interfaz, seguí estos criterios (resumen de las skills `principle
 - **Prototipo antes que producción**: las decisiones de diseño se prueban en la rama `prototipo-ui` (variantes sobre el programa real, con una barra para cambiarlas) y el usuario elige. A `main` va solo lo elegido, reescrito con las reglas de arriba.
 - **Rediseñar desde cero, entregar de a partes**: lo nuevo no se pega encima de lo que hay. Pensá cómo sería el diseño si se escribiera hoy sabiendo lo nuevo, llevalo a todo lo que toca (código, `GLOSSARY.md`, ADR) y entregalo en PRs chicos.
 
+## Rendimiento
+
+MG Items queda abierto mientras se juega, muchas veces en computadoras con pocos recursos: cada cambio lo deja lo más liviano posible, y eso es parte de terminarlo (lo medido hasta ahora, en los PRs #191 a #201):
+
+- **En reposo no corre nada**: ni animaciones infinitas, ni temporizadores, ni consultas repetidas. Con la ventana inactiva, los Gaturros se pausan.
+- **Lo pesado que no se usa se suelta**: un Gaturro, los datos de la búsqueda… se cierran al rato de dejar de verse y se vuelven a cargar al volver. Reusá `cierreAlRato`, `cerrarAlRatoDeCerrarse` y `limpiarEnUnRato` (`ui/js/gaturro_vivo.js`).
+- **Lo pesado se carga cuando hace falta**, no al arrancar el programa.
+- **Los datos también pesan**: si un cambio agranda el índice, lo que se descarga o la memoria que ocupa al cargarse, el PR lo dice.
+- **Se mide**: un cambio que toca lo que corre en la ventana (Gaturros, grillas, ventanas, búsqueda, FFDec) se mide antes y después en la ventana real (procesador y memoria) y el PR trae los números. La ventana de medición no se activa: no le saca el foco al juego.
+- **Nunca a costa del juego**: las vistas previas siguen idénticas al juego; los adornos de la interfaz sí se pueden reducir.
+
 ## Agent skills
 
 ### Issue tracker
