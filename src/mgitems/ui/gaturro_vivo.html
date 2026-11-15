@@ -37,31 +37,75 @@
       return contexto.call(this, tipo, tipo.startsWith("webgl") ? { ...opciones, preserveDrawingBuffer: true } : opciones);
     };
   }
-  // En pausa, el Gaturro queda quieto en el cuadro en que estaba, sin gastar: Ruffle avanza cuadro a cuadro con
-  // requestAnimationFrame y, mientras dura la pausa, no se le da ninguno (lo mismo que hace el navegador con un marco
-  // oculto). Al terminar, sigue desde ahí. Lo que se le pide estando en pausa (otra ropa, otro tamaño) se termina de
-  // dibujar y después queda quieto otra vez; mientras arranca, no se pausa.
+  // Los refrescos de pantalla que se le dan a Ruffle. Ruffle avanza con requestAnimationFrame: le pide al navegador cada
+  // refresco (60 por segundo), pero el SWF del Gaturro avanza 24 veces por segundo y solo entonces dibuja. En los demás
+  // refrescos no hace nada que se vea, y pedirlos igual cuesta: el navegador repasa la página en cada uno (medido: el
+  // Gaturro gasta un 11 % menos). Se le da solo el refresco en que le toca avanzar, llevando el tiempo como lo lleva él
+  // (`Player::tick`: acumula lo que pasó y avanza un cuadro cada 1000/24 ms), así avanza y dibuja en los mismos momentos.
+  // Si no dibujó cuando le tocaba (se perdió la cuenta), se le dan todos hasta que dibuje, y desde ahí se cuenta de nuevo.
+  // Se le dan todos mientras carga (arranca, le llegan Piezas, cambia de tamaño: Ruffle carga los SWF de a pedazos, uno
+  // por refresco) y con el editor (responde al mouse entre cuadro y cuadro).
+  const MS_POR_CUADRO = 1000 / 24; // scripts/gaturro_en_vivo/MMO.as: frameRate="24"
+  const pedirRefresco = window.requestAnimationFrame.bind(window);
+  const pedidos = []; // lo que se pidió hacer en el próximo refresco que se le dé
+  let refrescoPedido = false;
+  let anterior = null; // el último refresco que se le dio
+  let acumulado = 0; // el tiempo que acumuló desde que avanzó, como lo cuenta Ruffle
+  let contando = false; // si se sabe cuándo le toca avanzar
+  let cargando = 1; // lo que se le pidió y todavía se está cargando y dibujando (empieza con el arranque)
+  let conEditor = false;
+  let dibujo = false;
+  const terminarDeDibujar = WebGL2RenderingContext.prototype.flush; // Ruffle lo llama al dibujar cada cuadro
+  WebGL2RenderingContext.prototype.flush = function () {
+    dibujo = true;
+    return terminarDeDibujar.call(this);
+  };
+  window.requestAnimationFrame = (hacer) => {
+    pedidos.push(hacer);
+    pedirElSiguiente();
+    return 0;
+  };
+  function pedirElSiguiente() {
+    if (refrescoPedido || enPausa || !pedidos.length) return;
+    refrescoPedido = true;
+    pedirRefresco(refrescar);
+  }
+  function refrescar(t) {
+    refrescoPedido = false;
+    if (enPausa) return;
+    const pasado = anterior === null ? 0 : t - anterior;
+    const leToca = acumulado + pasado >= MS_POR_CUADRO;
+    if (contando && !cargando && !conEditor && !leToca) return pedirElSiguiente();
+    anterior = t;
+    acumulado += pasado;
+    while (acumulado >= MS_POR_CUADRO) acumulado -= MS_POR_CUADRO;
+    dibujo = false;
+    for (const hacer of pedidos.splice(0)) hacer(t);
+    if (dibujo && !contando) [contando, acumulado] = [true, 0]; // acaba de avanzar: se cuenta desde acá
+    else if (contando && leToca && !dibujo) contando = false; // no avanzó cuando le tocaba
+  }
+  // En pausa, el Gaturro queda quieto en el cuadro en que estaba, sin gastar: no se le da ningún refresco (lo mismo que
+  // hace el navegador con un marco oculto). Al terminar, sigue desde ahí. Mientras carga no se pausa: lo que se le pide
+  // estando en pausa (otra ropa, otro tamaño) se termina de dibujar y después queda quieto otra vez.
   let enPausa = false;
   let pausaPedida = false;
-  let despierto = 0; // cuántos pedidos se están terminando de dibujar
-  const cuadrosEnPausa = [];
-  const pedirCuadro = window.requestAnimationFrame.bind(window);
-  window.requestAnimationFrame = (siguiente) => (enPausa ? (cuadrosEnPausa.push(siguiente), 0) : pedirCuadro(siguiente));
   function ponerEnPausa(si) {
     enPausa = si && !FOTOS && player !== null;
-    if (!enPausa) for (const siguiente of cuadrosEnPausa.splice(0)) pedirCuadro(siguiente);
+    if (enPausa) return;
+    contando = false; // después de la pausa, Ruffle se pone al día a su manera
+    pedirElSiguiente();
   }
   function pausar(si) {
     pausaPedida = si;
-    if (!despierto) ponerEnPausa(si);
+    if (!cargando) ponerEnPausa(si);
   }
-  async function despertarUnRato() {
-    if (!pausaPedida) return;
-    despierto++;
+  // Hasta que llegan sus Piezas (de a una) y, `despues` ms más tarde, quedan dibujadas.
+  async function mientrasCarga(despues = 300) {
+    cargando++;
     ponerEnPausa(false);
     for (let i = 0; i < 100 && !(i > 1 && player?.mgCargado()); i++) await esperar(50);
-    await esperar(300);
-    if (--despierto === 0) ponerEnPausa(pausaPedida);
+    await esperar(despues);
+    if (--cargando === 0) ponerEnPausa(pausaPedida);
   }
   const avisar = (mensaje) => parent.postMessage(mensaje, "*");
   // Lo que llama el SWF del editor (ExternalInterface).
@@ -81,19 +125,19 @@
     if (zoom) document.documentElement.style.setProperty("--zoom", String(zoom));
     if (foto) return void fotografiar(foto, vestir);
     if (repetir) player?.mgRepetir();
-    if (editar) player?.mgEditar(JSON.stringify(editar));
-    else if (vestir && player) player.mgVestir(JSON.stringify(vestir));
+    if (editar) {
+      conEditor = true;
+      player?.mgEditar(JSON.stringify(editar));
+    } else if (vestir && player) player.mgVestir(JSON.stringify(vestir));
     else if (vestir) pendiente = vestir;
-    if (zoom || repetir || editar || vestir) despertarUnRato();
+    if (zoom || repetir || editar || vestir) mientrasCarga();
   });
 
   const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
 
   async function fotografiar(foto, vestir) {
     player.mgVestir(JSON.stringify(vestir));
-    // Las Piezas llegan de a una; después, un par de cuadros para que queden dibujadas.
-    for (let i = 0; i < 100 && !(i > 1 && player.mgCargado()); i++) await esperar(50);
-    await esperar(150);
+    await mientrasCarga(150);
     avisar({ foto, imagen: player.shadowRoot.querySelector("canvas")?.toDataURL("image/png") ?? null });
   }
 
@@ -111,7 +155,8 @@
     if (typeof nuevo.mgVestir !== "function") throw new Error("el Gaturro no arrancó");
     player = nuevo;
     if (pendiente) player.mgVestir(JSON.stringify(pendiente));
-    despertarUnRato(); // si mientras arrancaba se pidió la pausa, queda quieto cuando termina de dibujarse
+    mientrasCarga();
+    cargando--; // el arranque ya terminó; lo que sigue cargando lo cuenta `mientrasCarga`
     avisar({ listo: true });
   }
   abrir().catch((e) => avisar({ error: String(e.message ?? e) }));
