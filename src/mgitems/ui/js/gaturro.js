@@ -66,6 +66,18 @@ async function pedirGaturro(img, colores, partes = lookActual.partes, emote = nu
 const gaturroDelLook = gaturroVivo($("gaturro-vivo"));
 const pestanaConGaturro = () => PESTANAS_DEL_EDITOR.includes(vista) && !esNpc();
 const cerrarElDeLaTarjetaAlRato = cierreAlRato(() => gaturroDelLook.cerrar(), () => !pestanaConGaturro());
+// Mientras se juega (la ventana del programa inactiva por un rato) también se cierra, y le deja su memoria al juego (crece
+// con cada Look que se le pone); al volver, se abre de nuevo.
+let tarjetaCerradaMientrasSeJuega = false;
+const cerrarLaTarjetaMientrasSeJuega = cierreAlRato(() => {
+  gaturroDelLook.cerrar();
+  tarjetaCerradaMientrasSeJuega = true;
+}, () => !ventanaActiva);
+alCambiarElFoco.push((activa) => {
+  if (!activa) return cerrarLaTarjetaMientrasSeJuega();
+  if (tarjetaCerradaMientrasSeJuega && pestanaConGaturro()) dibujarGaturro();
+  tarjetaCerradaMientrasSeJuega = false;
+});
 // Los de las ventanas: el escenario de los guardados y «Elige tus colores».
 const gaturroDelEscenario = gaturroVivo($("vivo-mis-looks"));
 const gaturroDeColores = gaturroVivo($("gaturro-colores"));
