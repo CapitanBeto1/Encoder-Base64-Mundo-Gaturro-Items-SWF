@@ -1,13 +1,16 @@
 """Looks: aplicar un Look en su Item base, y los dibujos del juego para las ventanas que imitan las suyas."""
 
 import subprocess
+import time
 import tempfile
 from pathlib import Path
 
 from mgitems.ffdec import FFDecNoDisponible
 from mgitems.interfaz import BANNERS, CARPETA_BANNERS, DIBUJOS, recortar
 from mgitems.items import orden_natural
-from mgitems.looks import Look, LookInvalido
+from mgitems.gaturro import COLORES
+from mgitems.looks import CLAVES_LOOK_DEL_JUEGO, ITEM_LOOK_DEL_JUEGO, Look, LookInvalido
+from mgitems.script import codificar, generar_script_con_atributos
 from mgitems.personalizar import (
     PersonalizacionInvalida, con_personalizacion, desde_valores, es_personalizable, es_valor_valido, normalizar, separar,
 )
@@ -160,6 +163,31 @@ class Looks:
         if resultado["ok"]:
             resultado["look"] = {"nombre": look.nombre, "base": base, "base_propuesta": look.base is None}
         return resultado
+
+    def look_del_juego(self, look: dict, ahora_ms: int | None = None) -> dict:
+        """El Encode que le da el Look al jugador como un Look guardado del propio juego (ver `ITEM_LOOK_DEL_JUEGO`): sin
+        trucar ninguna Prenda, con sus Piezas (y su personalización), sus colores y su emoción. Lo que no puede viajar
+        (transporte, efecto…) va en `avisos`. `ahora_ms`: los milisegundos del nombre (el juego usa la hora)."""
+        try:
+            look = Look.desde(look)
+        except LookInvalido as e:
+            return {"ok": False, "error": str(e)}
+        if not look.partes:
+            return {"ok": False, "error": "Elegí al menos una Pieza para el Look."}
+        partes = con_personalizacion(look.partes, look.personalizacion)
+        atributos = {f"attr_{clave}": partes[clave] for clave in CLAVES_LOOK_DEL_JUEGO if clave in partes}
+        colores = COLORES | (look.colores or {})
+        atributos |= {f"attr_{c}": int(v.lstrip("#"), 16) for c, v in colores.items()}
+        atributos |= {"attr_emote": look.emote or "normal", "look": True}
+        ruta = f"{ITEM_LOOK_DEL_JUEGO}.{ahora_ms if ahora_ms is not None else int(time.time() * 1000)}"
+        try:
+            script = generar_script_con_atributos([(ruta, 1, atributos)])
+        except ValueError as e:
+            return {"ok": False, "error": f"El Look no se puede mandar así: {e}."}
+        avisos = [{"ruta": pieza, "motivo": f"{PARTES_DEL_CUERPO.get(parte, parte)} no viaja en un Look del juego"}
+                  for parte, pieza in look.partes.items() if parte not in CLAVES_LOOK_DEL_JUEGO]
+        return {"ok": True, "script": script, "encode": codificar(script), "items": [{"ruta": ruta, "cantidad": 1}],
+                "look": {"nombre": look.nombre, "del_juego": True}, "avisos": avisos}
 
     def _proponer_base(self, look: Look) -> str | None:
         swf = next(iter(look.partes.values())).rpartition(".")[0]

@@ -281,3 +281,7 @@ main.modo-trucar .casilleros { display: none; }
 /* Ventanitas de la pestaña. */
 #dialogo-ver-encode .panel { width: min(520px, 90vw); }
 #texto-ver-encode { min-height: 120px; }
+
+/* «Look del juego»: una casilla al lado de «Aplicar Look», como «Persistir» en Trucar Prenda. */
+#como-look-del-juego { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; cursor: pointer; }
+main:is(.modo-acciones, .modo-trucar, .modo-npc, .modo-fondos) #como-look-del-juego { display: none; }  /* solo en Looks */

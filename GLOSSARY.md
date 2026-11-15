@@ -59,8 +59,12 @@ Un Item usable o consumible (poción, bebida, comida) que queda en la mochila; a
 _Avoid_: consumible (a secas), objeto de mochila
 
 **Look** _(provisional)_:
-Un conjunto de Piezas asignadas a varias Partes del cuerpo a la vez, con nombre, que se materializa en el juego como un Item base modificado (normalmente un Item de mochila). Se guarda y se comparte como archivo; con él se puede volver a generar. Guarda también los colores con los que se ve el Gaturro en el programa (solo para mostrarlo; no cambian lo que se recibe en el juego).
+Un conjunto de Piezas asignadas a varias Partes del cuerpo a la vez, con nombre, que se materializa en el juego como un Item base modificado (normalmente un Item de mochila). Se guarda y se comparte como archivo; con él se puede volver a generar. Guarda también los colores y la emoción del Gaturro. Llega al juego como **Look del juego** (lo de abajo) o, sin esa casilla, como un Item base trucado (que no lleva colores ni emoción).
 _Avoid_: Outfit, conjunto
+
+**Look del juego**:
+Un Look guardado del propio juego, como los de «Guarda tu Look»: un Item de mochila `food.almond.<milisegundos>` con `attr_<parte>`, `attr_color1…4`, `attr_emote` y `look = true`. Se elige en la ventana de Looks del juego y pone todo junto, sin trucar ninguna Prenda. El juego guarda hasta 8; el transporte y el efecto de cabeza no viajan en él.
+_Avoid_: outfit del juego
 
 **Archivo de Look**:
 Un Look guardado en un archivo para pasárselo a otra persona, que lo importa a sus Looks y lo aplica (los SWF que le falten se descargan solos).
