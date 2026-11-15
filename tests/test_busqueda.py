@@ -86,6 +86,24 @@ def test_con_dos_modelos_se_juntan_por_puestos(tmp_path):
     assert dict(parecidos)["casa.silla"] == pytest.approx(0.95, abs=0.01)  # el parecido: el mejor de los dos
 
 
+def test_las_huellas_leidas_quedan_en_int8_y_se_comparan_de_a_bloques(tmp_path):
+    # En memoria quedan como en el archivo (en float32 ocuparían 4 veces más) y se pasan a float32 de a bloques.
+    matriz = np.random.default_rng(0).normal(size=(50, 8)).astype(np.float32)
+    matriz /= np.linalg.norm(matriz, axis=1, keepdims=True)
+    archivo = tmp_path / "huellas.npz"
+    Huellas([f"casa.mueble{i}" for i in range(50)], [matriz], {}).guardar(archivo)
+    leidas = Huellas.leer(archivo)
+
+    enteras = leidas.parecidos([matriz[[7]]])
+    leidas.BLOQUE = 16
+    de_a_bloques = leidas.parecidos([matriz[[7]]])
+
+    assert leidas.huellas[0].dtype == np.int8
+    assert [r for r, _ in de_a_bloques] == [r for r, _ in enteras] and enteras[0][0] == "casa.mueble7"
+    assert [p for _, p in de_a_bloques] == pytest.approx([p for _, p in enteras])
+    assert leidas.de_items({"casa.mueble7"})[0] == pytest.approx(matriz[[7]], abs=0.01)
+
+
 
 def test_con_rectangulo_tambien_se_compara_mas_amplio():
     captura = Image.new("RGB", (100, 100), (0, 0, 255))

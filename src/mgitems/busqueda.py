@@ -220,12 +220,17 @@ PENALIDAD_PEDAZO = 0.02
 class Huellas:
     """Las huellas de las imágenes de referencia (`scripts/armar_busqueda.py`): `rutas` ("swf.Clase", de Items
     y de Piezas; una misma ruta puede estar varias veces: suelta, dibujada puesta en el Gaturro y en pedazos),
-    `huellas` (las de cada modelo de `MODELOS`, una fila por imagen), `prendas_de_pieza` (Pieza → las Prendas que la
-    usan) y `pedazos` (qué filas son de un pedazo de un dibujo)."""
+    `huellas` (las de cada modelo de `MODELOS`, una fila por imagen; en float32 o, como en el archivo, en int8 con
+    `escalas`, una por fila), `prendas_de_pieza` (Pieza → las Prendas que la usan) y `pedazos` (qué filas son de un
+    pedazo de un dibujo)."""
+
+    # Filas que se comparan por vez: las huellas en int8 se pasan a float32 de a pedazos (enteras serían ~280 MB más).
+    BLOQUE = 16384
 
     def __init__(self, rutas: list[str], huellas: list[np.ndarray], prendas_de_pieza: dict[str, list[str]],
-                 pedazos: np.ndarray | None = None):
+                 pedazos: np.ndarray | None = None, escalas: list[np.ndarray] | None = None):
         self.rutas, self.huellas, self.prendas_de_pieza = rutas, list(huellas), prendas_de_pieza
+        self.escalas = list(escalas) if escalas is not None else [None] * len(self.huellas)
         self.pedazos = np.zeros(len(rutas), bool) if pedazos is None else pedazos.astype(bool)
         self._unicas = list(dict.fromkeys(rutas))
         indice = {r: i for i, r in enumerate(self._unicas)}
@@ -237,15 +242,22 @@ class Huellas:
             if int(datos["version"]) != VERSION_DATOS:
                 raise ValueError("las huellas son de otra versión")
             cuantas = sum(1 for clave in datos.files if clave.startswith("huellas_"))
-            huellas = [datos[f"huellas_{n}"].astype(np.float32) * datos[f"escalas_{n}"].astype(np.float32)[:, None]
-                       for n in range(cuantas)]
-            return cls([str(r) for r in datos["rutas"]], huellas, json.loads(str(datos["prendas_de_pieza"])), datos["pedazos"])
+            return cls([str(r) for r in datos["rutas"]], [datos[f"huellas_{n}"] for n in range(cuantas)],
+                       json.loads(str(datos["prendas_de_pieza"])), datos["pedazos"],
+                       [datos[f"escalas_{n}"].astype(np.float32) for n in range(cuantas)])
+
+    def _de_modelo(self, n: int, filas=slice(None)) -> np.ndarray:
+        """Las huellas del modelo `n` (solo esas `filas`) en float32."""
+        huellas = self.huellas[n][filas].astype(np.float32)
+        if self.escalas[n] is not None:
+            np.multiply(huellas, self.escalas[n][filas][:, None], out=huellas)
+        return huellas
 
     def guardar(self, archivo: Path) -> None:
         """En int8, con una escala por fila (la mitad que en float16): para comparar parecidos alcanza y sobra."""
         por_modelo = {}
-        for n, huellas in enumerate(self.huellas):
-            huellas = huellas.astype(np.float32)
+        for n in range(len(self.huellas)):
+            huellas = self._de_modelo(n)
             escalas = np.maximum(np.abs(huellas).max(axis=1), 1e-8) / 127
             por_modelo |= {f"huellas_{n}": np.round(huellas / escalas[:, None]).astype(np.int8), f"escalas_{n}": escalas.astype(np.float16)}
         np.savez_compressed(archivo, version=np.array(VERSION_DATOS), rutas=np.array(self.rutas), **por_modelo,
@@ -255,7 +267,7 @@ class Huellas:
     def de_items(self, items: set[str]) -> list[np.ndarray]:
         """Las huellas (de cada modelo) de las imágenes de estos Items: la suya y las de las Piezas que visten."""
         filas = [i for i, r in enumerate(self.rutas) if r in items or items & set(self.prendas_de_pieza.get(r, ()))]
-        return [h[filas] if filas else np.zeros((0, h.shape[1]), np.float32) for h in self.huellas]
+        return [self._de_modelo(n, filas) if filas else np.zeros((0, h.shape[1]), np.float32) for n, h in enumerate(self.huellas)]
 
     def parecidos(self, consultas: list[np.ndarray]) -> list[tuple[str, float]]:
         """Cada ruta, de la más a la menos parecida a las `consultas` (las de cada modelo: la captura y su espejo), con
@@ -264,8 +276,12 @@ class Huellas:
         Con un modelo, en el orden de su parecido. Con varios, por sus puestos: cada uno le suma a cada ruta
         1/(`FUSION` + el puesto que le da), así queda arriba lo que cualquiera ve muy parecido."""
         por_ruta = []
-        for huellas, consulta in zip(self.huellas, consultas):
-            puntajes = (huellas @ consulta.T).max(axis=1) - PENALIDAD_PEDAZO * self.pedazos
+        for n, consulta in enumerate(consultas):
+            puntajes = np.zeros(len(self.rutas), np.float32)
+            for desde in range(0, len(self.rutas), self.BLOQUE):
+                hasta = desde + self.BLOQUE
+                puntajes[desde:hasta] = (self._de_modelo(n, slice(desde, hasta)) @ consulta.T).max(axis=1)
+            puntajes -= PENALIDAD_PEDAZO * self.pedazos
             mejor = np.full(len(self._unicas), -np.inf, np.float32)
             np.maximum.at(mejor, self._de_ruta, puntajes)
             por_ruta.append(mejor)
