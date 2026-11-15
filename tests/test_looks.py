@@ -1,4 +1,5 @@
 import base64
+import json
 import xml.etree.ElementTree as ET
 
 import pytest
@@ -285,3 +286,30 @@ def test_aplicar_look_con_emote_no_falla(nucleo):
     resultado = nucleo.aplicar_look(dict(REY, emote="smile"))
 
     assert resultado["ok"]
+
+
+def test_un_look_del_juego_lleva_todo_en_un_item_de_mochila_sin_trucar_nada(nucleo, ffdec):
+    # Como «Guarda tu Look» del juego: `food.almond.<ms>` con `attr_<parte>`, los colores, la emoción y `look`.
+    look = dict(REY, partes={**REY["partes"], "hats2": "costumes2.gorra1_on", "transport": "costumes.capaRey_on"},
+                colores={"color1": "#3366CC"}, emote="devil", personalizacion={"hats2": {"ajuste": {"x": 2, "y": 0, "rot": 0, "escala": 10}}})
+
+    resultado = nucleo.look_del_juego(look, ahora_ms=1731650000000)
+
+    assert resultado["ok"], resultado
+    linea = next(l.strip() for l in resultado["script"].splitlines() if "inventory.addOptions" in l)
+    nombre, cantidad, catalogo, texto = linea.split(" ")[1:]
+    assert (nombre, cantidad, catalogo) == ("food.almond.1731650000000", "1", "null")
+    atributos = json.loads(texto)
+    assert atributos["look"] is True and atributos["attr_emote"] == "devil"
+    assert atributos["attr_hats2"] == "costumes2.gorra1_on//2,0,0,10"  # con su personalización, como en el juego
+    assert atributos["attr_color1"] == 3368652 and atributos["attr_color4"] == 16485563  # los que faltan, de fábrica
+    assert all(atributos[f"attr_{p}"] == v for p, v in REY["partes"].items())
+    assert "attr_transport" not in atributos
+    assert [a["ruta"] for a in resultado["avisos"]] == ["costumes.capaRey_on"]  # el transporte no viaja
+    assert ffdec.trucos == []  # no se truca ninguna Prenda
+    assert nucleo.entregar_encode(resultado["encode"])["ok"]
+
+
+def test_un_look_del_juego_sin_piezas_o_invalido(nucleo):
+    assert not nucleo.look_del_juego(dict(REY, partes={}))["ok"]
+    assert not nucleo.look_del_juego(dict(REY, emote="inventada"))["ok"]

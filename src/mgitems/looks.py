@@ -34,6 +34,19 @@ def colores_validos(colores) -> bool:
                                              for c, v in colores.items())
 
 
+# Un Look guardado del juego («Guarda tu Look», `AvatarSaverBanner`): un Item de mochila `food.almond.<milisegundos>`
+# con los atributos `attr_<clave>` de estas claves y `look = true`. El juego lo muestra en su ventana de Looks (hasta
+# `LOOKS_DEL_JUEGO`; al abrirla borra los que sobran) y, al elegirlo, le pone al Gaturro todo junto: las Piezas, los
+# colores y la emoción (`getCustomAttributes`). Las demás Partes (transporte, efecto…) no viajan en él.
+ITEM_LOOK_DEL_JUEGO = "food.almond"
+CLAVES_LOOK_DEL_JUEGO = (
+    "hats", "hats2", "hats3", "hairs", "hairs2", "hairs3", "accesories", "accesories2", "accesories3",
+    "mouths", "mouths2", "mouths3", "neck", "neck2", "neck3", "clothFront", "clothBack", "cloth", "leg", "foot", "arm",
+    "glove", "grip",
+)
+LOOKS_DEL_JUEGO = 8
+
+
 class LookInvalido(ValueError):
     """El Look no tiene la forma esperada."""
 

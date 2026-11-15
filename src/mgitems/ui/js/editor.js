@@ -168,16 +168,29 @@ function mostrarBarraLook() {
   mostrarGuia();
 }
 
+// Como Look del juego (la casilla, marcada de entrada): un Look guardado del juego, con las Piezas, los colores y la
+// emoción, sin trucar nada. Sin la casilla, la Prenda base trucada con las Piezas (los colores y la emoción no llegan).
 async function aplicarLook() {
-  const resultado = await mientras("Aplicando el Look… (tarda unos segundos)", () => api().aplicar_look(lookActual));
+  const delJuego = $("check-look-del-juego").checked;
+  const resultado = delJuego
+    ? await mientras("Armando el Look del juego…", () => api().look_del_juego(lookActual))
+    : await mientras("Aplicando el Look… (tarda unos segundos)", () => api().aplicar_look(lookActual));
   if (!resultado.ok) return avisarLista(resultado.error, "error");
   mostrarEncode(resultado);
+  const avisos = (resultado.avisos ?? []).map((a) => `${claseDeRuta(a.ruta)}: ${a.motivo}`);
   avisarLista(
-    (resultado.look.base_propuesta ? `Se usó ${resultado.look.base} como Item base. ` : "") + "Look aplicado: tocá «Agregar al juego» para recibirlo.",
-    "exito"
+    delJuego
+      ? "Look listo: tocá «Agregar al juego» y, en el juego, elegilo en la ventana de Looks (guarda hasta 8; si ya tenés 8, borrá uno antes)."
+        + (avisos.length ? ` No viaja: ${avisos.join("; ")}.` : "")
+      : (resultado.look.base_propuesta ? `Se usó ${resultado.look.base} como Item base. ` : "") + "Look aplicado: tocá «Agregar al juego» para recibirlo.",
+    avisos.length ? "advertencia" : "exito"
   );
   mostrarBarraLook();
 }
+$("check-look-del-juego").addEventListener("change", () => {
+  mostrarEncode(null);
+  mostrarBarraLook();
+});
 
 $("aplicar-look").addEventListener("click", () => dePestana().alAplicar());
 $("entregar-look").addEventListener("click", () => entregar());
