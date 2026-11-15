@@ -8,6 +8,7 @@ from mgitems.acciones import (
 from mgitems.categorias import CASA
 from mgitems.ffdec import FFDecNoDisponible
 from mgitems.items import es_ruta_valida, piezas_del_swf
+from mgitems.looks import colores_validos
 from mgitems.mambo import atributo_en_codigo, clase_de_mochila
 from mgitems.npcs import NoSePuedeConvertir
 from mgitems.prendas import ACCION, EFECTO, MOCHILA, PREFIJO_EFECTO, TruqueoFallido, no_sirve_de_base
@@ -26,8 +27,9 @@ class Acciones:
     def aplicar_accion(self, accion: dict) -> dict:
         """Truca el Item `accion["base"]` para que, al usarlo, el Gaturro haga la animación `accion["animacion"]`
         mostrando `accion["pieza"]` (opcional; cualquier Pieza, también un vehículo o un objeto de la casa) y, si se
-        elige, ponga `accion["efecto"]` sobre la cabeza. Con usos ilimitados. Devuelve el Encode que lo agrega, y en
-        `avisos` lo que el juego haría distinto de lo elegido.
+        elige, ponga `accion["efecto"]` sobre la cabeza. Con usos ilimitados. Devuelve el Encode que lo agrega (con
+        los colores del Gaturro, `accion["colores"]`, si se eligieron), y en `avisos` lo que el juego haría distinto de lo
+        elegido.
 
         El Item puede ser cualquiera de cualquier SWF (menos las Prendas de `clothes1`): uno de mochila guarda la
         acción en `adds.action`; cualquier otro se convierte en uno de mochila (ADR 0007) y llega a la mochila."""
@@ -35,8 +37,11 @@ class Acciones:
             return {"ok": False, "error": "La acción no tiene la forma esperada."}
         animacion, base = accion.get("animacion"), accion.get("base")
         pieza, efecto = accion.get("pieza") or None, accion.get("efecto") or None
+        colores = accion.get("colores") or None
         if animacion not in ANIMACIONES:
             return {"ok": False, "error": "Elegí una animación."}
+        if colores is not None and not colores_validos(colores):
+            return {"ok": False, "error": "Los colores del Gaturro no tienen la forma esperada."}
         if not isinstance(base, str) or not es_ruta_valida(base):
             return {"ok": False, "error": "Elegí el Item donde se guarda la acción."}
         if any(p is not None and not (isinstance(p, str) and es_ruta_valida(p)) for p in (pieza, efecto)):
@@ -75,14 +80,15 @@ class Acciones:
                 avisos.append({"ruta": valor, "motivo": motivo})
 
         if item is not None and item.tipo == MOCHILA:
-            resultado = self._trucar_item(swf, data, item, valores)
+            resultado = self._trucar_item(swf, data, item, valores, colores=colores)
         else:
-            resultado = self._accion_en_cualquier_item(swf, data, clase, valores)
+            resultado = self._accion_en_cualquier_item(swf, data, clase, valores, colores)
         if resultado["ok"]:
             resultado["avisos"] = avisos
         return resultado
 
-    def _accion_en_cualquier_item(self, swf: str, data: bytes, clase: str, valores: dict[str, str]) -> dict:
+    def _accion_en_cualquier_item(self, swf: str, data: bytes, clase: str, valores: dict[str, str],
+                                  colores: dict | None = None) -> dict:
         """Convierte `clase` (una Prenda, un objeto de la casa…) en un Item de mochila que hace la acción (ADR 0007)."""
         base = f"{swf}.{clase}"
         obtenido = self._categorias_de(swf)
@@ -109,7 +115,7 @@ class Acciones:
             return {"ok": False, "error": f"{e}: no se puede trucar."}
         except (OSError, subprocess.SubprocessError) as e:
             return {"ok": False, "error": f"No se pudo poner la acción en {clase}: {e}"}
-        script = generar_script([(base, 1)])
+        script = generar_script([(base, 1)], colores)
         encode = codificar(script)
         self._trucos[encode] = {swf: trucado}
         return {"ok": True, "prenda": {"ruta": base, "tipo": MOCHILA, "partes": dict(valores)},

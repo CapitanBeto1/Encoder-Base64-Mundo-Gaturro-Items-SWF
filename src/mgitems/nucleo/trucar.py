@@ -68,7 +68,7 @@ class Trucar:
             resumen.append({"ruta": t["base"], "tipo": item.tipo, "partes": dict(valores)})
 
         rutas = [t["base"] for t in trucadas]
-        script = generar_script([(ruta, 1) for ruta in rutas])
+        script = generar_script([(ruta, 1) for ruta in rutas], colores)
         encode = codificar(script)
         self._trucos[encode] = trucados
         return {"ok": True, "trucadas": resumen, "items": [{"ruta": r, "cantidad": 1} for r in rutas],
@@ -119,7 +119,7 @@ class Trucar:
             pedidos = [(ruta, qty, {**attrs, **int_colores}) for ruta, qty, attrs in pedidos]
         if emote:
             pedidos = [(ruta, qty, {**attrs, "emote": emote}) for ruta, qty, attrs in pedidos]
-        script = generar_script_con_atributos(pedidos)
+        script = generar_script_con_atributos(pedidos, colores)
         encode = codificar(script)
         return {"ok": True, "trucadas": resumen, "items": [{"ruta": t["base"], "cantidad": 1} for t in trucadas],
                 "script": script, "encode": encode}
@@ -194,7 +194,7 @@ class Trucar:
             return {"ok": False, "error": f"No se pudo trucar la Prenda: {e}"}
 
         ruta = f"{swf}.{base}"
-        script = generar_script([(ruta, 1)])
+        script = generar_script([(ruta, 1)], colores)
         encode = codificar(script)
         self._trucos[encode] = {swf: trucado}
         return {

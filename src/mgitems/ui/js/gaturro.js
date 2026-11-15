@@ -201,21 +201,14 @@ $("reiniciar-colores").addEventListener("click", () => {
   mostrarSelectoresColor();
   mostrarColoresEnEdicion();
 });
-// GUARDAR: los colores pasan a ser del Look abierto (se guardan con «Guardar el Look», como cualquier cambio).
+// GUARDAR: los colores pasan a ser del Look abierto (se guardan con «Guardar el Look», como cualquier cambio) y llegan
+// al juego en el mismo Encode que el Look, la Prenda trucada o la acción.
 $("guardar-colores").addEventListener("click", () => {
   lookActual.colores = Object.fromEntries(CLAVES_COLOR.map((c) => [c, coloresEnEdicion[c]]));
   $("dialogo-colores").close();
+  mostrarEncode(null);
+  mostrarBarraLook();
   dibujarGaturro();
-  avisarLista(lookActual.id ? "Colores cambiados: guardá el Look para conservarlos." : "Colores cambiados.", "exito");
-});
-$("aplicar-colores").addEventListener("click", async () => {
-  const colores = Object.fromEntries(CLAVES_COLOR.map((c) => [c, coloresEnEdicion[c]]).filter(([, v]) => v));
-  const resultado = await mientras("Generando Encode de colores…", () => api().aplicar_colores(colores));
-  if (!resultado.ok) return avisarLista(resultado.error, "error");
-  lookActual.colores = Object.fromEntries(CLAVES_COLOR.map((c) => [c, coloresEnEdicion[c]]));
-  $("dialogo-colores").close();
-  dibujarGaturro();
-  mostrarEncode(resultado);
-  avisarLista("Colores generados: recibí el Encode en el juego para aplicarlos.", "exito");
+  avisarLista("Colores cambiados: llegan al juego junto con lo que apliques." + (lookActual.id ? " Guardá para conservarlos." : ""), "exito");
 });
 $("cerrar-colores").addEventListener("click", () => $("dialogo-colores").close());

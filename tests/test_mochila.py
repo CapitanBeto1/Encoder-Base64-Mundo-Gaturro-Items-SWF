@@ -281,3 +281,13 @@ def test_lo_que_no_se_puede_trucar_no_truca_nada(nucleo, ffdec, trucadas):
 
     assert not resultado["ok"]
     assert "dos veces" in resultado["error"] or len(trucadas) < 2
+
+
+def test_los_colores_del_gaturro_llegan_en_el_mismo_encode_que_las_prendas_trucadas(nucleo):
+    trucadas = [{"base": "costumes2.remera5", "parte": "grip", "pieza": "costumes.coronaRey_on"},
+                {"base": "bruja.pocima1", "parte": "foot", "pieza": "costumes.capaRey_on"}]
+
+    for resultado in (nucleo.trucar_varias(trucadas, {"color2": "#112244"}),
+                      nucleo.trucar_varias_via_encode(trucadas, {"color2": "#112244"})):
+        assert resultado["ok"], resultado
+        assert resultado["script"].count("user.attr color2 1122884\n") == 1  # una vez, no por cada Prenda

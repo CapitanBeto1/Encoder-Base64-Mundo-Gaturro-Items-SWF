@@ -226,6 +226,14 @@ def test_cada_look_guarda_sus_colores(nucleo, sistema, fuente, ffdec):
     assert azul["id"] != sin["id"]
 
 
+
+def test_los_colores_del_look_llegan_en_el_mismo_encode(nucleo):
+    resultado = nucleo.aplicar_look(dict(REY, colores={"color1": "#3366CC"}))
+
+    assert resultado["ok"], resultado
+    assert "user.attr color1 3368652\n" in resultado["script"]
+    assert "user.attr" not in nucleo.aplicar_look(REY)["script"]
+
 def test_colores_invalidos(nucleo):
     for colores in ({"color9": "#FFFFFF"}, {"color1": "rojo"}, ["#FFFFFF"], {"color1": '"/><script>'}):
         resultado = nucleo.guardados.guardar("look", dict(REY, colores=colores))

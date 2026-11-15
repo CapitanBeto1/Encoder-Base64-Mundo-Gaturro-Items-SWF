@@ -234,3 +234,20 @@ def test_una_accion_puede_mostrar_objetos_de_la_casa_y_dibujos():
     # Un dibujo grande (como socialNetBackgrounds.SocialNetBackgrounds) queda marcado, como un mueble grande.
     limites = {"silla": (0, 0, 40, 40), "fondo": (0, 0, 1050, 600), "raro": (0, 0, 900, 900)}
     assert decoracion_en_acciones("x", items, limites) == {"fondo": {"accion": "grande"}}
+
+
+def test_los_colores_del_gaturro_llegan_en_el_mismo_encode_que_la_accion(nucleo, fuente, ffdec):
+    # Sin un botón aparte: el Encode de la acción también le pone los colores al Gaturro (`user.attr`).
+    fuente.publicar("mueblesDeEjemplo", crear_swf(["lampara"]), '"v1"')
+    ffdec.codigo["lampara"] = LAMPARA
+    colores = {"color1": "#3366CC", "color3": "#000000"}
+
+    de_mochila = nucleo.aplicar_accion({"animacion": "dance5", "base": "bruja.pocima1", "colores": colores})
+    convertido = nucleo.aplicar_accion({"animacion": "dance", "base": "mueblesDeEjemplo.lampara", "colores": colores})
+    sin_colores = nucleo.aplicar_accion({"animacion": "dance5", "base": "bruja.pocima1"})
+
+    for resultado in (de_mochila, convertido):
+        assert resultado["ok"], resultado
+        assert "user.attr color1 3368652\n" in resultado["script"] and "user.attr color3 0\n" in resultado["script"]
+    assert "user.attr" not in sin_colores["script"]
+    assert not nucleo.aplicar_accion({"animacion": "dance5", "base": "bruja.pocima1", "colores": {"color1": "rojo"}})["ok"]
