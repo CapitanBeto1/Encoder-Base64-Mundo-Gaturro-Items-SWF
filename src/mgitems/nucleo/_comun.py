@@ -1,6 +1,11 @@
 """Lo que usan varias partes del núcleo."""
 
+import re
+
 from mgitems.items import items_del_swf, piezas_del_swf
+
+# El nombre de un SWF del juego (`fashion_nuevo`, `npcs/tienda`…): solo eso, así no se sale de su carpeta.
+_NOMBRE_SWF = re.compile(r"^[A-Za-z0-9_\-]+(?:/[A-Za-z0-9_\-]+)*$")
 
 
 def _cantidad(valor) -> int | None:

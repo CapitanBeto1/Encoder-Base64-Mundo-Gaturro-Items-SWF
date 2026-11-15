@@ -1,7 +1,7 @@
 """El núcleo del programa: lo que hace MG Items, sin la ventana. Es la única puerta para la interfaz y las pruebas.
 
 Está repartido en una parte por función (`entrega`, `swfs`, `trucar`, `acciones`, `looks`, `npcs`, `busqueda`,
-`imagenes`, `encodes`; los guardados están en `mgitems.guardados`); `Nucleo` las junta y arma el estado que comparten.
+`imagenes`, `fotos`, `encodes`; los guardados están en `mgitems.guardados`); `Nucleo` las junta y arma el estado que comparten.
 """
 
 import threading
@@ -22,6 +22,7 @@ from mgitems.nucleo.colores import Colores
 from mgitems.nucleo.configuracion import Configuracion
 from mgitems.nucleo.encodes import Encodes
 from mgitems.nucleo.entrega import Entregar
+from mgitems.nucleo.fotos import Fotos
 from mgitems.nucleo.imagenes import Imagenes
 from mgitems.nucleo.looks import Looks
 from mgitems.nucleo.npcs import Npcs
@@ -30,7 +31,7 @@ from mgitems.nucleo.trucar import Trucar
 from mgitems.prendas import ItemBase, ItemsBaseFFDec
 
 
-class Nucleo(Entregar, Swfs, Trucar, Acciones, Looks, Npcs, Busqueda, Imagenes, Encodes, Configuracion, Colores):
+class Nucleo(Entregar, Swfs, Trucar, Acciones, Looks, Npcs, Busqueda, Imagenes, Fotos, Encodes, Configuracion, Colores):
     """Todo lo que hace el programa, para la interfaz (por `app.Puente`) y las pruebas. Cada parte vive en su módulo;
     acá se arma el estado que comparten (el SWF abierto, los SWF trucados de cada Encode, el entorno…)."""
 

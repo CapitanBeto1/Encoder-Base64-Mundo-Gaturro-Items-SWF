@@ -116,6 +116,7 @@ function cambiarVista(nueva) {
   $("generar").textContent = dePestana().generar;
   avisarLista("");
   mostrarEncode(null);
+  if (!pestanaConGaturro()) cerrarElDeLaTarjetaAlRato();
   return cargarParaLaVista();
 }
 

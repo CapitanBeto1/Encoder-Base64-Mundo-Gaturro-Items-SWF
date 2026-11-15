@@ -15,10 +15,19 @@ class CacheSwf:
         return base.with_name(base.name + ".swf"), base.with_name(base.name + ".version.json")
 
     def leer(self, nombre: str) -> tuple[bytes, Version] | None:
-        swf, version = self._rutas(nombre)
+        version = self.version(nombre)
+        if version is None:
+            return None
         try:
-            datos = json.loads(version.read_text(encoding="utf-8"))
-            return swf.read_bytes(), Version(datos["tamano"], datos.get("etag"))
+            return self._rutas(nombre)[0].read_bytes(), version
+        except OSError:
+            return None
+
+    def version(self, nombre: str) -> Version | None:
+        """La versión de la copia guardada (sin leer el SWF), o None si no hay."""
+        try:
+            datos = json.loads(self._rutas(nombre)[1].read_text(encoding="utf-8"))
+            return Version(datos["tamano"], datos.get("etag"))
         except (OSError, ValueError, KeyError):
             return None
 

@@ -26,7 +26,7 @@ function coloresDelEditor() {
 
 const dialogoEditor = () => $("dialogo-editor-piezas");
 const marcoEditor = () => $("editor-piezas");
-let editorListo = null; // la página del editor, abierta (se abre la primera vez y queda para las siguientes)
+let editorListo = null; // la página del editor, abierta (queda para las siguientes, hasta un rato después de cerrarlo)
 let partesEnElEditor = []; // las que el editor mostró (las que no vuelven al guardar, se cortaron con la tijera)
 let documentoEnElEditor = null; // el que se está editando (si se cambia de pestaña, el resultado no se pierde)
 
@@ -89,3 +89,7 @@ addEventListener("message", (evento) => {
 });
 
 $("editar-piezas").addEventListener("click", () => abrirEditorDePiezas());
+cerrarAlRatoDeCerrarse(dialogoEditor(), () => {
+  editorListo = null;
+  marcoEditor().src = "about:blank";
+});

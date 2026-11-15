@@ -120,7 +120,9 @@
 .guia li.hecho { color: #2f5d1d; }
 .guia li.hecho .numero-paso { background: #4f9a35; }
 .guia li.actual { background: rgba(255, 252, 235, 0.95); color: #4a3700; box-shadow: 0 2px 0 rgba(0, 0, 0, 0.15); }
-.guia li.actual .numero-paso { background: #e8541e; animation: latido 1.6s ease-in-out infinite; }
+/* Late unas veces cuando el paso pasa a ser el que sigue y después queda quieto, resaltado: una animación sin fin
+   hace que la ventana se redibuje todo el tiempo (~5 % de un núcleo, siempre). */
+.guia li.actual .numero-paso { background: #e8541e; animation: latido 1.6s ease-in-out 3; }
 @keyframes latido { 50% { transform: scale(1.15); } }
 
 .vista {

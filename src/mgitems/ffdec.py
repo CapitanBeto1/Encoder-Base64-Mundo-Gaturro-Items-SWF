@@ -15,6 +15,12 @@ class FFDecNoDisponible(Exception):
     """Falta Java o FFDec."""
 
 
+# Java para un trabajo corto (cada llamada es una exportación de segundos): sin su compilador más pesado (C2), que en
+# eso gasta más CPU de la que ahorra, y con el recolector de memoria simple, que pide mucha menos. Medido con el Java
+# incluido: tarda lo mismo, con un 40 a 75 % menos de CPU y entre 100 MB y 1 GB menos de memoria.
+_OPCIONES_DE_JAVA = ("-XX:TieredStopAtLevel=1", "-XX:+UseSerialGC")
+
+
 class FFDec:
     _SIN_VENTANA = getattr(subprocess, "CREATE_NO_WINDOW", 0)
 
@@ -36,7 +42,7 @@ class FFDec:
     def ejecutar(self, *argumentos: str, tiempo_maximo: int = 300) -> subprocess.CompletedProcess:
         java, jar = self.programas()
         return subprocess.run(
-            [str(java), "-jar", str(jar), *argumentos],
+            [str(java), *_OPCIONES_DE_JAVA, "-jar", str(jar), *argumentos],
             capture_output=True, timeout=tiempo_maximo, env=_entorno_java(), creationflags=self._SIN_VENTANA,
         )
 

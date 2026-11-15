@@ -23,9 +23,9 @@
 /* La ayuda de Fondos, como chip. */
 .aviso-npc:not(:empty) { margin: 0 auto; padding: 3px 10px; border-radius: 10px; background: rgba(0, 0, 0, 0.18); color: #fff3b0; }
 
-/* La lista vacía: una mano que señala la grilla. */
+/* La lista vacía: una mano que señala la grilla unas veces y queda quieta (sin fin, redibujaría la ventana todo el tiempo). */
 #lista-vacia:not([hidden]) { display: grid; place-items: center; gap: 6px; color: #fff; font-size: 13px; font-weight: 600; }
-.mano-vacia { width: 36px; height: 36px; color: rgba(255, 255, 255, 0.85); animation: senalar 1.2s ease-in-out infinite alternate; }
+.mano-vacia { width: 36px; height: 36px; color: rgba(255, 255, 255, 0.85); animation: senalar 1.2s ease-in-out 6 alternate; }
 @keyframes senalar { to { transform: translate(-6px, -4px); } }
 @media (prefers-reduced-motion: reduce) { .mano-vacia { animation: none; } }
 
