@@ -43,6 +43,9 @@ class DatosFalsos:
     def listos(self):
         return self._listos
 
+    def por_bajar(self):
+        return 0 if self._listos else 142_000_000
+
     def bajar(self, progreso):
         progreso(50, 100)
         self._listos = True
@@ -200,6 +203,26 @@ def test_baja_los_datos_y_verifica_que_no_esten_danados(tmp_path):
     assert avances[-1] == 3500
     datos.bajar()  # ya están: no se vuelven a pedir
     assert len(pedidos) == 2
+
+
+def test_con_los_datos_de_una_version_anterior_baja_solo_lo_que_cambio(tmp_path):
+    # Como al pasar de la versión 3 (solo CLIP) a la 4: el modelo de CLIP es el mismo y no se vuelve a bajar.
+    contenido = {"clip.onnx": b"c" * 3000, "dino.onnx": b"d" * 2000, "huellas.npz": b"h" * 500}
+    archivos = {n: (len(c), hashlib.sha256(c).hexdigest()) for n, c in contenido.items()}
+    (tmp_path / "clip.onnx").write_bytes(contenido["clip.onnx"])
+    (tmp_path / "huellas.npz").write_bytes(b"vieja")
+    pedidos, avances = [], []
+
+    def abrir(url):
+        pedidos.append(url.rsplit("/", 1)[1])
+        return io.BytesIO(contenido[pedidos[-1]])
+
+    datos = DatosBusqueda(tmp_path, archivos, "https://ejemplo/", abrir)
+
+    assert datos.por_bajar() == 2500
+    datos.bajar(lambda hechos, total: avances.append((hechos, total)))
+    assert pedidos == ["dino.onnx", "huellas.npz"]
+    assert avances[-1] == (2500, 2500) and datos.listos() and datos.por_bajar() == 0
 
 
 def test_si_un_archivo_llega_danado_no_queda(tmp_path):

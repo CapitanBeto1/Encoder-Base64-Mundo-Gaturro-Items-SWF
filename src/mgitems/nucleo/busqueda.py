@@ -13,15 +13,15 @@ class Busqueda:
     RESULTADOS_BUSQUEDA = 20
 
     def estado_busqueda(self) -> dict:
-        """Si ya están los datos de la búsqueda (el modelo y las huellas) y cuánto pesa bajarlos (en bytes). Sin
-        onnxruntime no se puede buscar: se avisa antes de bajar nada."""
+        """Si ya están los datos de la búsqueda (los modelos y las huellas) y cuánto falta bajar (en bytes: con los de
+        una versión anterior, solo lo que cambió). Sin onnxruntime no se puede buscar: se avisa antes de bajar nada."""
         if not hay_onnxruntime():
             return {"ok": False, "sin_onnxruntime": True, "error": FALTA_ONNXRUNTIME}
         try:
             datos = self._datos()
         except OSError as e:
             return {"ok": False, "error": str(e)}
-        return {"ok": True, "listos": datos.listos(), "tamano": DatosBusqueda.TAMANO}
+        return {"ok": True, "listos": datos.listos(), "tamano": datos.por_bajar()}
 
     def preparar_busqueda(self) -> dict:
         """Baja los datos de la búsqueda la primera vez (unos 230 MB). `progreso_busqueda` dice cuánto va."""
@@ -29,7 +29,7 @@ class Busqueda:
             datos = self._datos()
             if datos.listos():
                 return {"ok": True}
-            self._progreso_busqueda = {"bajando": True, "hechos": 0, "total": DatosBusqueda.TAMANO}
+            self._progreso_busqueda = {"bajando": True, "hechos": 0, "total": datos.por_bajar()}
 
             def progreso(hechos, total):
                 self._progreso_busqueda = {"bajando": True, "hechos": hechos, "total": total}

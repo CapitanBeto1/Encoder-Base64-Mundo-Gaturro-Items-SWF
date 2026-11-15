@@ -294,34 +294,41 @@ ARCHIVOS = {  # archivo → (tamaño, sha256)
 class DatosBusqueda:
     """Los modelos y las huellas en la carpeta del programa: se bajan del release de datos la primera vez."""
 
-    TAMANO = sum(t for t, _ in ARCHIVOS.values())
-
     def __init__(self, carpeta: Path, archivos: dict[str, tuple[int, str]] = ARCHIVOS, url: str = URL_DATOS, abrir=None):
         self._carpeta, self._archivos, self._url = carpeta, archivos, url
         self._abrir = abrir or _abrir_url
         self._cargados: tuple[list[Modelo], Huellas] | None = None
 
+    def _falta(self, nombre: str, tamano: int) -> bool:
+        archivo = self._carpeta / nombre
+        return not (archivo.is_file() and archivo.stat().st_size == tamano)
+
     def listos(self) -> bool:
         """Si están todos los archivos, completos (el hash se verifica al bajarlos)."""
-        return all((self._carpeta / n).is_file() and (self._carpeta / n).stat().st_size == t for n, (t, _) in self._archivos.items())
+        return not self.por_bajar()
+
+    def por_bajar(self) -> int:
+        """Los bytes que falta bajar: todo la primera vez; con los datos de una versión anterior, solo lo que cambió."""
+        return sum(t for n, (t, _) in self._archivos.items() if self._falta(n, t))
 
     def bajar(self, progreso=lambda hechos, total: None) -> None:
-        """Baja lo que falta y verifica su hash. OSError si no se pudo; ValueError si llegó dañado."""
+        """Baja lo que falta y verifica su hash; `progreso` va de 0 a `por_bajar`. OSError si no se pudo; ValueError si
+        llegó dañado."""
         import hashlib
 
         self._carpeta.mkdir(parents=True, exist_ok=True)
-        hechos = sum(t for n, (t, _) in self._archivos.items() if (self._carpeta / n).is_file() and (self._carpeta / n).stat().st_size == t)
+        hechos, total = 0, self.por_bajar()
         for nombre, (tamano, sha) in self._archivos.items():
-            destino = self._carpeta / nombre
-            if destino.is_file() and destino.stat().st_size == tamano:
+            if not self._falta(nombre, tamano):
                 continue
+            destino = self._carpeta / nombre
             parcial, suma = destino.with_suffix(destino.suffix + ".part"), hashlib.sha256()
             with self._abrir(self._url + nombre) as respuesta, parcial.open("wb") as salida:
                 while bloque := respuesta.read(1 << 20):
                     salida.write(bloque)
                     suma.update(bloque)
                     hechos += len(bloque)
-                    progreso(hechos, self.TAMANO)
+                    progreso(hechos, total)
             if suma.hexdigest() != sha:
                 parcial.unlink(missing_ok=True)
                 raise ValueError(f"{nombre} llegó dañado")
