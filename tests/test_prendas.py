@@ -153,34 +153,21 @@ def test_reescribir_las_partes_conserva_el_resto_del_codigo():
     assert 'symbol="symbol889"' in nuevo
 
 
-def test_reescribir_prenda_inyecta_colores_en_el_as3():
+def test_a_una_prenda_no_se_le_escribe_adds():
+    # `ClothMamboAsset` no tiene `adds`: el juego, al recibir la Prenda, fallaba con `adds.color1 = …` y se desconectaba.
     item = leer_item_base(codigo_prenda("remera5", PRENDAS["remera5"]))
 
-    nuevo = reescribir_partes(item, {"cloth": "buzo1_on"}, {"color1": "#FFD77D", "color2": "#FF9B25"})
+    nuevo = reescribir_partes(item, {"cloth": "buzo1_on"}, {"color1": "#FFD77D"}, emote="love")
 
-    # Los colores van como enteros (mismo formato que food.swf: adds.color1 = 16766845).
-    assert "adds.color1 = 16766845;" in nuevo
-    assert "adds.color2 = 16751397;" in nuevo
-    # Las partes de la ropa no cambian.
+    assert "adds" not in nuevo
     assert leer_item_base(nuevo).partes == {"cloth": "buzo1_on"}
 
 
-def test_reescribir_prenda_inyecta_emote_en_el_as3():
+def test_una_prenda_trucada_antes_pierde_sus_adds():
     item = leer_item_base(codigo_prenda("remera5", PRENDAS["remera5"]))
+    vieja = item.fuente.replace("clothes = ", 'adds.color1 = 16766845;\n         adds.emote = "love";\n         clothes = ')
 
-    nuevo = reescribir_partes(item, {"cloth": "buzo1_on"}, emote="love")
-
-    assert 'adds.emote = "love";' in nuevo
-    assert leer_item_base(nuevo).partes == {"cloth": "buzo1_on"}
-
-
-def test_reescribir_prenda_limpia_emote_anterior():
-    item = leer_item_base(codigo_prenda("remera5", PRENDAS["remera5"]))
-    con_emote = reescribir_partes(item, {"cloth": "buzo1_on"}, emote="love")
-
-    sin_emote = reescribir_partes(leer_item_base(con_emote), {"cloth": "remera5_on"})
-
-    assert 'adds.emote' not in sin_emote
+    assert "adds" not in reescribir_partes(leer_item_base(vieja), {"cloth": "remera5_on"})
 
 
 @pytest.mark.parametrize("partes", [{"cloth": 'x"; hackear(); "'}, {"cl oth": "remera5_on"}, {"cloth": ""}])

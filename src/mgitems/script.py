@@ -29,6 +29,11 @@ class EncodeInvalido(Exception):
     """El texto no es un Encode."""
 
 
+def _lineas_del_gaturro(colores: dict | None, emote: str | None) -> list[str]:
+    """Los colores y la emoción que el Encode le pone al Gaturro (`user.attr`)."""
+    return _lineas_colores(colores or {}) + ([f"{INDENTACION}user.attr emote {emote}"] if emote else [])
+
+
 def _lineas_colores(colores: dict) -> list[str]:
     """Líneas `user.attr colorN <entero>` para aplicar colores al avatar.
 
@@ -38,12 +43,12 @@ def _lineas_colores(colores: dict) -> list[str]:
     return [f"{INDENTACION}user.attr {c} {int(v.lstrip('#'), 16)}" for c, v in colores.items()]
 
 
-def generar_script(pedidos: list[tuple[str, int]], colores: dict | None = None) -> str:
+def generar_script(pedidos: list[tuple[str, int]], colores: dict | None = None, emote: str | None = None) -> str:
     """Script que agrega cada Item en su cantidad, encadenando un bloque `A<n>` por Item.
 
     El formato (incluida la línea de 4 espacios tras `on activate` y los dos saltos
     finales) reproduce el de los Encodes que ya se sabe que funcionan en el juego.
-    Con `colores` ({"color1": "#RRGGBB", …}), el primer bloque además le pone esos colores al Gaturro
+    Con `colores` ({"color1": "#RRGGBB", …}) o `emote` ("smile"…), el primer bloque además se los pone al Gaturro
     (`user.attr`): llegan junto con el Look, la Prenda trucada o la acción.
     """
     lineas = ["INICIO: DO", f"{INDENTACION}on activate A1", INDENTACION]
@@ -53,7 +58,7 @@ def generar_script(pedidos: list[tuple[str, int]], colores: dict | None = None) 
             f"A{n}: DO",
             f"{INDENTACION}user.state get",
             f"{INDENTACION}inventory.add {cantidad} {ruta}",
-            *(_lineas_colores(colores) if colores and n == 1 else []),
+            *(_lineas_del_gaturro(colores, emote) if n == 1 else []),
             f"{INDENTACION}after 1 {siguiente}",
         ]
         if n < len(pedidos):
@@ -61,14 +66,15 @@ def generar_script(pedidos: list[tuple[str, int]], colores: dict | None = None) 
     return "\n".join(lineas) + "\n\n"
 
 
-def generar_script_con_atributos(pedidos: list[tuple[str, int, dict]], colores: dict | None = None) -> str:
+def generar_script_con_atributos(pedidos: list[tuple[str, int, dict]], colores: dict | None = None,
+                                 emote: str | None = None) -> str:
     """Como `generar_script`, pero cada Item llega con atributos propios (`inventory.addOptions`).
 
     `inventory.addOptions <Item> <cantidad> <catálogo> <atributos>` del juego (`NpcActionRunner.addItemWithOptions`)
     los suma a los del Item al recibirlo (`mergeAttrs` en `InventoryUtil.doAcquireObject`), y el servidor los guarda
     en ese objeto: el mismo Item puede llegar varias veces, cada una con otros atributos, sin trucar su SWF. Los
     atributos van como JSON sin espacios, porque el guion separa los argumentos por espacios (y no deja comillas
-    dentro de un argumento entre comillas). Sin catálogo: `null`. `colores`: como en `generar_script`."""
+    dentro de un argumento entre comillas). Sin catálogo: `null`. `colores` y `emote`: como en `generar_script`."""
     lineas = ["INICIO: DO", f"{INDENTACION}on activate A1", INDENTACION]
     for n, (ruta, cantidad, atributos) in enumerate(pedidos, start=1):
         texto = json.dumps(atributos, separators=(",", ":"), ensure_ascii=True)
@@ -79,7 +85,7 @@ def generar_script_con_atributos(pedidos: list[tuple[str, int, dict]], colores: 
             f"A{n}: DO",
             f"{INDENTACION}user.state get",
             f"{INDENTACION}inventory.addOptions {ruta} {cantidad} null {texto}",
-            *(_lineas_colores(colores) if colores and n == 1 else []),
+            *(_lineas_del_gaturro(colores, emote) if n == 1 else []),
             f"{INDENTACION}after 1 {siguiente}",
         ]
         if n < len(pedidos):
