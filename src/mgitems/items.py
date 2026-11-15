@@ -4,11 +4,11 @@ import re
 
 _RUTA_ITEM = re.compile(r"^[A-Za-z0-9_\-]+(?:/[A-Za-z0-9_\-]+)*\.[A-Za-z_][A-Za-z0-9_]*$")
 
-# Sufijos de clases que viven en un SWF de assets pero no son Items en sí:
-# `_on` son Piezas del Gaturro (incluye `_brazo_on`), que van en `piezas_del_swf`.
-# Los `_so` eran considerados «objetos de escenario» no entregables, pero extienden
-# MamboAsset y el juego los agrega a la casa del jugador normalmente.
-_SUFIJOS_NO_ITEM = ("_on",)
+# Sufijos de clases que viven en un SWF de assets pero no son Items:
+# `_on` son Piezas (incluye `_brazo_on`) y `_so` son objetos de escenario. Los `_so` extienden MamboAsset como los
+# objetos de la casa, pero el juego no los deja tener (`config/ItemControl`): los descarta al recibirlos y, en una casa,
+# no los dibuja y los borra del servidor cuando entra el dueño.
+_SUFIJOS_NO_ITEM = ("_on", "_so")
 
 
 def es_ruta_valida(ruta: str) -> bool:
