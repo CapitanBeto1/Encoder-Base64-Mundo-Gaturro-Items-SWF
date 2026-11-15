@@ -159,7 +159,8 @@ function mostrarInventario() {
   $("uso-piezas").hidden = categoria.id !== "otros";
   const uso = categoria.id === "otros" ? $("uso-piezas").value : "";
   const coincide = buscarPorNombre(texto, $("modo-nombre-piezas").value);
-  const encontradas = todas.filter((p) => enCategoria(p, categoria) && coincide(p.clase) && (!uso || queEs(p).uso === uso));
+  const encontradas = todas.filter((p) => enCategoria(p, categoria) && coincide(p.clase) && (!uso || queEs(p).uso === uso)
+    && pasaAnimados(p, "piezas"));
   // Recomendado: primero las que son solo de esta categoría, después las que suman una más, dos más… (como en «Agregar Items»).
   const destino = vista === "acciones" ? casilleroMarcado ?? "action"
     : vista === "trucar" ? lookActual.parte
@@ -201,6 +202,7 @@ function mostrarInventario() {
         boton.title += ` · No se ve en el juego: ${motivo}`;
       }
       if (pieza.pasaporte) marcarPasaporte(boton);
+      if (pieza.se_mueve) marcarAnimado(boton);
       const li = document.createElement("li");
       li.append(boton);
       return li;
@@ -211,7 +213,9 @@ function mostrarInventario() {
     : !inventario.piezas.length
       ? ""
       : !piezas.length
-        ? texto ? "Ninguna Pieza se llama así." : uso ? "No hay Piezas de ese tipo en estas fuentes." : "No hay Piezas de esta categoría en estas fuentes."
+        ? texto ? "Ninguna Pieza se llama así."
+          : soloAnimados("piezas") ? "Ninguna Pieza de esta categoría se ve animada."
+          : uso ? "No hay Piezas de ese tipo en estas fuentes." : "No hay Piezas de esta categoría en estas fuentes."
         : !destino
           ? "Estas Piezas no tienen una Parte propia: tocá primero un casillero del Gaturro."
           : "";
@@ -246,6 +250,7 @@ function irAPaginaDeLooks(pagina) {
 for (const filtro of ["modo-nombre-piezas", "orden-piezas", "uso-piezas"]) {
   $(filtro).addEventListener("change", () => irAPaginaDeLooks(0));
 }
+conectarFiltroAnimados("piezas", () => irAPaginaDeLooks(0));
 $("abrir-archivo-looks").addEventListener("click", async () => {
   const resultado = await mientras("Abriendo SWF…", () => api().abrir_swf());
   mostrarSwfAbierto(resultado);
