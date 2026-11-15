@@ -132,8 +132,10 @@ def reescribir_partes(item: ItemBase, partes: dict[str, str], colores: dict | No
                      emote: str | None = None) -> str:
     """El código AS3 del Item base mostrando `partes` (Parte del cuerpo → Pieza).
 
-    Si se pasan `colores` ({"color1": "#RRGGBB", …}), se inyectan como `adds.colorN = <entero>`.
-    Si se pasa `emote` ("angry", "love"…), se inyecta como `adds.emote = "value"`.
+    En un Item de mochila, `colores` ({"color1": "#RRGGBB", …}) y `emote` ("angry", "love"…) se inyectan como
+    `adds.colorN = <entero>` y `adds.emote = "value"`: se los pone al Gaturro al usarlo. Una Prenda no tiene `adds`
+    (`ClothMamboAsset` no lo declara): escribirlo hace fallar su código cuando el juego la recibe, y el juego se
+    desconecta. A una Prenda no se le inyectan: los colores y la emoción van en el Encode (`script.generar_script`).
     """
     for parte, pieza in partes.items():
         if parte == EFECTO:
@@ -149,7 +151,7 @@ def reescribir_partes(item: ItemBase, partes: dict[str, str], colores: dict | No
     if item.tipo == PRENDA and ACCION in partes:
         raise ValueError("Una Prenda no hace acciones: solo un Item de mochila")
     if item.tipo == PRENDA:
-        return _reescribir_clothes(item.fuente, partes, colores, emote)
+        return _reescribir_clothes(item.fuente, partes)
     return _reescribir_adds(item, partes, colores, emote)
 
 
@@ -164,17 +166,12 @@ def _lineas_color(colores: dict) -> str:
     return "".join(f"         adds.{c} = {int(v.lstrip('#'), 16)};\n" for c, v in colores.items())
 
 
-def _reescribir_clothes(fuente: str, partes: dict[str, str], colores: dict | None = None,
-                        emote: str | None = None) -> str:
+def _reescribir_clothes(fuente: str, partes: dict[str, str]) -> str:
     pares = ",\n".join(f'            "{parte}":"{pieza}"' for parte, pieza in partes.items())
     literal = "clothes = {\n" + pares + "\n         };" if partes else "clothes = {};"
-    if colores:
-        literal += "\n" + _lineas_color(colores).rstrip("\n")
-    if emote:
-        literal += f'\n         adds.emote = "{emote}";'
     if not _CLOTHES.search(fuente):
         raise TruqueoFallido("La Prenda no declara sus Piezas de la forma esperada")
-    # Limpia colores y emote de un truco anterior antes de inyectar los nuevos.
+    # Saca los `adds` que dejaban versiones anteriores del programa (ver `reescribir_partes`).
     return _CLOTHES.sub(lambda _: literal, _ADDS_EMOTE.sub("", _ADDS_COLOR.sub("", fuente)), count=1)
 
 

@@ -228,10 +228,11 @@ def test_cada_look_guarda_sus_colores(nucleo, sistema, fuente, ffdec):
 
 
 def test_los_colores_del_look_llegan_en_el_mismo_encode(nucleo):
-    resultado = nucleo.aplicar_look(dict(REY, colores={"color1": "#3366CC"}))
+    resultado = nucleo.aplicar_look(dict(REY, colores={"color1": "#3366CC"}, emote="smile"))
 
     assert resultado["ok"], resultado
     assert "user.attr color1 3368652\n" in resultado["script"]
+    assert "user.attr emote smile\n" in resultado["script"]  # la Prenda no los lleva: no tiene `adds`
     assert "user.attr" not in nucleo.aplicar_look(REY)["script"]
 
 def test_colores_invalidos(nucleo):
