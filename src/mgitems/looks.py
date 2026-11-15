@@ -22,8 +22,10 @@ _PARTE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 _COMPORTAMIENTO = re.compile(r"^[A-Za-z0-9_\-]+(?:/[A-Za-z0-9_\-]+)*$")
 _COLOR = re.compile(r"^#[0-9a-fA-F]{6}$")
 _CLAVES_COLOR = {"color1", "color2", "color3", "color4"}
-# Emociones del Gaturro. Fuente: `EmoticonsGuiModal.EMOTES` (assets/main.swf).
-EMOTES = ("normal", "angry", "boring", "good", "smile", "love", "money")
+# Emociones del Gaturro, en el orden del juego. Fuente: `EmoticonsGuiModal.EMOTES` del cliente actual (las que no son
+# emojis: un emoji, `e_…`, es un globo pasajero, no queda en el Gaturro); la cabeza del Gaturro tiene un cuadro con
+# cada nombre. El `main.swf` del servidor es más viejo y solo trae las 7 primeras de antes.
+EMOTES = ("normal", "shy", "bored", "angry", "boring", "good", "smile", "love", "money", "devil")
 
 
 def colores_validos(colores) -> bool:

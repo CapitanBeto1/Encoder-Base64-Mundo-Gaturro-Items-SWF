@@ -272,7 +272,7 @@ def test_cada_look_guarda_su_emote(nucleo, sistema, fuente, ffdec):
     assert with_emote["id"] != sin_emote["id"]
 
 
-@pytest.mark.parametrize("emote", ["shrug", "happy", "ANGRY", "normal2", ["angry"]])
+@pytest.mark.parametrize("emote", ["shrug", "happy", "ANGRY", "normal2", ["angry"], "e_sad"])  # un emoji no queda en el Gaturro
 def test_emote_invalido(nucleo, emote):
     resultado = nucleo.guardados.guardar("look", dict(REY, emote=emote))
 
