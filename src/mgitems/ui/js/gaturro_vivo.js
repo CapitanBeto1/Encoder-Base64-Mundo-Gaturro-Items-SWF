@@ -17,10 +17,12 @@ function respuestaDe(marco, esLaRespuesta) {
 // entera.
 let ventanaActiva = true;
 const decirleLaPausa = (marco) => marco.contentWindow?.postMessage({ pausa: !ventanaActiva }, "*");
+const alCambiarElFoco = []; // lo que se hace además, con `ventanaActiva`
 function mirarElFoco() {
   if (document.hasFocus() === ventanaActiva) return;
   ventanaActiva = !ventanaActiva;
   document.querySelectorAll("iframe").forEach(decirleLaPausa);
+  for (const hacer of alCambiarElFoco) hacer(ventanaActiva);
 }
 setInterval(mirarElFoco, 1000);
 addEventListener("focus", mirarElFoco);
@@ -82,6 +84,19 @@ function gaturroVivo(marco, tamano = 1) {
   };
 }
 
+// Lo que ocupaba un Gaturro cerrado el navegador lo devuelve recién al juntar la basura, y si la página no hace nada
+// (mientras se juega) eso puede no pasar nunca. No hay cómo pedírselo directamente: reservar un bloque grande y soltarlo
+// hace que la junte enseguida (medido: 430 → 278 MB). Si no alcanza la memoria para reservarlo, no pasa nada.
+let limpieza = null;
+function limpiarEnUnRato() {
+  clearTimeout(limpieza);
+  limpieza = setTimeout(() => {
+    try {
+      new Uint8Array(new ArrayBuffer(128 * 2 ** 20))[0] = 1;
+    } catch {}
+  }, 2000);
+}
+
 // Un Gaturro abierto ocupa unos 100 MB aunque no se vea. Cuando deja de verse, se cierra un rato después: si antes se lo
 // vuelve a ver, sigue el mismo, sin esperar a que se abra. Devuelve con qué avisar que dejó de verse; `cerrar` se llama
 // si para entonces `sigueSinVerse()`.
@@ -90,7 +105,11 @@ function cierreAlRato(cerrar, sigueSinVerse) {
   let cierre = null;
   return () => {
     clearTimeout(cierre);
-    cierre = setTimeout(() => sigueSinVerse() && cerrar(), ESPERA_PARA_CERRAR_EL_GATURRO);
+    cierre = setTimeout(() => {
+      if (!sigueSinVerse()) return;
+      cerrar();
+      limpiarEnUnRato();
+    }, ESPERA_PARA_CERRAR_EL_GATURRO);
   };
 }
 
@@ -122,6 +141,7 @@ function abrirFotografo() {
 function cerrarFotografo() {
   fotografo?.then((marco) => marco.remove(), () => {});
   fotografo = null;
+  limpiarEnUnRato();
 }
 
 // La imagen (data:image/png…) del Gaturro quieto con esas Piezas, colores, emoción y personalización, o null si no
