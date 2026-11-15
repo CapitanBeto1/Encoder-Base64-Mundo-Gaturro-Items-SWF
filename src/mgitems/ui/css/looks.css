@@ -124,9 +124,9 @@ main.modo-trucar .casilleros { display: none; }
 .panel-emotes {
   position: absolute;
   bottom: calc(100% + 6px);
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
+  left: 0;  /* el botón va pegado al borde de la tarjeta: el panel se abre hacia la derecha */
+  display: grid;
+  grid-template-columns: repeat(5, auto);  /* las 10 del juego, en dos filas */
   gap: 4px;
   padding: 6px;
   background: var(--amarillo);

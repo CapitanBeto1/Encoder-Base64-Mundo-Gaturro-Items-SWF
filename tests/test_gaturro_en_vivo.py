@@ -43,6 +43,12 @@ def test_la_emocion_es_la_del_look_o_la_normal(nucleo):
     assert nucleo.gaturro_en_vivo({}, None, "inventada")["atributos"]["emote"] == "normal"
 
 
+@pytest.mark.parametrize("emote", ["shy", "bored", "devil"])
+def test_las_emociones_del_cliente_actual(nucleo, emote):
+    # Las tres que el `main.swf` del servidor no trae: el Gaturro del juego tiene un cuadro con cada nombre.
+    assert nucleo.gaturro_en_vivo({}, None, emote)["atributos"]["emote"] == emote
+
+
 def test_el_transporte_y_el_efecto_de_cabeza_van_como_en_el_juego(nucleo):
     atributos = nucleo.gaturro_en_vivo({"effect": "clothes1.remera5_on", "transport": "clothes1.buzo1_on"})["atributos"]
 
