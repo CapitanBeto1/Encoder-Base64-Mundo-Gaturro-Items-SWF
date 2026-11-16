@@ -73,6 +73,7 @@ const PESTANA = {
                        documentoNuevo: () => nuevoFondo(), elegirUno: "Elegí un objeto", queHace: "Elegí el fondo",
                        hace: () => lookActual.cuadro != null }),
   monedas: {
+    generar: "Generar Encode",
     pasos: () => [["Generá el Encode", hayEncode()], ["Agregá al juego", false]],
   },
   terminator: {
