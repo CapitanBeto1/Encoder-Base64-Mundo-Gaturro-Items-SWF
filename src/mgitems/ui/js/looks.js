@@ -71,9 +71,26 @@ async function cargarLooks() {
   $("texto-mis-looks").textContent = guardados().mis;
   $("titulo-mis-looks").textContent = guardados().titulo;
   $("sub-mis-looks").textContent = guardados().sub;
+  nombrarBotonesDelGuardado();
   mostrarListaLooks();
   mostrarLook();
   if (!inventario.cargado && !esNpc()) await cargarInventario();
+}
+
+// Los botones que guardan, borran o pasan lo que se edita nombran lo de la pestaña (el Look, la acción, la tienda…).
+function nombrarBotonesDelGuardado() {
+  const { el, lo, nuevo, mis } = guardados();
+  const elegido = lo === "la" ? "elegida" : "elegido";
+  const nombrar = (id, texto) => { $(id).title = texto; $(id).setAttribute("aria-label", texto); };
+  nombrar("guardar-look", `Guardar ${el}`);
+  nombrar("borrar-look", `Borrar ${el}`);
+  nombrar("eliminar-look-elegido", `Borrar ${el} ${elegido}`);
+  nombrar("nuevo-look", nuevo);
+  nombrar("reiniciar-look", `Volver ${el.replace(/^el /, "al ").replace(/^la /, "a la ")} que tenés abiert${lo === "la" ? "a" : "o"}`);
+  $("importar-look").title = `Agregar el archivo de ${dePestana().tocaUno} de otra persona`;
+  $("exportar-look").title = `Guardar ${el} ${elegido} en un archivo para pasárselo a otra persona`;
+  $("duplicar-look").title = `Hacer una copia de ${el} ${elegido}`;
+  $("grilla-looks").setAttribute("aria-label", mis);
 }
 
 // --- Mis Looks: la ventana "Guarda tu Look", como en el juego ---
@@ -108,7 +125,7 @@ function mostrarGrillaLooks() {
 }
 
 // El escenario muestra el Look puesto (el que se está editando, con sus cambios sin guardar) hasta que
-// se toca otro de la grilla; «Volver al Look que tenés puesto» lo muestra de nuevo.
+// se toca otro de la grilla; «Volver al Look que tenés abierto» lo muestra de nuevo.
 let mostrandoPuesto = true;
 
 function mostrarLookElegido() {
@@ -129,7 +146,7 @@ function mostrarLookElegido() {
     }
   };
   if (mostrandoPuesto) {
-    $("nombre-look-elegido").textContent = `${lookActual.nombre || guardados().nuevo} (puesto)`;
+    $("nombre-look-elegido").textContent = `${lookActual.nombre || guardados().nuevo} (abierto)`;
     $("equipar-look").disabled = true; // ya está puesto
     mostrar(lookActual);
     return;
@@ -175,7 +192,7 @@ $("zoom-escenario").addEventListener("input", (e) => gaturroDelEscenario.zoom(Nu
 // Elimina el Look elegido; si es el que se está editando, el editor queda con un Look nuevo.
 $("eliminar-look-elegido").addEventListener("click", async () => {
   const look = looksGuardados.find((l) => l.id === lookElegido);
-  if (!look || !confirm(`¿Eliminar ${guardados().el} «${look.nombre}»?`)) return;
+  if (!look || !confirm(`¿Borrar ${guardados().el} «${look.nombre}»?`)) return;
   const resultado = await llamarGuardados("borrar", look.id);
   if (!resultado.ok) return avisarLista(resultado.error, "error");
   const posicion = looksGuardados.indexOf(look);

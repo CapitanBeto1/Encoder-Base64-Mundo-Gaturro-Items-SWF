@@ -181,7 +181,7 @@
             <input id="nombre-look" class="nombre-tarjeta guardables" type="text" spellcheck="false" autocomplete="off"
                    placeholder="NOMBRE DEL LOOK" aria-label="Nombre del Look">
             <div class="se-guarda-en">
-              <span id="texto-se-guarda" class="ayuda">Se guarda en:</span>
+              <span class="ayuda">Item base:</span>
               <span id="base-look" class="base-look"></span>
               <button id="cambiar-base" class="enlace">Cambiar…</button>
             </div>
@@ -212,7 +212,7 @@
             <div class="escena">
               <ul id="casilleros-cabeza" class="casilleros" aria-label="Partes de la cabeza"></ul>
               <figure id="gaturro" class="gaturro">
-                <iframe id="gaturro-vivo" class="gaturro-vivo" title="Tu Gaturro con las Piezas del Look, como se ve en el juego" tabindex="-1"></iframe>
+                <iframe id="gaturro-vivo" class="gaturro-vivo" title="Tu Gaturro, como se ve en el juego" tabindex="-1"></iframe>
 
                 <label class="zoom-gaturro" title="Acercar o alejar el Gaturro">
                   <span aria-hidden="true">−</span>
@@ -426,7 +426,7 @@
         <div class="columna-escenario">
           <div class="escenario-look" data-dibujo="escenario" data-dibujo-como="fondo">
             <button type="button" id="reiniciar-look" class="girar-look" title="Volver al Look que tenés puesto" aria-label="Volver al Look que tenés puesto" data-dibujo="reiniciar">↻</button>
-            <button type="button" id="eliminar-look-elegido" class="girar-look eliminar-look" title="Eliminar el Look elegido" aria-label="Eliminar el Look elegido" data-dibujo="eliminar">🗑</button>
+            <button type="button" id="eliminar-look-elegido" class="girar-look eliminar-look" title="Borrar el Look elegido" aria-label="Borrar el Look elegido" data-dibujo="eliminar">🗑</button>
             <iframe id="vivo-mis-looks" class="gaturro-vivo" title="El guardado elegido" tabindex="-1" hidden></iframe>
             <div id="icono-mis-looks" class="icono-mis-looks" hidden></div>
             <label class="zoom-gaturro zoom-escenario" title="Acercar o alejar el Gaturro">
@@ -438,7 +438,7 @@
           </div>
           <div class="pie-mis-looks">
             <button type="button" id="cancelar-mis-looks" class="boton-juego">CANCELAR</button>
-            <button type="button" id="equipar-look" class="boton-juego">EQUIPAR</button>
+            <button type="button" id="equipar-look" class="boton-juego">ABRIR</button>
           </div>
         </div>
         <ul id="grilla-looks" class="grilla-looks" aria-label="Looks guardados">
@@ -450,10 +450,10 @@
 
   <dialog id="dialogo-base" class="dialogo-base">
     <div class="panel">
-      <h2 id="titulo-base">¿Dónde se guarda el Look?</h2>
-      <p id="ayuda-base" class="ayuda">El Item base es lo que vas a recibir: una Prenda (guardarropa) o un Item de mochila. Puede ser de cualquier SWF.</p>
+      <h2>Elegí el Item base</h2>
+      <p id="ayuda-base" class="ayuda"></p>
       <div class="fila fila-swf-base">
-        <span class="etiqueta-campo">SWF:</span>
+        <span class="etiqueta-campo">De:</span>
         <div class="selector-swf">
           <input id="swf-base" type="text" spellcheck="false" autocomplete="off" placeholder="Elegí un SWF del juego, ej: virtualGoods"
                  role="combobox" aria-expanded="false" aria-controls="resultados-swf-base" aria-autocomplete="list">
@@ -464,14 +464,13 @@
       <div class="filtros-base">
         <label class="filtro-base">
           <span data-icono="magnifying-glass"></span>
-          <input id="filtro-base" type="search" spellcheck="false" autocomplete="off" placeholder="Buscar por nombre" aria-label="Buscar los Items base por nombre">
+          <input id="filtro-base" type="search" spellcheck="false" autocomplete="off" placeholder="Nombre, ej: gorro, vincha" aria-label="Filtrar los Items base por el nombre">
         </label>
         <span class="tipos-base" role="radiogroup" aria-label="Qué Items mostrar">
-          <button type="button" id="tipo-ambos" class="filtro-tipo filtro-ambos" role="radio" aria-checked="true" data-tipo="ambos" title="Mostrar los de mochila y los de guardarropa">Ambos <span class="cantidad-tipo"></span></button>
+          <button type="button" id="tipo-ambos" class="filtro-tipo filtro-ambos" role="radio" aria-checked="true" data-tipo="ambos" title="Mostrar todos">Todo <span class="cantidad-tipo"></span></button>
           <button type="button" id="solo-mochila" class="filtro-tipo filtro-mochila" role="radio" aria-checked="false" data-tipo="mochila" title="Mostrar solo los Items de mochila (consumibles)"><span data-icono="backpack"></span> Mochila <span class="cantidad-tipo"></span></button>
           <button type="button" id="solo-guardarropa" class="filtro-tipo filtro-guardarropa" role="radio" aria-checked="false" data-tipo="prenda" title="Mostrar solo las Prendas (guardarropa)"><span data-icono="t-shirt"></span> Guardarropa <span class="cantidad-tipo"></span></button>
         </span>
-        <button type="button" id="animados-base" class="enlace filtro-animados" aria-pressed="false" aria-label="Solo los Items animados" title="Mostrar solo los Items que se ven animados"><span data-icono="film-strip"></span> Animados</button>
       </div>
       <ul id="lista-bases" class="lista-bases"></ul>
       <p id="mensaje-base" class="mensaje" role="status" aria-live="polite"></p>
@@ -483,7 +482,7 @@
 
   <dialog id="dialogo-ver-encode">
     <div class="panel">
-      <h2>Encode del Look</h2>
+      <h2 id="titulo-ver-encode">Encode del Look</h2>
       <p id="resumen-ver-encode" class="ayuda"></p>
       <textarea id="texto-ver-encode" readonly spellcheck="false"></textarea>
       <div class="acciones">

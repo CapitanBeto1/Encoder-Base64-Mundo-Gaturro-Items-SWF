@@ -11,15 +11,14 @@ const BOTONES_TIPO = ["tipo-ambos", "solo-mochila", "solo-guardarropa"];
 
 function mostrarBases() {
   const texto = $("filtro-base").value.trim().toLowerCase();
-  const porNombre = basesDelSwf.filter((b) => b.clase.toLowerCase().includes(texto) && pasaAnimados(b, "base"));
-  const deMochila = porNombre.filter((b) => b.tipo === "mochila").length;
+  const porNombre = basesDelSwf.filter((b) => b.clase.toLowerCase().includes(texto));
+  const deTipo = (tipo) => porNombre.filter((b) => b.tipo === tipo).length;
   $("tipo-ambos").querySelector(".cantidad-tipo").textContent = `(${porNombre.length})`;
-  $("solo-mochila").querySelector(".cantidad-tipo").textContent = `(${deMochila})`;
-  $("solo-guardarropa").querySelector(".cantidad-tipo").textContent = `(${porNombre.length - deMochila})`;
+  $("solo-mochila").querySelector(".cantidad-tipo").textContent = `(${deTipo("mochila")})`;
+  $("solo-guardarropa").querySelector(".cantidad-tipo").textContent = `(${deTipo("prenda")})`;
   for (const id of BOTONES_TIPO) $(id).setAttribute("aria-checked", String($(id).dataset.tipo === tipoBase));
-  const tipo = cualquierItem() ? "ambos" : tipoBase;
   const visibles = porNombre
-    .filter((b) => tipo === "ambos" || (b.tipo === "mochila" ? "mochila" : "prenda") === tipo)
+    .filter((b) => tipoBase === "ambos" || b.tipo === tipoBase)
     .slice(0, 200);
   $("lista-bases").replaceChildren(
     ...visibles.map((b) => {
@@ -27,7 +26,6 @@ function mostrarBases() {
       const boton = Object.assign(document.createElement("button"), { className: "fila-base", title: b.ruta });
       boton.setAttribute("aria-pressed", String(lookActual.base === b.ruta));
       boton.append(...filaDeBase(b));
-      if (b.se_mueve) marcarAnimado(boton);
       boton.addEventListener("click", () => {
         if (vista === "trucar" && lookActual.lista.some((t) => t.base === b.ruta)) {
           return avisar($("mensaje-base"), `${b.clase} ya está en la lista: cada uno necesita otro Item.`, "advertencia");
@@ -89,17 +87,9 @@ async function usarBasesDe(swf) {
   prepararIconosDe(swf);
 }
 
+// La misma ventana en todas las pestañas, con los mismos filtros: solo cambia qué se recibe.
 $("cambiar-base").addEventListener("click", () => {
-  const enAcciones = vista === "acciones";
-  $("dialogo-base").classList.toggle("sin-tipos", cualquierItem());
-  $("titulo-base").textContent = dePestana().tituloBase;
-  $("ayuda-base").textContent = enAcciones
-    ? "Cualquier Item de cualquier SWF: es lo que vas a recibir, y hace la acción cada vez que lo usás. Llega a la mochila, aunque sea una Prenda o de la casa."
-    : esNpc()
-    ? "Cualquier Item de cualquier SWF (de la casa, una Prenda, uno de mochila): llega a la casa con su dibujo y su nombre, y al tocarlo hace lo que elegiste."
-    : vista === "trucar"
-      ? "Es lo que vas a recibir: una Prenda (guardarropa) o un Item de mochila de cualquier SWF, que en vez de lo suyo muestra la Pieza elegida."
-      : "El Item base es lo que vas a recibir: una Prenda (guardarropa) o un Item de mochila. Puede ser de cualquier SWF.";
+  $("ayuda-base").textContent = dePestana().ayudaBase;
   $("dialogo-base").showModal();
   $("filtro-base").value = "";
   const swf = lookActual.base ? swfDeRuta(lookActual.base) : fuentes.swfs[0];
@@ -115,7 +105,6 @@ crearDesplegable({
   vacio: "No hay SWF con ese nombre.",
 });
 $("filtro-base").addEventListener("input", mostrarBases);
-conectarFiltroAnimados("base", mostrarBases);
 $("bases-de-todos").addEventListener("click", usarBasesDeTodos);
 for (const id of BOTONES_TIPO) {
   $(id).addEventListener("click", () => {
@@ -195,6 +184,7 @@ $("check-look-del-juego").addEventListener("change", () => {
 $("aplicar-look").addEventListener("click", () => dePestana().alAplicar());
 $("entregar-look").addEventListener("click", () => entregar());
 $("ver-encode").addEventListener("click", () => {
+  $("titulo-ver-encode").textContent = `Encode ${guardados().el.replace(/^el /, "del ").replace(/^la /, "de la ")}`;
   $("resumen-ver-encode").textContent = $("resumen").textContent;
   $("texto-ver-encode").value = $("encode").value;
   $("dialogo-ver-encode").showModal();
