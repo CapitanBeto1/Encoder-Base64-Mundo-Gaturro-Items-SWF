@@ -139,6 +139,9 @@ function mostrarEncode(resultado) {
     $("resumen").textContent = `${n === 1 ? "1 Prenda trucada" : `${n} Prendas trucadas`}: ${resultado.trucadas.map((t) => claseDeRuta(t.ruta)).join(", ")}.`;
   } else if (resultado?.accion) {
     $("resumen").textContent = `Acción «${resultado.accion.nombre}» en ${resultado.prenda.ruta}: está en la mochila, usala para hacerla.`;
+  } else if (resultado?.look?.del_juego) {
+    // El Look del juego no truca ninguna Prenda: llega como uno de los Looks guardados del juego.
+    $("resumen").textContent = `Look del juego «${resultado.look.nombre}»: en el juego, elegilo en la ventana de Looks.`;
   } else if (resultado?.look) {
     const n = Object.keys(resultado.prenda.partes).length;
     $("resumen").textContent = `Look «${resultado.look.nombre}»: ${resultado.prenda.ruta} con ${n === 1 ? "1 Pieza" : `${n} Piezas`}.` + (resultado.prenda.tipo === "mochila" ? " Está en la mochila: usalo para vestirte." : "");
