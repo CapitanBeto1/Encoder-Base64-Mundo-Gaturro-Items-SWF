@@ -97,8 +97,12 @@ package
       // `prendas.CAPAS`): la capa 1 es la Parte, y las de arriba se llaman como ella con su número.
       private static const PARTES_CON_CAPAS:Array = ["hats","hairs","accesories","mouths","neck"];
       
-      // A qué altura del escenario quedan los pies (la página agranda el zoom alrededor de ese punto).
+      // A qué altura del escenario quedan los pies (el zoom agranda o achica al Gaturro alrededor de ese punto).
       private static const PIES:Number = 0.8;
+
+      // El zoom de la página (`mgZoom`): 1 es el tamaño que entra en el escenario. Se aplica acá y no agrandando el
+      // reproductor: así el escenario es siempre el marco entero y lo grande (un vehículo) no se corta antes del borde.
+      private var zoom:Number = 1;
 
       public function MMO()
       {
@@ -139,18 +143,25 @@ package
             ExternalInterface.addCallback("mgCargado",this.mgCargado);
             ExternalInterface.addCallback("mgEditar",this.mgEditar);
             ExternalInterface.addCallback("mgPersonalizar",this.mgPersonalizar);
+            ExternalInterface.addCallback("mgZoom",this.mgZoom);
          }
+      }
+
+      private function mgZoom(valor:Number) : void
+      {
+         this.zoom = valor > 0 ? valor : 1;
+         this.acomodar();
       }
 
       /**
        * El Gaturro parado en el medio, del tamaño que entra en el lugar que haya (el del marco de la página),
-       * con espacio arriba para sombreros y vehículos que vuelan. Mide unos 62 × 78 sin nada puesto.
+       * con espacio arriba para sombreros y vehículos que vuelan, por el zoom. Mide unos 62 × 78 sin nada puesto.
        */
       private function acomodar(e:Event = null) : void
       {
          var ancho:Number = stage.stageWidth;
          var alto:Number = stage.stageHeight;
-         this.gaturro.scaleX = this.gaturro.scaleY = Math.min(0.5 * alto / 78,0.8 * ancho / 62);
+         this.gaturro.scaleX = this.gaturro.scaleY = Math.min(0.5 * alto / 78,0.8 * ancho / 62) * this.zoom;
          this.gaturro.x = ancho / 2;
          this.gaturro.y = alto * PIES;
       }

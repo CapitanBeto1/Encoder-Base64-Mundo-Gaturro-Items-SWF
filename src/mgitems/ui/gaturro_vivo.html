@@ -6,10 +6,9 @@
 <style>
   /* El Gaturro del juego, en un marco de la interfaz (js/gaturro_vivo.js). El fondo es el del marco. */
   html, body { margin: 0; height: 100%; overflow: hidden; background: transparent; }
-  /* El zoom agranda el reproductor (no lo estira con `transform`: Ruffle lo dibuja nítido a ese tamaño) alrededor
-     de los pies del Gaturro, que el SWF pone en el medio, al 80% del alto (scripts/gaturro_en_vivo/MMO.as). */
-  ruffle-player { position: absolute; width: calc(100% * var(--zoom, 1)); height: calc(100% * var(--zoom, 1));
-    left: calc(50% - 50% * var(--zoom, 1)); top: calc(80% - 80% * var(--zoom, 1)); }
+  /* El reproductor es siempre el marco entero: el zoom lo aplica el SWF (`mgZoom`, scripts/gaturro_en_vivo/MMO.as),
+     alrededor de los pies. Si agrandara el reproductor, al alejar lo grande se cortaría antes del borde del marco. */
+  ruffle-player { position: absolute; inset: 0; width: 100%; height: 100%; }
 </style>
 </head>
 <body>
@@ -126,11 +125,13 @@
   window.mgCapas = (json) => { editando = false; avisar({ capas: JSON.parse(json) }); };
   let player = null;
   let pendiente = null; // lo último que se pidió vestir antes de que el Gaturro estuviera listo
+  let zoomPedido = 1;
 
   addEventListener("message", (evento) => {
     const { vestir, zoom, repetir, foto, editar, personalizar, pausa } = evento.data ?? {};
     if (pausa !== undefined) pausar(pausa);
-    if (zoom) document.documentElement.style.setProperty("--zoom", String(zoom));
+    if (zoom) zoomPedido = zoom;
+    if (zoom && player) player.mgZoom(zoom);
     if (foto) return void fotografiar(foto, vestir);
     if (repetir) player?.mgRepetir();
     if (editar || personalizar) conVentanas = true;
@@ -162,6 +163,7 @@
     for (let i = 0; i < 150 && typeof nuevo.mgVestir !== "function"; i++) await new Promise((r) => setTimeout(r, 80));
     if (typeof nuevo.mgVestir !== "function") throw new Error("el Gaturro no arrancó");
     player = nuevo;
+    player.mgZoom(zoomPedido);
     if (pendiente) player.mgVestir(JSON.stringify(pendiente));
     mientrasCarga();
     cargando--; // el arranque ya terminó; lo que sigue cargando lo cuenta `mientrasCarga`
