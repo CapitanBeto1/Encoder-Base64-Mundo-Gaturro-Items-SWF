@@ -5,6 +5,8 @@
 - Ruffle (reproductor de Flash para la web): muestra al Gaturro en vivo. Queda en vendor/ruffle.
 - El Gaturro en vivo (`anim_preview.swf` de naw-trucador: el Gaturro del juego con su código): queda en
   vendor/gaturro, armado por `armar_gaturro.py` (necesita FFDec).
+- El arte del juego para la interfaz (sus letras, íconos, emociones y fondos del perfil): lo saca `sacar_arte.py` del
+  Gaturro en vivo y del juego a src/mgitems/ui/arte.
 
 No se versionan en git: se obtienen con este script para desarrollar y al armar
 el instalador. Para desarrollar alcanza con FFDec si ya hay Java instalado.
@@ -26,6 +28,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import armar_gaturro
+import sacar_arte
 
 VENDOR = Path(__file__).resolve().parent.parent / "vendor"
 
@@ -132,6 +135,11 @@ def main() -> None:
         sys.exit(f"No conozco: {', '.join(desconocidos)}. Opciones: {', '.join(BINARIOS)}")
     for nombre in pedidos:
         obtener(BINARIOS[nombre])
+    # El arte de la estética (sacar_arte.py) sale del Gaturro en vivo: después de él, si falta o cambió.
+    if "gaturro" in pedidos and not sacar_arte.al_dia():
+        print("Sacando el arte del juego para la interfaz…")
+        sacar_arte.sacar()
+        print(f"Arte del juego en {sacar_arte.SALIDA}")
 
 
 if __name__ == "__main__":

@@ -17,3 +17,6 @@ dist/
 
 # Temporales
 *.tmp
+
+# El arte del juego para la interfaz, que saca scripts/sacar_arte.py (no se versiona)
+src/mgitems/ui/arte/
