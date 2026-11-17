@@ -1,0 +1,729 @@
+/* La estética del programa: la del celular del juego (GatuPhone), con su paleta, sus letras y sus íconos, en modo claro
+   y oscuro (`<html data-modo="oscuro">`, js/modo.js). El arte sale del juego al instalar (scripts/sacar_arte.py →
+   ui/arte/, que git no lleva); si falta, quedan las letras y los íconos de siempre. Va después de las demás hojas: les
+   pone encima la estética del celular. */
+@import url("../arte/iconos.css");
+@import url("../arte/emociones.css");
+
+@font-face { font-family: "Juego Cooper"; src: url("../arte/fuentes/Cooper Std Black.ttf"); }
+@font-face { font-family: "Juego Fredoka"; src: url("../arte/fuentes/Fredoka SemiBold.ttf"); }
+@font-face { font-family: "Juego Fredoka Medium"; src: url("../arte/fuentes/Fredoka Medium.ttf"); }
+
+/* ============ El celular ============
+   La paleta y las letras son las del celular del juego (medidas en sus piezas y los botones de
+   Ajustes y la Tienda); la forma de los controles se dibuja con CSS, más prolija que estirar las piezas. */
+
+:root {
+  --c-violeta: #5365d2;      /* fondo del celular */
+  --c-violeta-oscuro: #414fa5;
+  --c-lila: #b6bafd;         /* «INSTALAR» */
+  --c-lila-encima: #adb1f1;
+  --c-lila-suave: #eef0ff;
+  --c-blanco: #ffffff;
+  --c-borde: #cccccc;        /* el borde de las tarjetas */
+  --c-gris: #e6e6e6;
+  --c-gris-suave: #f4f4f8;
+  --c-texto: #666666;        /* el texto de Fredoka */
+  --c-suave: #999999;
+  --c-rojo: #dc2626;
+  --c-verde: #49af4c;
+  --c-radio: 10px;
+  --c-tinta: #ffffff;         /* las letras sobre violeta */
+}
+body {
+  background: var(--c-violeta) url("../arte/fondo-del-celular.png") center / cover fixed;
+  font-family: "Juego Fredoka", sans-serif; color: var(--c-texto);
+}
+:is(button, input, select, textarea, h1, h2, h3, label, .pestana, .guia li):not(:is(.dialogo-mis-looks, .dialogo-colores) *) {
+  font-family: "Juego Fredoka", sans-serif; -webkit-text-stroke: 0; text-shadow: none; letter-spacing: 0;
+}
+button::before { display: none; }
+.logo { color: var(--c-tinta); -webkit-text-stroke: 0; text-shadow: 0 2px 0 var(--c-violeta-oscuro); }
+
+/* --- La columna de pestañas: una lista del celular --- */
+.pestanas {
+  background: var(--c-blanco); border-radius: 14px; box-shadow: 0 4px 0 var(--c-violeta-oscuro); padding: 10px 8px;
+}
+.grupo-pestanas { color: var(--c-violeta); font-size: 11px; letter-spacing: 0.5px; margin-top: 6px; }
+.pestana {
+  background: none; border: 0; border-radius: 8px; box-shadow: none; color: var(--c-texto); padding: 7px 10px; min-height: 0;
+}
+.pestana:hover:not([aria-selected="true"]):not(:disabled) { background: var(--c-lila-suave); }
+.pestana[aria-selected="true"] { background: var(--c-violeta); color: var(--c-tinta); box-shadow: none; }
+
+/* --- La guía de pasos: píldoras blancas con su número --- */
+.guia li {
+  background: rgba(255, 255, 255, 0.82); color: var(--c-suave); border-radius: 999px; box-shadow: none; padding: 4px 12px 4px 4px;
+}
+.guia li + li::before { background: rgba(255, 255, 255, 0.6); }
+.numero-paso { background: var(--c-suave) !important; color: var(--c-tinta); border-radius: 999px; animation: none; }
+.guia li.hecho { color: var(--c-texto); }
+.guia li.hecho .numero-paso { background: var(--c-verde) !important; }
+.guia li.actual { background: var(--c-blanco); color: var(--c-violeta); box-shadow: 0 0 0 2px var(--c-lila); }
+.guia li.actual .numero-paso { background: var(--c-violeta) !important; }
+
+/* --- Paneles y ventanas: tarjetas blancas --- */
+.panel {
+  background: var(--c-blanco); border: 0; border-radius: 16px; box-shadow: 0 4px 0 var(--c-violeta-oscuro); color: var(--c-texto);
+}
+.panel h2 { background: none; color: var(--c-violeta); box-shadow: none; padding: 0; }
+.panel h2 .ayuda { color: var(--c-suave); }
+/* Las ventanas: la caja es el panel de adentro (la ventana, transparente, puede ser más alta que él: si no, se ven dos). */
+dialog:not(.dialogo-mis-looks, .dialogo-colores, .dialogo-editor-piezas) {
+  background: none; border: 0; box-shadow: none; color: var(--c-texto);
+}
+dialog:not(.dialogo-mis-looks, .dialogo-colores, .dialogo-editor-piezas) > .panel {
+  background: var(--c-blanco); border: 0; border-radius: 16px; box-shadow: 0 8px 0 var(--c-violeta-oscuro);
+}
+dialog::backdrop { background: rgba(65, 79, 165, 0.55); }
+dialog h2 { color: var(--c-violeta); background: none; box-shadow: none; }
+/* Lo de adentro (la tarjeta del Gaturro, el panel de la grilla): gris muy claro, sin bordes. */
+:is(.armario, .tarjeta-gaturro, .lista, .lista-bases) {
+  background: var(--c-gris-suave); border: 0; border-radius: 12px; box-shadow: none;
+}
+.tarjeta-gaturro .nombre-tarjeta {
+  background: var(--c-violeta); color: var(--c-tinta); border-radius: 12px 12px 0 0; box-shadow: none;
+}
+.tarjeta-gaturro .nombre-tarjeta::placeholder { color: rgba(255, 255, 255, 0.75); }
+
+/* --- Botones: blancos con su borde; lo principal, violeta --- */
+button:not(:is(.dialogo-mis-looks, .dialogo-colores) *):not(.pestana, .pieza-grilla, .casillero, .categoria, .emote-btn, .cerrar-redondo, .quitar, .capa-poniendo) {
+  background: var(--c-blanco); color: var(--c-texto); border: 1px solid var(--c-borde); border-radius: 8px; box-shadow: none;
+}
+button:not(:is(.dialogo-mis-looks, .dialogo-colores) *):not(.pestana, .pieza-grilla, .casillero, .categoria, .emote-btn, .cerrar-redondo, .quitar, .capa-poniendo):hover:not(:disabled) {
+  background: var(--c-lila-suave); border-color: var(--c-lila); color: var(--c-violeta);
+}
+:is(button[aria-pressed="true"], button[aria-checked="true"], button[aria-expanded="true"], .capa-poniendo[aria-pressed="true"]):not(:is(.dialogo-mis-looks, .dialogo-colores) *):not(.pieza-grilla, .casillero, .categoria, .emote-btn) {
+  background: var(--c-violeta) !important; border-color: var(--c-violeta) !important; color: var(--c-tinta) !important;
+}
+button:is(.primario, .entregar):not(:is(.dialogo-mis-looks, .dialogo-colores) *) {
+  background: var(--c-violeta) !important; border-color: var(--c-violeta) !important; color: var(--c-tinta) !important;
+  box-shadow: 0 3px 0 var(--c-violeta-oscuro) !important;
+}
+button:is(.primario, .entregar):hover:not(:disabled):not(:is(.dialogo-mis-looks, .dialogo-colores) *) {
+  background: var(--c-violeta-oscuro) !important;
+}
+button:disabled:not(:is(.dialogo-mis-looks, .dialogo-colores) *) {
+  background: var(--c-gris) !important; border-color: var(--c-gris) !important; color: var(--c-suave) !important; box-shadow: none !important; opacity: 1;
+}
+
+/* --- Las grillas: tarjetas blancas --- */
+:is(.pieza-grilla, .casillero, .categoria, .emote-btn, .flecha-grande, .capa-poniendo) {
+  background: var(--c-blanco); border: 1px solid var(--c-borde); border-radius: var(--c-radio); box-shadow: none; color: var(--c-texto);
+}
+:is(.pieza-grilla, .casillero, .categoria, .emote-btn, .flecha-grande):hover:not(:disabled) { border-color: var(--c-violeta); }
+:is(.pieza-grilla, .casillero, .emote-btn)[aria-pressed="true"],
+.categoria[aria-selected="true"] {
+  background: var(--c-lila-suave); border-color: var(--c-violeta); box-shadow: inset 0 0 0 1px var(--c-violeta);
+}
+.pieza-grilla.en-uso { box-shadow: inset 0 0 0 2px var(--c-lila); }
+.item-grilla.no-llega-bien { border-color: var(--c-rojo); }
+:is(.nombre-item, .nombre-casillero, .numero-pagina, #ayuda-grilla, .ayuda) { color: var(--c-texto); }
+.tipo-pieza { background: var(--c-violeta) !important; color: var(--c-tinta); border-radius: 4px; }
+.destino-item[data-bien="false"] { background: var(--c-rojo); }
+:is(.marca-animado, .capas-casillero) { background: var(--c-violeta); color: var(--c-tinta); }
+
+/* --- Campos y listas --- */
+:is(input[type="text"], input[type="search"], input:not([type]), input.cantidad, textarea, select):not(:is(.dialogo-mis-looks, .dialogo-colores) *) {
+  appearance: none; background-color: var(--c-blanco); color: var(--c-texto); border: 1px solid var(--c-borde); border-radius: 8px; box-shadow: none;
+}
+:is(input, textarea, select):focus:not(:is(.dialogo-mis-looks, .dialogo-colores) *) { outline: none; border-color: var(--c-violeta); box-shadow: 0 0 0 2px var(--c-lila-suave); }
+:is(input, textarea)::placeholder { color: var(--c-suave); }
+select:not(:is(.dialogo-mis-looks, .dialogo-colores) *) {
+  padding-right: 22px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23999999' stroke-width='1.6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 7px center; background-size: 10px 6px;
+}
+.filtro-base { background: var(--c-blanco); border: 1px solid var(--c-borde); border-radius: 8px; }
+.filtro-base input { border: 0 !important; box-shadow: none !important; }
+input[type="range"] { accent-color: var(--c-violeta); }
+input[type="checkbox"] { accent-color: var(--c-violeta); }
+
+/* --- Píldoras y avisos --- */
+:is(.chip-fuente, .chip-look, .poniendo-en) {
+  background: var(--c-blanco); color: var(--c-texto); border: 1px solid var(--c-borde); border-radius: 999px; box-shadow: none;
+}
+.mensaje:not(:empty) { background: var(--c-violeta-oscuro); color: var(--c-tinta); border-radius: 999px; }
+.mensaje.error:not(:empty) { background: var(--c-rojo); }
+
+/* --- Las X: un círculo blanco que se pone rojo --- */
+:is(.cerrar-redondo, .quitar):not(:is(.dialogo-mis-looks, .dialogo-colores) *) {
+  background: var(--c-blanco); color: var(--c-suave); border: 1px solid var(--c-borde); border-radius: 999px; box-shadow: none;
+}
+:is(.cerrar-redondo, .quitar):hover:not(:is(.dialogo-mis-looks, .dialogo-colores) *) { background: var(--c-rojo); border-color: var(--c-rojo); color: var(--c-tinta); }
+
+/* --- Barras de desplazamiento finas --- */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--c-borde); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: var(--c-lila); }
+
+/* --- Detalles --- */
+.lista li {
+  background: var(--c-blanco); border: 1px solid var(--c-borde); border-radius: var(--c-radio); box-shadow: none; color: var(--c-texto);
+}
+.lista li:hover { background: var(--c-lila-suave); border-color: var(--c-lila); box-shadow: none; }
+:is(.total-paginas, .numero-pagina) { color: var(--c-suave); }
+/* «Todos: [cantidad] [Aplicar]»: que el campo se achique en vez de empujar el botón fuera del panel. */
+#form-cantidad-todos { flex-wrap: nowrap; min-width: 0; }
+#form-cantidad-todos .campo-chico { flex: 1 1 auto; min-width: 0; width: auto; }
+#form-cantidad-todos button { flex: none; }
+.mano-vacia { color: var(--c-lila); }
+/* El título de la tarjeta (el nombre del Look): la franja violeta, aunque sea un campo. */
+.tarjeta-gaturro input.nombre-tarjeta {
+  background: var(--c-violeta) !important; color: var(--c-tinta) !important; border: 0 !important; border-radius: 12px 12px 0 0 !important;
+}
+/* Las píldoras de estado («Look nuevo (sin guardar)», «Prendas trucadas (0)», lo que trae el Encode). */
+:is(#look-abierto, #resumen-look, .lista-trucadas > .ayuda) {
+  background: var(--c-blanco); color: var(--c-texto); border: 1px solid var(--c-borde); box-shadow: none;
+}
+#look-abierto::before { background: var(--c-lila); }
+#resumen-look::before { background: var(--c-violeta); }
+/* La fila de botones de la tarjeta: que no se salga si no entra. */
+.botones-tarjeta { flex-wrap: wrap; row-gap: 6px; }
+/* Sin contornos en las letras (los ponía la estética anterior), salvo en las ventanas que copian al juego. */
+:not(:is(.dialogo-mis-looks, .dialogo-colores, .dialogo-mis-looks *, .dialogo-colores *)) { -webkit-text-stroke: 0; }
+.icono-npc { color: var(--c-lila); }
+.monedas-pantalla { background: var(--c-violeta); color: var(--c-tinta); box-shadow: 0 4px 0 var(--c-violeta-oscuro); }
+/* Las etiquetas de tipo de la ventana del Item base: legibles. */
+.fila-base .tipo-prenda { background: var(--c-violeta); color: var(--c-tinta); }
+.fila-base .tipo-mochila { color: #4a2300; }
+
+/* --- Los íconos: las formas del juego (arte/iconos.css dice cuál va en cada uno). Sin forma, queda el de antes. --- */
+
+/* --- El fondo del perfil del juego detrás del Gaturro, con las flechas amarillas del juego para cambiarlo --- */
+.escena .gaturro.con-fondo-del-juego {
+  position: relative; align-self: stretch; margin: 6px 0; border-radius: 14px; overflow: hidden;
+  background-position: center; background-size: cover; background-repeat: no-repeat; box-shadow: inset 0 0 0 1px var(--c-borde);
+}
+.flechas-fondo { position: absolute; top: 6px; right: 6px; display: flex; gap: 4px; z-index: 2; }
+.flechas-fondo button {
+  width: 30px; height: 30px; min-height: 0; padding: 0; border: 0 !important; border-radius: 0 !important; box-shadow: none !important;
+  background: center / contain no-repeat !important;
+}
+.flechas-fondo .fondo-anterior { background-image: url("../arte/iconos/fondo-anterior.png") !important; }
+.flechas-fondo .fondo-siguiente { background-image: url("../arte/iconos/fondo-siguiente.png") !important; }
+.flechas-fondo button:hover { filter: brightness(1.1); transform: translateY(-1px); }
+
+/* ============ Tercera pasada: «Mis Looks», colores, zoom, emociones, Trucar y «Para la casa» ============ */
+
+/* --- Lo común de las dos ventanas que antes copiaban al juego: la letra y sin contornos --- */
+:is(.dialogo-mis-looks, .dialogo-colores),
+:is(.dialogo-mis-looks, .dialogo-colores) * {
+  font-family: "Juego Fredoka", sans-serif !important; font-weight: normal !important; -webkit-text-stroke: 0 !important; text-shadow: none !important;
+}
+:is(.dialogo-mis-looks, .dialogo-colores)::backdrop { background: rgba(65, 79, 165, 0.55); }
+:is(.dialogo-mis-looks, .dialogo-colores) .adorno { display: none !important; }
+:is(.dialogo-mis-looks, .dialogo-colores) .cerrar-redondo {
+  width: 32px; height: 32px; padding: 0; background: var(--c-blanco) !important; color: var(--c-suave) !important;
+  border: 1px solid var(--c-borde) !important; border-radius: 999px !important; box-shadow: none !important; font-size: 14px !important;
+}
+:is(.dialogo-mis-looks, .dialogo-colores) .cerrar-redondo > img { display: none; }
+:is(.dialogo-mis-looks, .dialogo-colores) .cerrar-redondo:has(> img)::after { content: "✕"; }  /* la de «Mis Looks» era un dibujo; la de los colores ya trae su X */
+:is(.dialogo-mis-looks, .dialogo-colores) .cerrar-redondo:hover { background: var(--c-rojo) !important; border-color: var(--c-rojo) !important; color: var(--c-tinta) !important; }
+/* Los botones de las dos ventanas: blancos con borde; el principal, violeta. */
+:is(.dialogo-mis-looks, .dialogo-colores) :is(.pastilla-chica, .pastilla-colores, .boton-juego) {
+  background: var(--c-blanco) !important; color: var(--c-texto) !important; border: 1px solid var(--c-borde) !important;
+  border-radius: 8px !important; box-shadow: none !important; padding: 8px 18px; text-transform: uppercase;
+}
+:is(.dialogo-mis-looks, .dialogo-colores) :is(.pastilla-chica, .pastilla-colores, .boton-juego):hover:not(:disabled) {
+  background: var(--c-lila-suave) !important; border-color: var(--c-lila) !important; color: var(--c-violeta) !important;
+}
+.dialogo-mis-looks .pie-mis-looks .boton-juego:last-child,
+.dialogo-colores #guardar-colores {
+  background: var(--c-violeta) !important; border-color: var(--c-violeta) !important; color: var(--c-tinta) !important;
+  box-shadow: 0 3px 0 var(--c-violeta-oscuro) !important;
+}
+:is(.dialogo-mis-looks, .dialogo-colores) :is(.pastilla-chica, .pastilla-colores, .boton-juego):disabled {
+  background: var(--c-gris) !important; border-color: var(--c-gris) !important; color: var(--c-suave) !important; box-shadow: none !important;
+}
+/* El escenario del Gaturro de las dos ventanas: el fondo del perfil elegido (js/fondo_del_perfil.js). */
+:is(.escenario-look, .escena-colores).con-fondo-del-juego {
+  background-position: center !important; background-size: cover !important; background-repeat: no-repeat !important; border-radius: 14px; overflow: hidden;
+}
+
+/* --- «Mis Looks», «Mis prendas trucadas», «Mis acciones» --- */
+dialog.dialogo-mis-looks { background: none; border: 0; box-shadow: none; padding: 0; }
+.panel-mis-looks {
+  background: var(--c-blanco) !important; color: var(--c-texto); border: 0 !important; border-radius: 18px !important;
+  box-shadow: 0 8px 0 var(--c-violeta-oscuro) !important; padding: 18px !important;
+}
+.titulo-mis-looks h2 { color: var(--c-violeta) !important; font-size: 22px; }
+.titulo-mis-looks h2 .sub { color: var(--c-suave) !important; font-size: 12px; }
+.titulo-mis-looks .martillo { display: none; }
+.dialogo-mis-looks .pastilla-chica { padding: 6px 12px; font-size: 12px; }
+.escenario-look { background-color: var(--c-gris-suave) !important; border-radius: 14px; }
+.dialogo-mis-looks :is(.girar-look, .eliminar-look) {
+  background: var(--c-blanco) !important; color: var(--c-texto) !important; border: 1px solid var(--c-borde) !important; border-radius: 10px !important;
+}
+.dialogo-mis-looks .eliminar-look:hover:not(:disabled) { background: var(--c-rojo) !important; color: var(--c-tinta) !important; }
+.dialogo-mis-looks .girar-look.con-dibujo > img { filter: grayscale(1) brightness(0.5); }
+:is(.nombre-look-elegido, .zoom-escenario) {
+  background: color-mix(in srgb, var(--c-blanco) 92%, transparent) !important; color: var(--c-texto) !important; border: 1px solid var(--c-borde); border-radius: 999px !important;
+}
+.grilla-looks { background: none !important; }
+.casillero-vacio { background: var(--c-gris-suave) !important; border-radius: 12px !important; }
+.casillero-look {
+  background: var(--c-blanco) !important; color: var(--c-texto) !important; border: 1px solid var(--c-borde) !important;
+  border-radius: 12px !important; box-shadow: none !important;
+}
+.casillero-look:hover:not(:disabled) { border-color: var(--c-violeta) !important; }
+.casillero-look[aria-pressed="true"] { background: var(--c-lila-suave) !important; border-color: var(--c-violeta) !important; box-shadow: inset 0 0 0 1px var(--c-violeta) !important; }
+.casillero-look.nuevo { background: var(--c-lila-suave) !important; color: var(--c-violeta) !important; border-style: dashed !important; border-color: var(--c-lila) !important; }
+.nombre-casillero-look { background: var(--c-violeta) !important; color: var(--c-tinta) !important; border-radius: 999px !important; }
+
+/* --- «Elige tus colores»: una sola tarjeta blanca, centrada; el Gaturro a la izquierda y los botones debajo --- */
+dialog.dialogo-colores {
+  position: fixed; inset: 0; margin: auto; width: fit-content; height: fit-content; max-width: 96vw; max-height: 96vh;
+  background: var(--c-blanco) !important; border: 0; border-radius: 18px; box-shadow: 0 8px 0 var(--c-violeta-oscuro) !important;
+  padding: 18px !important; overflow: auto;
+}
+.pantalla-colores { gap: 18px; align-items: stretch; }
+.escena-colores {
+  justify-content: space-between; padding: 12px; min-width: 300px; background-color: var(--c-gris-suave); border-radius: 14px;
+}
+.escena-colores .gaturro-vivo { width: 260px; }
+.dialogo-colores .panel-colores {
+  background: none !important; border: 0 !important; box-shadow: none !important; padding: 0 !important; color: var(--c-texto);
+}
+.titulo-colores .paleta { display: none; }
+.titulo-colores h2 { flex-direction: row !important; gap: 6px; color: var(--c-violeta) !important; font-size: 22px !important; }
+.titulo-colores h2 .rojo { color: var(--c-violeta) !important; font-size: 22px !important; }
+.dialogo-colores .rotulo-color {
+  background: var(--c-lila-suave) !important; color: var(--c-violeta) !important; border: 0 !important; border-radius: 999px !important;
+  font-size: 12px !important; text-transform: uppercase;
+}
+.dialogo-colores :is(.cuadro-color, .barra-tono) { border-radius: 8px; }
+
+/* --- El zoom del Gaturro: una píldora blanca --- */
+.zoom-gaturro {
+  background: color-mix(in srgb, var(--c-blanco) 92%, transparent); color: var(--c-violeta); border: 1px solid var(--c-borde); border-radius: 999px;
+  padding: 2px 12px; font-weight: bold; box-shadow: 0 2px 0 rgba(65, 79, 165, 0.25);
+}
+:is(.zoom-gaturro, .zoom-escenario) input[type="range"] { accent-color: var(--c-violeta); height: 16px; }
+
+/* --- El menú de emociones: un panel blanco; cada cara del juego, en su celda (lila, en vez del oliva del juego) --- */
+.panel-emotes {
+  background: var(--c-blanco); border: 1px solid var(--c-borde); border-radius: 14px; box-shadow: 0 6px 0 rgba(65, 79, 165, 0.35); padding: 8px; gap: 6px;
+}
+:is(.emote-btn, .boton-emote) {
+  width: 44px; height: 40px; padding: 0 !important; overflow: hidden; background: var(--c-lila-suave) !important;
+  border: 1px solid var(--c-borde) !important; border-radius: 10px !important; box-shadow: none !important;
+}
+:is(.emote-btn, .boton-emote) img { display: block; width: 100%; height: 100%; object-fit: cover; image-rendering: auto; }
+.emote-btn:hover:not(:disabled) { border-color: var(--c-violeta) !important; }
+.emote-btn[aria-pressed="true"] { border-color: var(--c-violeta) !important; box-shadow: inset 0 0 0 2px var(--c-violeta) !important; }
+
+/* --- Trucar Prenda: el Gaturro, al centro de la tarjeta --- */
+main.modo-trucar .escena { grid-template-columns: minmax(0, 1fr); padding: 0 10px; }
+main.modo-trucar .escena .casilleros { display: none; }
+main.modo-trucar .escena .gaturro { justify-self: center; }
+
+/* --- «Para la casa» (Tiendas, Portales, Minijuegos, Fondos): sin la emoción; el comportamiento a mano, plegado --- */
+main.modo-npc .desplegable-emote { display: none !important; }
+#form-comportamiento[hidden] { display: none; }
+.escribir-a-mano { align-self: center; background: none !important; border: 0 !important; color: var(--c-violeta) !important; font-size: 12px; text-decoration: underline; padding: 2px; min-height: 0; }
+.escribir-a-mano:hover { color: var(--c-violeta-oscuro) !important; }
+main.modo-npc .vista-npc { border-radius: 14px; }
+main.modo-npc .botones-tarjeta #agregar-npc { flex: 1; }
+
+/* ============ Cuarta pasada: el escenario igual en las tres pestañas, contrastes y modo oscuro ============ */
+
+/* --- El escenario del Gaturro: el mismo tamaño y la misma forma (vertical, como la ventana del perfil del juego) en
+   Looks, Acciones y Trucar Prenda --- */
+.escena .gaturro.con-fondo-del-juego {
+  --alto-escenario: clamp(240px, calc(100vh - 480px), 420px);
+  height: var(--alto-escenario) !important; width: calc(var(--alto-escenario) / 2) !important; justify-self: center; align-self: center; margin: 0;
+}
+/* El escenario no se achica: con la tarjeta justa (Trucar Prenda tiene una fila más), se achica el espacio entre filas. */
+.tarjeta-gaturro > .escena { flex: none; min-height: clamp(240px, calc(100vh - 480px), 420px); }
+.tarjeta-gaturro { gap: 5px; overflow-y: auto; }
+.tarjeta-gaturro > * { flex-shrink: 0; }
+/* En Trucar Prenda, los botones de la tarjeta en una sola fila: así el escenario tiene el mismo alto. */
+main.modo-trucar .botones-tarjeta { flex-wrap: nowrap; gap: 5px; }
+main.modo-trucar .botones-tarjeta .boton-cuadrado { width: 38px; height: 38px; min-height: 0; padding: 0; }
+main.modo-trucar #agregar-trucada { flex: 1 1 auto; min-width: 0; font-size: 12px; padding: 0 8px; white-space: nowrap; }
+
+/* --- Contrastes: los textos chicos y lo desactivado, en un gris que se lee --- */
+:root { --c-suave: #757575; }
+.numero-paso { background: #8a8a8a !important; }
+.guia li.hecho .numero-paso { background: var(--c-verde) !important; }
+.guia li.actual .numero-paso { background: var(--c-violeta) !important; }
+:is(#ayuda-grilla-items, #ayuda-grilla, .ayuda-grilla) { color: var(--c-texto) !important; }
+.pantalla-label { color: rgba(255, 255, 255, 0.85) !important; }
+.separador-custom span { color: var(--c-suave) !important; }
+.vista[id="vista-monedas"] { --m-sep-txt: var(--c-suave); }
+
+/* --- Modo oscuro: la misma estética, con superficies oscuras (lo elige el botón de la columna de pestañas) --- */
+[data-modo="oscuro"] {
+  --c-blanco: #252a4d;       /* las superficies (paneles, botones, campos) */
+  --c-gris-suave: #1c2040;   /* lo de adentro */
+  --c-gris: #333a66;         /* lo desactivado */
+  --c-borde: #424a7e;
+  --c-texto: #e6e8ff;
+  --c-suave: #a9aed8;
+  --c-lila-suave: #2f3670;
+  --c-lila: #7681e0;
+  --c-violeta: #6a7cf0;
+  --c-violeta-oscuro: #121638;
+  /* Sin color-scheme: dark: el marco del Gaturro en vivo quedaría con fondo blanco opaco y taparía el fondo del perfil. */
+}
+[data-modo="oscuro"] body {
+  background-color: #0f1229;
+  background-image: linear-gradient(rgba(8, 10, 28, 0.62), rgba(8, 10, 28, 0.62)), url("../arte/fondo-del-celular.png");
+}
+[data-modo="oscuro"] .numero-paso { background: #5a608c !important; }
+[data-modo="oscuro"] .guia li { background: rgba(37, 42, 77, 0.92); }
+[data-modo="oscuro"] .guia li.actual { background: var(--c-blanco); color: var(--c-texto); }
+[data-modo="oscuro"] .guia li + li::before { background: rgba(255, 255, 255, 0.25); }
+[data-modo="oscuro"] .logo { text-shadow: none; }
+/* Lo que el diseño anterior pinta con colores fijos, pensados para fondo claro. */
+[data-modo="oscuro"] :is(.nombre-item, .nombre-casillero, .nombre, .ayuda, label, .etiqueta-campo, .icono-npc,
+  .tipo-pieza + *, .descripcion-npc, .nombre-npc, .sub-npc) { color: var(--c-texto); }
+[data-modo="oscuro"] .pieza-grilla :is(.ayuda, small, .catalogo, .detalle) { color: var(--c-suave) !important; }
+[data-modo="oscuro"] .icono-npc { color: var(--c-lila) !important; }
+[data-modo="oscuro"] .fila-base .tipo-mochila { color: #2b1400; }
+[data-modo="oscuro"] .pieza-grilla .icono, [data-modo="oscuro"] .casillero .icono { background: transparent; }
+[data-modo="oscuro"] .casillero-npc .que-hace { color: var(--c-suave); }
+[data-modo="oscuro"] .cantidad-comportamientos { color: var(--c-texto) !important; }
+[data-modo="oscuro"] dialog::backdrop { background: rgba(5, 6, 18, 0.7); }
+
+/* ============ Quinta pasada: la tarjeta del Gaturro con lugares fijos ============ */
+
+/* --- La tarjeta, igual en Looks, Acciones y Trucar Prenda: cada cosa tiene su fila y su columna aunque la pestaña no la
+   use (la fila de la opción, los casilleros, el botón de sumar a la lista), así nada se mueve al cambiar de pestaña.
+   Columnas: casilleros de la cabeza | costado izquierdo | Gaturro | costado derecho | casilleros del cuerpo. --- */
+main:not(.modo-npc) .tarjeta-gaturro {
+  --boton: 36px;
+  --casillero: clamp(44px, 9cqw, 54px);  /* en una tarjeta angosta, los casilleros se achican antes que el Gaturro */
+  --ancho-casilleros: calc(2 * var(--casillero) + 4px);
+  --margen-casilleros: 10px;
+  --alto-abajo: 44px;
+  /* El escenario ocupa el alto que dejan las filas fijas (la tarjeta mide lo mismo en las tres pestañas). */
+  --ancho-escenario: min(calc((100cqh - 40px - 30px - 32px - var(--alto-abajo) - 4 * 6px - 18px) * 0.7), max(90px, calc(100cqw - 2 * var(--ancho-casilleros) - 2 * var(--margen-casilleros) - 8px)), 420px);
+  container-type: size;
+  display: grid !important;
+  grid-template-columns: [izq] minmax(0, 1fr) [hl] auto [centro] auto [hr] auto [der] minmax(0, 1fr) [fin];
+  grid-template-rows: [nombre] 40px [guarda] 30px [opcion] 32px [escena] auto [abajo] var(--alto-abajo);
+  align-content: start; column-gap: 0; row-gap: 6px; padding-bottom: 10px; overflow: hidden auto;
+}
+main:not(.modo-npc) .tarjeta-gaturro > :is(.nombre-tarjeta, .se-guarda-en, .armado-trucar, .fila-animacion) { grid-column: 1 / -1; min-width: 0; }
+main:not(.modo-npc) .tarjeta-gaturro > .nombre-tarjeta { grid-row: nombre; height: 40px; }
+main:not(.modo-npc) .tarjeta-gaturro > .se-guarda-en { grid-row: guarda; }
+main:not(.modo-npc) .tarjeta-gaturro > :is(.armado-trucar, .fila-animacion) { grid-row: opcion; align-self: center; justify-self: center; }
+main:not(.modo-npc) .tarjeta-gaturro > .escena,
+main:not(.modo-npc) .tarjeta-gaturro > .botones-tarjeta { display: contents !important; }
+/* Los casilleros, del mismo ancho en las tres (en Acciones hay uno por lado, al medio; en Trucar Prenda, ninguno). */
+main:not(.modo-npc) .tarjeta-gaturro .casilleros {
+  grid-row: escena; align-self: center; width: var(--ancho-casilleros);
+  grid-template-columns: repeat(auto-fit, var(--casillero)); justify-content: center;
+}
+main:not(.modo-npc) .tarjeta-gaturro .casillero { width: var(--casillero); }
+main:not(.modo-npc) .tarjeta-gaturro .casillero .icono { width: calc(var(--casillero) - 24px); height: calc(var(--casillero) - 24px); }
+main:not(.modo-npc) #casilleros-cabeza { grid-column: izq; justify-self: end; margin-right: var(--margen-casilleros); }
+main:not(.modo-npc) #casilleros-cuerpo { grid-column: der; justify-self: start; margin-left: var(--margen-casilleros); }
+/* El escenario: más ancho, con la forma de la ventana del perfil del juego (7 × 10), del mismo tamaño en las tres. */
+main:not(.modo-npc) .tarjeta-gaturro .escena .gaturro.con-fondo-del-juego,
+main:not(.modo-npc) .tarjeta-gaturro .escena .gaturro {
+  grid-column: centro; grid-row: escena; justify-self: center; align-self: start;  /* arriba: si los casilleros son más altos, no lo bajan */
+  width: var(--ancho-escenario) !important; height: auto !important; aspect-ratio: 7 / 10; margin: 0;
+}
+/* Los botones: dos grupos de lugares fijos (los del Gaturro: colores, emoción, personalizar; los de guardar: borrar,
+   descartar, guardar). El que una pestaña no usa deja su lugar vacío. */
+main:not(.modo-npc) .grupo-botones { display: flex; gap: 6px; align-items: center; z-index: 3; }
+main:not(.modo-npc) .grupo-botones .boton-cuadrado { width: var(--boton); height: var(--boton); min-height: 0; padding: 0; flex: none; }
+main:not(.modo-npc) .grupo-gaturro { width: calc(3 * var(--boton) + 12px); }
+main.modo-acciones .grupo-gaturro > :is(.desplegable-emote, #editar-piezas) { display: block !important; visibility: hidden; }
+main:not(.modo-npc) #agregar-trucada { grid-row: abajo; grid-column: hl / der; justify-self: center; width: min(100%, var(--ancho-escenario), calc(100cqw - 2 * (3 * var(--boton) + 22px) - 12px)); min-width: 0; overflow: hidden; text-overflow: ellipsis; align-self: center; height: var(--boton); font-size: 12px; white-space: nowrap; padding: 0 10px; }
+
+/* Los botones, debajo del Gaturro: los del Gaturro a la izquierda, los de guardar a la derecha y, en el medio, sumar. */
+main:not(.modo-npc) .grupo-gaturro { grid-row: abajo; grid-column: izq / centro; justify-self: start; margin-left: 10px; }
+main:not(.modo-npc) .grupo-guardar { grid-row: abajo; grid-column: hr / fin; justify-self: end; margin-right: 10px; }
+
+/* --- Lo de afuera de la tarjeta, también igual en las tres: las categorías en una sola fila (Acciones tiene una
+   más) y la lista de Prendas trucadas en la barra de abajo, que tiene un lugar fijo para cada botón --- */
+.categorias { grid-template-columns: none !important; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); }
+.barra-look {
+  display: grid; grid-template-columns: minmax(0, 1fr) 140px 130px 160px 180px; align-items: center; gap: 8px; min-height: 44px;
+}
+.barra-look > :is(.lista-trucadas, #resumen-look) { grid-column: 1; grid-row: 1; min-width: 0; }
+main:is(.modo-trucar, .modo-npc) .barra-look > #resumen-look { visibility: hidden; }
+.barra-look > :is(#persistir-trucado, #como-look-del-juego) { grid-column: 2; grid-row: 1; justify-self: start; }
+.barra-look > #ver-encode { grid-column: 3; grid-row: 1; }
+.barra-look > #aplicar-look { grid-column: 4; grid-row: 1; }
+.barra-look > #entregar-look { grid-column: 5; grid-row: 1; }
+.barra-look > :is(#ver-encode, #aplicar-look, #entregar-look) { width: 100% !important; padding-left: 6px; padding-right: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* «Repetir» (solo en Acciones) va sobre el fondo, encima del zoom: así el zoom queda en el mismo lugar en las tres. */
+main:not(.modo-npc) .gaturro { position: relative; }
+main:not(.modo-npc) #repetir-accion { position: absolute; left: 50%; bottom: 44px; transform: translateX(-50%); z-index: 2; }
+
+/* ============ Sexta pasada: la ventana del Item base («Catálogo») y más color ============ */
+
+/* --- La ventana del Item base: una tarjeta blanca, sin lo de la estética anterior --- */
+dialog.dialogo-base { padding: 0; width: min(920px, 94vw); height: min(680px, 92vh); }
+.dialogo-base .panel { padding: 20px 22px; gap: 12px; background: var(--c-blanco); }
+.dialogo-base .panel h2 { font-size: 22px; }
+.dialogo-base :is(.ayuda, .etiqueta-campo) { -webkit-text-stroke: 0 !important; text-shadow: none !important; color: var(--c-texto); font-weight: normal; }
+.dialogo-base .fila-swf-base .etiqueta-campo { color: var(--c-violeta); font-weight: bold; }
+.filtro-base {
+  background: var(--c-gris-suave); border: 1px solid var(--c-borde); border-radius: 999px; min-height: 34px; color: var(--c-suave);
+}
+.filtro-base:focus-within { border: 1px solid var(--c-violeta); box-shadow: 0 0 0 2px var(--c-lila-suave); }
+.filtro-base input { color: var(--c-texto); background: transparent !important; border: 0 !important; }
+/* Los filtros de tipo: cada uno con su color (mochila naranja, guardarropa celeste), como las etiquetas de las filas. */
+.dialogo-base .filtro-tipo { border-radius: 999px !important; padding: 5px 14px; font-size: 13px; }
+.dialogo-base .filtro-tipo[aria-checked="true"] { box-shadow: none !important; }
+.dialogo-base .filtro-mochila[aria-checked="true"] { background: var(--c-naranja) !important; border-color: var(--c-naranja) !important; color: var(--c-tinta-oscura) !important; }
+.dialogo-base .filtro-guardarropa[aria-checked="true"] { background: var(--c-celeste) !important; border-color: var(--c-celeste) !important; color: var(--c-tinta-oscura) !important; }
+.dialogo-base .lista-bases { background: var(--c-gris-suave); border-radius: 14px; padding: 10px; gap: 10px; }
+/* Las etiquetas de tipo: legibles sobre cualquier fondo (letra oscura sobre un color claro). */
+:is(.fila-base, .resultados-swf li) :is(.tipo-mochila, .tipo-prenda) {
+  background: var(--c-naranja); color: var(--c-tinta-oscura); border-radius: 999px; font-size: 10px; font-weight: bold; padding: 1px 8px;
+  display: inline-flex; align-items: center; gap: 3px; letter-spacing: 0.3px;
+}
+:is(.fila-base, .resultados-swf li) .tipo-prenda { background: var(--c-celeste); }
+:is(.fila-base, .resultados-swf li) :is(.tipo-mochila, .tipo-prenda) :is(svg, .ic) { width: 11px; height: 11px; }
+/* La fila: una tarjeta blanca; la elegida, lila con borde violeta. */
+.dialogo-base .fila-base {
+  background: var(--c-blanco) !important; border: 1px solid var(--c-borde) !important; border-radius: 12px !important; box-shadow: none !important;
+  color: var(--c-texto) !important; text-transform: none; padding: 8px 10px; overflow: hidden;
+}
+.dialogo-base .fila-base:hover { border-color: var(--c-violeta) !important; background: var(--c-blanco) !important; color: var(--c-texto) !important; }
+.dialogo-base .fila-base[aria-pressed="true"] { background: var(--c-lila-suave) !important; border-color: var(--c-violeta) !important; box-shadow: inset 0 0 0 1px var(--c-violeta) !important; color: var(--c-texto) !important; }
+.dialogo-base .fila-base .nombre { color: var(--c-texto); font-weight: bold; font-size: 13px; }
+.dialogo-base .fila-base .swf-base { color: var(--c-suave); font-size: 11px; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dialogo-base .fila-base .icono { background: var(--c-lila-suave); border-radius: 10px; box-shadow: none; border: 0; }
+.dialogo-base .fila-base .icono img { object-fit: contain; }
+
+/* La ventana del Item base, «Catálogo»: la lista a la izquierda y, a la derecha, el Item grande (el que está debajo del mouse o el elegido). */
+.dialogo-base .panel { display: grid; grid-template-columns: minmax(0, 1fr) 250px; grid-template-rows: auto auto auto auto minmax(0, 1fr) auto auto; column-gap: 16px; }
+.dialogo-base .panel > :not(.lista-bases, .vista-base) { grid-column: 1 / -1; }
+.dialogo-base .lista-bases { grid-column: 1; grid-row: 5; grid-template-columns: 1fr 1fr; grid-auto-rows: 52px; gap: 6px; }
+.dialogo-base .fila-base {
+  display: grid !important; grid-template-columns: 38px minmax(0, 1fr); grid-template-rows: auto auto; column-gap: 10px; align-content: center; padding: 6px 10px;
+}
+.dialogo-base .fila-base .icono { grid-row: 1 / 3; width: 38px; height: 38px; }
+.dialogo-base .fila-base .nombre { grid-column: 2; font-size: 12px; }
+.dialogo-base .fila-base .swf-base { display: none; }
+.dialogo-base .fila-base :is(.tipo-mochila, .tipo-prenda) { grid-column: 2; justify-self: start; }
+.dialogo-base .vista-base {
+  grid-column: 2; grid-row: 5; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 16px; text-align: center;
+  background: var(--c-lila-suave); border-radius: 14px; min-height: 0; overflow: hidden;
+}
+.vista-base .icono { width: 100%; height: 190px; background: var(--c-blanco); border-radius: 14px; }
+.vista-base .icono img { object-fit: contain; }
+.vista-base .nombre { color: var(--c-violeta); font-size: 18px; font-weight: bold; overflow-wrap: anywhere; }
+.vista-base .ruta { color: var(--c-suave); font-size: 11px; overflow-wrap: anywhere; }
+.vista-base .vacio { margin: auto; color: var(--c-suave); font-size: 13px; }
+
+/* --- Más color: la paleta del celular, con los colores del juego para cada cosa (el violeta y el blanco siguen de
+   base). Cada grupo de pestañas tiene su color; el principal de cada pantalla, el suyo. --- */
+:root {
+  --c-naranja: #ffa53d; --c-celeste: #5cc8f5; --c-rosa: #ff6fae; --c-amarillo: #ffd23f; --c-verde-claro: #5fd17a;
+  --c-tinta-oscura: #23204a;
+}
+body {
+  background: linear-gradient(160deg, rgba(83, 101, 210, 0.15), rgba(255, 111, 174, 0.28) 55%, rgba(92, 200, 245, 0.3)), var(--c-violeta) url("../arte/fondo-del-celular.png") center / cover fixed;
+}
+/* Las pestañas: cada grupo con su color (Items celeste, Ropa y Gaturro rosa, Para la casa naranja, Juego verde). */
+.pestanas { --grupo: var(--c-violeta); }
+:is(#pestana-agregar) { --grupo: var(--c-celeste); }
+:is(#pestana-trucar, #pestana-looks, #pestana-acciones) { --grupo: var(--c-rosa); }
+:is(#pestana-tiendas, #pestana-portales, #pestana-minijuegos, #pestana-fondos) { --grupo: var(--c-naranja); }
+:is(#pestana-monedas, #pestana-terminator) { --grupo: var(--c-verde-claro); }
+.pestana :is(svg, .ic) { color: var(--grupo); }
+.pestana[aria-selected="true"] { background: var(--grupo) !important; color: var(--c-tinta-oscura) !important; }
+.pestana[aria-selected="true"] :is(svg, .ic) { color: var(--c-tinta-oscura); }
+.pestana:hover:not([aria-selected="true"]) { background: color-mix(in srgb, var(--grupo) 18%, transparent) !important; }
+/* La guía: el paso de ahora en amarillo, los hechos en verde. */
+.guia li.actual { box-shadow: 0 0 0 2px var(--c-amarillo); }
+.guia li.actual .numero-paso { background: var(--c-amarillo) !important; color: var(--c-tinta-oscura); }
+/* «Agregar al juego» (lo último de cada pantalla), verde como el de confirmar del juego. */
+button.entregar:not(:disabled) {
+  background: var(--c-verde) !important; border-color: var(--c-verde) !important; box-shadow: 0 3px 0 #2f7d33 !important;
+}
+button.entregar:hover:not(:disabled) { background: #3d9a40 !important; }
+/* La tarjeta del Gaturro: la franja del nombre del color del grupo; los botones de guardar con su color. */
+main:is(.modo-looks) .tarjeta-gaturro input.nombre-tarjeta { background: linear-gradient(90deg, var(--c-violeta), var(--c-rosa)) !important; }
+main.modo-npc .tarjeta-gaturro input.nombre-tarjeta { background: linear-gradient(90deg, var(--c-violeta), var(--c-naranja)) !important; }
+#guardar-look:not(:disabled) { background: var(--c-verde) !important; border-color: var(--c-verde) !important; }
+#guardar-look:not(:disabled) :is(svg, .ic) { color: #fff; filter: brightness(0) invert(1); }
+#descartar-look:hover:not(:disabled),
+#borrar-look:hover:not(:disabled) { background: var(--c-rojo) !important; border-color: var(--c-rojo) !important; }
+/* Las categorías del inventario: la elegida en amarillo; los números de cantidad, en violeta. */
+.categoria[aria-selected="true"] { background: var(--c-amarillo) !important; border-color: #d9a800 !important; box-shadow: none !important; }
+/* Los casilleros con Pieza, con un toque de rosa; los títulos de las ventanas, con su degradé. */
+:is(.panel h2, dialog h2, .titulo-mis-looks h2 > span:first-child) {
+  background: linear-gradient(90deg, var(--c-violeta), var(--c-rosa)) !important; -webkit-background-clip: text !important; background-clip: text !important; color: transparent !important;
+}
+.nombre-casillero-look { background: linear-gradient(90deg, var(--c-violeta), var(--c-rosa)) !important; }
+.zoom-gaturro input[type="range"], .zoom-escenario input[type="range"] { accent-color: var(--c-rosa); }
+/* En modo oscuro, los mismos colores un poco más apagados. */
+[data-modo="oscuro"] { --c-naranja: #f0953a; --c-celeste: #4fb3e0; --c-rosa: #ec5f9e; --c-amarillo: #f2c53a; }
+[data-modo="oscuro"] body {
+  background: linear-gradient(160deg, rgba(8, 10, 28, 0.55), rgba(70, 20, 60, 0.6) 55%, rgba(10, 40, 70, 0.6)), #0f1229 url("../arte/fondo-del-celular.png") center / cover fixed;
+}
+/* Sobre los colores claros (amarillo, naranja, celeste), la letra siempre oscura, también en modo oscuro. */
+:is(.fila-base, .resultados-swf li, .vista-base) :is(.tipo-mochila, .tipo-prenda) { color: var(--c-tinta-oscura) !important; }
+.categoria[aria-selected="true"] :is(*, .cantidad-categoria) { color: var(--c-tinta-oscura) !important; }
+/* El dibujo no se sale de su caja (si no, tapa el nombre). */
+:is(.dialogo-base .fila-base, .vista-base) .icono { overflow: hidden; position: relative; }
+.dialogo-base .fila-base > :not(.icono) { position: relative; z-index: 1; }
+
+/* ============ Séptima pasada: las tarjetas de las grillas (fichas en «Lista»), lo animado y la Configuración ============ */
+
+/* --- Las tarjetas de todas las grillas (Agregar Items, el inventario, «Para la casa»): la misma tarjeta, con el
+   color de lo que es (ropa celeste, mochila naranja, casa verde, transporte amarillo, mascota rosa, acción violeta) --- */
+:is(.item-grilla, .casillero-npc) { --uso: var(--c-lila); }
+.item-grilla:has(> .tipo-pieza[data-uso="ropa"]) { --uso: var(--c-celeste); }
+.item-grilla:has(> .tipo-pieza[data-uso="mochila"]) { --uso: var(--c-naranja); }
+.item-grilla:has(> .tipo-pieza[data-uso="casa"]) { --uso: var(--c-verde-claro); }
+.item-grilla:has(> .tipo-pieza[data-uso="transporte"]) { --uso: var(--c-amarillo); }
+.item-grilla:has(> .tipo-pieza[data-uso="mascota"]) { --uso: var(--c-rosa); }
+.item-grilla:has(> .tipo-pieza[data-uso="accion"]) { --uso: var(--c-violeta); }
+.casillero-npc { --uso: var(--c-naranja); }
+:is(.item-grilla, .casillero-npc) {
+  display: flex !important; flex-direction: column; align-items: center; justify-content: flex-start; gap: 3px;
+  padding: 6px; border-radius: 14px !important; overflow: hidden; position: relative; text-align: center;
+  background: var(--c-blanco); border: 1px solid var(--c-borde) !important; box-shadow: none; color: var(--c-texto);
+}
+:is(.item-grilla, .casillero-npc) > :is(.icono, .icono-npc) {
+  flex: 1 1 0; min-height: 0; width: 100%; height: auto; overflow: hidden; border-radius: 10px; background: transparent; box-shadow: none;
+}
+:is(.item-grilla, .casillero-npc) > .icono img { width: 100%; height: 100%; object-fit: contain; }
+:is(.item-grilla, .casillero-npc) > :not(.icono, .icono-npc, .marca-animado, .marca-pasaporte, .encontrado-npc) { flex: none; max-width: 100%; }
+:is(.item-grilla > .nombre-item, .casillero-npc > .nombre) {
+  color: var(--c-texto) !important; font-size: 11px; line-height: 1.15; font-weight: bold; letter-spacing: 0; text-transform: none;
+  white-space: normal; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+:is(.item-grilla > .tipo-pieza, .casillero-npc > .que-hace) {
+  background: none !important; color: var(--c-suave) !important; font-size: 9px; line-height: 1.2; letter-spacing: 0.4px; text-transform: uppercase;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0; border-radius: 999px; font-weight: bold;
+}
+.item-grilla > .tipo-pieza::before { content: none; }
+.casillero-npc > .que-hace { text-transform: none; font-weight: normal; letter-spacing: 0; }
+.item-grilla > .destino-item[data-bien="false"] { background: var(--c-rojo); color: #fff !important; border-radius: 999px; padding: 0 6px; font-size: 9px; }
+:is(.item-grilla, .casillero-npc):hover:not(:disabled) { border-color: var(--uso) !important; box-shadow: 0 0 0 2px var(--uso); }
+:is(.item-grilla, .casillero-npc)[aria-pressed="true"] {
+  border-color: var(--c-violeta) !important; box-shadow: 0 0 0 2px var(--c-violeta), 0 4px 10px rgba(65, 79, 165, 0.25) !important;
+  background: color-mix(in srgb, var(--c-violeta) 10%, var(--c-blanco)) !important;
+}
+.item-grilla.en-uso { box-shadow: inset 0 0 0 2px var(--c-lila) !important; }
+.item-grilla.no-llega-bien { border-color: var(--c-rojo) !important; }
+.marca-pasaporte { z-index: 2; border-radius: 999px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2); }
+.encontrado-npc { position: absolute; top: 5px; left: 5px; z-index: 2; background: var(--c-verde) !important; color: #fff !important; border-radius: 999px; padding: 1px 7px; font-size: 9px; }
+
+/* --- Fichas: tarjetas horizontales en tres columnas (el dibujo a un lado; el nombre entero, el tipo y adónde llega,
+   al otro). --- */
+:is(#grilla-items, #grilla-piezas) { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; grid-template-rows: repeat(5, minmax(0, 1fr)) !important; }
+#grilla-comportamientos { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)) !important; grid-auto-rows: 64px !important; }
+:is(.item-grilla, .casillero-npc) {
+  container-type: inline-size;
+  display: grid !important; grid-template-columns: 34% minmax(0, 1fr); grid-template-rows: 1fr auto auto 1fr; column-gap: 8px; row-gap: 2px;
+  align-items: center; text-align: left; padding: 4px 10px 4px 4px;
+}
+:is(.item-grilla, .casillero-npc) > :is(.icono, .icono-npc) {
+  grid-column: 1; grid-row: 1 / -1; width: 100%; height: 100%; flex: none; border-radius: 8px;
+  background: color-mix(in srgb, var(--uso) 22%, var(--c-blanco));
+}
+:is(.item-grilla, .casillero-npc) > :not(.icono, .icono-npc, .marca-animado, .marca-pasaporte, .encontrado-npc) { grid-column: 2; justify-self: start; }
+:is(.item-grilla > .nombre-item, .casillero-npc > .nombre) { grid-row: 2; font-size: 12px; text-align: left; }
+#grilla-piezas .item-grilla > .nombre-item { font-size: 11px; }
+:is(.item-grilla > .tipo-pieza, .casillero-npc > .que-hace) { grid-row: 3; background: var(--uso) !important; color: var(--c-tinta-oscura) !important; padding: 0 7px; }
+.item-grilla > .destino-item { grid-row: 3; justify-self: end !important; }
+:is(.item-grilla, .casillero-npc) > .marca-animado { top: 4px !important; right: 4px !important; }
+
+/* «Lista»: sin tarjetas, renglones con una línea entre uno y otro (como una tabla); el elegido, con una barra. */
+:is(#grilla-items, #grilla-piezas, #grilla-comportamientos) { row-gap: 0 !important; column-gap: 14px !important; }
+:is(.item-grilla, .casillero-npc) {
+  background: transparent !important; border: 0 !important; border-bottom: 1px solid var(--c-borde) !important; border-radius: 0 !important; padding: 5px 8px 5px 4px;
+}
+:is(.item-grilla, .casillero-npc) > :is(.icono, .icono-npc) { height: 86%; background: none; }
+:is(.item-grilla, .casillero-npc):hover:not(:disabled) { background: var(--c-lila-suave) !important; box-shadow: none !important; }
+:is(.item-grilla, .casillero-npc)[aria-pressed="true"] {
+  background: var(--c-lila-suave) !important; box-shadow: inset 4px 0 0 var(--c-violeta) !important; border-radius: 0 !important;
+}
+
+/* --- Lo animado: un botón «▶ Animados» (prendido: rosa) y, en la tarjeta, la misma marca redonda --- */
+.enlace.filtro-animados {
+  min-height: 30px; height: 30px; padding: 0 12px 0 6px !important; gap: 6px; border-radius: 999px !important;
+  background: var(--c-blanco) !important; border: 1px solid var(--c-borde) !important; color: var(--c-texto) !important; font-size: 12px;
+}
+.enlace.filtro-animados::after { content: "Animados"; }
+.enlace.filtro-animados:hover { border-color: var(--c-rosa) !important; color: var(--c-texto) !important; background: var(--c-blanco) !important; }
+.enlace.filtro-animados[aria-pressed="true"] { background: var(--c-rosa) !important; border-color: var(--c-rosa) !important; color: var(--c-tinta-oscura) !important; }
+:is(.enlace.filtro-animados, .pieza-grilla) .ic[data-ic="film-strip"] {
+  width: 20px !important; height: 20px !important; border-radius: 50%; background: var(--c-rosa) !important; position: relative; flex: none; box-shadow: none !important; padding: 0 !important;
+}
+.enlace.filtro-animados[aria-pressed="true"] .ic[data-ic="film-strip"] { background: var(--c-blanco) !important; }
+:is(.enlace.filtro-animados, .pieza-grilla) .ic[data-ic="film-strip"] > svg { visibility: hidden; }
+:is(.enlace.filtro-animados, .pieza-grilla) .ic[data-ic="film-strip"]::after {
+  content: "" !important; position: absolute; inset: 0; margin: auto; width: 8px; height: 9px; left: 2px;
+  background: #fff !important; -webkit-mask: none !important; mask: none !important; clip-path: polygon(0 0, 100% 50%, 0 100%);
+}
+.enlace.filtro-animados[aria-pressed="true"] .ic[data-ic="film-strip"]::after { background: var(--c-rosa) !important; }
+.pieza-grilla .marca-animado { position: absolute !important; top: 5px !important; right: 5px !important; left: auto !important; bottom: auto !important; z-index: 2; box-shadow: 0 0 0 2px var(--c-blanco), 0 2px 4px rgba(0, 0, 0, 0.25) !important; }
+
+/* --- Configuración: una fila por cosa, con su estado de color (listo verde, falta rojo) y la ruta aparte --- */
+#dialogo-entorno .panel { gap: 12px; }
+#dialogo-entorno .ayuda { -webkit-text-stroke: 0 !important; text-shadow: none !important; color: var(--c-texto); font-weight: normal; }
+#dialogo-entorno .componentes { background: var(--c-gris-suave); border: 0 !important; border-radius: 14px; padding: 8px; gap: 8px; }
+#dialogo-entorno .componente {
+  background: var(--c-blanco) !important; border: 1px solid var(--c-borde) !important; border-left: 5px solid var(--c-verde) !important;
+  border-radius: 12px !important; box-shadow: none !important; color: var(--c-texto); padding: 10px 14px;
+}
+#dialogo-entorno .componente.falta { border-left-color: var(--c-rojo) !important; background: color-mix(in srgb, var(--c-rojo) 6%, var(--c-blanco)) !important; }
+#dialogo-entorno .componente .marca { background: var(--c-verde) !important; color: #fff !important; border: 0 !important; box-shadow: none !important; }
+#dialogo-entorno .componente.falta .marca { background: var(--c-rojo) !important; }
+#dialogo-entorno .componente .titulo { color: var(--c-violeta); font-size: 15px; text-transform: none; -webkit-text-stroke: 0; text-shadow: none; }
+#dialogo-entorno .componente .detalle { color: var(--c-texto); font-weight: normal; -webkit-text-stroke: 0; text-shadow: none; }
+#dialogo-entorno .componente .ruta {
+  display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  background: var(--c-gris-suave); color: var(--c-suave); border-radius: 6px; padding: 2px 8px; font-size: 11px;
+}
+#dialogo-entorno .componente .botones button { border-radius: 999px !important; padding: 3px 12px; font-size: 11px; }
+.casillero-npc > .icono-npc { color: var(--uso) !important; padding: 12%; }
+.casillero-npc > .icono-npc svg { width: 100%; height: 100%; }
+:is(#animados-piezas, #animados-items)[aria-pressed="true"] { background: var(--c-rosa) !important; border-color: var(--c-rosa) !important; color: var(--c-tinta-oscura) !important; }
+#dialogo-entorno .componentes { box-shadow: none !important; outline: 0 !important; border: 0 !important; }
+.encontrado-npc { background: #2f7d33 !important; }
+/* La etiqueta del tipo, siempre en la columna del texto (la estética anterior la centra debajo de todo). */
+.item-grilla > .tipo-pieza { grid-column: 2 !important; justify-self: start !important; }
+/* Fondos: los cuadros de un objeto siguen en casilleros grandes (son dibujos para ver, no una lista). */
+#grilla-comportamientos.con-cuadros { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)) !important; grid-auto-rows: 132px !important; row-gap: 8px !important; column-gap: 8px !important; }
+.con-cuadros .casillero-npc {
+  display: flex !important; flex-direction: column; align-items: center; gap: 4px; text-align: center; padding: 6px !important;
+  background: var(--c-blanco) !important; border: 1px solid var(--c-borde) !important; border-radius: 12px !important;
+}
+.con-cuadros .casillero-npc > :is(.icono, .icono-npc) { flex: 1 1 0; min-height: 0; width: 100%; height: auto; }
+.con-cuadros .casillero-npc > :not(.icono, .icono-npc) { justify-self: auto; }
+.con-cuadros .casillero-npc[aria-pressed="true"] { border-color: var(--c-violeta) !important; box-shadow: 0 0 0 2px var(--c-violeta) !important; background: var(--c-lila-suave) !important; }
+/* El nombre del Item base en la tarjeta y el aviso de «Para la casa»: legibles sobre la tarjeta. */
+.base-look :is(.nombre, .ayuda, span) { color: var(--c-texto) !important; -webkit-text-stroke: 0 !important; text-shadow: none !important; }
+.aviso-npc { background: var(--c-lila-suave) !important; color: var(--c-texto) !important; -webkit-text-stroke: 0 !important; text-shadow: none !important; border-radius: 999px; }
+/* La ventana de entrega: los detalles de cada paso y el cuadro final, con los colores de la estética (claro y oscuro). */
+.pasos .detalle { color: var(--c-suave) !important; }
+.resultado {
+  background: color-mix(in srgb, var(--c-verde) 14%, var(--c-blanco)) !important; border: 2px solid var(--c-verde) !important;
+  color: var(--c-texto) !important; border-radius: 12px; box-shadow: none !important;
+}
+.resultado.error { background: color-mix(in srgb, var(--c-rojo) 12%, var(--c-blanco)) !important; border-color: var(--c-rojo) !important; }
+.resultado :is(strong, *) { color: var(--c-texto) !important; -webkit-text-stroke: 0 !important; text-shadow: none !important; }
+/* Las listas que se despliegan al escribir un SWF: blancas, con el elegido en lila. */
+.resultados-swf {
+  background: var(--c-blanco) !important; border: 1px solid var(--c-borde) !important; border-radius: 12px !important;
+  box-shadow: 0 6px 16px rgba(20, 24, 60, 0.25) !important; padding: 4px !important;
+}
+.resultados-swf li {
+  background: none !important; color: var(--c-texto) !important; border: 0 !important; border-radius: 8px !important; box-shadow: none !important;
+}
+.resultados-swf li .ayuda { color: var(--c-suave) !important; }
+.resultados-swf li:is(:hover, .activo) { background: var(--c-lila-suave) !important; color: var(--c-violeta) !important; }
+
+/* El botón del modo (claro u oscuro), arriba del de Configuración. */
+.cambiar-modo {
+  grid-area: modo; margin: 8px 10px 0 18px; padding: 6px 10px; border-radius: 999px !important; font-size: 12px;
+  background: var(--c-blanco) !important; color: var(--c-texto) !important; border: 1px solid var(--c-borde) !important;
+}
+.cambiar-modo:hover { background: var(--c-lila-suave) !important; color: var(--c-violeta) !important; }
+@media (max-width: 1080px) { .cambiar-modo { margin: 6px 6px 0 12px; padding: 4px 2px; font-size: 9px; white-space: normal; } }

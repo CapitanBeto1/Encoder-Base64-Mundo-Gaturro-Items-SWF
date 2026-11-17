@@ -12,7 +12,7 @@ const CATEGORIAS = [
   { id: "neck", nombre: "Cuello", que: "Cuello", icono: "coat-hanger", partes: ["neck"] },
   { id: "cloth", nombre: "Torso", que: "Torso", icono: "t-shirt", partes: ["cloth", "clothFront"] },
   { id: "arm", nombre: "Mangas", que: "Brazos", icono: "hand-fist", partes: ["arm", "armFore", "armBack"] },
-  { id: "clothBack", nombre: "Espalda", que: "Espalda", icono: "backpack", partes: ["clothBack"] },
+  { id: "clothBack", nombre: "Espalda", que: "Espalda", icono: "alas", partes: ["clothBack"] },
   { id: "grip", nombre: "Mano", que: "Mano", icono: "hand", partes: ["grip", "gripFore", "gripBack", "glove", "gloveFore", "gloveBack"] },
   { id: "leg", nombre: "Piernas", que: "Piernas", icono: "pants", partes: ["leg"] },
   { id: "foot", nombre: "Pies", que: "Pies", icono: "sneaker", partes: ["foot"] },

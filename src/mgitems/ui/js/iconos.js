@@ -52,10 +52,15 @@ const ICONOS = {
   "lock-open": "<path d=\"M216,112H120V64a24,24,0,0,1,47.44-5,12,12,0,0,0,23.12-6.4A48,48,0,0,0,96,64v48H40a16,16,0,0,0-16,16V208a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V128A16,16,0,0,0,216,112Zm-4,96H44V132H212Zm-84-48a12,12,0,1,1-12-12A12,12,0,0,1,128,160Z\"/>",
 };
 
-// Un ícono como elemento, del color del texto que lo rodea.
+// La Espalda: sin el arte del juego, la mochila; con él, unas alas (css/celular.css, `data-ic`).
+ICONOS.alas = ICONOS.backpack;
+
+// Un ícono como elemento, del color del texto que lo rodea. `data-ic` dice cuál es: con el arte del juego
+// (ui/arte/iconos.css), se dibuja con la forma del juego.
 function icono(nombre, clase = "") {
   const caja = document.createElement("span");
   caja.className = `ic ${clase}`.trim();
+  caja.dataset.ic = nombre;
   caja.setAttribute("aria-hidden", "true");
   caja.innerHTML = `<svg viewBox="0 0 256 256" fill="currentColor">${ICONOS[nombre]}</svg>`;
   return caja;

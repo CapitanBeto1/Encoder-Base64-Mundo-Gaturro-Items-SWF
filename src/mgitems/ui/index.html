@@ -20,48 +20,17 @@
   <link rel="stylesheet" href="css/toques.css">
   <link rel="stylesheet" href="css/terminator.css">
   <link rel="stylesheet" href="css/monedas.css">
+  <link rel="stylesheet" href="css/celular.css">
+  <!-- El modo (claro u oscuro) antes de dibujar nada: si no, se vería un momento el otro (js/modo.js). -->
+  <script>try { document.documentElement.dataset.modo = localStorage.getItem("modo") === "oscuro" ? "oscuro" : "claro"; } catch {}</script>
 </head>
 <body>
-  <!-- Fondo al estilo de la pantalla de servidores clásica: estrellas, planeta y anillo. -->
-  <svg class="fondo" viewBox="0 0 1000 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-    <defs>
-      <path id="estrella" d="M0,-10 L2.9,-4 9.5,-3.1 4.7,1.5 5.9,8.1 0,5 -5.9,8.1 -4.7,1.5 -9.5,-3.1 -2.9,-4 Z"/>
-      <clipPath id="recorte-planeta"><circle cx="500" cy="400" r="300"/></clipPath>
-    </defs>
-    <ellipse class="anillo" cx="500" cy="410" rx="520" ry="130" transform="rotate(-14 500 410)"/>
-    <g clip-path="url(#recorte-planeta)">
-      <circle cx="500" cy="400" r="300" fill="#244f0c"/>
-      <path d="M660,90 C740,170 800,290 805,430 C810,560 730,690 640,730 L840,730 L840,90 Z" fill="#1f9aa0"/>
-      <path d="M610,100 C670,170 720,270 712,370 C705,470 670,550 615,620 C690,580 760,490 770,380 C778,260 705,150 610,100 Z" fill="#2fb4b0" opacity="0.7"/>
-      <path d="M215,330 C265,255 350,225 415,262 C470,295 460,355 395,373 C330,391 265,420 228,400 Z" fill="#2f6a14"/>
-      <path d="M300,535 C355,498 460,498 515,545 C560,586 515,646 432,655 C358,664 292,618 300,535 Z" fill="#2f6a14"/>
-      <path d="M470,150 C525,132 590,150 618,196 C636,233 581,260 526,251 C471,242 433,187 470,150 Z" fill="#336f16"/>
-    </g>
-    <path class="anillo" d="M-4,535 A520,130 -14 0 0 1004,286"/>
-    <g class="estrellas">
-      <use href="#estrella" transform="translate(330,40) scale(1.4) rotate(12)" fill="#f39a2a"/>
-      <use href="#estrella" transform="translate(210,78) scale(1.1) rotate(-8)" fill="#ef4b23"/>
-      <use href="#estrella" transform="translate(660,32) scale(1.5) rotate(20)" fill="#ef4b23"/>
-      <use href="#estrella" transform="translate(742,88) scale(0.9)" fill="#ef4b23"/>
-      <use href="#estrella" transform="translate(800,120) scale(1.6) rotate(-15)" fill="#ef4b23"/>
-      <use href="#estrella" transform="translate(905,140) scale(1.2) rotate(8)" fill="#f39a2a"/>
-      <use href="#estrella" transform="translate(255,112) scale(0.8)" fill="#f39a2a"/>
-      <use href="#estrella" transform="translate(60,420) scale(1.2) rotate(-20)" fill="#f39a2a"/>
-      <use href="#estrella" transform="translate(28,470) scale(0.8)" fill="#f39a2a"/>
-      <use href="#estrella" transform="translate(965,380) scale(0.8)" fill="#f39a2a"/>
-      <use href="#estrella" transform="translate(760,672) scale(1.3) rotate(10)" fill="#f39a2a"/>
-      <use href="#estrella" transform="translate(700,690) scale(1.1)" fill="#ef4b23"/>
-      <use href="#estrella" transform="translate(250,672) scale(0.8)" fill="#f39a2a"/>
-      <use href="#estrella" transform="translate(320,694) scale(1.0)" fill="#ef4b23"/>
-      <use href="#estrella" transform="translate(120,200) scale(0.9) rotate(30)" fill="#ef4b23"/>
-      <use href="#estrella" transform="translate(940,560) scale(1.1) rotate(-5)" fill="#ef4b23"/>
-    </g>
-  </svg>
 
   <header class="barra">
     <div class="marca">
       <h1 class="logo">MG Items</h1>
     </div>
+    <button id="cambiar-modo" class="cambiar-modo" type="button" title="Cambiar entre el modo claro y el oscuro">Modo oscuro</button>
     <button id="abrir-entorno" class="estado-entorno" title="Configuración" disabled>
       <span data-icono="gear"></span>
       <span id="indicador-entorno" class="indicador" aria-hidden="true"></span>
@@ -197,7 +166,8 @@
                 <span class="ayuda">Hace:</span>
                 <span id="comportamiento-elegido" class="pieza-trucar comportamiento-elegido"></span>
               </div>
-              <form id="form-comportamiento" class="fila-npc no-fondos">
+              <button id="escribir-a-mano" type="button" class="escribir-a-mano no-fondos" aria-expanded="false" aria-controls="form-comportamiento">Escribir el comportamiento a mano</button>
+              <form id="form-comportamiento" class="fila-npc no-fondos" hidden>
                 <input id="comportamiento-a-mano" type="text" spellcheck="false" autocomplete="off"
                        placeholder="O escribí un comportamiento, ej: brujaMesa" aria-label="Escribir un comportamiento a mano">
                 <button id="usar-comportamiento" type="submit" class="enlace">Usar</button>
@@ -227,6 +197,8 @@
             <div class="botones-tarjeta">
               <button id="agregar-trucada" class="primario solo-trucar" title="Sumar esta Prenda trucada a la lista">Agregar a la lista</button>
               <button id="agregar-npc" class="primario solo-npc" title="Sumar este Item a la lista">Agregar a la lista</button>
+              <div class="grupo-botones grupo-gaturro">
+              <button id="colores-look" class="boton-cuadrado boton-colores" title="Colores del Gaturro" aria-label="Colores del Gaturro"><span data-icono="gear"></span></button>
               <div class="desplegable-emote solo-looks">
                 <button type="button" id="emote-look" class="boton-cuadrado boton-emote" title="Emoción del Gaturro" aria-label="Emoción del Gaturro" aria-expanded="false" aria-haspopup="true">
                   <img id="icono-emote-actual" src="img/emotes/normal.png" alt="Sin emoción">
@@ -244,11 +216,13 @@
                   <button type="button" class="emote-btn" data-emote="devil" title="Diablito" aria-pressed="false"><img src="img/emotes/devil.png" alt="Diablito"></button>
                 </div>
               </div>
-              <button id="colores-look" class="boton-cuadrado boton-colores" title="Colores del Gaturro" aria-label="Colores del Gaturro"><span data-icono="gear"></span></button>
               <button id="editar-piezas" class="boton-cuadrado boton-editar-piezas solo-looks" title="Personalizar las Piezas: colores por capa, mover, girar y ajustar" aria-label="Personalizar las Piezas"><span data-icono="paint-brush"></span></button>
+              </div>
+              <div class="grupo-botones grupo-guardar">
               <button id="borrar-look" class="boton-cuadrado guardables" title="Borrar el Look" aria-label="Borrar el Look"><span data-icono="trash"></span></button>
               <button id="descartar-look" class="boton-cuadrado boton-descartar guardables" title="Descartar los cambios" aria-label="Descartar los cambios"><span data-icono="x"></span></button>
               <button id="guardar-look" class="boton-cuadrado boton-guardar guardables" title="Guardar el Look" aria-label="Guardar el Look"><span data-icono="check"></span></button>
+              </div>
             </div>
           </div>
 
@@ -318,12 +292,11 @@
           </div>
         </div>
 
-        <div class="lista-trucadas solo-lista">
-          <span class="ayuda"><span id="titulo-lista-trucadas">Prendas trucadas</span> <span id="cantidad-trucadas"></span></span>
-          <ul id="lista-trucadas" aria-label="Las Prendas trucadas que se reciben juntas"></ul>
-        </div>
-
         <div class="barra-look">
+          <div class="lista-trucadas solo-lista">
+            <span class="ayuda"><span id="titulo-lista-trucadas">Prendas trucadas</span> <span id="cantidad-trucadas"></span></span>
+            <ul id="lista-trucadas" aria-label="Las Prendas trucadas que se reciben juntas"></ul>
+          </div>
           <span id="resumen-look" class="ayuda"></span>
           <label id="persistir-trucado" class="solo-trucar" title="Via Encode: los atributos quedan guardados en el servidor; la prenda persiste aunque Fiddler esté apagado">
             <input type="checkbox" id="check-persistir-trucado" checked>
@@ -473,6 +446,7 @@
         </span>
       </div>
       <ul id="lista-bases" class="lista-bases"></ul>
+      <aside id="vista-base" class="vista-base" aria-live="polite"></aside>
       <p id="mensaje-base" class="mensaje" role="status" aria-live="polite"></p>
       <div class="acciones">
         <button type="button" id="cerrar-base" class="derecha">Cerrar</button>
@@ -622,6 +596,7 @@
   <script src="js/inventario.js"></script>
   <script src="js/gaturro_vivo.js"></script>
   <script src="js/gaturro.js"></script>
+  <script src="js/fondo_del_perfil.js"></script>
   <script src="js/personalizar.js"></script>
   <script src="js/editor.js"></script>
   <script src="js/guia.js"></script>
@@ -633,6 +608,7 @@
   <script src="js/agregar.js"></script>
   <script src="js/busqueda.js"></script>
   <script src="js/terminator.js"></script>
+  <script src="js/modo.js"></script>
   <script src="js/inicio.js"></script>
 </body>
 </html>

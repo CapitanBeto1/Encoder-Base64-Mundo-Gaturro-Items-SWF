@@ -140,7 +140,7 @@ def main() -> None:
         height=720,
         # Más chica, la grilla y el Gaturro no entran (la barra lateral ya se achica a íconos: css/estructura.css).
         min_size=(960, 640),
-        background_color="#f6d610",
+        background_color="#5365d2",  # el violeta del celular (css/celular.css)
     )
     webview.start()
     servidor.detener()

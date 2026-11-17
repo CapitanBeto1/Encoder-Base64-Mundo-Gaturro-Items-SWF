@@ -72,33 +72,13 @@ body {
      y la pestaña elegida, a todo el alto. */
   display: grid;
   grid-template-columns: 212px minmax(0, 1fr);
-  grid-template-rows: auto minmax(0, 1fr) auto;
-  grid-template-areas: "marca guia" "pestanas paneles" "config paneles";
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  grid-template-areas: "marca guia" "pestanas paneles" "modo paneles" "config paneles";
   position: relative;
   background: var(--amarillo-fondo);
   color: var(--texto);
   font: 500 15px/1.4 "Fredoka", sans-serif;
 }
-
-/* --- Fondo --- */
-
-svg.fondo {
-  position: fixed;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 0;
-  pointer-events: none;
-}
-
-.fondo .anillo {
-  fill: none;
-  stroke: #fbe16f;
-  stroke-width: 34;
-  opacity: 0.85;
-}
-
-body > :not(svg) { position: relative; z-index: 1; }
 
 /* --- Encabezado --- */
 

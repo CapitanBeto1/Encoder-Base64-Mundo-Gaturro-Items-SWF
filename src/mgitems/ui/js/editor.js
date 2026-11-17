@@ -114,6 +114,19 @@ for (const id of BOTONES_TIPO) {
 }
 $("cerrar-base").addEventListener("click", () => $("dialogo-base").close());
 
+// Al lado de la lista, el Item grande: el que está debajo del mouse o, si no, el elegido.
+function mostrarEnVistaBase(fila) {
+  if (!fila) return $("vista-base").replaceChildren(etiqueta("Pasá el mouse por un Item para verlo grande.", "vacio"));
+  $("vista-base").replaceChildren(...[fila.querySelector(".icono")?.cloneNode(true), etiqueta(fila.querySelector(".nombre")?.textContent ?? "", "nombre"),
+    etiqueta(fila.title, "ruta"), fila.querySelector(".tipo-mochila, .tipo-prenda")?.cloneNode(true)].filter(Boolean));
+}
+$("lista-bases").addEventListener("pointerover", (e) => {
+  const fila = e.target.closest(".fila-base");
+  if (fila) mostrarEnVistaBase(fila);
+});
+$("lista-bases").addEventListener("pointerleave", () => mostrarEnVistaBase($("lista-bases").querySelector('.fila-base[aria-pressed="true"]')));
+$("cambiar-base").addEventListener("click", () => mostrarEnVistaBase(null));
+
 // --- Guardar, descartar, borrar, duplicar ---
 
 async function guardarLook() {
