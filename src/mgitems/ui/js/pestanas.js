@@ -20,13 +20,15 @@ const esFondos = () => vista === "fondos";
 const hayEncode = () => Boolean($("encode").value);
 const conPiezas = () => Object.keys(lookActual.partes).length > 0;
 const enLaLista = () => lookActual.lista.length > 0;
-const pestanaNpc = ({ tipo, el, lo, nuevo, mis, titulo, sub, nombre, tocaUno, lista, tituloBase, sinBase = "elegí cualquier Item",
-                      documentoNuevo = () => nuevoNpc(), elegirUno = "Elegí un Item", queHace = "Elegí qué hace",
+// Lo que significa lo mismo se dice igual en todas: «Item base:», «Elegí el Item base», «Aplicar…», «Agregá… a la lista».
+const pestanaNpc = ({ tipo, el, lo, nuevo, mis, titulo, sub, nombre, tocaUno, lista, sinBase = "elegí uno",
+                      documentoNuevo = () => nuevoNpc(), queHace = "Elegí qué hace",
                       hace = () => Boolean(lookActual.comportamiento) }) => ({
-  generar: "Convertir todos", aplicar: "Convertir todos", seGuarda: "Se convierte:", alAplicar: () => convertirNpcs(),
-  pasos: () => [[elegirUno, Boolean(lookActual.base)], [queHace, hace()], ["Sumalo a la lista", enLaLista()],
-                ["Convertí todos", hayEncode()], ["Agregá al juego", false]],
-  nombre, tocaUno, lista, tituloBase, sinBase, nuevo: documentoNuevo, guardados: { tipo, el, lo, nuevo, mis, titulo, sub },
+  generar: "Aplicar todos", aplicar: "Aplicar todos", alAplicar: () => convertirNpcs(),
+  ayudaBase: "Es lo que vas a recibir: cualquier Item, de cualquier SWF. Llega a la casa y, al tocarlo, hace lo que elegiste.",
+  pasos: () => [["Elegí el Item base", Boolean(lookActual.base)], [queHace, hace()], ["Agregalo a la lista", enLaLista()],
+                ["Aplicá todos", hayEncode()], ["Agregá al juego", false]],
+  nombre, tocaUno, lista, sinBase, nuevo: documentoNuevo, guardados: { tipo, el, lo, nuevo, mis, titulo, sub },
 });
 const PESTANA = {
   agregar: {
@@ -34,43 +36,45 @@ const PESTANA = {
     pasos: () => [["Elegí los Items", items.length > 0], ["Agregá al juego", false]], // el Encode se genera al agregar
   },
   looks: {
-    generar: "Aplicar Look", aplicar: "Aplicar Look", nombre: "NOMBRE DEL LOOK", seGuarda: "Se guarda en:", tocaUno: "un Look",
+    generar: "Aplicar Look", aplicar: "Aplicar Look", nombre: "NOMBRE DEL LOOK", tocaUno: "un Look",
     pasos: () => [["Elegí las Piezas", conPiezas()], ["Aplicá el Look", hayEncode()], ["Agregá al juego", false]],
-    sinBase: "se elige al aplicar", tituloBase: "¿Dónde se guarda el Look?", nuevo: () => nuevoLook(), alAplicar: () => aplicarLook(),
+    // Sin Item base, al aplicar se elige uno solo (y el Look del juego no lo usa).
+    sinBase: "se elige solo al aplicar", nuevo: () => nuevoLook(), alAplicar: () => aplicarLook(),
+    ayudaBase: "Es lo que vas a recibir: una Prenda o un Item de mochila, de cualquier SWF.",
     capas: true, // el pincel abre el menú del juego para personalizar, con «Configura tus accesorios»
     guardados: { tipo: "look", el: "el Look", lo: "lo", nuevo: "Look nuevo", mis: "Mis Looks", titulo: "GUARDA TU LOOK", sub: "GUARDA TUS LOOKS FAVORITOS" },
   },
   acciones: {
     generar: "Aplicar acción", aplicar: "Aplicar acción",
-    pasos: () => [["Elegí la animación", Boolean(lookActual.animacion)], ["Elegí el Item", Boolean(lookActual.base)],
-                  ["Aplicá la acción", hayEncode()], ["Agregá al juego", false]], nombre: "NOMBRE DE LA ACCIÓN", tocaUno: "una acción", sinBase: "elegí cualquier Item",
-    tituloBase: "¿Dónde se guarda la acción?", nuevo: () => nuevaAccion(), alAplicar: () => aplicarAccion(),
+    pasos: () => [["Elegí la animación", Boolean(lookActual.animacion)], ["Elegí el Item base", Boolean(lookActual.base)],
+                  ["Aplicá la acción", hayEncode()], ["Agregá al juego", false]], nombre: "NOMBRE DE LA ACCIÓN", tocaUno: "una acción", sinBase: "elegí uno",
+    ayudaBase: "Es lo que vas a recibir: cualquier Item, de cualquier SWF. Llega a la mochila y hace la acción cada vez que lo usás.",
+    nuevo: () => nuevaAccion(), alAplicar: () => aplicarAccion(),
     guardados: { tipo: "accion", el: "la acción", lo: "la", nuevo: "Acción nueva", mis: "Mis acciones", titulo: "GUARDA TU ACCIÓN",
                  sub: "GUARDA TUS ACCIONES FAVORITAS" },
   },
   trucar: {
-    generar: "Trucar Prenda", aplicar: "Trucar todas", nombre: "NOMBRE DE LA PRENDA TRUCADA", seGuarda: "Se trucará:",
-    tocaUno: "una Prenda trucada", sinBase: "elegí el Item base", tituloBase: "¿Qué Item se truca?", nuevo: () => nuevaPrendaATrucar(),
+    generar: "Aplicar todas", aplicar: "Aplicar todas", nombre: "NOMBRE DE LA PRENDA TRUCADA",
+    tocaUno: "una Prenda trucada", sinBase: "elegí uno", nuevo: () => nuevaPrendaATrucar(),
+    ayudaBase: "Es lo que vas a recibir: una Prenda o un Item de mochila, de cualquier SWF, que en vez de su dibujo muestra la Pieza elegida.",
     alAplicar: () => trucarPrenda(),
     capas: false, // lleva una sola Pieza: el pincel abre directo «Customiza tu ropa»
-    pasos: () => [["Elegí el Item base", Boolean(lookActual.base)], ["Elegí la Pieza", conPiezas()], ["Sumala a la lista", enLaLista()],
-                  ["Trucá todas", hayEncode()], ["Agregá al juego", false]],
+    pasos: () => [["Elegí el Item base", Boolean(lookActual.base)], ["Elegí la Pieza", conPiezas()], ["Agregala a la lista", enLaLista()],
+                  ["Aplicá todas", hayEncode()], ["Agregá al juego", false]],
     guardados: { tipo: "trucada", el: "la Prenda trucada", lo: "la", nuevo: "Prenda trucada nueva", mis: "Mis Prendas trucadas",
                  titulo: "GUARDA TU PRENDA TRUCADA", sub: "GUARDA TUS PRENDAS TRUCADAS FAVORITAS" },
   },
   tiendas: pestanaNpc({ tipo: "tienda", el: "la tienda", lo: "la", nuevo: "Tienda nueva", mis: "Mis tiendas", titulo: "GUARDA TU TIENDA",
-                        sub: "GUARDA TUS TIENDAS FAVORITAS", nombre: "NOMBRE DE LA TIENDA", tocaUno: "una tienda", lista: "Tiendas",
-                        tituloBase: "¿Qué Item se convierte en tienda?" }),
+                        sub: "GUARDA TUS TIENDAS FAVORITAS", nombre: "NOMBRE DE LA TIENDA", tocaUno: "una tienda", lista: "Tiendas" }),
   portales: pestanaNpc({ tipo: "portal", el: "el portal", lo: "lo", nuevo: "Portal nuevo", mis: "Mis portales", titulo: "GUARDA TU PORTAL",
-                         sub: "GUARDA TUS PORTALES FAVORITOS", nombre: "NOMBRE DEL PORTAL", tocaUno: "un portal", lista: "Portales",
-                         tituloBase: "¿Qué Item se convierte en portal?" }),
+                         sub: "GUARDA TUS PORTALES FAVORITOS", nombre: "NOMBRE DEL PORTAL", tocaUno: "un portal", lista: "Portales" }),
   minijuegos: pestanaNpc({ tipo: "minijuego", el: "el minijuego", lo: "lo", nuevo: "Minijuego nuevo", mis: "Mis minijuegos",
                            titulo: "GUARDA TU MINIJUEGO", sub: "GUARDA TUS MINIJUEGOS FAVORITOS", nombre: "NOMBRE DEL MINIJUEGO",
-                           tocaUno: "un minijuego", lista: "Minijuegos", tituloBase: "¿Qué Item se convierte en minijuego?" }),
+                           tocaUno: "un minijuego", lista: "Minijuegos" }),
   fondos: pestanaNpc({ tipo: "fondo", el: "el fondo", lo: "lo", nuevo: "Fondo nuevo", mis: "Mis fondos", titulo: "GUARDA TU FONDO",
                        sub: "GUARDA TUS FONDOS FAVORITOS", nombre: "NOMBRE DEL FONDO", tocaUno: "un fondo", lista: "Fondos",
-                       tituloBase: "¿Qué objeto se convierte en fondo?", sinBase: "elegí un objeto de la derecha",
-                       documentoNuevo: () => nuevoFondo(), elegirUno: "Elegí un objeto", queHace: "Elegí el fondo",
+                       sinBase: "elegí uno de la derecha",
+                       documentoNuevo: () => nuevoFondo(), queHace: "Elegí el fondo",
                        hace: () => lookActual.cuadro != null }),
   monedas: {
     generar: "Generar Encode",
@@ -112,7 +116,6 @@ function cambiarVista(nueva) {
   document.querySelector("main").classList.toggle("modo-monedas", vista === "monedas");
   document.querySelector("main").classList.toggle("modo-terminator", vista === "terminator");
   $("aplicar-look").textContent = dePestana().aplicar;
-  $("texto-se-guarda").textContent = dePestana().seGuarda;
   $("nombre-look").placeholder = dePestana().nombre;
   document.querySelector("main").classList.toggle("modo-agregar", vista === "agregar");
   $("items-a-recibir").hidden = vista !== "agregar";

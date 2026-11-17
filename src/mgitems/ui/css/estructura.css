@@ -144,8 +144,7 @@ main.modo-npc #editar-piezas,
 main.modo-npc .armario > :not(.solo-npc),
 main.modo-acciones .solo-looks,
 main:not(.modo-fondos) .solo-fondos,
-main.modo-fondos .no-fondos,
-.dialogo-base.sin-tipos .tipos-base {
+main.modo-fondos .no-fondos {
   display: none;
 }
 

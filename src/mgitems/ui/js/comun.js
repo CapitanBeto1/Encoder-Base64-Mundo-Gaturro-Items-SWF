@@ -375,7 +375,7 @@ function marcarAnimado(boton) {
   boton.title += " · Se ve animado.";
 }
 
-// El filtro «Animados» de una lista («items», «piezas» o «base»): un botón con el mismo rollo, que se prende y se apaga.
+// El filtro «Animados» de una lista («items» o «piezas»): un botón con el mismo rollo, que se prende y se apaga.
 const soloAnimados = (lista) => $(`animados-${lista}`).getAttribute("aria-pressed") === "true";
 const pasaAnimados = (cosa, lista) => !soloAnimados(lista) || Boolean(cosa.se_mueve);
 function conectarFiltroAnimados(lista, mostrar) {
