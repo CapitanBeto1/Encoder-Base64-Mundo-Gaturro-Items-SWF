@@ -1,0 +1,153 @@
+[data-estetica="celular"] .ic[data-ic="x"] { position: relative; } [data-estetica="celular"] .ic[data-ic="x"] > svg { visibility: hidden; }
+[data-estetica="celular"] .ic[data-ic="x"]::after { content: ""; position: absolute; inset: 0; background: currentColor; }
+[data-estetica="celular"] .ic[data-ic="x"]::after { -webkit-mask: url("iconos/1942.png") center / contain no-repeat; }
+[data-estetica="celular"] .ic[data-ic="check"] { position: relative; } [data-estetica="celular"] .ic[data-ic="check"] > svg { visibility: hidden; }
+[data-estetica="celular"] .ic[data-ic="check"]::after { content: ""; position: absolute; inset: 0; background: currentColor; }
+[data-estetica="celular"] .ic[data-ic="check"]::after { -webkit-mask: url("iconos/1435.png") center / contain no-repeat; }
+[data-estetica="celular"] .ic[data-ic="magnifying-glass"] { position: relative; } [data-estetica="celular"] .ic[data-ic="magnifying-glass"] > svg { visibility: hidden; }
+[data-estetica="celular"] .ic[data-ic="magnifying-glass"]::after { content: ""; position: absolute; inset: 0; background: currentColor; }
+[data-estetica="celular"] .ic[data-ic="magnifying-glass"]::after { -webkit-mask: url("iconos/1248.png") center / contain no-repeat; }
+[data-estetica="celular"] .ic[data-ic="gear"] { position: relative; } [data-estetica="celular"] .ic[data-ic="gear"] > svg { visibility: hidden; }
+[data-estetica="celular"] .ic[data-ic="gear"]::after { content: ""; position: absolute; inset: 0; background: currentColor; }
+[data-estetica="celular"] .ic[data-ic="gear"]::after { -webkit-mask: url("iconos/1489.png") center / contain no-repeat; }
+[data-estetica="celular"] .ic[data-ic="trash"] { position: relative; } [data-estetica="celular"] .ic[data-ic="trash"] > svg { visibility: hidden; }
+[data-estetica="celular"] .ic[data-ic="trash"]::after { content: ""; position: absolute; inset: 0; background: currentColor; }
+[data-estetica="celular"] .ic[data-ic="trash"]::after { -webkit-mask: url("iconos/1779.png") center / contain no-repeat; }
+[data-estetica="celular"] .ic[data-ic="storefront"] { position: relative; } [data-estetica="celular"] .ic[data-ic="storefront"] > svg { visibility: hidden; }
+[data-estetica="celular"] .ic[data-ic="storefront"]::after { content: ""; position: absolute; inset: 0; background: currentColor; }
+[data-estetica="celular"] .ic[data-ic="storefront"]::after { -webkit-mask: url("iconos/1518.png") center / contain no-repeat; }
+[data-estetica="celular"] .ic[data-ic="plus-circle"] { position: relative; } [data-estetica="celular"] .ic[data-ic="plus-circle"] > svg { visibility: hidden; }
+[data-estetica="celular"] .ic[data-ic="plus-circle"]::after { content: ""; position: absolute; inset: 0; background: currentColor; }
+[data-estetica="celular"] .ic[data-ic="plus-circle"]::after { -webkit-mask: url("iconos/1689.png") center / contain no-repeat; }
+[data-estetica="celular"] .ic[data-ic="person-simple-run"] { position: relative; } [data-estetica="celular"] .ic[data-ic="person-simple-run"] > svg { visibility: hidden; }
+[data-estetica="celular"] .ic[data-ic="person-simple-run"]::after { content: ""; position: absolute; inset: 0; background: currentColor; }
+[data-estetica="celular"] .ic[data-ic="person-simple-run"]::after { -webkit-mask: url("iconos/1950.png") center / contain no-repeat; }
+[data-estetica="celular"] .ic[data-ic="paint-brush"] { position: relative; } [data-estetica="celular"] .ic[data-ic="paint-brush"] > svg { visibility: hidden; }
+[data-estetica="celular"] .ic[data-ic="paint-brush"]::after { content: ""; position: absolute; inset: 0; background: currentColor; }
+[data-estetica="celular"] .ic[data-ic="paint-brush"]::after { -webkit-mask: url("iconos/1522.png") center / contain no-repeat; }
+[data-estetica="celular"] .ic[data-ic="magic-wand"] { position: relative; } [data-estetica="celular"] .ic[data-ic="magic-wand"] > svg { visibility: hidden; }
+[data-estetica="celular"] .ic[data-ic="magic-wand"]::after { content: ""; position: absolute; inset: 0; background: currentColor; }
+[data-estetica="celular"] .ic[data-ic="magic-wand"]::after { -webkit-mask: url("iconos/1848.png") center / contain no-repeat; }
+[data-estetica="celular"] .ic[data-ic="scissors"] { position: relative; } [data-estetica="celular"] .ic[data-ic="scissors"] > svg { visibility: hidden; }
+[data-estetica="celular"] .ic[data-ic="scissors"]::after { content: ""; position: absolute; inset: 0; background: currentColor; }
+[data-estetica="celular"] .ic[data-ic="scissors"]::after { -webkit-mask: url("iconos/1848.png") center / contain no-repeat; }
+[data-estetica="celular"] .ic[data-ic="lock-open"] { position: relative; } [data-estetica="celular"] .ic[data-ic="lock-open"] > svg { visibility: hidden; }
+[data-estetica="celular"] .ic[data-ic="lock-open"]::after { content: ""; position: absolute; inset: 0; background: currentColor; }
+[data-estetica="celular"] .ic[data-ic="lock-open"]::after { -webkit-mask: url("iconos/671.png") center / contain no-repeat; }
+[data-estetica="celular"] .ic[data-ic="hand-pointing"] { position: relative; } [data-estetica="celular"] .ic[data-ic="hand-pointing"] > svg { visibility: hidden; }
+[data-estetica="celular"] .ic[data-ic="hand-pointing"]::after { content: ""; position: absolute; inset: 0; background: currentColor; }
+[data-estetica="celular"] .ic[data-ic="hand-pointing"]::after { -webkit-mask: url("iconos/665.png") center / contain no-repeat; }
+[data-estetica="celular"] .ic[data-ic="game-controller"] { position: relative; } [data-estetica="celular"] .ic[data-ic="game-controller"] > svg { visibility: hidden; }
+[data-estetica="celular"] .ic[data-ic="game-controller"]::after { content: ""; position: absolute; inset: 0; background: currentColor; }
+[data-estetica="celular"] .ic[data-ic="game-controller"]::after { -webkit-mask: url("iconos/1079.png") center / contain no-repeat; }
+[data-estetica="celular"] .ic[data-ic="door-open"] { position: relative; } [data-estetica="celular"] .ic[data-ic="door-open"] > svg { visibility: hidden; }
+[data-estetica="celular"] .ic[data-ic="door-open"]::after { content: ""; position: absolute; inset: 0; background: currentColor; }
+[data-estetica="celular"] .ic[data-ic="door-open"]::after { -webkit-mask: url("iconos/1876.png") center / contain no-repeat; }
+[data-estetica="celular"] .ic[data-ic="images-square"] { position: relative; } [data-estetica="celular"] .ic[data-ic="images-square"] > svg { visibility: hidden; }
+[data-estetica="celular"] .ic[data-ic="images-square"]::after { content: ""; position: absolute; inset: 0; background: currentColor; }
+[data-estetica="celular"] .ic[data-ic="images-square"]::after { -webkit-mask: url("iconos/1529.png") center / contain no-repeat; }
+[data-estetica="celular"] .ic[data-ic="image"] { position: relative; } [data-estetica="celular"] .ic[data-ic="image"] > svg { visibility: hidden; }
+[data-estetica="celular"] .ic[data-ic="image"]::after { content: ""; position: absolute; inset: 0; background: currentColor; }
+[data-estetica="celular"] .ic[data-ic="image"]::after { -webkit-mask: url("iconos/1529.png") center / contain no-repeat; }
+[data-estetica="celular"] .ic[data-ic="clipboard"] { position: relative; } [data-estetica="celular"] .ic[data-ic="clipboard"] > svg { visibility: hidden; }
+[data-estetica="celular"] .ic[data-ic="clipboard"]::after { content: ""; position: absolute; inset: 0; background: currentColor; }
+[data-estetica="celular"] .ic[data-ic="clipboard"]::after { -webkit-mask: url("iconos/2020.png") center / contain no-repeat; }
+[data-estetica="celular"] .ic[data-ic="arrow-clockwise"] { position: relative; } [data-estetica="celular"] .ic[data-ic="arrow-clockwise"] > svg { visibility: hidden; }
+[data-estetica="celular"] .ic[data-ic="arrow-clockwise"]::after { content: ""; position: absolute; inset: 0; background: currentColor; }
+[data-estetica="celular"] .ic[data-ic="arrow-clockwise"]::after { -webkit-mask: url("iconos/1819.png") center / contain no-repeat; }
+[data-estetica="celular"] .ic[data-ic="map-pin"] { position: relative; } [data-estetica="celular"] .ic[data-ic="map-pin"] > svg { visibility: hidden; }
+[data-estetica="celular"] .ic[data-ic="map-pin"]::after { content: ""; position: absolute; inset: 0; background: currentColor; }
+[data-estetica="celular"] .ic[data-ic="map-pin"]::after { -webkit-mask: url("iconos/1446.png") center / contain no-repeat; }
+[data-estetica="celular"] .ic[data-ic="coin"] { position: relative; } [data-estetica="celular"] .ic[data-ic="coin"] > svg { visibility: hidden; }
+[data-estetica="celular"] .ic[data-ic="coin"]::after { content: ""; position: absolute; inset: 0; background: currentColor; }
+[data-estetica="celular"] .ic[data-ic="coin"]::after { background: url("iconos/1348.png") center / contain no-repeat; -webkit-mask: none; }
+[data-estetica="celular"] .ic[data-ic="film-strip"] { position: relative; } [data-estetica="celular"] .ic[data-ic="film-strip"] > svg { visibility: hidden; }
+[data-estetica="celular"] .ic[data-ic="film-strip"]::after { content: ""; position: absolute; inset: 0; background: currentColor; }
+[data-estetica="celular"] .ic[data-ic="film-strip"]::after { background: url("iconos/2041.png") center / contain no-repeat; -webkit-mask: none; }
+[data-estetica="celular"] .ic[data-ic="shopping-cart"] { position: relative; } [data-estetica="celular"] .ic[data-ic="shopping-cart"] > svg { visibility: hidden; }
+[data-estetica="celular"] .ic[data-ic="shopping-cart"]::after { content: ""; position: absolute; inset: 0; background: currentColor; }
+[data-estetica="celular"] .ic[data-ic="shopping-cart"]::after { -webkit-mask: url("iconos/1460.png") center / contain no-repeat; }
+[data-estetica="celular"] .ic[data-ic="door"] { position: relative; } [data-estetica="celular"] .ic[data-ic="door"] > svg { visibility: hidden; }
+[data-estetica="celular"] .ic[data-ic="door"]::after { content: ""; position: absolute; inset: 0; background: currentColor; }
+[data-estetica="celular"] .ic[data-ic="door"]::after { -webkit-mask: url("iconos/1876.png") center / contain no-repeat; }
+[data-estetica="celular"] .ic[data-ic="question"] { position: relative; } [data-estetica="celular"] .ic[data-ic="question"] > svg { visibility: hidden; }
+[data-estetica="celular"] .ic[data-ic="question"]::after { content: ""; position: absolute; inset: 0; background: currentColor; }
+[data-estetica="celular"] .ic[data-ic="question"]::after { -webkit-mask: url("iconos/1502.png") center / contain no-repeat; }
+[data-estetica="celular"] .ic[data-ic="fondo-anterior"] { position: relative; } [data-estetica="celular"] .ic[data-ic="fondo-anterior"] > svg { visibility: hidden; }
+[data-estetica="celular"] .ic[data-ic="fondo-anterior"]::after { content: ""; position: absolute; inset: 0; background: currentColor; }
+[data-estetica="celular"] .ic[data-ic="fondo-anterior"]::after { background: url("iconos/2046.png") center / contain no-repeat; -webkit-mask: none; }
+[data-estetica="celular"] .ic[data-ic="fondo-siguiente"] { position: relative; } [data-estetica="celular"] .ic[data-ic="fondo-siguiente"] > svg { visibility: hidden; }
+[data-estetica="celular"] .ic[data-ic="fondo-siguiente"]::after { content: ""; position: absolute; inset: 0; background: currentColor; }
+[data-estetica="celular"] .ic[data-ic="fondo-siguiente"]::after { background: url("iconos/2041.png") center / contain no-repeat; -webkit-mask: none; }
+[data-estetica="celular"] .ic[data-ic="caret-left"] { position: relative; } [data-estetica="celular"] .ic[data-ic="caret-left"] > svg { visibility: hidden; }
+[data-estetica="celular"] .ic[data-ic="caret-left"]::after { content: ""; position: absolute; inset: 0; background: currentColor; }
+[data-estetica="celular"] .ic[data-ic="caret-left"]::after { -webkit-mask: url("iconos/1618.png") center / contain no-repeat; }
+[data-estetica="celular"] .ic[data-ic="caret-right"] { position: relative; } [data-estetica="celular"] .ic[data-ic="caret-right"] > svg { visibility: hidden; }
+[data-estetica="celular"] .ic[data-ic="caret-right"]::after { content: ""; position: absolute; inset: 0; background: currentColor; }
+[data-estetica="celular"] .ic[data-ic="caret-right"]::after { -webkit-mask: url("iconos/1618.png") center / contain no-repeat; transform: scaleX(-1); }
+[data-estetica="celular"] .ic[data-ic="caret-double-left"] { position: relative; } [data-estetica="celular"] .ic[data-ic="caret-double-left"] > svg { visibility: hidden; }
+[data-estetica="celular"] .ic[data-ic="caret-double-left"]::after { content: ""; position: absolute; inset: 0; background: currentColor; }
+[data-estetica="celular"] .ic[data-ic="caret-double-left"]::after { -webkit-mask: url("iconos/1618.png") center / 50% 100% repeat-x; }
+[data-estetica="celular"] .ic[data-ic="caret-double-right"] { position: relative; } [data-estetica="celular"] .ic[data-ic="caret-double-right"] > svg { visibility: hidden; }
+[data-estetica="celular"] .ic[data-ic="caret-double-right"]::after { content: ""; position: absolute; inset: 0; background: currentColor; }
+[data-estetica="celular"] .ic[data-ic="caret-double-right"]::after { -webkit-mask: url("iconos/1618.png") center / 50% 100% repeat-x; transform: scaleX(-1); }
+[data-estetica="celular"] .ic[data-ic="couch"] { position: relative; } [data-estetica="celular"] .ic[data-ic="couch"] > svg { visibility: hidden; }
+[data-estetica="celular"] .ic[data-ic="couch"]::after { content: ""; position: absolute; inset: 0; background: currentColor; }
+[data-estetica="celular"] .ic[data-ic="couch"]::after { -webkit-mask: url("iconos/705.png") center / contain no-repeat; }
+[data-estetica="celular"] .ic[data-ic="t-shirt"] { position: relative; } [data-estetica="celular"] .ic[data-ic="t-shirt"] > svg { visibility: hidden; }
+[data-estetica="celular"] .ic[data-ic="t-shirt"]::after { content: ""; position: absolute; inset: 0; background: currentColor; }
+[data-estetica="celular"] .ic[data-ic="t-shirt"]::after { -webkit-mask: url("iconos/706.png") center / contain no-repeat; }
+[data-estetica="celular"] .ic[data-ic="backpack"] { position: relative; } [data-estetica="celular"] .ic[data-ic="backpack"] > svg { visibility: hidden; }
+[data-estetica="celular"] .ic[data-ic="backpack"]::after { content: ""; position: absolute; inset: 0; background: currentColor; }
+[data-estetica="celular"] .ic[data-ic="backpack"]::after { -webkit-mask: url("iconos/707.png") center / contain no-repeat; }
+[data-estetica="celular"] .ic[data-ic="scooter"] { position: relative; } [data-estetica="celular"] .ic[data-ic="scooter"] > svg { visibility: hidden; }
+[data-estetica="celular"] .ic[data-ic="scooter"]::after { content: ""; position: absolute; inset: 0; background: currentColor; }
+[data-estetica="celular"] .ic[data-ic="scooter"]::after { -webkit-mask: url("iconos/708.png") center / contain no-repeat; }
+[data-estetica="celular"] .ic[data-ic="baseball-cap"] { position: relative; } [data-estetica="celular"] .ic[data-ic="baseball-cap"] > svg { visibility: hidden; }
+[data-estetica="celular"] .ic[data-ic="baseball-cap"]::after { content: ""; position: absolute; inset: 0; background: currentColor; }
+[data-estetica="celular"] .ic[data-ic="baseball-cap"]::after { -webkit-mask: url("iconos/1399.png") center / contain no-repeat; }
+[data-estetica="celular"] .ic[data-ic="smiley"] { position: relative; } [data-estetica="celular"] .ic[data-ic="smiley"] > svg { visibility: hidden; }
+[data-estetica="celular"] .ic[data-ic="smiley"]::after { content: ""; position: absolute; inset: 0; background: currentColor; }
+[data-estetica="celular"] .ic[data-ic="smiley"]::after { -webkit-mask: url("iconos/smiley.png") center / contain no-repeat; }
+[data-estetica="celular"] .ic[data-ic="eyeglasses"] { position: relative; } [data-estetica="celular"] .ic[data-ic="eyeglasses"] > svg { visibility: hidden; }
+[data-estetica="celular"] .ic[data-ic="eyeglasses"]::after { content: ""; position: absolute; inset: 0; background: currentColor; }
+[data-estetica="celular"] .ic[data-ic="eyeglasses"]::after { -webkit-mask: url("iconos/1400.png") center / contain no-repeat; }
+[data-estetica="celular"] .ic[data-ic="hand-fist"] { position: relative; } [data-estetica="celular"] .ic[data-ic="hand-fist"] > svg { visibility: hidden; }
+[data-estetica="celular"] .ic[data-ic="hand-fist"]::after { content: ""; position: absolute; inset: 0; background: currentColor; }
+[data-estetica="celular"] .ic[data-ic="hand-fist"]::after { -webkit-mask: url("iconos/665.png") center / contain no-repeat; }
+[data-estetica="celular"] .ic[data-ic="sneaker"] { position: relative; } [data-estetica="celular"] .ic[data-ic="sneaker"] > svg { visibility: hidden; }
+[data-estetica="celular"] .ic[data-ic="sneaker"]::after { content: ""; position: absolute; inset: 0; background: currentColor; }
+[data-estetica="celular"] .ic[data-ic="sneaker"]::after { -webkit-mask: url("iconos/1401.png") center / contain no-repeat; }
+[data-estetica="celular"] .ic[data-ic="sparkle"] { position: relative; } [data-estetica="celular"] .ic[data-ic="sparkle"] > svg { visibility: hidden; }
+[data-estetica="celular"] .ic[data-ic="sparkle"]::after { content: ""; position: absolute; inset: 0; background: currentColor; }
+[data-estetica="celular"] .ic[data-ic="sparkle"]::after { -webkit-mask: url("iconos/1119.png") center / contain no-repeat; }
+[data-estetica="celular"] .ic[data-ic="mask-happy"] { position: relative; } [data-estetica="celular"] .ic[data-ic="mask-happy"] > svg { visibility: hidden; }
+[data-estetica="celular"] .ic[data-ic="mask-happy"]::after { content: ""; position: absolute; inset: 0; background: currentColor; }
+[data-estetica="celular"] .ic[data-ic="mask-happy"]::after { -webkit-mask: url("iconos/1458.png") center / contain no-repeat; }
+[data-estetica="celular"] .ic[data-ic="flask"] { position: relative; } [data-estetica="celular"] .ic[data-ic="flask"] > svg { visibility: hidden; }
+[data-estetica="celular"] .ic[data-ic="flask"]::after { content: ""; position: absolute; inset: 0; background: currentColor; }
+[data-estetica="celular"] .ic[data-ic="flask"]::after { -webkit-mask: url("iconos/707.png") center / contain no-repeat; }
+[data-estetica="celular"] .ic[data-ic="dog"] { position: relative; } [data-estetica="celular"] .ic[data-ic="dog"] > svg { visibility: hidden; }
+[data-estetica="celular"] .ic[data-ic="dog"]::after { content: ""; position: absolute; inset: 0; background: currentColor; }
+[data-estetica="celular"] .ic[data-ic="dog"]::after { -webkit-mask: url("iconos/1402.png") center / contain no-repeat; }
+[data-estetica="celular"] .ic[data-ic="gift"] { position: relative; } [data-estetica="celular"] .ic[data-ic="gift"] > svg { visibility: hidden; }
+[data-estetica="celular"] .ic[data-ic="gift"]::after { content: ""; position: absolute; inset: 0; background: currentColor; }
+[data-estetica="celular"] .ic[data-ic="gift"]::after { -webkit-mask: url("iconos/1386.png") center / contain no-repeat; }
+[data-estetica="celular"] .ic[data-ic="bone"] { position: relative; } [data-estetica="celular"] .ic[data-ic="bone"] > svg { visibility: hidden; }
+[data-estetica="celular"] .ic[data-ic="bone"]::after { content: ""; position: absolute; inset: 0; background: currentColor; }
+[data-estetica="celular"] .ic[data-ic="bone"]::after { -webkit-mask: url("iconos/1122.png") center / contain no-repeat; }
+[data-estetica="celular"] .ic[data-ic="hair-dryer"] { position: relative; } [data-estetica="celular"] .ic[data-ic="hair-dryer"] > svg { visibility: hidden; }
+[data-estetica="celular"] .ic[data-ic="hair-dryer"]::after { content: ""; position: absolute; inset: 0; background: currentColor; }
+[data-estetica="celular"] .ic[data-ic="hair-dryer"]::after { -webkit-mask: url("iconos/hair-dryer.png") center / contain no-repeat; }
+[data-estetica="celular"] .ic[data-ic="coat-hanger"] { position: relative; } [data-estetica="celular"] .ic[data-ic="coat-hanger"] > svg { visibility: hidden; }
+[data-estetica="celular"] .ic[data-ic="coat-hanger"]::after { content: ""; position: absolute; inset: 0; background: currentColor; }
+[data-estetica="celular"] .ic[data-ic="coat-hanger"]::after { -webkit-mask: url("iconos/coat-hanger.png") center / contain no-repeat; }
+[data-estetica="celular"] .ic[data-ic="alas"] { position: relative; } [data-estetica="celular"] .ic[data-ic="alas"] > svg { visibility: hidden; }
+[data-estetica="celular"] .ic[data-ic="alas"]::after { content: ""; position: absolute; inset: 0; background: currentColor; }
+[data-estetica="celular"] .ic[data-ic="alas"]::after { -webkit-mask: url("iconos/alas.png") center / contain no-repeat; }
+[data-estetica="celular"] .ic[data-ic="pants"] { position: relative; } [data-estetica="celular"] .ic[data-ic="pants"] > svg { visibility: hidden; }
+[data-estetica="celular"] .ic[data-ic="pants"]::after { content: ""; position: absolute; inset: 0; background: currentColor; }
+[data-estetica="celular"] .ic[data-ic="pants"]::after { -webkit-mask: url("iconos/pants.png") center / contain no-repeat; }
+[data-estetica="celular"] .ic[data-ic="hand"] { position: relative; } [data-estetica="celular"] .ic[data-ic="hand"] > svg { visibility: hidden; }
+[data-estetica="celular"] .ic[data-ic="hand"]::after { content: ""; position: absolute; inset: 0; background: currentColor; }
+[data-estetica="celular"] .ic[data-ic="hand"]::after { -webkit-mask: url("iconos/hand.png") center / contain no-repeat; }

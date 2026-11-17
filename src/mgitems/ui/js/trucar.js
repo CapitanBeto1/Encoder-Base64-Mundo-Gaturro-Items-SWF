@@ -71,7 +71,7 @@ $("agregar-trucada").addEventListener("click", () => {
   }
   const personalizacion = lookActual.personalizacion?.[lookActual.parte] ?? null;
   lookActual.lista.push({ base: lookActual.base, parte: lookActual.parte, pieza, nombre: lookActual.nombre.trim(), personalizacion });
-  avisarLista(`Se agregó ${claseDeRuta(pieza)} en ${nombreDeParte(lookActual.parte)} (${claseDeRuta(lookActual.base)}). Armá otra o tocá «Trucar todas».`, "exito");
+  avisarLista(`Se agregó ${claseDeRuta(pieza)} en ${nombreDeParte(lookActual.parte)} (${claseDeRuta(lookActual.base)}). Armá otra o tocá «Aplicar todas».`, "exito");
   Object.assign(lookActual, { id: "", nombre: "", base: null, partes: {}, personalizacion: {} });
   mostrarEncode(null);
   mostrarListaLooks();

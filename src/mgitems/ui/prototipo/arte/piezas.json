@@ -1,0 +1,383 @@
+{
+ "ropero-marco": {
+  "normal": {
+   "archivo": "ropero-marco.png",
+   "ancho": 436.0,
+   "alto": 392.0
+  }
+ },
+ "ropero-titulo": {
+  "normal": {
+   "archivo": "ropero-titulo.png",
+   "ancho": 202.0,
+   "alto": 25.0
+  }
+ },
+ "modal": {
+  "normal": {
+   "archivo": "modal.png",
+   "ancho": 410.0,
+   "alto": 280.0
+  }
+ },
+ "verde-afuera": {
+  "normal": {
+   "archivo": "verde-afuera.png",
+   "ancho": 694.8,
+   "alto": 361.85
+  }
+ },
+ "verde-borde": {
+  "normal": {
+   "archivo": "verde-borde.png",
+   "ancho": 639.55,
+   "alto": 310.45
+  }
+ },
+ "verde": {
+  "normal": {
+   "archivo": "verde.png",
+   "ancho": 620.6,
+   "alto": 263.6
+  }
+ },
+ "cerrar": {
+  "normal": {
+   "archivo": "cerrar.png",
+   "ancho": 27.0,
+   "alto": 27.0
+  },
+  "encima": {
+   "archivo": "cerrar-encima.png",
+   "ancho": 27.0,
+   "alto": 27.0
+  }
+ },
+ "boton-celeste": {
+  "normal": {
+   "archivo": "boton-celeste.png",
+   "ancho": 119.0,
+   "alto": 32.0
+  },
+  "encima": {
+   "archivo": "boton-celeste-encima.png",
+   "ancho": 119.0,
+   "alto": 32.0
+  }
+ },
+ "boton-amarillo": {
+  "normal": {
+   "archivo": "boton-amarillo.png",
+   "ancho": 119.0,
+   "alto": 32.0
+  },
+  "encima": {
+   "archivo": "boton-amarillo-encima.png",
+   "ancho": 119.0,
+   "alto": 32.0
+  }
+ },
+ "boton-rojo": {
+  "normal": {
+   "archivo": "boton-rojo.png",
+   "ancho": 175.95,
+   "alto": 31.7
+  },
+  "encima": {
+   "archivo": "boton-rojo-encima.png",
+   "ancho": 175.95,
+   "alto": 31.7
+  }
+ },
+ "casillero": {
+  "normal": {
+   "archivo": "casillero.png",
+   "ancho": 48.0,
+   "alto": 48.0
+  },
+  "encima": {
+   "archivo": "casillero-encima.png",
+   "ancho": 48.0,
+   "alto": 48.0
+  }
+ },
+ "pestana": {
+  "normal": {
+   "archivo": "pestana.png",
+   "ancho": 35.0,
+   "alto": 35.0
+  }
+ },
+ "confirmar": {
+  "normal": {
+   "archivo": "confirmar.png",
+   "ancho": 85.0,
+   "alto": 29.0
+  }
+ },
+ "campo": {
+  "normal": {
+   "archivo": "campo.png",
+   "ancho": 152.0,
+   "alto": 22.0,
+   "grilla": [
+    2.25,
+    1.45,
+    150.05,
+    20.05
+   ]
+  }
+ },
+ "lista": {
+  "normal": {
+   "archivo": "lista.png",
+   "ancho": 148.0,
+   "alto": 22.0,
+   "grilla": [
+    4.0,
+    13.45,
+    124.75,
+    18.05
+   ]
+  },
+  "encima": {
+   "archivo": "lista-encima.png",
+   "ancho": 148.0,
+   "alto": 22.0,
+   "grilla": [
+    5.0,
+    13.25,
+    125.0,
+    17.6
+   ]
+  },
+  "apretada": {
+   "archivo": "lista-apretada.png",
+   "ancho": 148.0,
+   "alto": 22.0,
+   "grilla": [
+    5.0,
+    13.45,
+    125.0,
+    18.25
+   ]
+  }
+ },
+ "lista-fondo": {
+  "normal": {
+   "archivo": "lista-fondo.png",
+   "ancho": 273.0,
+   "alto": 192.0,
+   "grilla": [
+    5.9,
+    5.7,
+    266.3,
+    186.45
+   ]
+  }
+ },
+ "celda": {
+  "normal": {
+   "archivo": "celda.png",
+   "ancho": 152.0,
+   "alto": 22.05,
+   "grilla": [
+    1.0,
+    1.0,
+    151.0,
+    21.0
+   ]
+  },
+  "encima": {
+   "archivo": "celda-encima.png",
+   "ancho": 152.0,
+   "alto": 22.05,
+   "grilla": [
+    1.0,
+    1.0,
+    151.0,
+    21.0
+   ]
+  },
+  "elegida": {
+   "archivo": "celda-elegida.png",
+   "ancho": 152.0,
+   "alto": 22.05,
+   "grilla": [
+    1.0,
+    1.0,
+    151.0,
+    21.0
+   ]
+  }
+ },
+ "scroll-pista": {
+  "normal": {
+   "archivo": "scroll-pista.png",
+   "ancho": 15.0,
+   "alto": 148.0
+  }
+ },
+ "scroll-barra": {
+  "normal": {
+   "archivo": "scroll-barra.png",
+   "ancho": 15.0,
+   "alto": 52.0,
+   "grilla": [
+    0.05,
+    5.0,
+    7.0,
+    48.0
+   ]
+  },
+  "encima": {
+   "archivo": "scroll-barra-encima.png",
+   "ancho": 15.0,
+   "alto": 52.0,
+   "grilla": [
+    -2.05,
+    5.0,
+    7.0,
+    48.0
+   ]
+  },
+  "apretada": {
+   "archivo": "scroll-barra-apretada.png",
+   "ancho": 15.0,
+   "alto": 52.0,
+   "grilla": [
+    -2.0,
+    5.0,
+    7.05,
+    48.0
+   ]
+  }
+ },
+ "scroll-arriba": {
+  "normal": {
+   "archivo": "scroll-arriba.png",
+   "ancho": 15.0,
+   "alto": 14.0
+  },
+  "encima": {
+   "archivo": "scroll-arriba-encima.png",
+   "ancho": 15.0,
+   "alto": 14.0
+  },
+  "apretada": {
+   "archivo": "scroll-arriba-apretada.png",
+   "ancho": 15.0,
+   "alto": 14.0
+  }
+ },
+ "scroll-abajo": {
+  "normal": {
+   "archivo": "scroll-abajo.png",
+   "ancho": 15.0,
+   "alto": 14.0
+  },
+  "encima": {
+   "archivo": "scroll-abajo-encima.png",
+   "ancho": 15.0,
+   "alto": 14.0
+  },
+  "apretada": {
+   "archivo": "scroll-abajo-apretada.png",
+   "ancho": 15.0,
+   "alto": 14.0
+  }
+ },
+ "celu-fondo": {
+  "normal": {
+   "archivo": "celu-fondo.png",
+   "ancho": 444.0,
+   "alto": 292.0
+  }
+ },
+ "celu-panel": {
+  "normal": {
+   "archivo": "celu-panel.png",
+   "ancho": 368.0,
+   "alto": 384.0
+  }
+ },
+ "celu-tarjeta": {
+  "normal": {
+   "archivo": "celu-tarjeta.png",
+   "ancho": 179.0,
+   "alto": 55.0
+  }
+ },
+ "celu-tarjeta-ancha": {
+  "normal": {
+   "archivo": "celu-tarjeta-ancha.png",
+   "ancho": 365.0,
+   "alto": 55.0
+  }
+ },
+ "celu-violeta": {
+  "normal": {
+   "archivo": "celu-violeta.png",
+   "ancho": 444.0,
+   "alto": 292.0
+  }
+ },
+ "celu-tienda": {
+  "normal": {
+   "archivo": "celu-tienda.png",
+   "ancho": 444.0,
+   "alto": 292.0
+  }
+ },
+ "celu-opcion": {
+  "normal": {
+   "archivo": "celu-opcion.png",
+   "ancho": 179.0,
+   "alto": 55.0
+  },
+  "encima": {
+   "archivo": "celu-opcion-encima.png",
+   "ancho": 179.0,
+   "alto": 55.0
+  },
+  "apretada": {
+   "archivo": "celu-opcion-apretada.png",
+   "ancho": 179.0,
+   "alto": 55.0
+  }
+ },
+ "celu-instalar": {
+  "normal": {
+   "archivo": "celu-instalar.png",
+   "ancho": 105.0,
+   "alto": 30.0
+  },
+  "encima": {
+   "archivo": "celu-instalar-encima.png",
+   "ancho": 107.0,
+   "alto": 30.0
+  },
+  "apretada": {
+   "archivo": "celu-instalar-apretada.png",
+   "ancho": 105.0,
+   "alto": 30.0
+  }
+ },
+ "celu-volver": {
+  "normal": {
+   "archivo": "celu-volver.png",
+   "ancho": 30.0,
+   "alto": 30.0
+  },
+  "encima": {
+   "archivo": "celu-volver-encima.png",
+   "ancho": 30.0,
+   "alto": 30.0
+  },
+  "apretada": {
+   "archivo": "celu-volver-apretada.png",
+   "ancho": 30.0,
+   "alto": 30.0
+  }
+ }
+}

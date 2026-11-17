@@ -1,0 +1,10 @@
+[data-estetica="celular"] img[src$="emotes/normal.png"] { content: url("emociones/normal.png"); }
+[data-estetica="celular"] img[src$="emotes/shy.png"] { content: url("emociones/shy.png"); }
+[data-estetica="celular"] img[src$="emotes/bored.png"] { content: url("emociones/bored.png"); }
+[data-estetica="celular"] img[src$="emotes/angry.png"] { content: url("emociones/angry.png"); }
+[data-estetica="celular"] img[src$="emotes/boring.png"] { content: url("emociones/boring.png"); }
+[data-estetica="celular"] img[src$="emotes/good.png"] { content: url("emociones/good.png"); }
+[data-estetica="celular"] img[src$="emotes/smile.png"] { content: url("emociones/smile.png"); }
+[data-estetica="celular"] img[src$="emotes/love.png"] { content: url("emociones/love.png"); }
+[data-estetica="celular"] img[src$="emotes/money.png"] { content: url("emociones/money.png"); }
+[data-estetica="celular"] img[src$="emotes/devil.png"] { content: url("emociones/devil.png"); }

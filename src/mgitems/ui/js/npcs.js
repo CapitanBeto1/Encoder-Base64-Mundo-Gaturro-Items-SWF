@@ -253,7 +253,7 @@ function mostrarArmadoNpc() {
   if (nombre && !fila) leerComportamiento(nombre); // uno guardado que no está en la grilla
   const base = lookActual.base;
   $("vista-npc").replaceChildren(
-    ...(base ? [elementoIcono(base), etiqueta(`${claseDeRuta(base)} (${swfDeRuta(base)})`, "ayuda")] : [etiqueta("Elegí el Item que se convierte con «Cambiar…».", "ayuda")])
+    ...(base ? [elementoIcono(base), etiqueta(`${claseDeRuta(base)} (${swfDeRuta(base)})`, "ayuda")] : [etiqueta("Elegí el Item base con «Cambiar…».", "ayuda")])
   );
   if (base) prepararIconosDe(swfDeRuta(base));
   const tipo = base && tiposDeItems.get(base);
@@ -326,7 +326,7 @@ $("agregar-npc").addEventListener("click", () => {
     return avisarLista(`${claseDeRuta(base)} con ${comportamiento} ya está en la lista: si querés más, subí su cantidad.`, "advertencia");
   }
   lookActual.lista.push({ base, comportamiento, cantidad: 1, nombre: lookActual.nombre.trim(), ...(esFondos() ? { cuadro } : {}) });
-  avisarLista(`Se agregó ${claseDeRuta(base)} (${esFondos() ? `cuadro ${cuadro}` : comportamiento}). Armá otro o tocá «Convertir todos».`, "exito");
+  avisarLista(`Se agregó ${claseDeRuta(base)} (${esFondos() ? `cuadro ${cuadro}` : comportamiento}). Armá otro o tocá «Aplicar todos».`, "exito");
   Object.assign(lookActual, { id: "", nombre: "", base: null, comportamiento: esFondos() ? comportamientoFondo : null, cuadro: null });
   verObjetos = true;
   mostrarEncode(null);
@@ -384,7 +384,7 @@ $("importar-look").addEventListener("click", async () => {
   lookElegido = guardadoDe(resultado).id;
   mostrandoPuesto = false;
   await cargarLooks();
-  avisarLista(`Se importó ${guardados().el} «${guardadoDe(resultado).nombre}». Tocá «Equipar» para abrir${guardados().lo}.`, "exito");
+  avisarLista(`Se importó ${guardados().el} «${guardadoDe(resultado).nombre}». Tocá «Abrir» para abrir${guardados().lo}.`, "exito");
 });
 $("duplicar-look").addEventListener("click", duplicarLook);
 $("borrar-look").addEventListener("click", borrarLook);
