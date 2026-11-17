@@ -338,16 +338,15 @@ def test_donde_se_ve_cada_pieza_en_el_gaturro(tmp_path, ffdec):
     assert "solo_en" not in piezas["varios.gorra1_on"] and "no_se_ve" not in piezas["varios.gorra1_on"]
 
 
-def test_un_vehiculo_fuera_de_transporte_no_se_ve(tmp_path, ffdec):
-    # `Gaturro.add` (`checkTransport`): una Pieza con `type` en otra Parte que Transporte no se agrega al Gaturro.
+def test_un_vehiculo_se_ve_en_cualquier_parte(tmp_path, ffdec):
+    # En el juego un vehículo se ve también fuera de Transporte (el cliente descifrado lo frena: `checkTransport`).
     ffdec.codigo["skate1_on"] = clase_con("skate1_on", "MovieClip", 'speed = 300; type = "rollers";')
     nucleo = nucleo_con(tmp_path, FuenteFalsa({"varios": crear_swf(["skate1_on"])}), ffdec, {})
 
     en_la_mano = nucleo.gaturro_en_vivo({"grip": "varios.skate1_on"})["no_se_ven"]
     en_transporte = nucleo.gaturro_en_vivo({"transport": "varios.skate1_on"})["no_se_ven"]
 
-    assert [(n["parte"], n["motivo"]) for n in en_la_mano] == [("grip", "solo se ve en Transporte")]
-    assert en_transporte == []
+    assert en_la_mano == en_transporte == []
 
 
 def test_un_vehiculo_puede_heredar_su_tipo(tmp_path, ffdec):

@@ -208,8 +208,8 @@ class Imagenes:
             return motivo_sin_efecto(donde)
         if "no_se_ve" in donde:
             return donde["no_se_ve"]
-        # También los vehículos: fuera de Transporte, `Gaturro.add` no los agrega (`checkTransport`).
-        if "solo_en" in donde and donde["solo_en"] != parte_de_la_capa(parte):
+        # Lo de Transporte (los vehículos) se ve en cualquier Parte: en el juego, sí (ver `se_ve`).
+        if "solo_en" in donde and donde["solo_en"] != parte_de_la_capa(parte) and donde["solo_en"] != TRANSPORTE:
             return f"solo se ve en {PARTES_DEL_CUERPO.get(donde['solo_en'], donde['solo_en'])}"
         if parte == TRANSPORTE and donde.get("solo_en") != TRANSPORTE and not donde.get("vehiculo"):
             return "en Transporte solo se ven los vehículos"

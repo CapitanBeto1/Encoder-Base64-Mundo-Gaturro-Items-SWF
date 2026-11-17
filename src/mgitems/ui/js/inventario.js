@@ -83,7 +83,8 @@ function motivoNoSeVe(pieza, parte) {
     if (pieza.grande) return "el efecto de cabeza no dibuja lo de 150×150 o más";
     return null;
   }
-  if (pieza.solo_en && pieza.solo_en !== parte) return `solo se ve en ${nombreDeParte(pieza.solo_en)}`; // también los vehículos
+  // Lo de Transporte (los vehículos) se ve en cualquier Parte, como en el juego.
+  if (pieza.solo_en && pieza.solo_en !== parte && pieza.solo_en !== "transport") return `solo se ve en ${nombreDeParte(pieza.solo_en)}`;
   if (parte === "transport" && pieza.solo_en !== "transport" && !pieza.vehiculo) return "en Transporte solo se ven los vehículos";
   return null;
 }
@@ -166,7 +167,7 @@ function mostrarInventario() {
     : vista === "trucar" ? lookActual.parte
     : casilleroMarcado ?? (categoria.id === "otros" ? null : categoria.id);
   // Lo que el juego no mostraría donde va (en rojo), siempre al final, como en «Agregar Items».
-  const rojo = (p) => Boolean(motivoNoSeVe(p, destinoDe(p, destino)));
+  const rojo = (p) => Boolean(motivoNoSeVe(p, destino));
   const piezas = $("orden-piezas").value === "recomendado"
     ? ordenarPor(encontradas, (p) => [rojo(p), CATEGORIAS.filter((c) => c.partes.length && partesDePieza(p).some((x) => c.partes.includes(x))).length])
     : ordenarPor(ordenarPorNombre(encontradas, $("orden-piezas").value), (p) => [rojo(p)]);
@@ -183,7 +184,7 @@ function mostrarInventario() {
       boton.setAttribute("aria-pressed", String(Boolean(puesta)));
       boton.classList.toggle("en-uso", enUso && !puesta);
       boton.disabled = ocupado;
-      const motivo = motivoNoSeVe(pieza, destinoDe(pieza, destino));
+      const motivo = motivoNoSeVe(pieza, destino);
       boton.classList.toggle("no-llega-bien", Boolean(motivo));
       boton.addEventListener("click", () => {
         ponerPieza(pieza, destino);
@@ -227,15 +228,7 @@ function mostrarInventario() {
   for (const swf of new Set(visibles.map((p) => p.swf))) prepararIconosDe(swf);
 }
 
-// Un vehículo va siempre en Transporte: en otra Parte el juego no lo dibuja (`checkTransport`). En la acción y en el
-// efecto de cabeza, sí (ahí no cuenta la Parte).
-const esVehiculo = (pieza) => pieza.solo_en === "transport";
-const destinoDe = (pieza, destino) => (esVehiculo(pieza) && destino && !["transport", "action", "effect"].includes(destino) ? "transport" : destino);
-
-function ponerPieza(pieza, elegido) {
-  const destino = destinoDe(pieza, elegido);
-  if (destino !== elegido) avisarLista(`${pieza.clase} es un vehículo: va en Transporte, la única Parte donde el juego lo dibuja.`);
-  if (vista === "trucar" && destino !== lookActual.parte) lookActual.parte = destino;
+function ponerPieza(pieza, destino) {
   if (!destino) {
     avisarLista("Tocá primero el casillero de la Parte donde va esta Pieza.", "advertencia");
     return;
