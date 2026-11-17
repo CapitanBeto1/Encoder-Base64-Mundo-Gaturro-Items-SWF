@@ -10,8 +10,10 @@ pero no dibuja algunas y saca otras:
 - Las que van solo en una Parte. Están en la lista `troublesomeItems` de `cfgs/gameplay.json`: si se
   ponen en otra, el juego las saca del Gaturro. Con Parte vacía no van en ninguna; son instrumentos y
   objetos de acción, que solo sirven para la animación.
-- Los vehículos: las Piezas con la propiedad `type`. Solo van en la Parte `transport` (`checkTransport`);
-  ahí, una Pieza sin `type` se saca (`hasTransport`).
+- Los vehículos: las Piezas con la propiedad `type`. El cliente descifrado solo los agrega en la Parte `transport`
+  (`checkTransport`), pero en el juego se ven también en otras (lo comprobó el dueño del proyecto): para el programa
+  se ven en cualquiera, y el Gaturro en vivo se arma sin esa regla (`scripts/armar_gaturro.py`). En `transport`, una
+  Pieza sin `type` se saca (`hasTransport`).
 
 Las de pasaporte se ven solo con pasaporte (`destinos.es_de_pasaporte`).
 
