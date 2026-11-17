@@ -303,6 +303,14 @@ async function leerComportamiento(nombre) {
 }
 
 $("filtro-comportamientos").addEventListener("input", mostrarComportamientos);
+// Escribir el comportamiento a mano es para pocos: queda plegado detrás de un enlace.
+$("escribir-a-mano").addEventListener("click", () => {
+  const abrir = $("form-comportamiento").hidden;
+  $("form-comportamiento").hidden = !abrir;
+  $("escribir-a-mano").setAttribute("aria-expanded", String(abrir));
+  $("escribir-a-mano").textContent = abrir ? "Ocultar" : "Escribir el comportamiento a mano";
+  if (abrir) $("comportamiento-a-mano").focus();
+});
 $("form-comportamiento").addEventListener("submit", async (evento) => {
   evento.preventDefault();
   const nombre = $("comportamiento-a-mano").value.trim();
