@@ -5,7 +5,6 @@
 main.modo-agregar .buscador-swf { display: none; }
 .buscador-items { flex: 1; }
 .boton-todos { font-size: 11px; padding: 3px 8px; }
-.boton-todos[aria-pressed="true"] { background: var(--amarillo); border-color: var(--amarillo-contorno); }
 .categorias-items { grid-template-columns: repeat(10, minmax(0, 1fr)); }
 #filtro-items { flex: none; font-size: 12px; padding: 4px 8px; }
 .item-grilla { grid-template-rows: minmax(0, 1fr) auto auto; overflow: hidden; }
@@ -19,9 +18,8 @@ main.modo-agregar .buscador-swf { display: none; }
   line-height: 11px;
   letter-spacing: 0;
   text-transform: none;
-  color: var(--texto);
 }
-.pie-grilla { flex: none; display: flex; align-items: center; gap: 8px; color: #fff; font-size: 11px; }
+.pie-grilla { flex: none; display: flex; align-items: center; gap: 8px; font-size: 11px; }
 .pie-grilla .ayuda-grilla { flex: 1; min-width: 0; }
 #agregar-todos { font-size: 11px; padding: 3px 10px; }
 
@@ -46,10 +44,8 @@ main.modo-agregar .acciones button { padding-left: 10px; padding-right: 10px; fo
   line-height: 10px;
   letter-spacing: 0;
   text-transform: none;
-  color: #2f6421;
 }
-.destino-item[data-bien="false"] { color: #fff; background: #c41a1a; padding: 0 4px; border-radius: 5px; }
-.item-grilla.no-llega-bien { border-color: #c41a1a; }
+.destino-item[data-bien="false"] { padding: 0 4px; border-radius: 5px; }
 
 /* Exclusivo de pasaporte: una etiqueta dorada arriba a la izquierda. */
 .pieza-grilla { position: relative; }
@@ -59,9 +55,7 @@ main.modo-agregar .acciones button { padding-left: 10px; padding-right: 10px; fo
   left: 2px;
   padding: 0 4px;
   border-radius: 5px;
-  background: linear-gradient(#ffe066, #e0a800);
   border: 1px solid #8a5a00;
-  color: #5a3a00;
   font-size: 8px;
   line-height: 11px;
   letter-spacing: 0;
@@ -77,9 +71,6 @@ main.modo-agregar .acciones button { padding-left: 10px; padding-right: 10px; fo
   font-size: 11px;
   letter-spacing: 0;
   line-height: 1.1;
-  color: #c4401a;
-  background: var(--amarillo);
-  border-color: var(--amarillo-contorno);
   border-width: 2px;
 }
 .flecha-diez::before { display: none; }
@@ -92,11 +83,9 @@ main.modo-agregar .acciones button { padding-left: 10px; padding-right: 10px; fo
   border-width: 2px;
   border-radius: 7px;
   font-size: 11px;
-  -webkit-text-stroke: 0;
 }
 .numero-de-pagina::before { display: none; }
-.numero-de-pagina[aria-current="page"] { background: var(--amarillo); border-color: var(--amarillo-contorno); }
-.total-paginas { margin-left: 4px; color: #fff; font-size: 11px; }
+.total-paginas { margin-left: 4px; font-size: 11px; }
 
 /* Agregar Items: nombre, orden y destino en una fila. */
 .filtros-items { flex: none; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
@@ -108,8 +97,6 @@ select.filtro-lista {
   padding: 3px 4px;
   border: 2px solid var(--celeste-borde);
   border-radius: 8px;
-  background: #fff;
-  color: var(--texto);
   font: inherit;
   font-size: 11px;
 }
@@ -117,9 +104,8 @@ select.filtro-lista {
 /* Lo que se ve animado: un rollo de película arriba a la derecha de la tarjeta (o de la fila del Item base), y el
    filtro, con el mismo rollo (en las grillas sin texto: no entra). */
 .marca-animado { position: absolute; top: 3px; right: 3px; width: 15px; height: 15px; padding: 2px; border-radius: 5px;
-  background: #2a3150; color: #ffd84d; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.6); }
+  }
 .fila-base { position: relative; }
 .fila-base .marca-animado { top: 6px; right: 8px; }
 .enlace.filtro-animados { flex: none; min-height: 30px; padding: 3px 7px; font-size: 11px; display: inline-flex; align-items: center; gap: 4px; }
 .enlace.filtro-animados .ic { width: 14px; height: 14px; }
-.enlace.filtro-animados[aria-pressed="true"] { background: #2a3150; border-color: #141a30; color: #ffd84d; }

@@ -1,12 +1,5 @@
-/* Los colores, las letras, el fondo, el encabezado y los botones. */
-
-/*
- * Estética de la pantalla de servidores clásica de Mundo Gaturro (~2015):
- * fondo amarillo con estrellas y un planeta, paneles oscuros translúcidos, botones
- * celestes con brillo que se vuelven amarillos al pasar el mouse, ventanas amarillas
- * con borde gris, letra Cooper Black (o Fraunces, su alternativa libre). Los colores
- * se midieron de los gráficos del juego y de un video de la época.
- */
+/* Las letras, la grilla de la página, el encabezado y la forma de los botones. Los colores y la letra de cada cosa los
+   pone la estética (celular.css, ADR 0011). */
 
 @font-face {
   font-family: "MG";
@@ -14,7 +7,7 @@
   font-weight: 100 900;
 }
 
-/* La letra de la interfaz: Fredoka (OFL), redondeada. La del juego («MG») queda para el logo y las ventanas que lo copian. */
+/* Fredoka (OFL), redondeada. La del juego («MG») queda para las ventanas que copian al juego. */
 @font-face {
   font-family: "Fredoka";
   src: url("../fuentes/Fredoka.ttf") format("truetype");
@@ -75,8 +68,6 @@ body {
   grid-template-rows: auto minmax(0, 1fr) auto auto;
   grid-template-areas: "marca guia" "pestanas paneles" "modo paneles" "config paneles";
   position: relative;
-  background: var(--amarillo-fondo);
-  color: var(--texto);
   font: 500 15px/1.4 "Fredoka", sans-serif;
 }
 
@@ -93,10 +84,9 @@ body {
   padding: 14px 4px 8px 16px;
 }
 
-/* Título al estilo del logo del juego: letras amarillas con contorno marrón grueso. */
+/* El título (el logo del programa). */
 .logo {
   margin: 0;
-  font-family: "MG", Georgia, serif;
   font-variation-settings: "SOFT" 100, "WONK" 0, "opsz" 9;
   font-size: 30px;
   font-weight: 900;
@@ -104,10 +94,7 @@ body {
   letter-spacing: 1px;
   white-space: nowrap;
   text-transform: uppercase;
-  color: #ffd21f;
-  -webkit-text-stroke: 9px #8a4f12;
   paint-order: stroke fill;
-  text-shadow: 0 4px 0 #6b3a0a;
 }
 
 /* --- Botones --- */
@@ -117,9 +104,6 @@ button {
   padding: 8px 18px;
   border: 3px solid var(--celeste-borde);
   border-radius: 12px;
-  background: linear-gradient(var(--celeste), var(--celeste-oscuro));
-  box-shadow: 0 3px 0 var(--celeste-sombra);
-  color: var(--texto);
   font: inherit;
   font-weight: 600;
   text-transform: uppercase;
@@ -135,69 +119,38 @@ button::before {
   top: 3px;
   height: 44%;
   border-radius: 8px 8px 12px 12px / 8px 8px 5px 5px;
-  background: linear-gradient(rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.15));
   pointer-events: none;
 }
 
 button:hover:not(:disabled),
 button:focus-visible {
-  background: linear-gradient(var(--amarillo), var(--amarillo-oscuro));
-  border-color: var(--amarillo-borde);
-  box-shadow: 0 3px 0 rgba(90, 70, 0, 0.35);
   outline: none;
 }
 
-button:hover:not(:disabled)::before,
-button:focus-visible::before {
-  background: linear-gradient(rgba(255, 250, 200, 0.7), rgba(255, 240, 150, 0.2));
-}
 
 button:active:not(:disabled) {
   transform: translateY(2px);
-  box-shadow: 0 1px 0 var(--celeste-sombra);
 }
 
 /* Deshabilitado: el mismo botón en gris claro y opaco (con transparencia se vería sucio sobre el panel). */
 button:disabled {
   cursor: default;
   filter: grayscale(0.9) brightness(1.2) contrast(0.8);
-  box-shadow: none;
 }
 
-/* Botón principal: rojo, con letras blancas. */
-button.primario {
-  border-color: #ff7a72;
-  background: linear-gradient(var(--rojo-claro) 0%, var(--rojo) 55%, #c40101 100%);
-  box-shadow: 0 3px 0 rgba(80, 0, 0, 0.4);
-  color: var(--blanco);
-  text-shadow: 0 2px 0 var(--rojo-oscuro);
-}
 
-button.primario:hover:not(:disabled),
-button.primario:focus-visible {
-  border-color: var(--amarillo-borde);
-  background: linear-gradient(var(--amarillo), var(--amarillo-oscuro));
-  box-shadow: 0 3px 0 rgba(90, 70, 0, 0.35);
-  color: var(--texto);
-  text-shadow: none;
-}
 
-/* Deshabilitado, el principal también queda gris claro (pasado a gris, el rojo quedaría oscuro y parecería activo). */
+/* Deshabilitado, el principal no se oscurece con un filtro. */
 button.primario:disabled {
   filter: none;
-  border-color: #dcd6c4;
-  background: linear-gradient(#ece8dc, #d9d3c2);
-  color: #8f8873;
-  text-shadow: none;
 }
 
-/* Agregar al juego: el botón grande, rojo con letras amarillas. */
+/* Agregar al juego: el botón grande. */
 button.entregar {
   width: 100%;
   padding: 12px;
   font-size: 20px;
   letter-spacing: 1px;
-  color: #ffe14d;
 }
 
 /* Íconos (js/iconos.js): del tamaño y el color del texto que los rodea. */
