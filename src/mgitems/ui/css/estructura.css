@@ -11,13 +11,10 @@
   padding: 6px 8px 10px;
   overflow-y: auto;
   border-radius: 18px;
-  background: rgba(40, 30, 0, 0.32);
-  box-shadow: inset 0 2px 0 rgba(0, 0, 0, 0.12);
 }
 
 .grupo-pestanas {
   padding: 10px 10px 3px;
-  color: #ffe98a;
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 1.2px;
@@ -32,22 +29,13 @@
   padding: 8px 10px;
   border: 0;
   border-radius: 12px;
-  background: transparent;
-  box-shadow: none;
-  color: var(--blanco);
   font-size: 13px;
   text-align: left;
   white-space: nowrap;
 }
 
 .pestana::before { display: none; }
-.pestana:hover:not([aria-selected="true"]):not(:disabled) { background: rgba(255, 255, 255, 0.13); }
 
-.pestana[aria-selected="true"] {
-  background: linear-gradient(var(--amarillo), var(--amarillo-oscuro));
-  color: var(--texto);
-  box-shadow: 0 3px 0 rgba(90, 70, 0, 0.35);
-}
 
 /* Con poco ancho, la barra lateral queda solo con los íconos (el nombre de cada pestaña, al pasar el mouse). */
 @media (max-width: 1080px) {
@@ -57,7 +45,7 @@
   .logo::first-letter { font-size: 28px; }
   .pestanas { margin: 2px 6px 0 12px; padding: 6px 4px; }
   .grupo-pestanas { padding: 8px 0 2px; text-align: center; font-size: 0; }
-  .grupo-pestanas::before { content: ""; display: block; height: 2px; margin: 0 8px; border-radius: 1px; background: rgba(255, 233, 138, 0.45); }
+  .grupo-pestanas::before { content: ""; display: block; height: 2px; margin: 0 8px; border-radius: 1px; }
   .grupo-pestanas:first-child::before { display: none; }
   .pestana { justify-content: center; padding: 9px 0; font-size: 0; }
   .pestana .ic { width: 22px; height: 22px; }
@@ -84,7 +72,6 @@
   gap: 7px;
   padding: 6px 12px 6px 6px;
   border-radius: 999px;
-  color: #6b5a10;
   font-size: 12px;
   font-weight: 600;
   white-space: nowrap;
@@ -101,7 +88,6 @@
   height: 3px;
   margin-top: -1.5px;
   border-radius: 2px;
-  background: rgba(60, 45, 0, 0.35);
 }
 
 .numero-paso {
@@ -111,18 +97,13 @@
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: rgba(60, 45, 0, 0.35);
-  color: var(--blanco);
   font-size: 11px;
 }
 
 .ic.numero-paso { padding: 5px; }
-.guia li.hecho { color: #2f5d1d; }
-.guia li.hecho .numero-paso { background: #4f9a35; }
-.guia li.actual { background: rgba(255, 252, 235, 0.95); color: #4a3700; box-shadow: 0 2px 0 rgba(0, 0, 0, 0.15); }
 /* Late unas veces cuando el paso pasa a ser el que sigue y después queda quieto, resaltado: una animación sin fin
    hace que la ventana se redibuje todo el tiempo (~5 % de un núcleo, siempre). */
-.guia li.actual .numero-paso { background: #e8541e; animation: latido 1.6s ease-in-out 3; }
+.guia li.actual .numero-paso { animation: latido 1.6s ease-in-out 3; }
 @keyframes latido { 50% { transform: scale(1.15); } }
 
 .vista {
@@ -182,16 +163,7 @@ button.chip-look {
   text-transform: none;
 }
 
-button.chip-look[aria-pressed="true"] {
-  background: linear-gradient(var(--amarillo), var(--amarillo-oscuro));
-  border-color: var(--amarillo-borde);
-  box-shadow: 0 3px 0 rgba(90, 70, 0, 0.35);
-}
 
-.vacia-chica {
-  color: var(--blanco);
-  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.6);
-}
 
 .etiqueta-campo {
   flex: none;
@@ -205,8 +177,6 @@ button.chip-look[aria-pressed="true"] {
   text-overflow: ellipsis;
   padding: 2px 6px;
   border-radius: 8px;
-  background: var(--rotulo);
-  color: var(--blanco);
   font-size: 11px;
   white-space: nowrap;
   text-align: center;
@@ -215,10 +185,6 @@ button.chip-look[aria-pressed="true"] {
 
 .partes li .nombre { font-size: 13px; }
 
-.icono.vacio {
-  background: rgba(255, 255, 255, 0.45);
-  box-shadow: inset 0 0 0 2px rgba(42, 93, 116, 0.25);
-}
 
 .selector-parte {
   flex: 1;
@@ -260,7 +226,6 @@ main.modo-terminator .buscador-swf {
   flex-direction: column;
   gap: 10px;
   padding: 16px;
-  background: var(--panel);
   border-radius: 16px;
   min-height: 0;
 }
@@ -271,26 +236,17 @@ main.modo-terminator .buscador-swf {
   margin: 0;
   padding: 4px 14px;
   border-radius: 10px;
-  background: var(--rotulo);
-  color: var(--blanco);
   font-size: 15px;
   font-weight: 600;
   text-transform: uppercase;
 }
 
-.panel h2 .ayuda { color: #ffe14d; }
 
 .ayuda {
   margin: 0;
-  color: var(--texto-suave);
   font-size: 13px;
 }
 
-.panel > .ayuda,
-.fila > .ayuda {
-  color: var(--blanco);
-  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.6), 0 0 4px rgba(0, 0, 0, 0.45);
-}
 
 .fila {
   display: flex;

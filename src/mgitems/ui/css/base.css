@@ -15,43 +15,7 @@
 }
 
 :root {
-  /* Fondo y paneles */
-  --amarillo-fondo: #f6d610;
-  --panel: rgba(48, 38, 0, 0.30);
-  --panel-hundido: rgba(30, 22, 0, 0.22);
-  --rotulo: rgba(18, 18, 18, 0.82);
-
-  /* Botón celeste (servidor) */
-  --celeste: #8bceeb;
-  --celeste-oscuro: #86cbe9;
-  --celeste-borde: #a9dcf1;
-  --celeste-contorno: #4fa9d6;
-  --celeste-sombra: rgba(20, 60, 90, 0.35);
-
-  /* Estado al pasar el mouse */
-  --amarillo: #f5d711;
-  --amarillo-oscuro: #f0cf0c;
-  --amarillo-borde: #fbe36a;
-  --amarillo-contorno: #c9a800;
-
-  /* Rojo (botones principales y cerrar) */
-  --rojo: #d70101;
-  --rojo-claro: #fc3f3d;
-  --rojo-oscuro: #a60400;
-
-  /* Ventanas */
-  --ventana: #f9d611;
-  --ventana-interior: #fadd3b;
-  --ventana-borde: #b9b9b9;
-
-  /* Otros */
-  --texto: #011422;
-  --texto-suave: #4a3b00;
-  --naranja: #fc6400;
-  --azul: #2991b9;
-  --verde: #49af4c;
-  --verde-oscuro: #2e7d32;
-  --blanco: #ffffff;
+  --amarillo: #f5d711;  /* el del juego, en las ventanas que lo copian (ventanas-del-juego.css) */
   --radio: 14px;
 }
 
@@ -102,7 +66,7 @@ body {
 button {
   position: relative;
   padding: 8px 18px;
-  border: 3px solid var(--celeste-borde);
+  border: 3px solid var(--c-borde);
   border-radius: 12px;
   font: inherit;
   font-weight: 600;

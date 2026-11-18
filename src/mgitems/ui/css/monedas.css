@@ -27,7 +27,6 @@
   gap: 12px;
   padding: 20px 24px;
   margin-bottom: 20px;
-  background: var(--m-panel);
   border-radius: var(--radio);
   min-height: 90px;
   transition: background 0.25s;
@@ -37,13 +36,11 @@
   font-size: 36px;
   flex-shrink: 0;
   line-height: 1;
-  color: var(--m-num);
 }
 
 .pantalla-numero {
   font-size: 36px;
   font-weight: 700;
-  color: var(--m-num);
   line-height: 1;
   letter-spacing: -0.5px;
   transition: color 0.25s;
@@ -51,7 +48,6 @@
 
 .pantalla-label {
   font-size: 14px;
-  color: var(--m-label);
   align-self: flex-end;
   padding-bottom: 4px;
   font-weight: 500;
@@ -75,35 +71,21 @@
   padding: 10px 12px;
   border-radius: 8px;
   border: 2px solid #a07800;
-  background: linear-gradient(to bottom, #f9d611 0%, #c09000 100%);
-  color: #3a2600;
   font-size: 14px;
   font-weight: 700;
-  font-family: inherit;
   cursor: pointer;
   text-align: center;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3);
   transition: background 0.12s, border-color 0.12s, box-shadow 0.12s, transform 0.08s;
 }
 
 .chip-moneda:hover {
-  background: linear-gradient(to bottom, #fbe96a 0%, #d4aa00 100%);
-  border-color: #c9a000;
   transform: translateY(-1px);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
 }
 
 .chip-moneda:active {
   transform: translateY(0);
 }
 
-.chip-moneda.activo {
-  background: linear-gradient(to bottom, #fc3f3d 0%, #a60400 100%);
-  border-color: #a60400;
-  color: #fff;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
-  box-shadow: 0 2px 12px rgba(215, 1, 1, 0.45);
-}
 
 /* ============================================================
    Separador y campo personalizado
@@ -114,7 +96,6 @@
   align-items: center;
   gap: 10px;
   margin-bottom: 10px;
-  color: var(--m-sep-txt);
   font-size: 12px;
   font-weight: 500;
   transition: color 0.25s;
@@ -125,7 +106,6 @@
   content: "";
   flex: 1;
   height: 1px;
-  background: var(--m-sep);
   transition: background 0.25s;
 }
 
@@ -136,9 +116,7 @@
   margin-bottom: 14px;
   border-radius: 12px;
   border: 2px solid var(--m-input-border);
-  background: var(--m-input-bg);
   font: 600 16px/1 "Fredoka", sans-serif;
-  color: var(--m-input-txt);
   text-align: center;
   transition: border-color 0.15s, background 0.15s;
   -moz-appearance: textfield;
@@ -149,10 +127,8 @@
 
 .input-monedas-custom:focus {
   outline: none;
-  border-color: var(--m-input-focus);
 }
 
-.input-monedas-custom::placeholder { color: var(--m-label); }
 
 /* ============================================================
    Botón Generar Encode

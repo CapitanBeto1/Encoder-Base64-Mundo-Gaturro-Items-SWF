@@ -29,7 +29,6 @@ main.modo-looks .buscador-swf { display: none; }
   align-items: stretch;
   gap: 6px;
   padding-bottom: 10px;
-  background: #4f9a3a;
   border: 3px solid #f6d610;
   border-radius: 16px;
   overflow: hidden;
@@ -40,17 +39,12 @@ main.modo-looks .buscador-swf { display: none; }
   border: 0;
   border-radius: 0;
   padding: 8px;
-  background: #b3202a;
-  color: #fff;
   text-align: center;
   text-transform: uppercase;
   font-size: 17px;
-  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.18);
 }
-.tarjeta-gaturro .nombre-tarjeta::placeholder { color: rgba(255, 255, 255, 0.7); }
-.tarjeta-gaturro .nombre-tarjeta:focus { box-shadow: inset 0 0 0 3px var(--amarillo); border: 0; }
-.se-guarda-en { flex: none; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 0 10px; color: #fff; font-size: 12px; }
-.se-guarda-en .ayuda { color: #e9ffd9; }
+.tarjeta-gaturro .nombre-tarjeta:focus { border: 0; }
+.se-guarda-en { flex: none; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 0 10px; font-size: 12px; }
 .base-look { display: flex; align-items: center; gap: 4px; min-width: 0; }
 .base-look .icono { width: 26px; height: 26px; }
 .base-look .nombre { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -68,11 +62,11 @@ main.modo-looks .buscador-swf { display: none; }
 }
 .gaturro { margin: 0; min-height: 0; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 /* El Gaturro en vivo (un marco, js/gaturro_vivo.js). */
-.gaturro-vivo { flex: 1 1 0; align-self: stretch; min-height: 0; border: 0; background: transparent; pointer-events: none; }
+.gaturro-vivo { flex: 1 1 0; align-self: stretch; min-height: 0; border: 0; pointer-events: none; }
 .gaturro-vivo[hidden] { display: none; }
 /* El Gaturro al que se le sacan las fotos de las miniaturas: está, pero no se ve (fuera de la vista no se dibujaría). */
 .fotografo-del-gaturro { position: fixed; left: 0; top: 0; z-index: -1; width: 240px; height: 240px; border: 0; opacity: 0; pointer-events: none; }
-.gaturro figcaption { flex: none; display: flex; flex-direction: column; gap: 2px; color: #fff; font-size: 10px; line-height: 1.2; text-align: center; }
+.gaturro figcaption { flex: none; display: flex; flex-direction: column; gap: 2px; font-size: 10px; line-height: 1.2; text-align: center; }
 .gaturro figcaption:empty { display: none; }
 
 .casilleros { display: grid; grid-template-columns: repeat(2, 54px); align-content: center; gap: 4px; margin: 0; padding: 0; list-style: none; }
@@ -86,23 +80,20 @@ main.modo-looks .buscador-swf { display: none; }
   gap: 1px;
   padding: 3px;
   border-radius: 10px;
-  background: var(--amarillo);
-  border-color: var(--amarillo-contorno);
 }
-.casillero .icono { width: 30px; height: 30px; box-shadow: none; background: rgba(255, 255, 255, 0.55); }
-.casillero .nombre-casillero { max-width: 100%; overflow: hidden; text-overflow: ellipsis; font-size: 9px; line-height: 1.1; text-transform: uppercase; color: var(--texto); white-space: nowrap; }
-.casillero[aria-pressed="true"] { background: #6fc054; border-color: #2f6421; box-shadow: 0 0 0 3px #fff; }
+.casillero .icono { width: 30px; height: 30px; }
+.casillero .nombre-casillero { max-width: 100%; overflow: hidden; text-overflow: ellipsis; font-size: 9px; line-height: 1.1; text-transform: uppercase; white-space: nowrap; }
 .casilleros .sacar-pieza { position: absolute; top: -4px; right: -4px; width: 22px; height: 22px; font-size: 12px; padding: 0; }
 /* Cuántas capas de arriba tienen Pieza («Configura tus accesorios»): abajo a la derecha del dibujo de la Parte. */
-.capas-casillero { position: absolute; right: 3px; bottom: 16px; padding: 0 4px; border-radius: 6px; background: #2a3150; color: #fff; font-size: 10px; line-height: 14px; font-weight: 700; }
+.capas-casillero { position: absolute; right: 3px; bottom: 16px; padding: 0 4px; border-radius: 6px; font-size: 10px; line-height: 14px; font-weight: 700; }
 /* Trucar Prenda: una Pieza en una Parte por Prenda trucada (sin casilleros), y la lista de las que se reciben juntas. */
 main.modo-trucar .casilleros { display: none; }
 .armado-trucar { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; }
-.pieza-trucar { display: inline-flex; align-items: center; gap: 6px; min-height: 28px; padding: 2px 10px; border-radius: 10px; background: rgba(0, 0, 0, 0.18); color: #fff; font-size: 13px; }
+.pieza-trucar { display: inline-flex; align-items: center; gap: 6px; min-height: 28px; padding: 2px 10px; border-radius: 10px; font-size: 13px; }
 .pieza-trucar .icono { width: 26px; height: 26px; }
 .lista-trucadas { flex: none; display: flex; align-items: center; gap: 8px; min-height: 40px; }
 #lista-trucadas { display: flex; gap: 6px; flex: 1; min-width: 0; overflow-x: auto; margin: 0; padding: 2px; list-style: none; }
-#lista-trucadas li { flex: none; display: flex; align-items: center; gap: 6px; padding: 3px 6px 3px 8px; border-radius: 10px; background: var(--celeste); color: var(--texto); font-size: 12px; white-space: nowrap; }
+#lista-trucadas li { flex: none; display: flex; align-items: center; gap: 6px; padding: 3px 6px 3px 8px; border-radius: 10px; font-size: 12px; white-space: nowrap; }
 #lista-trucadas .icono { width: 26px; height: 26px; }
 
 .botones-tarjeta { flex: none; display: flex; justify-content: center; gap: 8px; }
@@ -112,15 +103,10 @@ main.modo-trucar .casilleros { display: none; }
   padding: 0;
   font-size: 24px;
   line-height: 1;
-  background: var(--amarillo);
-  border-color: var(--amarillo-contorno);
 }
-.boton-colores:hover:not(:disabled), .boton-editar-piezas:hover:not(:disabled) { background: #6fc054; border-color: #2f6421; }
 .desplegable-emote { position: relative; }
 .boton-emote { padding: 2px; }
 .boton-emote img { width: 36px; height: auto; image-rendering: pixelated; }
-.boton-emote:hover:not(:disabled) { background: #6fc054; border-color: #2f6421; }
-.boton-emote[aria-expanded="true"] { background: #6fc054; border-color: #2f6421; }
 .panel-emotes {
   position: absolute;
   bottom: calc(100% + 6px);
@@ -129,8 +115,7 @@ main.modo-trucar .casilleros { display: none; }
   grid-template-columns: repeat(5, auto);  /* las 10 del juego, en dos filas */
   gap: 4px;
   padding: 6px;
-  background: var(--amarillo);
-  border: 2px solid var(--amarillo-contorno);
+  border: 2px solid var(--c-violeta);
   border-radius: 12px;
   z-index: 10;
   white-space: nowrap;
@@ -141,18 +126,12 @@ main.modo-trucar .casilleros { display: none; }
   height: 44px;
   padding: 2px;
   flex: none;
-  background: var(--amarillo);
-  border-color: var(--amarillo-contorno);
   border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 .emote-btn img { width: 36px; height: auto; image-rendering: pixelated; }
-.emote-btn:hover:not(:disabled) { background: #6fc054; border-color: #2f6421; }
-.emote-btn[aria-pressed="true"] { background: #6fc054; border-color: #2f6421; box-shadow: inset 0 0 0 2px #2f6421; }
-.boton-guardar { color: #16801f; }
-.boton-descartar { color: #c41a1a; }
 
 /* Mitad derecha: el inventario. */
 .armario {
@@ -161,19 +140,17 @@ main.modo-trucar .casilleros { display: none; }
   flex-direction: column;
   gap: 6px;
   padding: 8px;
-  background: #4f9a3a;
   border: 3px solid #f6d610;
   border-radius: 16px;
 }
 .fuentes { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; }
-.fuentes .etiqueta-campo { color: #fff; width: auto; }
+.fuentes .etiqueta-campo { width: auto; }
 .lista-fuentes { display: flex; flex-wrap: wrap; gap: 4px; }
-.chip-fuente { display: inline-flex; align-items: center; gap: 4px; padding: 2px 4px 2px 8px; border-radius: 10px; background: #fff; color: var(--texto); font-size: 11px; }
+.chip-fuente { display: inline-flex; align-items: center; gap: 4px; padding: 2px 4px 2px 8px; border-radius: 10px; font-size: 11px; }
 .chip-fuente .quitar { width: 22px; height: 22px; font-size: 11px; padding: 0; }
 .agregar-fuente { width: 130px; }
 .agregar-fuente input { padding: 3px 8px; font-size: 12px; }
 #todas-las-fuentes { font-size: 11px; padding: 3px 8px; }
-#todas-las-fuentes[aria-pressed="true"] { background: var(--amarillo); border-color: var(--amarillo-contorno); }
 
 .categorias { flex: none; display: grid; grid-template-columns: repeat(13, minmax(0, 1fr)); gap: 3px; }
 .categoria {
@@ -183,23 +160,17 @@ main.modo-trucar .casilleros { display: none; }
   align-items: center;
   padding: 3px 1px 2px;
   border-radius: 9px;
-  background: #3c7d2b;
-  border-color: #2f6421;
-  color: #fff;
 }
 .categoria .icono-categoria { width: 20px; height: 20px; justify-self: center; }
 .categoria .cantidad-categoria { font-size: 10px; line-height: 1; }
 .categoria .nombre-categoria { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
-.categoria[aria-selected="true"] { background: #6fc054; border-color: #f6d610; }
 
-.poniendo-en { flex: none; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 3px 8px; border-radius: 10px; background: #fff; color: var(--texto); font-size: 12px; }
+.poniendo-en { flex: none; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 3px 8px; border-radius: 10px; font-size: 12px; }
 .poniendo-en[hidden] { display: none; }
 /* La capa donde va lo que se toque (Sombrero, Pelo, Accesorio, Boca y Cuello). */
 .capas-poniendo { display: inline-flex; align-items: center; gap: 3px; }
 .capas-poniendo[hidden] { display: none; }
 .capa-poniendo { width: 26px; min-height: 26px; padding: 0; font-size: 12px; border-radius: 7px; text-transform: none; }
-.capa-poniendo.llena { border-color: #2f6421; }
-.capa-poniendo[aria-pressed="true"] { background: #2a3150; color: #ffd84d; border-color: #141a30; }
 .poniendo-en .quitar { width: 20px; height: 20px; font-size: 10px; padding: 0; }
 .armario #filtro-piezas { flex: none; font-size: 12px; padding: 4px 8px; }
 
@@ -211,9 +182,6 @@ main.modo-trucar .casilleros { display: none; }
   height: 64px;
   padding: 0;
   font-size: 20px;
-  color: #c4401a;
-  background: var(--amarillo);
-  border-color: var(--amarillo-contorno);
 }
 .grilla {
   flex: 1;
@@ -237,10 +205,8 @@ main.modo-trucar .casilleros { display: none; }
   gap: 1px;
   padding: 4px 3px 3px;
   border-radius: 12px;
-  background: var(--amarillo);
-  border-color: var(--amarillo-contorno);
 }
-.pieza-grilla .icono { width: 100%; height: 100%; min-height: 0; box-shadow: none; background: transparent; }
+.pieza-grilla .icono { width: 100%; height: 100%; min-height: 0; }
 /* Lo que es la Pieza, debajo: verde si se viste, otro color si el juego la usa para otra cosa. */
 .tipo-pieza {
   max-width: 100%;
@@ -253,21 +219,12 @@ main.modo-trucar .casilleros { display: none; }
   letter-spacing: 0;
   text-transform: none;
   line-height: 12px;
-  color: #fff;
-  background: #2f7d24;
 }
-.tipo-pieza[data-uso="transporte"] { background: #2a6db5; }
-.tipo-pieza[data-uso="casa"] { background: #8a5a2b; }
-.tipo-pieza[data-uso="mascota"] { background: #b0418f; }
-.tipo-pieza[data-uso="accion"] { background: #c4661a; }
-.tipo-pieza[data-uso="objeto"] { background: #6d6d6d; }
 .pieza-grilla .icono img { max-width: 100%; max-height: 100%; }
-.pieza-grilla .icono.sin-imagen::after { content: "…"; color: #9a8400; font-size: 18px; }
-.pieza-grilla.en-uso { box-shadow: inset 0 0 0 3px rgba(22, 128, 31, 0.5); }
-.pieza-grilla[aria-pressed="true"] { background: #6fc054; border-color: #2f6421; box-shadow: inset 0 0 0 3px #2f6421; }
-.armario #ayuda-grilla { flex: none; margin: 0; color: #fff; font-size: 11px; text-align: center; }
+.pieza-grilla .icono.sin-imagen::after { content: "…"; font-size: 18px; }
+.armario #ayuda-grilla { flex: none; margin: 0; font-size: 11px; text-align: center; }
 .armario #ayuda-grilla:empty { display: none; }
-.numero-pagina { flex: none; align-self: center; color: #fff; font-size: 12px; }
+.numero-pagina { flex: none; align-self: center; font-size: 12px; }
 
 /* «Agregar a la lista», en un renglón aunque la tarjeta sea angosta. */
 #agregar-trucada, #agregar-npc { white-space: nowrap; padding-left: 14px; padding-right: 14px; }
