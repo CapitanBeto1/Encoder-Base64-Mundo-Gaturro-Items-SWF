@@ -2,7 +2,7 @@
 
 /* Las tarjetas de las grillas suben al pasar el mouse y se hunden al tocarlas. */
 .pieza-grilla { transition: transform 0.12s ease, box-shadow 0.12s ease; }
-.pieza-grilla:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 5px 0 rgba(0, 0, 0, 0.18); }
+.pieza-grilla:hover:not(:disabled) { transform: translateY(-3px); }
 .pieza-grilla:active:not(:disabled) { transform: translateY(0) scale(0.95); }
 
 /* Los botones se hunden al apretarlos. */

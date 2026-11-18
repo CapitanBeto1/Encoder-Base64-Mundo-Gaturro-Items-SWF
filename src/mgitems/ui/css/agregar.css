@@ -95,7 +95,7 @@ select.filtro-lista {
   max-width: 112px;
   min-height: 30px;
   padding: 3px 4px;
-  border: 2px solid var(--celeste-borde);
+  border: 2px solid var(--c-borde);
   border-radius: 8px;
   font: inherit;
   font-size: 11px;

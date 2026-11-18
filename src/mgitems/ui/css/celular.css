@@ -727,3 +727,43 @@ main.modo-npc .tarjeta-gaturro input.nombre-tarjeta { background: linear-gradien
 }
 .cambiar-modo:hover { background: var(--c-lila-suave) !important; color: var(--c-violeta) !important; }
 @media (max-width: 1080px) { .cambiar-modo { margin: 6px 6px 0 12px; padding: 4px 2px; font-size: 9px; white-space: normal; } }
+
+/* ============ Lo que antes pintaban las demás hojas, con los colores del celular ============ */
+/* Las cargas (cargas.css): el esqueleto de lo que viene, con el lila del celular y la misma ola. */
+:root { --base-carga: color-mix(in srgb, var(--c-lila) 30%, transparent); }
+.esqueleto :is(.img, .txt) { background: var(--brillo-carga), var(--base-carga); }
+.esqueleto-tarjetas { background: var(--c-blanco); border-color: var(--c-borde); }
+.esqueleto-filas { background: var(--c-blanco); }
+.gaturro.cargando::before { background: var(--brillo-carga), color-mix(in srgb, var(--c-lila) 45%, transparent); }
+.gaturro.cargando::after { background: rgba(0, 0, 0, 0.16); }
+.casillero-look.cargando::before { background: var(--brillo-carga), var(--c-lila-suave); }
+#encode.cargando { color: transparent; background: var(--brillo-carga), var(--c-lila-suave); }
+.icono.llegando { background: var(--brillo-carga), var(--c-lila-suave); }
+.mensaje.progreso:not(:empty) { background-image: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.18) 50%, transparent 65%); }
+/* Los avisos, cada uno con su color. */
+.mensaje.exito:not(:empty) { background-color: var(--c-verde); }
+.mensaje.error:not(:empty) { background-color: var(--c-rojo); }
+.mensaje.advertencia:not(:empty) { background-color: #fc6400; }
+/* El punto de Configuración: verde si está todo, naranja si falta algo. */
+.indicador.ok { background: var(--c-verde); }
+.indicador.falta { background: #fc6400; }
+/* Las marcas de los pasos de la entrega. */
+.pasos .marca { color: #fff; }
+.pasos .ok .marca { background: var(--c-verde); }
+.pasos .falla .marca { background: var(--c-rojo); }
+/* Las rutas de la Configuración, en letra de ancho fijo. */
+.componente .ruta { font-family: Consolas, monospace; }
+/* Las ventanas que copian al juego: su color de letra. */
+:is(#dialogo-colores, #dialogo-mis-looks) { color: #011422; }
+/* La Pieza o el comportamiento elegidos: una píldora gris con letra blanca. */
+.pieza-trucar { background-color: rgba(0, 0, 0, 0.18); color: #fff; }
+/* Los casilleros vacíos. */
+.casillero .icono { box-shadow: none; }
+/* «Buscar por imagen»: el lugar donde se suelta la captura. */
+#zona-imagen { background-color: var(--c-gris-suave); }
+/* Monedas: la cantidad elegida y las líneas de «o escribí otra cantidad». */
+#cantidad-monedas { background-color: rgba(255, 255, 255, 0.14); color: #fff; }
+.separador-custom { color: rgba(255, 255, 255, 0.4); }
+.separador-custom::before, .separador-custom::after { background-color: rgba(255, 255, 255, 0.18); }
+/* En la columna angosta, la línea entre los grupos de pestañas. */
+@media (max-width: 1080px) { .grupo-pestanas::before { background: var(--c-borde); } }
