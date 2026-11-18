@@ -120,7 +120,7 @@ button:disabled:not(:is(.dialogo-mis-looks, .dialogo-colores) *) {
 .item-grilla.no-llega-bien { border-color: var(--c-rojo); }
 :is(.nombre-item, .nombre-casillero, .numero-pagina, #ayuda-grilla, .ayuda) { color: var(--c-texto); }
 .tipo-pieza { background: var(--c-violeta) !important; color: var(--c-tinta); border-radius: 4px; }
-.destino-item[data-bien="false"] { background: var(--c-rojo); }
+.destino-item[data-bien="false"] { background: var(--c-rojo); color: #fff; }
 :is(.marca-animado, .capas-casillero) { background: var(--c-violeta); color: var(--c-tinta); }
 
 /* --- Campos y listas --- */
